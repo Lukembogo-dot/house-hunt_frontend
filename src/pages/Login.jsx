@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useAuth } from "../context/AuthContext"; // ✅ 1. Import useAuth
+// ❌ Remove: import axios from "axios";
+import apiClient from "../api/axios"; // ✅ 1. Import our central api client
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +10,7 @@ const Login = () => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // ✅ 2. Get the login function from context
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,13 +22,14 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+      // ✅ 2. Use apiClient and a relative path
+      const response = await apiClient.post(
+        "/auth/login",
         { email, password },
         { withCredentials: true }
       );
 
-      login(response.data); // ✅ 3. Update global state with user data
+      login(response.data);
       navigate("/");
 
     } catch (err) {
@@ -40,6 +42,8 @@ const Login = () => {
   };
 
   return (
+    // ... rest of your JSX ...
+    // (No changes needed to the JSX)
     <div className="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
         <div>

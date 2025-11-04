@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+// ❌ Remove: import axios from "axios";
+import apiClient, { API_BASE_URL } from "../api/axios"; // ✅ 1. Import both client and base URL
 import { FaStar } from "react-icons/fa";
-import MapComponent from "../components/MapComponent"; // ✅ 1. Import the map component
+import MapComponent from "../components/MapComponent";
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -18,9 +19,10 @@ const PropertyDetails = () => {
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
-      const propertyRes = await axios.get(`http://localhost:5000/api/properties/${id}`);
+      // ✅ 2. Use apiClient and relative paths
+      const propertyRes = await apiClient.get(`/properties/${id}`);
       setProperty(propertyRes.data);
-      const reviewsRes = await axios.get(`http://localhost:5000/api/reviews/${id}`);
+      const reviewsRes = await apiClient.get(`/reviews/${id}`);
       setComments(reviewsRes.data || []);
     } catch (error) {
       console.error("❌ Error fetching property data:", error);
@@ -40,8 +42,9 @@ const PropertyDetails = () => {
 
     try {
       setSubmitting(true);
-      await axios.post(
-        `http://localhost:5000/api/reviews/${id}`,
+      // ✅ 3. Use apiClient and a relative path
+      await apiClient.post(
+        `/reviews/${id}`,
         { comment: reviewText, rating },
         { withCredentials: true }
       );
@@ -58,6 +61,7 @@ const PropertyDetails = () => {
   };
   
   if (loading) {
+    // ... (rest of loading JSX is fine)
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -66,6 +70,7 @@ const PropertyDetails = () => {
   }
 
   if (!property) {
+    // ... (rest of no property JSX is fine)
     return (
       <div className="text-center mt-20 text-gray-500">
         <p>Property not found.</p>
@@ -92,7 +97,7 @@ const PropertyDetails = () => {
           <div className="mb-6">
             {property.imageUrl && (
               <img
-                src={`http://localhost:5000${property.imageUrl}`}
+                src={`${API_BASE_URL}${property.imageUrl}`} // ✅ 4. Use live URL for image
                 alt="Main"
                 className="rounded-lg w-full h-96 object-cover mb-4"
               />
@@ -104,7 +109,6 @@ const PropertyDetails = () => {
             <p className="text-gray-600 leading-relaxed">{property.description}</p>
           </div>
 
-          {/* ✅ 2. Add the Map Section here */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">Location Map</h2>
             {property.coordinates && property.coordinates.lat ? (
@@ -120,6 +124,7 @@ const PropertyDetails = () => {
             </h2>
 
             <form onSubmit={handleReviewSubmit} className="mb-6">
+              {/* ... (rest of form JSX is fine) ... */}
               <div className="flex items-center mb-2">
                 {[...Array(5)].map((_, i) => (
                   <FaStar

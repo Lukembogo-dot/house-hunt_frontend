@@ -1,6 +1,7 @@
 // src/components/PropertyList.jsx
 import { useEffect, useState } from "react";
-import axios from "axios";
+// ❌ Remove: import axios from "axios";
+import apiClient from "../api/axios"; // ✅ 1. Import our central api client
 import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
 
@@ -21,8 +22,9 @@ export default function PropertyList() {
         page: pageNumber,
       });
 
-      const response = await axios.get(
-        `http://localhost:5000/api/properties?${params.toString()}`
+      // ✅ 2. Use apiClient and a relative path
+      const response = await apiClient.get(
+        `/properties?${params.toString()}`
       );
 
       // The backend returns { total, page, pages, properties }
@@ -55,6 +57,8 @@ export default function PropertyList() {
   };
 
   return (
+    // ... rest of your JSX ...
+    // (No changes needed to the JSX)
     <section className="bg-gray-100 min-h-screen py-10 px-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800">

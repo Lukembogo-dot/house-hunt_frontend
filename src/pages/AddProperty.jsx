@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+// ❌ Remove: import axios from 'axios';
+import apiClient from "../api/axios"; // ✅ 1. Import our central api client
 
-const API_URL = 'http://localhost:5000/api/properties';
+// ❌ Remove: const API_URL = 'http://localhost:5000/api/properties';
 
-// ✅ 1. InputField component is now defined OUTSIDE AddProperty.
+// ✅ InputField component is now defined OUTSIDE AddProperty.
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
+  // ... (rest of InputField code is fine)
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor={name}>
       {label}
@@ -25,6 +27,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
 );
 
 const initialFormState = {
+  // ... (rest of initialFormState is fine)
   title: '',
   description: '',
   location: '',
@@ -42,6 +45,7 @@ const AddProperty = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
+    // ... (this function is fine)
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
@@ -50,6 +54,7 @@ const AddProperty = () => {
   };
 
   const handleFileChange = (e) => {
+    // ... (this function is fine)
     setImageFile(e.target.files[0]);
   };
 
@@ -67,7 +72,8 @@ const AddProperty = () => {
     dataToSend.append('image', imageFile);
 
     try {
-      const response = await axios.post(API_URL, dataToSend, {
+      // ✅ 2. Use apiClient and a relative path
+      const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -90,6 +96,8 @@ const AddProperty = () => {
   };
 
   return (
+    // ... rest of your JSX ...
+    // (No changes needed to the JSX)
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
@@ -108,7 +116,6 @@ const AddProperty = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ✅ 2. The component now passes props correctly */}
             <InputField 
               label="Property Title" 
               name="title" 

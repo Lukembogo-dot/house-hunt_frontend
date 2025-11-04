@@ -1,6 +1,7 @@
 // src/components/PropertyCard.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../api/axios"; // ✅ Import base URL
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function PropertyCard({ property }) {
     <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden">
       <div className="relative">
         <img
-          src={`http://localhost:5000${property.imageUrl || "/uploads/default.jpg"}`}
+          src={`${API_BASE_URL}${property.imageUrl || "/uploads/default.jpg"}`} // ✅ Use live URL
           alt={property.title}
           className="w-full h-56 object-cover"
           loading="lazy"
