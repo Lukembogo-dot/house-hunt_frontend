@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import apiClient, { API_BASE_URL } from "../api/axios"; // Import both client and base URL
+// ✅ FIX 1: Import 'Link' from react-router-dom
+import { useParams, Link } from "react-router-dom"; 
+import apiClient, { API_BASE_URL } from "../api/axios"; // API_BASE_URL is no longer needed here for images
 import { FaStar } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
-import { useAuth } from "../context/AuthContext"; // Import useAuth to check login status
+import { useAuth } from "../context/AuthContext"; 
 
 const PropertyDetails = () => {
   const { id } = useParams();
-  const { user } = useAuth(); // Get the current user
+  const { user } = useAuth(); 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
@@ -94,7 +95,8 @@ const PropertyDetails = () => {
           <div className="mb-6">
             {property.imageUrl && (
               <img
-                src={`${API_BASE_URL}${property.imageUrl}`} // Use live URL for image
+                // ✅ FIX 2: Use property.imageUrl directly. Cloudinary provides a full URL.
+                src={property.imageUrl} 
                 alt="Main"
                 className="rounded-lg w-full h-96 object-cover mb-4"
               />
