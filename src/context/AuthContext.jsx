@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+// ❌ Remove: import axios from 'axios';
+import apiClient from '../api/axios'; // ✅ 1. Import our central api client
 
 const AuthContext = createContext(null);
 
@@ -11,9 +12,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
-        // We use the '/api/auth/profile' route which is protected.
-        // If the cookie is valid, it will return user data.
-        const { data } = await axios.get('http://localhost:5000/api/auth/profile', {
+        // ✅ 2. Use apiClient and a relative path
+        const { data } = await apiClient.get('/auth/profile', {
           withCredentials: true,
         });
         setUser(data);
@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // We will create this backend route next
-      await axios.post('http://localhost:5000/api/auth/logout', {}, {
+      // ✅ 3. Use apiClient and a relative path
+      await apiClient.post('/auth/logout', {}, {
         withCredentials: true,
       });
       setUser(null);
