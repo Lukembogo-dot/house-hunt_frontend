@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react"; // ✅ 1. Import useState
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
 import SearchBar from "./components/SearchBar";
@@ -11,14 +11,18 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
-import AddProperty from './pages/AddProperty'; // ✅ 1. Import the new AddProperty page
+import AddProperty from './pages/AddProperty';
 
 // Import the necessary hooks and components
 import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
+import { FaBars, FaTimes } from "react-icons/fa"; // ✅ 2. Import icons
 
 function App() {
   const { user, loading } = useAuth(); // Get user and loading state from context
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ✅ 3. Add state for mobile menu
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <Router>
@@ -34,7 +38,7 @@ function App() {
               </Link>
             </div>
 
-            {/* Navigation */}
+            {/* Desktop Navigation (no changes here) */}
             <nav className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
               <Link to="/" className="hover:text-blue-600 transition">Home</Link>
               <Link to="/buy" className="hover:text-blue-600 transition">Buy</Link>
@@ -43,9 +47,8 @@ function App() {
               <Link to="/contact" className="hover:text-blue-600 transition">Contact</Link>
             </nav>
 
-            {/* CTA */}
+            {/* Desktop CTA (no changes here) */}
             <div className="hidden md:flex items-center space-x-4">
-              {/* Login/Profile Dropdown */}
               {loading ? (
                 <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse"></div>
               ) : user ? (
@@ -56,7 +59,6 @@ function App() {
                 </Link>
               )}
               
-              {/* ✅ 2. Conditionally render the "List Property" button for admins */}
               {user && user.role === 'admin' && (
                 <Link 
                   to="/add-property" 
@@ -66,10 +68,65 @@ function App() {
                 </Link>
               )}
             </div>
+
+            {/* ✅ 4. Add Mobile Menu Button */}
+            <div className="md:hidden flex items-center">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-700 hover:text-blue-600 focus:outline-none"
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? (
+                  <FaTimes size={24} /> // Close icon
+                ) : (
+                  <FaBars size={24} /> // Hamburger icon
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* ✅ 5. Add Mobile Menu Dropdown */}
+          {isMobileMenuOpen && (
+            <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 z-40">
+              <nav className="flex flex-col p-6 space-y-4">
+                <Link to="/" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Home</Link>
+                <Link to="/buy" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Buy</Link>
+                <Link to="/rent" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Rent</Link>
+                <Link to="/about" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>About</Link>
+                <Link to="/contact" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Contact</Link>
+                
+                <div className="border-t border-gray-100 pt-4 space-y-4">
+                  {loading ? (
+                    <div className="h-9 w-full bg-gray-200 rounded-md animate-pulse"></div>
+                  ) : user ? (
+                    <ProfileDropdown />
+                  ) : (
+                    <Link 
+                      to="/login" 
+                      className="block w-full text-center bg-gray-100 py-2.5 rounded-lg font-medium text-gray-700 hover:text-blue-600 transition"
+                      onClick={closeMobileMenu}
+                    >
+                      Login
+                    </Link>
+                  )}
+                  
+                  {user && user.role === 'admin' && (
+                    <Link 
+                      to="/add-property" 
+                      className="block w-full text-center bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 transition"
+                      onClick={closeMobileMenu}
+                    >
+                      List Property
+                    </Link>
+                  )}
+                </div>
+              </nav>
+            </div>
+          )}
         </header>
 
         {/* ================= ROUTES ================= */}
+        {/* (No changes to your <Routes> or <Footer> sections) */}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={
@@ -110,7 +167,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          {/* ✅ 3. Add Protected Admin Route for adding properties */}
           <Route path="" element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/add-property" element={<AddProperty />} />
