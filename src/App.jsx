@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
-import SearchBar from "./components/SearchBar";
+import SearchBar from "./components/SearchBar"; // This import is no longer needed here, but fine to leave
 import About from "./pages/About";
 import Buy from "./pages/Buy";
 import Rent from "./pages/Rent";
@@ -12,7 +12,7 @@ import Register from "./pages/Register";
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
 import AddProperty from './pages/AddProperty';
-import EditProperty from "./pages/EditProperty"; // ✅ Import EditProperty
+import EditProperty from "./pages/EditProperty";
 
 // Import the necessary hooks and components
 import { useAuth } from "./context/AuthContext";
@@ -30,6 +30,7 @@ function App() {
       <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50">
         {/* ================= HEADER ================= */}
         <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+          {/* ... (Your header code is unchanged) ... */}
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             {/* Logo */}
             <div className="flex items-center space-x-2">
@@ -150,9 +151,15 @@ function App() {
                   <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed">
                     Explore verified listings — from affordable rentals to luxury homes across Kenya.
                   </p>
-                  <div className="bg-white rounded-full shadow-xl px-6 py-3 mt-2 max-w-2xl mx-auto border border-gray-200">
-                    <SearchBar />
-                  </div>
+                  
+                  {/* ✅ FIX: I have removed the extra SearchBar from this hero section.
+                    The real, functional search bar is inside your <PropertyList /> component below.
+                  
+                    <div className="bg-white rounded-full shadow-xl px-6 py-3 mt-2 max-w-2xl mx-auto border border-gray-200">
+                      <SearchBar />
+                    </div> 
+                  */}
+
                 </div>
               </section>
               {/* FEATURED PROPERTIES */}
@@ -162,6 +169,7 @@ function App() {
                     <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">
                       Featured Properties
                     </h2>
+                    {/* This component contains the real search bar */}
                     <PropertyList />
                   </div>
                 </section>
@@ -186,10 +194,10 @@ function App() {
 
         {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 text-gray-300 py-12 border-t border-gray-800">
+          {/* ... (Your footer code is unchanged) ... */}
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold mb-3 text-white">HouseHunt</h3>
-              {/* ✅ FIX: Removed the invalid </auto-generated-code> tag */}
               <p className="leading-relaxed text-gray-400">
                 Your trusted platform for finding affordable, verified homes across Kenya — simple, fast, and reliable.
               </p>
