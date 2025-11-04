@@ -1,4 +1,4 @@
-import React, { useState } from "react"; // ✅ 1. Import useState
+import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
 import SearchBar from "./components/SearchBar";
@@ -12,15 +12,16 @@ import Register from "./pages/Register";
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
 import AddProperty from './pages/AddProperty';
+import EditProperty from "./pages/EditProperty"; // ✅ Import EditProperty
 
 // Import the necessary hooks and components
 import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
-import { FaBars, FaTimes } from "react-icons/fa"; // ✅ 2. Import icons
+import { FaBars, FaTimes } from "react-icons/fa";
 
 function App() {
-  const { user, loading } = useAuth(); // Get user and loading state from context
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // ✅ 3. Add state for mobile menu
+  const { user, loading } = useAuth(); 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -38,16 +39,20 @@ function App() {
               </Link>
             </div>
 
-            {/* Desktop Navigation (no changes here) */}
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
               <Link to="/" className="hover:text-blue-600 transition">Home</Link>
               <Link to="/buy" className="hover:text-blue-600 transition">Buy</Link>
               <Link to="/rent" className="hover:text-blue-600 transition">Rent</Link>
               <Link to="/about" className="hover:text-blue-600 transition">About</Link>
               <Link to="/contact" className="hover:text-blue-600 transition">Contact</Link>
+              {/* Add Dashboard link for admin */}
+              {user && user.role === 'admin' && (
+                <Link to="/admin/dashboard" className="font-bold text-red-600 hover:text-red-800 transition">Dashboard</Link>
+              )}
             </nav>
 
-            {/* Desktop CTA (no changes here) */}
+            {/* Desktop CTA */}
             <div className="hidden md:flex items-center space-x-4">
               {loading ? (
                 <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse"></div>
@@ -69,7 +74,7 @@ function App() {
               )}
             </div>
 
-            {/* ✅ 4. Add Mobile Menu Button */}
+            {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center">
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -77,15 +82,15 @@ function App() {
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
-                  <FaTimes size={24} /> // Close icon
+                  <FaTimes size={24} />
                 ) : (
-                  <FaBars size={24} /> // Hamburger icon
+                  <FaBars size={24} />
                 )}
               </button>
             </div>
           </div>
 
-          {/* ✅ 5. Add Mobile Menu Dropdown */}
+          {/* Mobile Menu Dropdown */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 z-40">
               <nav className="flex flex-col p-6 space-y-4">
@@ -94,6 +99,11 @@ function App() {
                 <Link to="/rent" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Rent</Link>
                 <Link to="/about" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>About</Link>
                 <Link to="/contact" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Contact</Link>
+                
+                {/* Add Dashboard link for mobile admin */}
+                {user && user.role === 'admin' && (
+                  <Link to="/admin/dashboard" className="font-bold text-red-600 hover:text-red-800 transition" onClick={closeMobileMenu}>Dashboard</Link>
+                )}
                 
                 <div className="border-t border-gray-100 pt-4 space-y-4">
                   {loading ? (
@@ -126,7 +136,6 @@ function App() {
         </header>
 
         {/* ================= ROUTES ================= */}
-        {/* (No changes to your <Routes> or <Footer> sections) */}
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={
@@ -167,9 +176,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
+          {/* Update Admin Routes */}
           <Route path="" element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/add-property" element={<AddProperty />} />
+            <Route path="/admin/property/:id/edit" element={<EditProperty />} />
           </Route>
         </Routes>
 
@@ -178,6 +189,7 @@ function App() {
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold mb-3 text-white">HouseHunt</h3>
+              {/* ✅ FIX: Removed the invalid </auto-generated-code> tag */}
               <p className="leading-relaxed text-gray-400">
                 Your trusted platform for finding affordable, verified homes across Kenya — simple, fast, and reliable.
               </p>
