@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
-import SearchBar from "./components/SearchBar"; // This import is no longer needed here, but fine to leave
+// SearchBar is not used here
 import About from "./pages/About";
 import Buy from "./pages/Buy";
 import Rent from "./pages/Rent";
@@ -18,6 +18,7 @@ import EditProperty from "./pages/EditProperty";
 import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
 import { FaBars, FaTimes } from "react-icons/fa";
+import ThemeToggle from "./components/ThemeToggle"; // ✅ 1. Import the new toggle
 
 function App() {
   const { user, loading } = useAuth(); 
@@ -27,40 +28,44 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50">
+      {/* ✅ Added dark mode classes to the main div */}
+      <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
+        
         {/* ================= HEADER ================= */}
-        <header className="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-          {/* ... (Your header code is unchanged) ... */}
+        {/* ✅ Added dark mode classes */}
+        <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
-              <Link to="/" className="text-2xl font-extrabold text-blue-600 tracking-tight">
+              {/* ✅ Added dark mode classes */}
+              <Link to="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-500 tracking-tight">
                 HouseHunt Kenya
               </Link>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-10 text-gray-700 font-medium">
-              <Link to="/" className="hover:text-blue-600 transition">Home</Link>
-              <Link to="/buy" className="hover:text-blue-600 transition">Buy</Link>
-              <Link to="/rent" className="hover:text-blue-600 transition">Rent</Link>
-              <Link to="/about" className="hover:text-blue-600 transition">About</Link>
-              <Link to="/contact" className="hover:text-blue-600 transition">Contact</Link>
-              {/* Add Dashboard link for admin */}
+            {/* ✅ Added dark mode classes */}
+            <nav className="hidden md:flex items-center space-x-10 text-gray-700 dark:text-gray-300 font-medium">
+              <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home</Link>
+              <Link to="/buy" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Buy</Link>
+              <Link to="/rent" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Rent</Link>
+              <Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition">About</Link>
+              <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</Link>
               {user && user.role === 'admin' && (
-                <Link to="/admin/dashboard" className="font-bold text-red-600 hover:text-red-800 transition">Dashboard</Link>
+                <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition">Dashboard</Link>
               )}
             </nav>
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center space-x-4">
+              <ThemeToggle /> {/* ✅ 2. Add the toggle button */}
               {loading ? (
-                <div className="h-9 w-24 bg-gray-200 rounded-md animate-pulse"></div>
+                <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
               ) : user ? (
                 <ProfileDropdown />
               ) : (
-                <Link to="/login" className="font-medium text-gray-600 hover:text-blue-600 transition">
+                <Link to="/login" className="font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">
                   Login
                 </Link>
               )}
@@ -68,7 +73,7 @@ function App() {
               {user && user.role === 'admin' && (
                 <Link 
                   to="/add-property" 
-                  className="bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 transition"
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 dark:hover:bg-blue-500 transition"
                 >
                   List Property
                 </Link>
@@ -76,45 +81,43 @@ function App() {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="md:hidden flex items-center">
+            {/* ✅ Added dark mode classes */}
+            <div className="md:hidden flex items-center space-x-2">
+              <ThemeToggle /> {/* ✅ 3. Add the toggle button for mobile */}
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none"
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
                 aria-label="Toggle menu"
               >
-                {isMobileMenuOpen ? (
-                  <FaTimes size={24} />
-                ) : (
-                  <FaBars size={24} />
-                )}
+                {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
               </button>
             </div>
           </div>
 
           {/* Mobile Menu Dropdown */}
+          {/* ✅ Added dark mode classes */}
           {isMobileMenuOpen && (
-            <div className="md:hidden absolute top-full left-0 w-full bg-white shadow-lg border-t border-gray-200 z-40">
+            <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-40">
               <nav className="flex flex-col p-6 space-y-4">
-                <Link to="/" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Home</Link>
-                <Link to="/buy" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Buy</Link>
-                <Link to="/rent" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Rent</Link>
-                <Link to="/about" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>About</Link>
-                <Link to="/contact" className="hover:text-blue-600 transition" onClick={closeMobileMenu}>Contact</Link>
+                <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Home</Link>
+                <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Buy</Link>
+                <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Rent</Link>
+                <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>About</Link>
+                <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Contact</Link>
                 
-                {/* Add Dashboard link for mobile admin */}
                 {user && user.role === 'admin' && (
-                  <Link to="/admin/dashboard" className="font-bold text-red-600 hover:text-red-800 transition" onClick={closeMobileMenu}>Dashboard</Link>
+                  <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition" onClick={closeMobileMenu}>Dashboard</Link>
                 )}
                 
-                <div className="border-t border-gray-100 pt-4 space-y-4">
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
                   {loading ? (
-                    <div className="h-9 w-full bg-gray-200 rounded-md animate-pulse"></div>
+                    <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
                   ) : user ? (
                     <ProfileDropdown />
                   ) : (
                     <Link 
                       to="/login" 
-                      className="block w-full text-center bg-gray-100 py-2.5 rounded-lg font-medium text-gray-700 hover:text-blue-600 transition"
+                      className="block w-full text-center bg-gray-100 dark:bg-gray-700 py-2.5 rounded-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 transition"
                       onClick={closeMobileMenu}
                     >
                       Login
@@ -124,7 +127,7 @@ function App() {
                   {user && user.role === 'admin' && (
                     <Link 
                       to="/add-property" 
-                      className="block w-full text-center bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 transition"
+                      className="block w-full text-center bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 dark:hover:bg-blue-500 transition"
                       onClick={closeMobileMenu}
                     >
                       List Property
@@ -151,25 +154,17 @@ function App() {
                   <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed">
                     Explore verified listings — from affordable rentals to luxury homes across Kenya.
                   </p>
-                  
-                  {/* ✅ FIX: I have removed the extra SearchBar from this hero section.
-                    The real, functional search bar is inside your <PropertyList /> component below.
-                  
-                    <div className="bg-white rounded-full shadow-xl px-6 py-3 mt-2 max-w-2xl mx-auto border border-gray-200">
-                      <SearchBar />
-                    </div> 
-                  */}
-
                 </div>
               </section>
               {/* FEATURED PROPERTIES */}
               <main id="properties" className="flex-grow">
-                <section className="py-20 px-6 bg-gray-100 border-t border-gray-200">
+                {/* ✅ Added dark mode classes */}
+                <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                   <div className="max-w-6xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">
+                    {/* ✅ Added dark mode classes */}
+                    <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
                       Featured Properties
                     </h2>
-                    {/* This component contains the real search bar */}
                     <PropertyList />
                   </div>
                 </section>
@@ -193,12 +188,12 @@ function App() {
         </Routes>
 
         {/* ================= FOOTER ================= */}
-        <footer className="bg-gray-900 text-gray-300 py-12 border-t border-gray-800">
-          {/* ... (Your footer code is unchanged) ... */}
+        {/* ✅ Added dark mode classes */}
+        <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold mb-3 text-white">HouseHunt</h3>
-              <p className="leading-relaxed text-gray-400">
+              <p className="leading-relaxed text-gray-400 dark:text-gray-500">
                 Your trusted platform for finding affordable, verified homes across Kenya — simple, fast, and reliable.
               </p>
             </div>
@@ -218,7 +213,7 @@ function App() {
               <p>Phone: <span className="hover:text-white transition">+254 717 109 971</span></p>
             </div>
           </div>
-          <p className="text-center text-gray-500 mt-12 text-sm tracking-wide">
+          <p className="text-center text-gray-500 dark:text-gray-600 mt-12 text-sm tracking-wide">
             © {new Date().getFullYear()} HouseHunt Kenya. All rights reserved.
           </p>
         </footer>

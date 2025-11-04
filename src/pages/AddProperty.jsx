@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// ❌ Remove: import axios from 'axios';
-import apiClient from "../api/axios"; // ✅ 1. Import our central api client
+import apiClient from "../api/axios"; // Use our central api client
 
-// ❌ Remove: const API_URL = 'http://localhost:5000/api/properties';
-
-// ✅ InputField component is now defined OUTSIDE AddProperty.
+// InputField component
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
-  // ... (rest of InputField code is fine)
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor={name}>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
     <input
@@ -21,13 +17,12 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       onChange={onChange}
       min={min}
       required
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
     />
   </div>
 );
 
 const initialFormState = {
-  // ... (rest of initialFormState is fine)
   title: '',
   description: '',
   location: '',
@@ -45,7 +40,6 @@ const AddProperty = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    // ... (this function is fine)
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
@@ -54,7 +48,6 @@ const AddProperty = () => {
   };
 
   const handleFileChange = (e) => {
-    // ... (this function is fine)
     setImageFile(e.target.files[0]);
   };
 
@@ -72,7 +65,6 @@ const AddProperty = () => {
     dataToSend.append('image', imageFile);
 
     try {
-      // ✅ 2. Use apiClient and a relative path
       const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -96,19 +88,17 @@ const AddProperty = () => {
   };
 
   return (
-    // ... rest of your JSX ...
-    // (No changes needed to the JSX)
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700">
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
           List a New Property
         </h1>
         
         {status.message && (
           <div className={`p-4 mb-6 text-sm rounded-lg ${
             status.type === 'success' 
-              ? 'bg-green-100 text-green-700' 
-              : 'bg-red-100 text-red-700'
+              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
+              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
           }`} role="alert">
             {status.message}
           </div>
@@ -133,7 +123,7 @@ const AddProperty = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="description">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
               Description
             </label>
             <textarea
@@ -144,7 +134,7 @@ const AddProperty = () => {
               value={formData.description}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             />
           </div>
 
@@ -159,12 +149,12 @@ const AddProperty = () => {
               min={100} 
             />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="type">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
                 Property Type
               </label>
               <select
                 id="type" name="type" value={formData.type} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="apartment">Apartment</option>
                 <option value="house">House</option>
@@ -196,7 +186,7 @@ const AddProperty = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="image">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="image">
               Property Image
             </label>
             <input
@@ -205,9 +195,9 @@ const AddProperty = () => {
               name="image"
               onChange={handleFileChange}
               required
-              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-             {imageFile && <p className="text-xs text-gray-500 mt-1">Selected: {imageFile.name}</p>}
+             {imageFile && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFile.name}</p>}
           </div>
           
           <div className="pt-4">
@@ -216,8 +206,8 @@ const AddProperty = () => {
               disabled={loading}
               className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white transition ${
                 loading 
-                  ? 'bg-blue-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                  ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500'
               }`}
             >
               {loading ? 'Submitting...' : 'Submit Listing'}

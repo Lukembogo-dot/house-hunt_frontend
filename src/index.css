@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    /* Apply a smooth transition to background and text colors */
+    @apply transition-colors duration-300;
+  }
+}

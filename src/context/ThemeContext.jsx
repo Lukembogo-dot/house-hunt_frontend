@@ -1,0 +1,42 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+const ThemeContext = createContext();
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(() => {
+    // 1. Get theme from localStorage, or default to 'system'
+    return localStorage.getItem('theme') || 'system';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement; // The <html> tag
+    root.classList.remove('light', 'dark'); // Clear any existing classes
+
+    if (theme === 'system') {
+      // 2. Check OS preference
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      root.classList.add(systemTheme);
+      return;
+    }
+
+    // 3. Apply the user's chosen theme (light or dark)
+    root.classList.add(theme);
+
+  }, [theme]); // Rerun this effect whenever the theme state changes
+
+  const handleSetTheme = (newTheme) => {
+    localStorage.setItem('theme', newTheme);
+    setTheme(newTheme);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme: handleSetTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// Custom hook to use the theme easily
+export const useTheme = () => {
+  return useContext(ThemeContext);
+};

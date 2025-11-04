@@ -4,8 +4,14 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // ✅ This is the crucial change
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        // This ensures your custom font is available
+        inter: ['"Inter"', 'sans-serif'], 
+      },
+    },
   },
   plugins: [],
 }
