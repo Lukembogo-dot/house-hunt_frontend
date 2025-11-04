@@ -1,7 +1,9 @@
-// src/components/PropertyCard.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../api/axios"; // Import base URL
+// ❌ We no longer need API_BASE_URL here
+// import { API_BASE_URL } from "../api/axios"; 
+
+const placeholderImage = "https://via.placeholder.com/400x300.png?text=No+Image";
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
@@ -10,11 +12,16 @@ export default function PropertyCard({ property }) {
     navigate(`/properties/${property._id}`);
   };
 
+  // ✅ FIX: Get the primary image from the 'images' array
+  const primaryImage = (property.images && property.images.length > 0) 
+    ? property.images[0] 
+    : placeholderImage;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:border dark:border-gray-700 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden">
       <div className="relative">
         <img
-          src={`${API_BASE_URL}${property.imageUrl || "/uploads/default.jpg"}`} // Use live URL
+          src={primaryImage} // ✅ FIX: Use the new variable
           alt={property.title}
           className="w-full h-56 object-cover"
           loading="lazy"

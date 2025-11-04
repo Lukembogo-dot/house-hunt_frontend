@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from "../api/axios"; // Use our central api client
 
-// InputField component
+// (InputField component is unchanged)
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
@@ -34,7 +34,8 @@ const initialFormState = {
 
 const AddProperty = () => {
   const [formData, setFormData] = useState(initialFormState);
-  const [imageFile, setImageFile] = useState(null);
+  // ✅ FIX: Change state to handle multiple files
+  const [imageFiles, setImageFiles] = useState(null); 
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -48,13 +49,15 @@ const AddProperty = () => {
   };
 
   const handleFileChange = (e) => {
-    setImageFile(e.target.files[0]);
+    // ✅ FIX: Store all selected files
+    setImageFiles(e.target.files); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!imageFile) {
-      setStatus({ message: 'Please select an image to upload.', type: 'error' });
+    // ✅ FIX: Check if imageFiles exist and have length
+    if (!imageFiles || imageFiles.length === 0) {
+      setStatus({ message: 'Please select at least one image to upload.', type: 'error' });
       return;
     }
     setLoading(true);
@@ -62,7 +65,11 @@ const AddProperty = () => {
 
     const dataToSend = new FormData();
     Object.keys(formData).forEach(key => dataToSend.append(key, formData[key]));
-    dataToSend.append('image', imageFile);
+    
+    // ✅ FIX: Loop through files and append them all
+    for (let i = 0; i < imageFiles.length; i++) {
+      dataToSend.append('images', imageFiles[i]); // 'images' must match route
+    }
 
     try {
       const response = await apiClient.post("/properties", dataToSend, {
@@ -105,6 +112,7 @@ const AddProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ... (All InputField components are unchanged) ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField 
               label="Property Title" 
@@ -187,7 +195,7 @@ const AddProperty = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="image">
-              Property Image
+              Property Images (Select up to 5)
             </label>
             <input
               type="file"
@@ -195,9 +203,11 @@ const AddProperty = () => {
               name="image"
               onChange={handleFileChange}
               required
+              multiple // ✅ FIX: Add the 'multiple' attribute
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-             {imageFile && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFile.name}</p>}
+             {/* ✅ FIX: Show how many files are selected */}
+             {imageFiles && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFiles.length} files</p>}
           </div>
           
           <div className="pt-4">

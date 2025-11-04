@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-// ✅ FIX 1: Import 'Link' from react-router-dom
 import { useParams, Link } from "react-router-dom"; 
-import apiClient, { API_BASE_URL } from "../api/axios"; // API_BASE_URL is no longer needed here for images
+import apiClient from "../api/axios";
 import { FaStar } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
+
+// A default placeholder image
+const placeholderImage = "https://via.placeholder.com/1000x600.png?text=No+Image+Available";
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -13,11 +15,12 @@ const PropertyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [reviewText, setReviewText] = useState("");
+  // ... (rest of state definitions are unchanged)
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch property and its reviews
+  // (fetchPropertyData, useEffect, handleReviewSubmit, loading/no-property checks are unchanged)
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
@@ -36,7 +39,6 @@ const PropertyDetails = () => {
     fetchPropertyData();
   }, [id]);
 
-  // Submit review/comment
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
@@ -75,17 +77,23 @@ const PropertyDetails = () => {
       </div>
     );
   }
-
+  
   const avgRating =
     comments.length > 0
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
       : 0;
+
+  // ✅ FIX: Get the primary image from the 'images' array
+  const primaryImage = (property.images && property.images.length > 0) 
+    ? property.images[0] 
+    : placeholderImage;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
+          {/* ... (title, price, location unchanged) ... */}
           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
@@ -93,16 +101,16 @@ const PropertyDetails = () => {
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
           <div className="mb-6">
-            {property.imageUrl && (
-              <img
-                // ✅ FIX 2: Use property.imageUrl directly. Cloudinary provides a full URL.
-                src={property.imageUrl} 
-                alt="Main"
-                className="rounded-lg w-full h-96 object-cover mb-4"
-              />
-            )}
+            {/* ✅ FIX: Use the new 'primaryImage' variable */}
+            <img
+              src={primaryImage} 
+              alt="Main"
+              className="rounded-lg w-full h-96 object-cover mb-4"
+            />
+            {/* You could map over property.images.slice(1) here to show thumbnails */}
           </div>
 
+          {/* ... (rest of the component is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
