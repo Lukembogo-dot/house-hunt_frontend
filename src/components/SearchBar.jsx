@@ -1,20 +1,17 @@
-import { useState } from "react";
+// src/components/SearchBar.jsx
+import React from 'react'; // Removed useState
 
-export default function SearchBar({ onFilter }) {
-  const [filters, setFilters] = useState({
-    location: "",
-    type: "",
-    minPrice: "",
-    maxPrice: "",
-  });
-
+// ✅ 1. Accept 'filters' and 'onChange' as props
+export default function SearchBar({ filters, onChange, onFilter }) {
+  
+  // ✅ 2. Use the 'onChange' prop directly
   const handleChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    onChange(e.target.name, e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onFilter(filters);
+    onFilter(); // We just tell the parent to filter
   };
 
   return (
@@ -27,6 +24,7 @@ export default function SearchBar({ onFilter }) {
         <input
           type="text"
           name="location"
+          // ✅ 3. Use the 'filters' prop for the value
           value={filters.location}
           onChange={handleChange}
           placeholder="e.g. Nairobi"
@@ -38,6 +36,7 @@ export default function SearchBar({ onFilter }) {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
         <select
           name="type"
+          // ✅ 3. Use the 'filters' prop for the value
           value={filters.type}
           onChange={handleChange}
           className="border rounded p-2 w-40 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -54,6 +53,7 @@ export default function SearchBar({ onFilter }) {
         <input
           type="number"
           name="minPrice"
+          // ✅ 3. Use the 'filters' prop for the value
           value={filters.minPrice}
           onChange={handleChange}
           placeholder="10000"
@@ -66,7 +66,9 @@ export default function SearchBar({ onFilter }) {
         <input
           type="number"
           name="maxPrice"
+          // ✅ 3. Use the 'filters' prop for the value
           value={filters.maxPrice}
+          onChange={handleChange}
           placeholder="1000000"
           className="border rounded p-2 w-32 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
         />

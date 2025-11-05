@@ -1,32 +1,33 @@
 // src/components/PropertyList.jsx
 import { useEffect, useState } from "react";
-import apiClient from "../api/axios"; // Import our central api client
+import apiClient from "../api/axios"; 
 import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
 
-// ✅ 1. Accept a 'defaultFilter' prop. Default to an empty object.
 export default function PropertyList({ defaultFilter = {} }) {
   const [properties, setProperties] = useState([]);
-  // ✅ 2. Initialize filters with the defaultFilter
-  const [filters, setFilters] = useState(defaultFilter);
+  
+  // ✅ 1. Initialize the combined filter state
+  const [filters, setFilters] = useState({
+    location: "",
+    type: "",
+    minPrice: "",
+    maxPrice: "",
+    ...defaultFilter, // Apply default filters (e.g., type: 'rent')
+  });
+
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch properties from backend
   const fetchProperties = async (currentFilters = {}, pageNumber = 1) => {
     try {
       setLoading(true);
-
       const params = new URLSearchParams({
-        ...currentFilters, // Use the filters passed to the function
+        ...currentFilters, 
         page: pageNumber,
       });
-
-      const response = await apiClient.get(
-        `/properties?${params.toString()}`
-      );
-
+      const response = await apiClient.get(`/properties?${params.toString()}`);
       setProperties(response.data.properties || []);
       setPage(response.data.page || 1);
       setTotalPages(response.data.pages || 1);
@@ -37,23 +38,27 @@ export default function PropertyList({ defaultFilter = {} }) {
     }
   };
 
-  // ✅ 3. Call fetchProperties on first load with the initial filters
   useEffect(() => {
     fetchProperties(filters, 1);
-  }, []); // This now only runs once on mount
+  }, []); 
 
-  const handleFilter = (newFilters) => {
-    // ✅ 4. Combine default filters with new search filters
-    const combinedFilters = { ...defaultFilter, ...newFilters };
-    setFilters(combinedFilters);
+  // ✅ 2. This function now just triggers the fetch
+  const handleFilter = () => {
     setPage(1);
-    fetchProperties(combinedFilters, 1);
+    fetchProperties(filters, 1);
+  };
+
+  // ✅ 3. New handler to update state from SearchBar
+  const handleFilterChange = (name, value) => {
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [name]: value,
+    }));
   };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
-      // Pass the current combined filters when changing pages
       fetchProperties(filters, newPage);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -72,11 +77,16 @@ export default function PropertyList({ defaultFilter = {} }) {
 
       <div className="mb-10 flex justify-center">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 w-full max-w-2xl border border-gray-200 dark:border-gray-700">
-          {/* ✅ 5. This SearchBar is now wired up correctly */}
-          <SearchBar onFilter={handleFilter} />
+          {/* ✅ 4. Pass down the filters and the new change handler */}
+          <SearchBar 
+            filters={filters}
+            onChange={handleFilterChange}
+            onFilter={handleFilter} 
+          />
         </div>
       </div>
 
+      {/* ... (rest of the file is unchanged) ... */}
       {loading ? (
         <div className="flex justify-center items-center min-h-[40vh]">
           <div className="w-10 h-10 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>

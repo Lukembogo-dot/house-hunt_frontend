@@ -1,46 +1,73 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// ❌ We no longer need API_BASE_URL here
-// import { API_BASE_URL } from "../api/axios"; 
 
-const placeholderImage = "https://via.placeholder.com/400x300.png?text=No+Image";
+const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Image";
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+
+  // Use the full 'images' array, or the old 'imageUrl', or a placeholder
+  const images = (property.images && property.images.length > 0)
+    ? property.images
+    : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
+
+  // This effect runs the slideshow only when hovering
+  useEffect(() => {
+    if (isHovering && images.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+      }, 1000); // Change image every 1 second
+
+      return () => clearInterval(interval); // Clean up the interval on unmount or hover end
+    }
+  }, [isHovering, images.length]);
 
   const handleViewDetails = () => {
     navigate(`/properties/${property._id}`);
   };
 
-  // ✅ FIX: Get the primary image from the 'images' array
-  const primaryImage = (property.images && property.images.length > 0) 
-    ? property.images[0] 
-    : placeholderImage;
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:border dark:border-gray-700 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden">
+    <div 
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:border dark:border-gray-700 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => {
+        setIsHovering(false);
+        setCurrentImageIndex(0); // Reset to first image on mouse leave
+      }}
+    >
       <div className="relative">
         <img
-          src={primaryImage} // ✅ FIX: Use the new variable
+          src={images[currentImageIndex]} // ✅ Show the currently active image
           alt={property.title}
-          className="w-full h-56 object-cover"
+          className="w-full h-56 object-cover transition-opacity duration-300"
           loading="lazy"
         />
+        {/* Small dots at the bottom of the image for slideshow */}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1.5">
+            {images.map((_, index) => (
+              <div
+                key={index}
+                className={`w-1.5 h-1.5 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white/50'}`}
+              ></div>
+            ))}
+          </div>
+        )}
         <span className="absolute top-3 left-3 bg-blue-600 dark:bg-blue-700 text-white dark:text-blue-100 text-xs px-3 py-1 rounded-full uppercase font-semibold">
           {property.bedrooms} Beds • {property.bathrooms} Baths
         </span>
       </div>
-
+      
       <div className="p-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">
           {property.title}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-1">{property.location}</p>
-
         <p className="text-blue-700 dark:text-blue-400 font-bold text-lg mt-2">
           Ksh {property.price?.toLocaleString()}
         </p>
-
         <button
           onClick={handleViewDetails}
           className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition"

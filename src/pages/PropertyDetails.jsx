@@ -5,8 +5,7 @@ import { FaStar } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 
-// A default placeholder image
-const placeholderImage = "https://via.placeholder.com/1000x600.png?text=No+Image+Available";
+const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
 const PropertyDetails = () => {
   const { id } = useParams();
@@ -15,17 +14,28 @@ const PropertyDetails = () => {
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
   const [reviewText, setReviewText] = useState("");
-  // ... (rest of state definitions are unchanged)
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  
+  // ✅ 1. State to track the active main image
+  const [activeImage, setActiveImage] = useState(null);
 
-  // (fetchPropertyData, useEffect, handleReviewSubmit, loading/no-property checks are unchanged)
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
       const propertyRes = await apiClient.get(`/properties/${id}`);
       setProperty(propertyRes.data);
+      
+      // ✅ 2. Set the active image when data is fetched
+      if (propertyRes.data.images && propertyRes.data.images.length > 0) {
+        setActiveImage(propertyRes.data.images[0]);
+      } else if (propertyRes.data.imageUrl) {
+        setActiveImage(propertyRes.data.imageUrl); // Fallback for old properties
+      } else {
+        setActiveImage(placeholderImage);
+      }
+
       const reviewsRes = await apiClient.get(`/reviews/${id}`);
       setComments(reviewsRes.data || []);
     } catch (error) {
@@ -39,10 +49,10 @@ const PropertyDetails = () => {
     fetchPropertyData();
   }, [id]);
 
+  // (handleReviewSubmit, loading/no-property checks are unchanged)
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
-
     try {
       setSubmitting(true);
       await apiClient.post(
@@ -69,7 +79,6 @@ const PropertyDetails = () => {
       </div>
     );
   }
-
   if (!property) {
     return (
       <div className="text-center mt-20 text-gray-500 dark:text-gray-400">
@@ -82,41 +91,56 @@ const PropertyDetails = () => {
     comments.length > 0
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
       : 0;
-
-  // ✅ FIX: Get the primary image from the 'images' array
-  const primaryImage = (property.images && property.images.length > 0) 
-    ? property.images[0] 
-    : placeholderImage;
+      
+  // ✅ 3. Get the list of all images (new format or old)
+  const allImages = (property.images && property.images.length > 0)
+    ? property.images
+    : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
-          {/* ... (title, price, location unchanged) ... */}
           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
+          {/* ✅ 4. Main Image + Grid Layout */}
           <div className="mb-6">
-            {/* ✅ FIX: Use the new 'primaryImage' variable */}
             <img
-              src={primaryImage} 
+              src={activeImage} // Show the active image
               alt="Main"
               className="rounded-lg w-full h-96 object-cover mb-4"
             />
-            {/* You could map over property.images.slice(1) here to show thumbnails */}
+            {/* Render the grid only if there's more than 1 image */}
+            {allImages.length > 1 && (
+              <div className="grid grid-cols-5 gap-2">
+                {allImages.map((imgUrl, index) => (
+                  <img
+                    key={index}
+                    src={imgUrl}
+                    alt={`Thumbnail ${index + 1}`}
+                    onClick={() => setActiveImage(imgUrl)} // Set as active on click
+                    className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${
+                      activeImage === imgUrl 
+                        ? 'ring-2 ring-blue-500' 
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* ... (rest of the component is unchanged) ... */}
+          {/* (Rest of the component is unchanged) */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
           </div>
-
-          <div className="mb-8">
+           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location Map</h2>
             {property.coordinates && property.coordinates.lat ? (
               <MapComponent coordinates={property.coordinates} />
@@ -124,12 +148,10 @@ const PropertyDetails = () => {
               <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>
             )}
           </div>
-
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Reviews ({comments.length}) ⭐ {avgRating}
             </h2>
-
             {user ? (
               <form onSubmit={handleReviewSubmit} className="mb-6">
                 <div className="flex items-center mb-2">
@@ -168,7 +190,6 @@ const PropertyDetails = () => {
                 You must be <Link to="/login" className="text-blue-600 dark:text-blue-400 underline">logged in</Link> to write a review.
               </p>
             )}
-
             {comments.length > 0 ? (
               <ul className="space-y-4">
                 {comments.map((review) => (
