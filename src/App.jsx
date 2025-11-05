@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
-// SearchBar is not used here
 import About from "./pages/About";
 import Buy from "./pages/Buy";
 import Rent from "./pages/Rent";
@@ -13,53 +12,51 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
 import AddProperty from './pages/AddProperty';
 import EditProperty from "./pages/EditProperty";
-
-// Import the necessary hooks and components
 import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
 import { FaBars, FaTimes } from "react-icons/fa";
-import ThemeToggle from "./components/ThemeToggle"; // ✅ 1. Import the new toggle
+import ThemeToggle from "./components/ThemeToggle"; 
+import AgentRoute from "./components/AgentRoute"; // ✅ 1. Import new AgentRoute
+import MyProfile from "./pages/MyProfile"; // ✅ 2. Import new Profile Page
 
 function App() {
   const { user, loading } = useAuth(); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
-
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  // ✅ 3. Helper to check if user is admin or agent
+  const canListProperty = user && (user.role === 'admin' || user.role === 'agent');
 
   return (
     <Router>
-      {/* ✅ Added dark mode classes to the main div */}
       <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
         
-        {/* ================= HEADER ================= */}
-        {/* ✅ Added dark mode classes */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
-            {/* Logo */}
+            {/* ... (Logo is unchanged) ... */}
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
-              {/* ✅ Added dark mode classes */}
               <Link to="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-500 tracking-tight">
                 HouseHunt Kenya
               </Link>
             </div>
 
             {/* Desktop Navigation */}
-            {/* ✅ Added dark mode classes */}
             <nav className="hidden md:flex items-center space-x-10 text-gray-700 dark:text-gray-300 font-medium">
               <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home</Link>
               <Link to="/buy" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Buy</Link>
               <Link to="/rent" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Rent</Link>
               <Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition">About</Link>
               <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</Link>
+              {/* ✅ 4. Show Dashboard link if admin */}
               {user && user.role === 'admin' && (
-                <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition">Dashboard</Link>
+                <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition">Admin Dashboard</Link>
               )}
             </nav>
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle /> {/* ✅ 2. Add the toggle button */}
+              <ThemeToggle />
               {loading ? (
                 <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
               ) : user ? (
@@ -70,7 +67,8 @@ function App() {
                 </Link>
               )}
               
-              {user && user.role === 'admin' && (
+              {/* ✅ 5. Show List Property link if admin or agent */}
+              {canListProperty && (
                 <Link 
                   to="/add-property" 
                   className="bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 dark:hover:bg-blue-500 transition"
@@ -80,10 +78,9 @@ function App() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            {/* ✅ Added dark mode classes */}
+            {/* ... (Mobile Menu Button is unchanged) ... */}
             <div className="md:hidden flex items-center space-x-2">
-              <ThemeToggle /> {/* ✅ 3. Add the toggle button for mobile */}
+              <ThemeToggle />
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
@@ -95,18 +92,19 @@ function App() {
           </div>
 
           {/* Mobile Menu Dropdown */}
-          {/* ✅ Added dark mode classes */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-40">
               <nav className="flex flex-col p-6 space-y-4">
+                {/* ... (Public links unchanged) ... */}
                 <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Home</Link>
                 <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Buy</Link>
                 <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Rent</Link>
                 <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>About</Link>
                 <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Contact</Link>
                 
+                {/* ✅ 6. Show Admin Dashboard link if admin */}
                 {user && user.role === 'admin' && (
-                  <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition" onClick={closeMobileMenu}>Dashboard</Link>
+                  <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition" onClick={closeMobileMenu}>Admin Dashboard</Link>
                 )}
                 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
@@ -124,7 +122,8 @@ function App() {
                     </Link>
                   )}
                   
-                  {user && user.role === 'admin' && (
+                  {/* ✅ 7. Show List Property link if admin or agent */}
+                  {canListProperty && (
                     <Link 
                       to="/add-property" 
                       className="block w-full text-center bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 dark:hover:bg-blue-500 transition"
@@ -141,10 +140,9 @@ function App() {
 
         {/* ================= ROUTES ================= */}
         <Routes>
-          {/* Public Routes */}
+          {/* ... (Public Routes are unchanged) ... */}
           <Route path="/" element={
             <>
-              {/* HERO */}
               <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80')" }}>
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
                 <div className="relative z-10 px-6 max-w-3xl">
@@ -156,12 +154,9 @@ function App() {
                   </p>
                 </div>
               </section>
-              {/* FEATURED PROPERTIES */}
               <main id="properties" className="flex-grow">
-                {/* ✅ Added dark mode classes */}
                 <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                   <div className="max-w-6xl mx-auto">
-                    {/* ✅ Added dark mode classes */}
                     <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
                       Featured Properties
                     </h2>
@@ -178,17 +173,21 @@ function App() {
           <Route path="/properties/:id" element={<PropertyDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<MyProfile />} /> {/* ✅ 8. Add Profile route */}
           
-          {/* Update Admin Routes */}
+          {/* Admin-Only Route */}
           <Route path="" element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          </Route>
+
+          {/* Agent & Admin Routes */}
+          <Route path="" element={<AgentRoute />}>
             <Route path="/add-property" element={<AddProperty />} />
             <Route path="/admin/property/:id/edit" element={<EditProperty />} />
           </Route>
         </Routes>
 
-        {/* ================= FOOTER ================= */}
-        {/* ✅ Added dark mode classes */}
+        {/* ... (Footer is unchanged) ... */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>

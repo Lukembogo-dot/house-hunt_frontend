@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaTimes } from 'react-icons/fa'; // Icon for delete button
-
-// (InputField component is unchanged)
+import { FaTimes } from 'react-icons/fa'; 
+// ... (InputField component is unchanged)
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
@@ -32,6 +31,7 @@ const EditProperty = () => {
     bedrooms: '',
     bathrooms: '',
     type: 'apartment',
+    status: 'available', // ✅ 1. Add status
   });
   
   const [existingImages, setExistingImages] = useState([]);
@@ -41,7 +41,6 @@ const EditProperty = () => {
   const navigate = useNavigate();
   const { id: propertyId } = useParams();
 
-  // Fetch the existing property data on load
   useEffect(() => {
     const fetchProperty = async () => {
       try {
@@ -55,15 +54,13 @@ const EditProperty = () => {
           bedrooms: data.bedrooms,
           bathrooms: data.bathrooms,
           type: data.type,
+          status: data.status || 'available', // ✅ 2. Load status
         });
         
-        // ✅ FIX: Make it backward-compatible
-        // Check for the new 'images' array first, then fall back to the old 'imageUrl'
         let imagesToSet = [];
         if (data.images && data.images.length > 0) {
           imagesToSet = data.images;
         } else if (data.imageUrl) {
-          // If it's an old property, put the single 'imageUrl' into the array
           imagesToSet = [data.imageUrl]; 
         }
         setExistingImages(imagesToSet);
@@ -77,6 +74,7 @@ const EditProperty = () => {
     fetchProperty();
   }, [propertyId]);
 
+  // ... (handleChange, handleFileChange, handleRemoveExistingImage, handleSubmit are unchanged)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
@@ -93,32 +91,25 @@ const EditProperty = () => {
     setExistingImages(existingImages.filter(img => img !== imageUrlToRemove));
   };
 
-  // Handle the form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setStatus({ message: '', type: '' });
 
     const dataToSend = new FormData();
-    
-    // Append all text fields
     Object.keys(formData).forEach(key => dataToSend.append(key, formData[key]));
     
-    // ✅ FIX: Append the list of existing images to keep
-    // Send each URL as a separate item in the array
     if (existingImages.length > 0) {
       existingImages.forEach(url => {
         dataToSend.append('existingImages', url);
       });
     } else {
-      // Send an empty value if all images are removed
       dataToSend.append('existingImages', '');
     }
 
-    // Append all *new* files
     if (newImageFiles) {
       for (let i = 0; i < newImageFiles.length; i++) {
-        dataToSend.append('images', newImageFiles[i]); // 'images' must match route
+        dataToSend.append('images', newImageFiles[i]);
       }
     }
 
@@ -131,7 +122,7 @@ const EditProperty = () => {
       setStatus({ message: `Success! Property "${response.data.title}" updated. Redirecting...`, type: 'success' });
       
       setTimeout(() => {
-        navigate('/admin/dashboard'); // Redirect to dashboard
+        navigate('/admin/dashboard'); // Will work for both admins and agents
       }, 2000);
 
     } catch (error) {
@@ -152,6 +143,7 @@ const EditProperty = () => {
           Edit Property
         </h1>
         
+        {/* ... (status message is unchanged) ... */}
         {status.message && (
           <div className={`p-4 mb-6 text-sm rounded-lg ${
             status.type === 'success' 
@@ -163,7 +155,7 @@ const EditProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ... (Text input fields are unchanged) ... */}
+          {/* ... (text fields are unchanged) ... */}
           <InputField label="Property Title" name="title" value={formData.title} onChange={handleChange} />
           <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
           <div>
@@ -190,8 +182,22 @@ const EditProperty = () => {
             <InputField label="Bedrooms" name="bedrooms" type="number" value={formData.bedrooms} onChange={handleChange} min={0} />
             <InputField label="Bathrooms" name="bathrooms" type="number" value={formData.bathrooms} onChange={handleChange} min={0} />
           </div>
+
+          {/* ✅ 3. Add Status Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
+              Property Status
+            </label>
+            <select
+              id="status" name="status" value={formData.status} onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="available">Available</option>
+              <option value="full">Full/Rented</option>
+            </select>
+          </div>
           
-          {/* Image Management Section */}
+          {/* ... (Image management sections are unchanged) ... */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Manage Property Images
@@ -201,7 +207,7 @@ const EditProperty = () => {
                 <div key={imageUrl} className="relative group">
                   <img src={imageUrl} alt="Property" className="w-full h-24 object-cover rounded-lg"/>
                   <button
-                    type="button" // Prevents form submission
+                    type="button" 
                     onClick={() => handleRemoveExistingImage(imageUrl)}
                     className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none opacity-0 group-hover:opacity-100 transition-opacity"
                     aria-label="Remove image"
@@ -215,7 +221,6 @@ const EditProperty = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400">No images currently uploaded.</p>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="new-images">
               Add New Images (Up to 5)
@@ -231,6 +236,7 @@ const EditProperty = () => {
             {newImageFiles && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files</p>}
           </div>
           
+          {/* ... (Submit button is unchanged) ... */}
           <div className="pt-4">
             <button
               type="submit"

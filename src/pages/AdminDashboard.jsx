@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../api/axios'; // Use your central API client
+import apiClient from '../api/axios'; 
 import { useAuth } from '../context/AuthContext';
-import { FaEdit, FaTrash } from 'react-icons/fa'; // Icons for actions
+import { FaEdit, FaTrash, FaUserShield } from 'react-icons/fa'; // ✅ 1. Add new icon
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -10,70 +10,78 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { user } = useAuth(); // Get current user info
+  const { user } = useAuth(); 
 
-  // Fetch all admin data
   const fetchData = async () => {
+    // ... (fetchData is unchanged)
     try {
       setLoading(true);
       setError('');
-      // Fetch all three data sources in parallel
       const [usersRes, propertiesRes, reviewsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
-        apiClient.get('/properties'), // Properties list is public
-        apiClient.get('/reviews', { withCredentials: true }), // All reviews (admin)
+        apiClient.get('/properties'),
+        apiClient.get('/reviews', { withCredentials: true }),
       ]);
       setUsers(usersRes.data);
-      setProperties(propertiesRes.data.properties); // Properties are nested
+      setProperties(propertiesRes.data.properties);
       setReviews(reviewsRes.data);
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
-      console.error(err); // This line will show the detailed AxiosError
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load data on component mount
   useEffect(() => {
     fetchData();
   }, []);
 
-  // --- Delete Handlers ---
-
+  // ... (deleteProperty and deleteReview are unchanged)
   const deleteProperty = async (id) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
         await apiClient.delete(`/properties/${id}`, { withCredentials: true });
-        fetchData(); // Refresh all data
+        fetchData();
       } catch (err) {
         alert('Failed to delete property.');
       }
     }
   };
-
+  const deleteReview = async (id) => {
+    if (window.confirm('Are you sure you want to delete this review?')) {
+      try {
+        await apiClient.delete(`/reviews/${id}`, { withCredentials: true });
+        fetchData();
+      } catch (err) {
+        alert('Failed to delete review.');
+      }
+    }
+  };
+  
   const deleteUser = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      if (id === user._id) { // Prevent self-delete
+      if (id === user._id) { 
         alert("You cannot delete your own admin account.");
         return;
       }
       try {
         await apiClient.delete(`/users/${id}`, { withCredentials: true });
-        fetchData(); // Refresh all data
+        fetchData(); 
       } catch (err) {
         alert('Failed to delete user.');
       }
     }
   };
 
-  const deleteReview = async (id) => {
-    if (window.confirm('Are you sure you want to delete this review?')) {
+  // ✅ 2. Add function to update user role
+  const updateUserRole = async (id, newRole) => {
+    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       try {
-        await apiClient.delete(`/reviews/${id}`, { withCredentials: true });
-        fetchData(); // Refresh all data
+        await apiClient.put(`/users/${id}`, { role: newRole }, { withCredentials: true });
+        fetchData(); // Refresh the user list
       } catch (err) {
-        alert('Failed to delete review.');
+        alert('Failed to update user role.');
       }
     }
   };
@@ -85,7 +93,7 @@ const AdminDashboard = () => {
     <div className="container mx-auto p-6 md:p-10 bg-gray-50 dark:bg-gray-950 min-h-screen">
       <h1 className="text-3xl font-bold mb-8 dark:text-white">Admin Dashboard</h1>
 
-      {/* === Manage Properties === */}
+      {/* ... (Manage Properties section is unchanged) ... */}
       <section className="mb-12">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties ({properties.length})</h2>
@@ -143,14 +151,31 @@ const AdminDashboard = () => {
                   <td className="p-3 dark:text-gray-200">{u.name}</td>
                   <td className="p-3 dark:text-gray-200">{u.email}</td>
                   <td className="p-3">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      u.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                      : u.role === 'agent' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                    }`}>
                       {u.role}
                     </span>
                   </td>
-                  <td className="p-3">
-                    <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                      <FaTrash />
-                    </button>
+                  {/* ✅ 3. Add new actions for promoting/demoting */}
+                  <td className="p-3 flex space-x-3">
+                    {u.role === 'user' && (
+                      <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent">
+                        <FaUserShield />
+                      </button>
+                    )}
+                    {u.role === 'agent' && (
+                      <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">
+                        (demote)
+                      </button>
+                    )}
+                    {u._id !== user._id && (
+                      <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
+                        <FaTrash />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -159,7 +184,7 @@ const AdminDashboard = () => {
         </div>
       </section>
 
-      {/* === Manage Reviews === */}
+      {/* ... (Manage Reviews section is unchanged) ... */}
       <section>
         <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Reviews ({reviews.length})</h2>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">

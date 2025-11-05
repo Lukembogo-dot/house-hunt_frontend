@@ -4,6 +4,7 @@ import apiClient from "../api/axios";
 import { FaStar } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
+import PropertyCard from "../components/PropertyCard"; // ✅ 1. Import PropertyCard
 
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
@@ -17,23 +18,29 @@ const PropertyDetails = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  
-  // ✅ 1. State to track the active main image
   const [activeImage, setActiveImage] = useState(null);
+  const [agentProperties, setAgentProperties] = useState([]); // ✅ 2. State for agent's other properties
 
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
+      setAgentProperties([]); // Clear old agent properties
       const propertyRes = await apiClient.get(`/properties/${id}`);
       setProperty(propertyRes.data);
       
-      // ✅ 2. Set the active image when data is fetched
+      let imagesToSet = [];
       if (propertyRes.data.images && propertyRes.data.images.length > 0) {
-        setActiveImage(propertyRes.data.images[0]);
+        imagesToSet = propertyRes.data.images;
       } else if (propertyRes.data.imageUrl) {
-        setActiveImage(propertyRes.data.imageUrl); // Fallback for old properties
-      } else {
-        setActiveImage(placeholderImage);
+        imagesToSet = [propertyRes.data.imageUrl];
+      }
+      setActiveImage(imagesToSet[0] || placeholderImage);
+
+      // ✅ 3. After fetching property, fetch other properties by the same agent
+      if (propertyRes.data.agent?._id) {
+        const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`);
+        // Filter out the current property from the list
+        setAgentProperties(agentRes.data.filter(p => p._id !== id));
       }
 
       const reviewsRes = await apiClient.get(`/reviews/${id}`);
@@ -47,9 +54,9 @@ const PropertyDetails = () => {
 
   useEffect(() => {
     fetchPropertyData();
-  }, [id]);
+  }, [id]); // Refetch if the ID (page) changes
 
-  // (handleReviewSubmit, loading/no-property checks are unchanged)
+  // ... (handleReviewSubmit, loading/no-property checks are unchanged) ...
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
@@ -92,7 +99,6 @@ const PropertyDetails = () => {
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
       : 0;
       
-  // ✅ 3. Get the list of all images (new format or old)
   const allImages = (property.images && property.images.length > 0)
     ? property.images
     : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
@@ -102,20 +108,20 @@ const PropertyDetails = () => {
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
+          {/* ... (Title, Price, Location are unchanged) ... */}
           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
-          {/* ✅ 4. Main Image + Grid Layout */}
+          {/* ... (Image grid is unchanged) ... */}
           <div className="mb-6">
             <img
-              src={activeImage} // Show the active image
+              src={activeImage}
               alt="Main"
               className="rounded-lg w-full h-96 object-cover mb-4"
             />
-            {/* Render the grid only if there's more than 1 image */}
             {allImages.length > 1 && (
               <div className="grid grid-cols-5 gap-2">
                 {allImages.map((imgUrl, index) => (
@@ -123,7 +129,7 @@ const PropertyDetails = () => {
                     key={index}
                     src={imgUrl}
                     alt={`Thumbnail ${index + 1}`}
-                    onClick={() => setActiveImage(imgUrl)} // Set as active on click
+                    onClick={() => setActiveImage(imgUrl)}
                     className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${
                       activeImage === imgUrl 
                         ? 'ring-2 ring-blue-500' 
@@ -135,7 +141,7 @@ const PropertyDetails = () => {
             )}
           </div>
 
-          {/* (Rest of the component is unchanged) */}
+          {/* ... (Description, Map, Reviews are unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
@@ -221,15 +227,49 @@ const PropertyDetails = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
             <ul className="text-gray-700 dark:text-gray-300 space-y-2">
+              {/* ✅ 4. Add Status */}
+              <li className="flex justify-between">
+                <span>Status:</span>
+                <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${
+                  property.status === 'available' 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                }`}>
+                  {property.status}
+                </span>
+              </li>
               <li>Bedrooms: {property.bedrooms}</li>
               <li>Bathrooms: {property.bathrooms}</li>
               <li>Type: {property.type || "N/A"}</li>
               <li>Location: {property.location}</li>
               <li>Price: Ksh {property.price?.toLocaleString()}</li>
             </ul>
+
+            {/* ✅ 5. Add Agent Info */}
+            {property.agent && (
+              <div className="mt-6 border-t dark:border-gray-700 pt-6">
+                <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Listed By</h3>
+                <p className="text-gray-800 dark:text-gray-200 font-medium">{property.agent.name}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* ✅ 6. Add "More from this Agent" Section */}
+      {agentProperties.length > 0 && (
+        <section className="max-w-6xl mx-auto mt-16">
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+            More from {property.agent.name}
+          </h2>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+            {agentProperties.map((prop) => (
+              <PropertyCard key={prop._id} property={prop} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

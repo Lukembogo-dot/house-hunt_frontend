@@ -6,9 +6,8 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // To handle initial auth check
+  const [loading, setLoading] = useState(true);
 
-  // Function to check if a user is already logged in (e.g., on page refresh)
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
@@ -18,13 +17,11 @@ export const AuthProvider = ({ children }) => {
         });
         setUser(data);
       } catch (error) {
-        // If it fails, it means no valid cookie, so no user is logged in.
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
-
     checkLoggedIn();
   }, []);
 
@@ -51,7 +48,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to easily use the auth context in other components
 export const useAuth = () => {
   return useContext(AuthContext);
 };
