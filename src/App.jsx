@@ -16,45 +16,41 @@ import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
 import { FaBars, FaTimes } from "react-icons/fa";
 import ThemeToggle from "./components/ThemeToggle"; 
-import AgentRoute from "./components/AgentRoute"; // ✅ 1. Import new AgentRoute
-import MyProfile from "./pages/MyProfile"; // ✅ 2. Import new Profile Page
+import AgentRoute from "./components/AgentRoute"; 
+import MyProfile from "./pages/MyProfile"; 
+import EditProfileSettings from "./pages/EditProfileSettings"; // ✅ 1. Import new settings page
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ 2. Import protected route
 
 function App() {
   const { user, loading } = useAuth(); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  // ✅ 3. Helper to check if user is admin or agent
   const canListProperty = user && (user.role === 'admin' || user.role === 'agent');
 
   return (
     <Router>
       <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
         
+        {/* ... (Header and Nav are unchanged) ... */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
-            {/* ... (Logo is unchanged) ... */}
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
               <Link to="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-500 tracking-tight">
                 HouseHunt Kenya
               </Link>
             </div>
-
-            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-10 text-gray-700 dark:text-gray-300 font-medium">
               <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home</Link>
               <Link to="/buy" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Buy</Link>
               <Link to="/rent" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Rent</Link>
               <Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition">About</Link>
               <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</Link>
-              {/* ✅ 4. Show Dashboard link if admin */}
               {user && user.role === 'admin' && (
                 <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition">Admin Dashboard</Link>
               )}
             </nav>
-
-            {/* Desktop CTA */}
             <div className="hidden md:flex items-center space-x-4">
               <ThemeToggle />
               {loading ? (
@@ -67,7 +63,6 @@ function App() {
                 </Link>
               )}
               
-              {/* ✅ 5. Show List Property link if admin or agent */}
               {canListProperty && (
                 <Link 
                   to="/add-property" 
@@ -77,8 +72,6 @@ function App() {
                 </Link>
               )}
             </div>
-
-            {/* ... (Mobile Menu Button is unchanged) ... */}
             <div className="md:hidden flex items-center space-x-2">
               <ThemeToggle />
               <button 
@@ -90,19 +83,15 @@ function App() {
               </button>
             </div>
           </div>
-
-          {/* Mobile Menu Dropdown */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-40">
               <nav className="flex flex-col p-6 space-y-4">
-                {/* ... (Public links unchanged) ... */}
                 <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Home</Link>
                 <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Buy</Link>
                 <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Rent</Link>
                 <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>About</Link>
                 <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Contact</Link>
                 
-                {/* ✅ 6. Show Admin Dashboard link if admin */}
                 {user && user.role === 'admin' && (
                   <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition" onClick={closeMobileMenu}>Admin Dashboard</Link>
                 )}
@@ -122,7 +111,6 @@ function App() {
                     </Link>
                   )}
                   
-                  {/* ✅ 7. Show List Property link if admin or agent */}
                   {canListProperty && (
                     <Link 
                       to="/add-property" 
@@ -173,7 +161,12 @@ function App() {
           <Route path="/properties/:id" element={<PropertyDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<MyProfile />} /> {/* ✅ 8. Add Profile route */}
+          
+          {/* ✅ 3. Add Protected Routes for all logged-in users */}
+          <Route path="" element={<ProtectedRoute />}>
+            <Route path="/profile" element={<MyProfile />} />
+            <Route path="/profile/edit" element={<EditProfileSettings />} />
+          </Route>
           
           {/* Admin-Only Route */}
           <Route path="" element={<AdminRoute />}>

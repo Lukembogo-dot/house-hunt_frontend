@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"; 
 import apiClient from "../api/axios";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaWhatsapp } from "react-icons/fa"; // ✅ 1. Import WhatsApp icon
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
-import PropertyCard from "../components/PropertyCard"; // ✅ 1. Import PropertyCard
+import PropertyCard from "../components/PropertyCard";
 
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
@@ -19,12 +19,12 @@ const PropertyDetails = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [activeImage, setActiveImage] = useState(null);
-  const [agentProperties, setAgentProperties] = useState([]); // ✅ 2. State for agent's other properties
+  const [agentProperties, setAgentProperties] = useState([]);
 
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
-      setAgentProperties([]); // Clear old agent properties
+      setAgentProperties([]); 
       const propertyRes = await apiClient.get(`/properties/${id}`);
       setProperty(propertyRes.data);
       
@@ -36,10 +36,8 @@ const PropertyDetails = () => {
       }
       setActiveImage(imagesToSet[0] || placeholderImage);
 
-      // ✅ 3. After fetching property, fetch other properties by the same agent
       if (propertyRes.data.agent?._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`);
-        // Filter out the current property from the list
         setAgentProperties(agentRes.data.filter(p => p._id !== id));
       }
 
@@ -54,7 +52,7 @@ const PropertyDetails = () => {
 
   useEffect(() => {
     fetchPropertyData();
-  }, [id]); // Refetch if the ID (page) changes
+  }, [id]); 
 
   // ... (handleReviewSubmit, loading/no-property checks are unchanged) ...
   const handleReviewSubmit = async (e) => {
@@ -108,14 +106,13 @@ const PropertyDetails = () => {
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
-          {/* ... (Title, Price, Location are unchanged) ... */}
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
+          {/* ... (Title, Price, Location, Image Grid are unchanged) ... */}
+           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
-          {/* ... (Image grid is unchanged) ... */}
           <div className="mb-6">
             <img
               src={activeImage}
@@ -140,7 +137,7 @@ const PropertyDetails = () => {
               </div>
             )}
           </div>
-
+          
           {/* ... (Description, Map, Reviews are unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
@@ -227,7 +224,6 @@ const PropertyDetails = () => {
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
             <ul className="text-gray-700 dark:text-gray-300 space-y-2">
-              {/* ✅ 4. Add Status */}
               <li className="flex justify-between">
                 <span>Status:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${
@@ -245,19 +241,40 @@ const PropertyDetails = () => {
               <li>Price: Ksh {property.price?.toLocaleString()}</li>
             </ul>
 
-            {/* ✅ 5. Add Agent Info */}
+            {/* ✅ 6. Add Agent Info with Profile Pic and WhatsApp */}
             {property.agent && (
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
-                <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Listed By</h3>
-                <p className="text-gray-800 dark:text-gray-200 font-medium">{property.agent.name}</p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
+                <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={property.agent.profilePicture} 
+                    alt={property.agent.name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">{property.agent.name}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
+                  </div>
+                </div>
+                {/* Add WhatsApp Button */}
+                {property.agent.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} // Removes '+' for a valid URL
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition"
+                  >
+                    <FaWhatsapp size={20} />
+                    <span>Chat on WhatsApp</span>
+                  </a>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* ✅ 6. Add "More from this Agent" Section */}
+      {/* "More from this Agent" Section */}
       {agentProperties.length > 0 && (
         <section className="max-w-6xl mx-auto mt-16">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
