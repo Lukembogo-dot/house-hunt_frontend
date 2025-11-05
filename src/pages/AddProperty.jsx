@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from "../api/axios"; 
-// ... (InputField component is unchanged)
+
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
@@ -27,9 +27,10 @@ const initialFormState = {
   location: '',
   price: '',
   bedrooms: '',
-  bathrooms: '',
+  // bathrooms: '', // ✅ REMOVED
   type: 'apartment',
-  status: 'available', // ✅ 1. Add status to initial state
+  status: 'available',
+  listingType: 'sale', // ✅ ADDED
 };
 
 const AddProperty = () => {
@@ -40,7 +41,6 @@ const AddProperty = () => {
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    // ... (handleChange is unchanged)
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
@@ -49,14 +49,12 @@ const AddProperty = () => {
   };
 
   const handleFileChange = (e) => {
-    // ... (handleFileChange is unchanged)
     setImageFiles(e.target.files); 
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!imageFiles || imageFiles.length === 0) {
-      // ... (file check is unchanged)
       setStatus({ message: 'Please select at least one image to upload.', type: 'error' });
       return;
     }
@@ -71,20 +69,15 @@ const AddProperty = () => {
     }
 
     try {
-      // ... (apiClient.post is unchanged)
       const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-
       setStatus({ message: `Success! Property "${response.data.title}" added. Redirecting...`, type: 'success' });
-      
       setTimeout(() => {
         navigate(`/properties/${response.data._id}`);
       }, 2000);
-
     } catch (error) {
-      // ... (error handling is unchanged)
       console.error("Error creating property:", error.response?.data || error.message);
       setStatus({ 
         message: `Failed to add property: ${error.response?.data?.message || 'Check console for details.'}`, 
@@ -102,7 +95,6 @@ const AddProperty = () => {
           List a New Property
         </h1>
         
-        {/* ... (status message is unchanged) ... */}
         {status.message && (
           <div className={`p-4 mb-6 text-sm rounded-lg ${
             status.type === 'success' 
@@ -114,8 +106,7 @@ const AddProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ... (text fields are unchanged) ... */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField 
               label="Property Title" 
               name="title" 
@@ -131,6 +122,39 @@ const AddProperty = () => {
               placeholder="e.g., Nairobi, Kilimani" 
             />
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ✅ NEW: Listing Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="listingType">
+                Listing For
+              </label>
+              <select
+                id="listingType" name="listingType" value={formData.listingType} onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+            </div>
+            
+            {/* ✅ UPDATED: Property Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
+                Property Type
+              </label>
+              <select
+                id="type" name="type" value={formData.type} onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="apartment">Apartment</option>
+                <option value="house">House</option>
+                <option value="airbnb">Airbnb</option>
+                <option value="land">Land</option>
+              </select>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
               Description
@@ -146,6 +170,7 @@ const AddProperty = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField 
               label="Price (Ksh)" 
@@ -153,46 +178,26 @@ const AddProperty = () => {
               type="number" 
               value={formData.price}
               onChange={handleChange}
-              placeholder="e.g., 15000000" 
+              placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15000000'}
               min={100} 
             />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
-                Property Type
-              </label>
-              <select
-                id="type" name="type" value={formData.type} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="apartment">Apartment</option>
-                <option value="house">House</option>
-                <option value="townhouse">Townhouse</option>
-                <option value="commercial">Commercial</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField 
-              label="Bedrooms" 
-              name="bedrooms" 
-              type="number" 
-              value={formData.bedrooms}
-              onChange={handleChange}
-              min={0} 
-              placeholder="e.g., 3" 
-            />
-            <InputField 
-              label="Bathrooms" 
-              name="bathrooms" 
-              type="number" 
-              value={formData.bathrooms}
-              onChange={handleChange}
-              min={0} 
-              placeholder="e.g., 2" 
-            />
+
+            {/* ✅ CONDITION: Only show Bedrooms if not 'land' */}
+            {formData.type !== 'land' && (
+              <InputField 
+                label="Bedrooms" 
+                name="bedrooms" 
+                type="number" 
+                value={formData.bedrooms}
+                onChange={handleChange}
+                min={0} 
+                placeholder="e.g., 3" 
+              />
+            )}
+            
+            {/* ✅ REMOVED: Bathrooms InputField */}
           </div>
           
-          {/* ✅ 2. Add Status Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
               Property Status
@@ -206,7 +211,6 @@ const AddProperty = () => {
             </select>
           </div>
 
-          {/* ... (Image upload is unchanged) ... */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="image">
               Property Images (Select up to 5)
@@ -223,7 +227,6 @@ const AddProperty = () => {
              {imageFiles && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFiles.length} files</p>}
           </div>
           
-          {/* ... (Submit button is unchanged) ... */}
           <div className="pt-4">
             <button
               type="submit"

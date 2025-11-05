@@ -10,10 +10,9 @@ function Buy() {
           Discover your perfect home to buy across Kenya — from budget-friendly starter homes to luxurious estates.
         </p>
 
-        {/* The PropertyList component itself will need dark mode styles, 
-            but this container will provide the dark background for it. */}
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 py-10 px-4">
-          <PropertyList />
+          {/* ✅ FIX: Pass the 'sale' filter */}
+          <PropertyList defaultFilter={{ listingType: 'sale' }} />
         </div>
       </div>
     </section>

@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 const Rent = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col font-inter">
-      {/* HERO SECTION */}
+      {/* ... (Hero section is unchanged) ... */}
       <section
         className="relative bg-cover bg-center h-[60vh] flex flex-col items-center justify-center text-center text-white"
         style={{
@@ -25,7 +25,6 @@ const Rent = () => {
           >
             Find Homes for Rent in Kenya
           </motion.h1>
-
           <motion.p
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -39,15 +38,14 @@ const Rent = () => {
       </section>
 
       {/* RENTAL LISTINGS */}
-      {/* ✅ FIX: We now render PropertyList and pass it a default filter */}
       <section className="py-16 px-6 bg-gray-100 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
-          {/* We assume your backend filters by 'type'. If it's 'status', change this. */}
-          <PropertyList defaultFilter={{ type: 'rent' }} />
+          {/* ✅ FIX: Pass the 'rent' filter */}
+          <PropertyList defaultFilter={{ listingType: 'rent' }} />
         </div>
       </section>
 
-      {/* WHY RENT WITH US SECTION */}
+      {/* ... (Why Rent With Us and CTA sections are unchanged) ... */}
       <section className="bg-white dark:bg-gray-800 py-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <h3 className="text-3xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
@@ -58,7 +56,6 @@ const Rent = () => {
             Kenya. Whether you’re looking for a city apartment or a countryside
             retreat, we connect you to trusted landlords and secure listings.
           </p>
-
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition">
               <h4 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-3">
@@ -90,8 +87,6 @@ const Rent = () => {
           </div>
         </div>
       </section>
-
-      {/* CTA SECTION */}
       <section className="bg-blue-600 text-white py-16 text-center">
         <h3 className="text-3xl font-semibold mb-4">
           Can’t Find Your Dream Home?

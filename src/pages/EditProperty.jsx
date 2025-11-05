@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { FaTimes } from 'react-icons/fa'; 
-// ... (InputField component is unchanged)
+import { useAuth } from '../context/AuthContext'; // Import useAuth
+
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
@@ -23,15 +24,17 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
 );
 
 const EditProperty = () => {
+  const { user } = useAuth(); // Get user
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     location: '',
     price: '',
     bedrooms: '',
-    bathrooms: '',
+    // bathrooms: '', // ✅ REMOVED
     type: 'apartment',
-    status: 'available', // ✅ 1. Add status
+    status: 'available', 
+    listingType: 'sale', // ✅ ADDED
   });
   
   const [existingImages, setExistingImages] = useState([]);
@@ -51,10 +54,11 @@ const EditProperty = () => {
           description: data.description,
           location: data.location,
           price: data.price,
-          bedrooms: data.bedrooms,
-          bathrooms: data.bathrooms,
+          bedrooms: data.bedrooms || '', // Set to empty string if undefined
+          // bathrooms: data.bathrooms, // ✅ REMOVED
           type: data.type,
-          status: data.status || 'available', // ✅ 2. Load status
+          status: data.status || 'available', 
+          listingType: data.listingType || 'sale', // ✅ ADDED
         });
         
         let imagesToSet = [];
@@ -74,7 +78,6 @@ const EditProperty = () => {
     fetchProperty();
   }, [propertyId]);
 
-  // ... (handleChange, handleFileChange, handleRemoveExistingImage, handleSubmit are unchanged)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
@@ -122,7 +125,12 @@ const EditProperty = () => {
       setStatus({ message: `Success! Property "${response.data.title}" updated. Redirecting...`, type: 'success' });
       
       setTimeout(() => {
-        navigate('/admin/dashboard'); // Will work for both admins and agents
+        // Redirect to profile page if agent, dashboard if admin
+        if (user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/profile');
+        }
       }, 2000);
 
     } catch (error) {
@@ -143,7 +151,6 @@ const EditProperty = () => {
           Edit Property
         </h1>
         
-        {/* ... (status message is unchanged) ... */}
         {status.message && (
           <div className={`p-4 mb-6 text-sm rounded-lg ${
             status.type === 'success' 
@@ -155,35 +162,75 @@ const EditProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ... (text fields are unchanged) ... */}
           <InputField label="Property Title" name="title" value={formData.title} onChange={handleChange} />
           <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ✅ NEW: Listing Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="listingType">
+                Listing For
+              </label>
+              <select
+                id="listingType" name="listingType" value={formData.listingType} onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+            </div>
+            
+            {/* ✅ UPDATED: Property Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
+                Property Type
+              </label>
+              <select
+                id="type" name="type" value={formData.type} onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="apartment">Apartment</option>
+                <option value="house">House</option>
+                <option value="airbnb">Airbnb</option>
+                <option value="land">Land</option>
+              </select>
+            </div>
+          </div>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">Description</label>
             <textarea id="description" name="description" rows="4" value={formData.description} onChange={handleChange} required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             />
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Price (Ksh)" name="price" type="number" value={formData.price} onChange={handleChange} min={100} />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">Property Type</label>
-              <select id="type" name="type" value={formData.type} onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="apartment">Apartment</option>
-                <option value="house">House</option>
-                <option value="townhouse">Townhouse</option>
-                <option value="commercial">Commercial</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField label="Bedrooms" name="bedrooms" type="number" value={formData.bedrooms} onChange={handleChange} min={0} />
-            <InputField label="Bathrooms" name="bathrooms" type="number" value={formData.bathrooms} onChange={handleChange} min={0} />
+            <InputField 
+              label="Price (Ksh)" 
+              name="price" 
+              type="number" 
+              value={formData.price}
+              onChange={handleChange}
+              placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15000000'}
+              min={100} 
+            />
+            
+            {/* ✅ CONDITION: Only show Bedrooms if not 'land' */}
+            {formData.type !== 'land' && (
+              <InputField 
+                label="Bedrooms" 
+                name="bedrooms" 
+                type="number" 
+                value={formData.bedrooms}
+                onChange={handleChange}
+                min={0} 
+                placeholder="e.g., 3" 
+              />
+            )}
+            
+            {/* ✅ REMOVED: Bathrooms InputField */}
           </div>
 
-          {/* ✅ 3. Add Status Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
               Property Status
@@ -197,7 +244,6 @@ const EditProperty = () => {
             </select>
           </div>
           
-          {/* ... (Image management sections are unchanged) ... */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Manage Property Images
@@ -236,7 +282,6 @@ const EditProperty = () => {
             {newImageFiles && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files</p>}
           </div>
           
-          {/* ... (Submit button is unchanged) ... */}
           <div className="pt-4">
             <button
               type="submit"

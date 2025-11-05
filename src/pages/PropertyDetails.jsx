@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom"; 
 import apiClient from "../api/axios";
-import { FaStar, FaWhatsapp } from "react-icons/fa"; // ✅ 1. Import WhatsApp icon
+import { FaStar, FaWhatsapp } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
@@ -21,6 +21,7 @@ const PropertyDetails = () => {
   const [activeImage, setActiveImage] = useState(null);
   const [agentProperties, setAgentProperties] = useState([]);
 
+  // ... (fetchPropertyData, useEffect, handleReviewSubmit, loading/no-property checks are unchanged) ...
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
@@ -36,7 +37,6 @@ const PropertyDetails = () => {
       }
       setActiveImage(imagesToSet[0] || placeholderImage);
 
-      // Fetch other properties by the same agent
       if (propertyRes.data.agent?._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`);
         setAgentProperties(agentRes.data.filter(p => p._id !== id));
@@ -55,7 +55,6 @@ const PropertyDetails = () => {
     fetchPropertyData();
   }, [id]); 
 
-  // ... (handleReviewSubmit, loading/no-property checks are unchanged) ...
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
@@ -107,10 +106,11 @@ const PropertyDetails = () => {
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
-          {/* ... (Title, Price, Location, Image Grid are unchanged) ... */}
            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
+            {/* Add '/month' for rentals */}
+            {property.listingType === 'rent' && <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/month</span>}
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
@@ -139,7 +139,6 @@ const PropertyDetails = () => {
             )}
           </div>
           
-          {/* ... (Description, Map, Reviews are unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
@@ -152,6 +151,7 @@ const PropertyDetails = () => {
               <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>
             )}
           </div>
+          {/* ... (Reviews section is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Reviews ({comments.length}) ⭐ {avgRating}
@@ -235,24 +235,33 @@ const PropertyDetails = () => {
                   {property.status}
                 </span>
               </li>
-              <li>Bedrooms: {property.bedrooms}</li>
-              <li>Bathrooms: {property.bathrooms}</li>
-              <li>Type: {property.type || "N/A"}</li>
+              {/* ✅ MODIFIED: Listing Type */}
+              <li className="flex justify-between">
+                <span>Listing:</span>
+                <span className="font-semibold capitalize">
+                  {property.listingType}
+                </span>
+              </li>
+              
+              {/* ✅ CONDITION: Only show if not land */}
+              {property.type !== 'land' && (
+                <li>Bedrooms: {property.bedrooms}</li>
+              )}
+              {/* ✅ REMOVED: Bathrooms */}
+              <li>Type: <span className="capitalize">{property.type || "N/A"}</span></li>
               <li>Location: {property.location}</li>
-              <li>Price: Ksh {property.price?.toLocaleString()}</li>
+              <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
             </ul>
 
-            {/* ✅ 6. Add Agent Info with Profile Pic and WhatsApp */}
             {property.agent && (
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
-                {/* Make the entire block a link to the agent's profile */}
                 <Link 
                   to={`/agent/${property.agent._id}`} 
                   className="flex items-center space-x-3 group"
                 >
                   <img 
-                    src={property.agent.profilePicture} // This will now work
+                    src={property.agent.profilePicture} 
                     alt={property.agent.name}
                     className="w-16 h-16 rounded-full object-cover"
                   />
@@ -263,10 +272,9 @@ const PropertyDetails = () => {
                     <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
                   </div>
                 </Link>
-                {/* Add WhatsApp Button */}
                 {property.agent.whatsappNumber && (
                   <a
-                    href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} // Removes '+' for a valid URL
+                    href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition"
