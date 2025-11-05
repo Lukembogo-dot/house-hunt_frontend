@@ -22,7 +22,7 @@ const MyProfile = () => {
             className="w-24 h-24 rounded-full object-cover border-4 border-blue-500" 
           />
           <div>
-            {/* ✅ FIX: Hide email, show username */}
+            {/* ✅ FIX: Show username, hide email */}
             <h1 className="text-3xl font-bold mb-1 dark:text-white">Hello, {user.name}</h1>
             <p className="text-lg text-gray-600 dark:text-gray-400">
               You are logged in as an <span className="font-semibold capitalize">{user.role}</span>.

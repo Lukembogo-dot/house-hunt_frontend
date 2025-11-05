@@ -36,6 +36,7 @@ const PropertyDetails = () => {
       }
       setActiveImage(imagesToSet[0] || placeholderImage);
 
+      // Fetch other properties by the same agent
       if (propertyRes.data.agent?._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`);
         setAgentProperties(agentRes.data.filter(p => p._id !== id));
@@ -245,17 +246,23 @@ const PropertyDetails = () => {
             {property.agent && (
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
-                <div className="flex items-center space-x-3">
+                {/* Make the entire block a link to the agent's profile */}
+                <Link 
+                  to={`/agent/${property.agent._id}`} 
+                  className="flex items-center space-x-3 group"
+                >
                   <img 
-                    src={property.agent.profilePicture} 
+                    src={property.agent.profilePicture} // This will now work
                     alt={property.agent.name}
                     className="w-16 h-16 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">{property.agent.name}</p>
+                    <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                      {property.agent.name}
+                    </p>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
                   </div>
-                </div>
+                </Link>
                 {/* Add WhatsApp Button */}
                 {property.agent.whatsappNumber && (
                   <a

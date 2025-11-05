@@ -20,6 +20,7 @@ import AgentRoute from "./components/AgentRoute";
 import MyProfile from "./pages/MyProfile"; 
 import EditProfileSettings from "./pages/EditProfileSettings"; // ✅ 1. Import new settings page
 import ProtectedRoute from "./components/ProtectedRoute"; // ✅ 2. Import protected route
+import AgentPublicProfile from "./pages/AgentPublicProfile"; // ✅ 3. Import public agent page
 
 function App() {
   const { user, loading } = useAuth(); 
@@ -161,8 +162,9 @@ function App() {
           <Route path="/properties/:id" element={<PropertyDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/agent/:agentId" element={<AgentPublicProfile />} /> {/* ✅ 4. Add public agent route */}
           
-          {/* ✅ 3. Add Protected Routes for all logged-in users */}
+          {/* ✅ 5. Add Protected Routes for all logged-in users */}
           <Route path="" element={<ProtectedRoute />}>
             <Route path="/profile" element={<MyProfile />} />
             <Route path="/profile/edit" element={<EditProfileSettings />} />

@@ -1,3 +1,4 @@
+// src/pages/EditProfileSettings.jsx
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/axios';
@@ -10,8 +11,17 @@ const EditProfileSettings = () => {
   const [name, setName] = useState(user.name);
   const [whatsappNumber, setWhatsappNumber] = useState(user.whatsappNumber || '');
   const [profilePicture, setProfilePicture] = useState(null); // File object
+  const [previewImage, setPreviewImage] = useState(user.profilePicture); // For showing the preview
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePicture(file);
+      setPreviewImage(URL.createObjectURL(file)); // Create a temporary URL for preview
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,8 +75,8 @@ const EditProfileSettings = () => {
           {/* Profile Picture Upload */}
           <div className="flex items-center space-x-4">
             <img 
-              src={profilePicture ? URL.createObjectURL(profilePicture) : user.profilePicture} 
-              alt="Profile" 
+              src={previewImage} 
+              alt="Profile Preview" 
               className="w-24 h-24 rounded-full object-cover"
             />
             <div>
@@ -78,7 +88,7 @@ const EditProfileSettings = () => {
                 id="profilePicture"
                 name="profilePicture"
                 accept="image/*"
-                onChange={(e) => setProfilePicture(e.target.files[0])}
+                onChange={handleFileChange}
                 className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
               />
             </div>
