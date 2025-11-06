@@ -28,6 +28,11 @@ import SearchBar from "./components/SearchBar";
 import ChatBubble from "./components/ChatBubble";
 import NotificationBell from "./components/NotificationBell";
 
+// ✅ 1. Import new chat components
+import ChatPage from './pages/ChatPage';
+import MessageStream from './components/MessageStream';
+import ChatPlaceholder from './components/ChatPlaceholder';
+
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -130,6 +135,15 @@ function AppRoutes() {
                         onClick={closeMobileMenu}
                       >
                         My Profile
+                      </Link>
+                      
+                      {/* ✅ 2. Add "My Messages" link to mobile menu */}
+                      <Link
+                        to="/chat"
+                        className="block text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition"
+                        onClick={closeMobileMenu}
+                      >
+                        My Messages
                       </Link>
 
                       {user.role === 'admin' && (
@@ -270,6 +284,12 @@ function AppRoutes() {
             <Route path="" element={<ProtectedRoute />}>
               <Route path="/profile" element={<MyProfile />} />
               <Route path="/profile/edit" element={<EditProfileSettings />} />
+              
+              {/* ✅ 3. Add the new chat routes */}
+              <Route path="/chat" element={<ChatPage />}>
+                <Route index element={<ChatPlaceholder />} />
+                <Route path=":id" element={<MessageStream />} />
+              </Route>
             </Route>
 
             <Route path="" element={<AdminRoute />}>
@@ -279,7 +299,6 @@ function AppRoutes() {
             <Route path="" element={<AgentRoute />}>
               <Route path="/add-property" element={<AddProperty />} />
               <Route path="/admin/property/:id/edit" element={<EditProperty />} />
-Same as 
             </Route>
           </Routes>
         </AnimatePresence>

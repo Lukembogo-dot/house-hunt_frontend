@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react"; // ✅ Import useState
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
 import { 
   FaStar, FaWhatsapp, FaHeart, FaRegHeart, 
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark, FaTimes,
-  FaCalendarAlt // ✅ 1. Import new icon
+  FaCalendarAlt,
+  FaCommentDots // ✅ 1. Import new icon
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
@@ -50,7 +51,7 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return d.toFixed(1); // Return distance rounded to 1 decimal place
 }
 
-// ✅ 2. NEW COMPONENT: Schedule Viewing Modal
+// ... (ScheduleModal component is unchanged) ...
 const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [message, setMessage] = useState('');
@@ -68,7 +69,6 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
       return;
     }
     
-    // Check if selected date is in the past
     if (new Date(scheduledDate) < new Date()) {
       setError('You cannot schedule a viewing in the past.');
       return;
@@ -83,10 +83,9 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
       setSuccess('Viewing request sent successfully! The agent will contact you to confirm.');
       setScheduledDate('');
       setMessage('');
-      // Keep the modal open for 3 seconds to show success message
       setTimeout(() => {
         onClose();
-        setSuccess(''); // Reset for next time
+        setSuccess('');
       }, 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send request. Please try again.');
@@ -201,8 +200,10 @@ const PropertyDetails = () => {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const itemsPerPage = 8;
   
-  // ✅ 3. New state for the modal
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+
+  // ✅ 2. Add new state for chat button
+  const [isStartingChat, setIsStartingChat] = useState(false);
 
   // ... (fetchPropertyData, useEffect, handleReviewSubmit, etc. are all unchanged) ...
   const fetchPropertyData = async () => {
@@ -317,6 +318,27 @@ const PropertyDetails = () => {
     setSelectedPlace({ ...place, distance });
   };
 
+  // ✅ 3. Add new handler for starting a chat
+  const handleStartChat = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setIsStartingChat(true);
+    try {
+      const { data } = await apiClient.post('/chat/conversations', { 
+        propertyId: id 
+      });
+      // On success, navigate to the new chat page with the conversation ID
+      navigate(`/chat/${data._id}`);
+    } catch (error) {
+      console.error('Failed to start chat:', error);
+      alert('Could not start chat. Please try again.');
+    } finally {
+      setIsStartingChat(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -343,7 +365,6 @@ const PropertyDetails = () => {
     ? property.images
     : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
 
-  // ✅ 4. Check if the logged-in user is the agent
   const isAgentOwner = user && user._id === property.agent?._id;
 
   return (
@@ -615,15 +636,25 @@ const PropertyDetails = () => {
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
               
-              {/* ✅ 5. ADDED "Schedule Viewing" Button */}
+              {/* ✅ 4. UPDATED Button Section */}
               {user && !isAgentOwner && property.status === 'available' && (
-                <button
-                  onClick={() => setShowScheduleModal(true)}
-                  className="mt-6 w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
-                >
-                  <FaCalendarAlt />
-                  <span>Schedule a Viewing</span>
-                </button>
+                <div className="mt-6 flex flex-col space-y-3">
+                  <button
+                    onClick={() => setShowScheduleModal(true)}
+                    className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
+                  >
+                    <FaCalendarAlt />
+                    <span>Schedule a Viewing</span>
+                  </button>
+                  <button
+                    onClick={handleStartChat}
+                    disabled={isStartingChat}
+                    className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    <FaCommentDots />
+                    <span>{isStartingChat ? 'Starting...' : 'Chat with Agent'}</span>
+                  </button>
+                </div>
               )}
 
               {/* ... (Agent details box is unchanged) ... */}
@@ -648,7 +679,7 @@ const PropertyDetails = () => {
                   </Link>
                   {property.agent.whatsappNumber && (
                     <a
-                      href={`httpshttps://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
+                      href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-all duration-150 active:scale-[0.98]"
@@ -678,7 +709,7 @@ const PropertyDetails = () => {
         )}
       </div>
 
-      {/* ✅ 6. RENDER THE MODALS */}
+      {/* ... (Modals: ScheduleModal, AnimatePresence, etc. - unchanged) ... */}
       <AnimatePresence>
         <ScheduleModal
           show={showScheduleModal}

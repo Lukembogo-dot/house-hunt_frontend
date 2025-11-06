@@ -54,6 +54,15 @@ const ProfileDropdown = () => {
             >
               My Profile
             </Link>
+
+            {/* ✅ 1. Add "My Messages" Link */}
+            <Link
+              to="/chat"
+              onClick={() => setIsOpen(false)}
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              My Messages
+            </Link>
             
             {user && user.role === 'admin' && (
               <Link
@@ -65,7 +74,6 @@ const ProfileDropdown = () => {
               </Link>
             )}
 
-            {/* ✅ 1. Add "List Property" link for agents and admins */}
             {user && (user.role === 'agent' || user.role === 'admin') && (
               <Link
                 to="/add-property"
@@ -76,7 +84,6 @@ const ProfileDropdown = () => {
               </Link>
             )}
 
-            {/* ✅ 2. Add a divider for visual separation */}
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
             <button
