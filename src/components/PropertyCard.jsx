@@ -1,8 +1,7 @@
-// components/PropertyCard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // ✅ 1. Import useAuth
-import { FaHeart, FaRegHeart } from "react-icons/fa"; // ✅ 2. Import heart icons
+import { useAuth } from "../context/AuthContext";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Image";
 
@@ -11,7 +10,6 @@ export default function PropertyCard({ property }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
   
-  // ✅ 3. Get user and context functions
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
 
   const images = (property.images && property.images.length > 0)
@@ -31,12 +29,11 @@ export default function PropertyCard({ property }) {
     navigate(`/properties/${property._id}`);
   };
 
-  // ✅ 4. Check if this property is favorited
-  const isFavorited = user && user.favorites.includes(property._id);
+  // ✅ FIX: Check if favorites is an array before using .includes()
+  const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property._id);
 
-  // ✅ 5. Handle the favorite button click
   const handleFavoriteClick = (e) => {
-    e.stopPropagation(); // Prevent navigating to details page
+    e.stopPropagation(); 
     if (!user) {
       alert("Please log in to save properties.");
       navigate("/login");
@@ -61,8 +58,7 @@ export default function PropertyCard({ property }) {
       }}
     >
       <div className="relative">
-        {/* ✅ 6. Add the Favorite Button */}
-        {user && ( // Only show button if user is loaded
+        {user && (
           <button
             onClick={handleFavoriteClick}
             className="absolute top-3 right-3 z-10 p-2 bg-black/40 backdrop-blur-sm rounded-full text-white hover:bg-black/60 transition"
@@ -77,7 +73,6 @@ export default function PropertyCard({ property }) {
           alt={property.title}
           className="w-full h-56 object-cover transition-opacity duration-300"
           loading="lazy"
-          // Make the image clickable to navigate
           onClick={handleViewDetails} 
           style={{ cursor: 'pointer' }} 
         />
@@ -98,7 +93,6 @@ export default function PropertyCard({ property }) {
           </span>
         )}
         
-        {/* Move listing type to avoid clash with heart icon */}
         <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full uppercase font-semibold">
           {property.listingType}
         </span>
@@ -107,7 +101,7 @@ export default function PropertyCard({ property }) {
       <div className="p-4">
         <h2 
           className="text-lg font-semibold text-gray-900 dark:text-gray-100 line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition cursor-pointer"
-          onClick={handleViewDetails} // Make title clickable
+          onClick={handleViewDetails}
         >
           {property.title}
         </h2>

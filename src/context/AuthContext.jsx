@@ -1,4 +1,3 @@
-// context/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import apiClient from '../api/axios';
 
@@ -14,7 +13,9 @@ export const AuthProvider = ({ children }) => {
         const { data } = await apiClient.get('/auth/profile', {
           withCredentials: true,
         });
-        setUser(data);
+        // ✅ FIX: Ensure favorites is always an array
+        const userData = { ...data, favorites: data.favorites || [] };
+        setUser(userData);
       } catch (error) {
         setUser(null);
       } finally {
@@ -25,7 +26,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    setUser(userData);
+    // ✅ FIX: Ensure favorites is always an array on login
+    const completeUserData = { ...userData, favorites: userData.favorites || [] };
+    setUser(completeUserData);
   };
 
   const logout = async () => {
@@ -39,27 +42,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ --- NEW FUNCTIONS FOR FAVORITES ---
+  // --- NEW FUNCTIONS FOR FAVORITES ---
   
-  // This function adds a favorite
   const addFavoriteContext = async (propertyId) => {
     if (!user) return;
 
-    // 1. Optimistic UI update: Add to state immediately
     setUser(prevUser => ({
       ...prevUser,
-      favorites: [...prevUser.favorites, propertyId],
+      // This is now safe because we know favorites is an array
+      favorites: [...prevUser.favorites, propertyId], 
     }));
 
-    // 2. Call the backend
     try {
       await apiClient.post(`/users/favorites/${propertyId}`, {}, {
         withCredentials: true,
       });
-      // Backend confirmed, state is already correct
     } catch (error) {
       console.error("Failed to add favorite", error);
-      // 3. Rollback on error
       setUser(prevUser => ({
         ...prevUser,
         favorites: prevUser.favorites.filter(id => id !== propertyId),
@@ -68,26 +67,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // This function removes a favorite
   const removeFavoriteContext = async (propertyId) => {
     if (!user) return;
 
-    // 1. Optimistic UI update: Remove from state immediately
-    const oldFavorites = user.favorites; // Keep for rollback
+    const oldFavorites = user.favorites;
     setUser(prevUser => ({
       ...prevUser,
+      // This is now safe
       favorites: prevUser.favorites.filter(id => id !== propertyId),
     }));
 
-    // 2. Call the backend
     try {
       await apiClient.delete(`/users/favorites/${propertyId}`, {
         withCredentials: true,
       });
-      // Backend confirmed, state is correct
     } catch (error) {
       console.error("Failed to remove favorite", error);
-      // 3. Rollback on error
       setUser(prevUser => ({
         ...prevUser,
         favorites: oldFavorites,
@@ -96,17 +91,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
-  // ✅ --- END NEW FUNCTIONS ---
-
-
   return (
     <AuthContext.Provider value={{ 
       user, 
       login, 
       logout, 
       loading, 
-      addFavoriteContext,    // ✅ Pass new function
-      removeFavoriteContext  // ✅ Pass new function
+      addFavoriteContext,
+      removeFavoriteContext
     }}>
       {children}
     </AuthContext.Provider>

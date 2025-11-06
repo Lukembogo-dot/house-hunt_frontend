@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom"; // ✅ 1. Import useNavigate
+import { useParams, Link, useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
-import { FaStar, FaWhatsapp, FaHeart, FaRegHeart } from "react-icons/fa"; // ✅ 2. Import heart icons
+import { FaStar, FaWhatsapp, FaHeart, FaRegHeart } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
@@ -10,9 +10,8 @@ const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Im
 
 const PropertyDetails = () => {
   const { id } = useParams();
-  // ✅ 3. Get user and context functions
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
-  const navigate = useNavigate(); // ✅ 4. Get navigate
+  const navigate = useNavigate(); 
   
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +23,6 @@ const PropertyDetails = () => {
   const [activeImage, setActiveImage] = useState(null);
   const [agentProperties, setAgentProperties] = useState([]);
 
-  // ... (fetchPropertyData is unchanged) ...
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
@@ -58,7 +56,6 @@ const PropertyDetails = () => {
     fetchPropertyData();
   }, [id]); 
 
-  // ... (handleReviewSubmit is unchanged) ...
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
@@ -81,8 +78,8 @@ const PropertyDetails = () => {
     }
   };
   
-  // ✅ 5. Check if favorited and handle click
-  const isFavorited = user && user.favorites.includes(id);
+  // ✅ FIX: Check if favorites is an array before using .includes()
+  const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(id);
 
   const handleFavoriteClick = () => {
     if (!user) {
@@ -127,12 +124,11 @@ const PropertyDetails = () => {
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
-           {/* ✅ 6. Add Favorite Button next to title */}
            <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
             <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
               {property.title}
             </h1>
-            {user && ( // Only show if user is loaded
+            {user && (
               <button
                 onClick={handleFavoriteClick}
                 className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -158,7 +154,6 @@ const PropertyDetails = () => {
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
-          {/* ... (Image Gallery is unchanged) ... */}
           <div className="mb-6">
             <img
               src={activeImage}
@@ -184,13 +179,10 @@ const PropertyDetails = () => {
             )}
           </div>
           
-          {/* ... (Description is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
           </div>
-
-          {/* ... (Map is unchanged) ... */}
            <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location Map</h2>
             {property.coordinates && property.coordinates.lat ? (
@@ -199,8 +191,6 @@ const PropertyDetails = () => {
               <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>
             )}
           </div>
-
-          {/* ... (Reviews section is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Reviews ({comments.length}) ⭐ {avgRating}
@@ -269,7 +259,7 @@ const PropertyDetails = () => {
           </div>
         </div>
 
-        {/* ... (Sidebar is unchanged) ... */}
+        {/* Sidebar */}
         <div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
@@ -315,7 +305,7 @@ const PropertyDetails = () => {
                       {property.agent.name}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
-                  </div>
+</div>
                 </Link>
                 {property.agent.whatsappNumber && (
                   <a
@@ -334,7 +324,7 @@ const PropertyDetails = () => {
         </div>
       </div>
 
-      {/* ... ("More from this Agent" section is unchanged) ... */}
+      {/* "More from this Agent" Section */}
       {agentProperties.length > 0 && (
         <section className="max-w-6xl mx-auto mt-16">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
