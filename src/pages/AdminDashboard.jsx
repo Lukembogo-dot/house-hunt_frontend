@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios'; 
 import { useAuth } from '../context/AuthContext';
-import { FaEdit, FaTrash, FaUserShield } from 'react-icons/fa'; // ✅ 1. Add new icon
+import { FaEdit, FaTrash, FaUserShield } from 'react-icons/fa';
+import FailedQueries from '../components/FailedQueries'; // ✅ 1. Import the new component
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -10,13 +11,13 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
   const fetchData = async () => {
-    // ... (fetchData is unchanged)
     try {
       setLoading(true);
       setError('');
+      // We can leave this as-is. The new component fetches its own data.
       const [usersRes, propertiesRes, reviewsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
         apiClient.get('/properties'),
@@ -37,7 +38,6 @@ const AdminDashboard = () => {
     fetchData();
   }, []);
 
-  // ... (deleteProperty and deleteReview are unchanged)
   const deleteProperty = async (id) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
@@ -61,20 +61,19 @@ const AdminDashboard = () => {
   
   const deleteUser = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      if (id === user._id) { 
+      if (id === user._id) {
         alert("You cannot delete your own admin account.");
         return;
       }
       try {
         await apiClient.delete(`/users/${id}`, { withCredentials: true });
-        fetchData(); 
+        fetchData();
       } catch (err) {
         alert('Failed to delete user.');
       }
     }
   };
 
-  // ✅ 2. Add function to update user role
   const updateUserRole = async (id, newRole) => {
     if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       try {
@@ -159,7 +158,6 @@ const AdminDashboard = () => {
                       {u.role}
                     </span>
                   </td>
-                  {/* ✅ 3. Add new actions for promoting/demoting */}
                   <td className="p-3 flex space-x-3">
                     {u.role === 'user' && (
                       <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent">
@@ -183,6 +181,9 @@ const AdminDashboard = () => {
           </table>
         </div>
       </section>
+
+      {/* ✅ 2. Add the new FailedQueries component here */}
+      <FailedQueries />
 
       {/* ... (Manage Reviews section is unchanged) ... */}
       <section>
