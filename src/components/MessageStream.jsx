@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import { useSocket } from '../context/SocketContext.jsx'; // ✅ 1. Import useSocket
 
 const MessageStream = () => {
   const { id: conversationId } = useParams();
@@ -13,10 +14,10 @@ const MessageStream = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const socket = useSocket(); // ✅ 2. Get the socket connection
 
   const otherParticipant = conversation?.participants.find(p => p._id !== user._id);
 
-  // Function to scroll to the bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -39,10 +40,28 @@ const MessageStream = () => {
     fetchMessages();
   }, [conversationId]);
   
-  // Scroll to bottom when messages load
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // ✅ 3. Add useEffect to listen for new messages
+  useEffect(() => {
+    if (!socket) return; // Don't do anything if socket isn't connected
+
+    // Listen for the 'newMessage' event
+    socket.on('newMessage', (incomingMessage) => {
+      // Check if the incoming message belongs to this conversation
+      if (incomingMessage.conversation === conversationId) {
+        setMessages((prevMessages) => [...prevMessages, incomingMessage]);
+      }
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => {
+      socket.off('newMessage');
+    };
+  }, [socket, conversationId]); // Re-run if socket or conversation changes
+
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -50,10 +69,13 @@ const MessageStream = () => {
 
     setSending(true);
     try {
+      // We no longer need to optimistically update
+      // The server will save and emit the message, and our listener will catch it
       const { data: sentMessage } = await apiClient.post(`/chat/conversations/${conversationId}`, {
         content: newMessage,
       });
-      setMessages([...messages, sentMessage]);
+      // We add it here *as well* so the sender sees it instantly
+      setMessages((prevMessages) => [...prevMessages, sentMessage]);
       setNewMessage('');
     } catch (error) {
       console.error('Failed to send message:', error);

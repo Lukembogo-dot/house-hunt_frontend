@@ -3,11 +3,13 @@ import { FaBell, FaRegBell } from 'react-icons/fa';
 import apiClient from '../api/axios';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { useSocket } from '../context/SocketContext.jsx'; // ✅ 1. Import useSocket
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const socket = useSocket(); // ✅ 2. Get the socket connection
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -22,10 +24,25 @@ const NotificationBell = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // Optional: Poll for new notifications every minute
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  // ✅ 3. Add new useEffect to listen for socket events
+  useEffect(() => {
+    if (!socket) return; // Don't do anything if socket isn't connected
+
+    // Listen for the 'newNotification' event from the server
+    socket.on('newNotification', (newNotification) => {
+      // Add the new notification to the top of the list
+      setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+      // Increment the unread count
+      setUnreadCount((prevCount) => prevCount + 1);
+    });
+
+    // Clean up the listener when the component unmounts
+    return () => {
+      socket.off('newNotification');
+    };
+  }, [socket]); // Re-run this effect if the socket connection changes
 
   const handleOpen = async () => {
     setIsOpen(!isOpen);
@@ -34,7 +51,6 @@ const NotificationBell = () => {
       try {
         await apiClient.put('/notifications/read-all');
         setUnreadCount(0);
-        // Optimistically update UI
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       } catch (error) {
         console.error('Failed to mark notifications as read:', error);
@@ -60,7 +76,7 @@ const NotificationBell = () => {
       {isOpen && (
         <div 
           className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50"
-          onClick={() => setIsOpen(false)} // Close on click inside
+          onClick={() => setIsOpen(false)} 
         >
           <div className="p-3 border-b dark:border-gray-700">
             <h4 className="font-semibold text-gray-800 dark:text-gray-100">Notifications</h4>
