@@ -18,9 +18,10 @@ import { FaBars, FaTimes } from "react-icons/fa";
 import ThemeToggle from "./components/ThemeToggle"; 
 import AgentRoute from "./components/AgentRoute"; 
 import MyProfile from "./pages/MyProfile"; 
-import EditProfileSettings from "./pages/EditProfileSettings"; // ✅ 1. Import new settings page
-import ProtectedRoute from "./components/ProtectedRoute"; // ✅ 2. Import protected route
-import AgentPublicProfile from "./pages/AgentPublicProfile"; // ✅ 3. Import public agent page
+import EditProfileSettings from "./pages/EditProfileSettings";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AgentPublicProfile from "./pages/AgentPublicProfile";
+import ScrollToTop from "./components/ScrollToTop"; // ✅ Import the new component
 
 function App() {
   const { user, loading } = useAuth(); 
@@ -31,9 +32,10 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop /> {/* ✅ Add the component here */}
       <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
         
-        {/* ... (Header and Nav are unchanged) ... */}
+        {/* ================= HEADER ================= */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
@@ -129,7 +131,7 @@ function App() {
 
         {/* ================= ROUTES ================= */}
         <Routes>
-          {/* ... (Public Routes are unchanged) ... */}
+          {/* ... Public Routes ... */}
           <Route path="/" element={
             <>
               <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80')" }}>
@@ -138,11 +140,13 @@ function App() {
                   <h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
                     Find Your Dream Home in Kenya
                   </h1>
+                  {/* ✅ FIX: This <p> tag is now correctly closed */}
                   <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed">
                     Explore verified listings — from affordable rentals to luxury homes across Kenya.
                   </p>
                 </div>
               </section>
+              {/* ✅ FIX: The <main> and <section> tags are now correctly structured */}
               <main id="properties" className="flex-grow">
                 <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                   <div className="max-w-6xl mx-auto">
@@ -162,9 +166,9 @@ function App() {
           <Route path="/properties/:id" element={<PropertyDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/agent/:agentId" element={<AgentPublicProfile />} /> {/* ✅ 4. Add public agent route */}
+          <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
           
-          {/* ✅ 5. Add Protected Routes for all logged-in users */}
+          {/* Protected Routes for all logged-in users */}
           <Route path="" element={<ProtectedRoute />}>
             <Route path="/profile" element={<MyProfile />} />
             <Route path="/profile/edit" element={<EditProfileSettings />} />
@@ -182,7 +186,7 @@ function App() {
           </Route>
         </Routes>
 
-        {/* ... (Footer is unchanged) ... */}
+        {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>
