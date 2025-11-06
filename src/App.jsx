@@ -25,6 +25,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import { AnimatePresence, motion } from "framer-motion";
 import TrendingProperties from "./components/TrendingProperties";
 import SearchBar from "./components/SearchBar";
+import ChatBubble from "./components/ChatBubble"; // ✅ 1. Import your new component
 
 function AppRoutes() {
   const { user, loading } = useAuth(); 
@@ -58,7 +59,6 @@ function AppRoutes() {
         {/* ================= HEADER ================= */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
           
-          {/* ✅ BUG FIX: Added 'relative' and 'z-40' to the main header bar */}
           <div className="relative z-40 container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
@@ -110,7 +110,6 @@ function AppRoutes() {
           </div>
 
           {/* ================= MOBILE MENU ================= */}
-          {/* This menu already has 'z-50', so it will now correctly render on top of the 'z-40' header bar */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-50">
               <nav className="flex flex-col p-6 space-y-4">
@@ -267,6 +266,10 @@ function AppRoutes() {
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
           {/* ... (Footer code is unchanged) ... */}
         </footer>
+
+        {/* ✅ 2. Add the ChatBubble here, inside the main div but after the footer */}
+        <ChatBubble />
+
       </div>
     </>
   );
