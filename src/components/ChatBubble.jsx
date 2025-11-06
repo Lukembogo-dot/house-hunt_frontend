@@ -1,28 +1,134 @@
 // src/components/ChatBubble.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaComments, FaTimes, FaPaperPlane } from 'react-icons/fa';
-import apiClient from '../api/axios'; // We'll use this later
+// ✅ 1. Import new icons
+import { FaComments, FaTimes, FaPaperPlane, FaExternalLinkAlt } from 'react-icons/fa';
+import apiClient from '../api/axios';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ 2. Import useNavigate
 
-// This component renders a single chat message
-const ChatMessage = ({ message }) => {
-  const isUser = message.role === 'user';
-  return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-      <div
-        className={`px-4 py-3 rounded-lg max-w-xs lg:max-w-md ${
-          isUser
-            ? 'bg-blue-600 text-white rounded-br-none'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
-        }`}
+// ✅ 3. NEW: Updated link parser function
+const ParseAndLinkText = ({ text, onLinkClick }) => {
+  // Regex to find markdown links [text](url) or keywords
+  const regex = /(\[.*?\]\(.*?\))|(\bAbout Us\b)|(\bContact Us\b)/g;
+  
+  // This is a complex function, so we split the text into parts
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+
+    // Handle the match
+    let url = '';
+    let linkText = '';
+
+    if (match[1]) { // Markdown link: [Title](/properties/123)
+      linkText = match[1].substring(1, match[1].indexOf(']'));
+      url = match[1].substring(match[1].indexOf('(') + 1, match[1].length - 1);
+    } else if (match[2]) { // "About Us"
+      linkText = 'About Us';
+      url = '/about';
+    } else if (match[3]) { // "Contact Us"
+      linkText = 'Contact Us';
+      url = '/contact';
+    }
+
+    parts.push(
+      <Link
+        key={match.index}
+        to={url}
+        onClick={onLinkClick} // ✅ Close chat on click
+        className="font-semibold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 inline-flex items-center space-x-1"
       >
-        {message.text}
-      </div>
+        <span>{linkText}</span>
+        <FaExternalLinkAlt size={10} />
+      </Link>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Add any remaining text
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  // Render the parts, splitting by newlines
+  return (
+    <div className="flex flex-col space-y-2">
+      {parts.map((part, index) => {
+        if (typeof part === 'string') {
+          return part.split('\n').map((line, lineIndex) => (
+            <p key={`${index}-${lineIndex}`}>{line}</p>
+          ));
+        }
+        return part;
+      })}
     </div>
   );
 };
 
-// This is the main ChatBubble component
+
+// --- Chat Message Component ---
+const ChatMessage = ({ message, onSuggestionClick, onLinkClick }) => {
+  const isUser = message.role === 'user';
+
+  const messageVariants = {
+    hidden: { opacity: 0, y: 10, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1 },
+  };
+
+  return (
+    <motion.div
+      variants={messageVariants}
+      initial="hidden"
+      animate="visible"
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}
+    >
+      <div>
+        <div
+          className={`px-4 py-3 rounded-lg max-w-xs lg:max-w-md ${
+            isUser
+              ? 'bg-blue-600 text-white rounded-br-none'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
+          }`}
+        >
+          {/* ✅ 4. Use the new parser component */}
+          <ParseAndLinkText text={message.text} onLinkClick={onLinkClick} />
+        </div>
+
+        {message.suggestions && message.suggestions.length > 0 && (
+          <motion.div
+            className="flex flex-wrap gap-2 mt-3"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.05 } }
+            }}
+          >
+            {message.suggestions.map((suggestion, index) => (
+              <motion.button
+                key={index}
+                variants={messageVariants}
+                onClick={() => onSuggestionClick(suggestion)}
+                className="px-3 py-1.5 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-all active:scale-95"
+              >
+                {suggestion}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
+
+// --- Main ChatBubble Component ---
 const ChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -31,48 +137,64 @@ const ChatBubble = () => {
     {
       role: 'ai',
       text: "Hello! I'm your AI assistant. Ask me anything about our properties or locations, like 'Find me a house in Kilimani under 100k'.",
+      suggestions: ["Find properties for rent", "Find properties for sale", "About Us"]
     },
   ]);
   const chatEndRef = useRef(null);
+  const navigate = useNavigate(); // ✅ 5. Get navigate hook
 
-  // Automatically scroll to the bottom when new messages appear
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  const sendMessage = async (messageText) => {
+    if (isLoading) return;
 
-    const userMessage = { role: 'user', text: input };
+    const userMessage = { role: 'user', text: messageText };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
     setIsLoading(true);
 
     try {
-      // --- THIS IS THE REAL CODE WE WILL USE LATER ---
-      // ✅ FIX: Removed the extra '/api' from the path.
       const { data } = await apiClient.post('/ai/chat', {
-        message: input,
-        // history: messages, // Send context (optional)
+        message: messageText,
       });
 
       const aiResponse = {
         role: 'ai',
-        text: data.response, // Assuming backend sends { response: "..." }
+        text: data.response,
+        suggestions: data.suggestions || [], 
       };
       
       setMessages((prev) => [...prev, aiResponse]);
-    } catch (error) {
+    } catch (error)
+    {
       console.error("Failed to fetch AI response:", error);
       const errorResponse = {
         role: 'ai',
         text: error.response?.data?.response || "Sorry, I'm having a little trouble connecting. Please try again in a moment.",
+        suggestions: [],
       };
       setMessages((prev) => [...prev, errorResponse]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    sendMessage(input);
+    setInput('');
+  };
+
+  const handleSuggestionClick = (suggestionText) => {
+    sendMessage(suggestionText);
+  };
+
+  // ✅ 6. New handler to close chat when a link is clicked
+  const handleLinkClick = () => {
+    setIsOpen(false);
+    // Note: The <Link> component will handle the navigation
   };
 
   return (
@@ -87,8 +209,12 @@ const ChatBubble = () => {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="fixed bottom-24 right-4 sm:right-6 md:right-8 w-[calc(100%-2rem)] sm:w-96 h-[60vh] sm:h-[70vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col z-50 overflow-hidden"
           >
-            {/* Header */}
-            <div className="flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0">
+            {/* ... (Header is unchanged) ... */}
+            <div
+              className={`flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0 transition-all ${
+                isLoading ? 'border-b-blue-500 shadow-blue-500/20 shadow-lg' : ''
+              }`}
+            >
               <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                 AI Assistant
               </h3>
@@ -103,7 +229,12 @@ const ChatBubble = () => {
             {/* Messages Area */}
             <div className="flex-grow p-4 overflow-y-auto">
               {messages.map((msg, index) => (
-                <ChatMessage key={index} message={msg} />
+                <ChatMessage
+                  key={index}
+                  message={msg}
+                  onSuggestionClick={handleSuggestionClick}
+                  onLinkClick={handleLinkClick} // ✅ 7. Pass handler down
+                />
               ))}
               {isLoading && (
                 <div className="flex justify-start mb-3">
@@ -146,11 +277,13 @@ const ChatBubble = () => {
         )}
       </AnimatePresence>
 
-      {/* --- The Floating Button --- */}
+      {/* --- The Floating Button (unchanged) --- */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-4 sm:right-6 md:right-8 z-50 bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg"
+        className={`fixed bottom-6 right-4 sm:right-6 md:right-8 z-50 bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
+          isLoading && !isOpen ? 'animate-pulse' : ''
+        }`}
         aria-label="Toggle AI Chat"
       >
         <AnimatePresence mode="wait">
