@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import MyListings from '../components/MyListings';
 import { Link } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa'; // Settings Icon
-import MyFavorites from '../components/MyFavorites'; // ✅ 1. Import MyFavorites
+import MyFavorites from '../components/MyFavorites'; 
 
 const MyProfile = () => {
   const { user } = useAuth();
@@ -32,17 +32,16 @@ const MyProfile = () => {
         
         <Link
           to="/profile/edit"
-          className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          // ✅ ADDED: Click animation
+          className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-150 active:scale-95"
         >
           <FaCog />
           <span>Settings</span>
         </Link>
       </div>
 
-      {/* ✅ 2. Add the MyFavorites component here for ALL users */}
       <MyFavorites />
 
-      {/* Show "My Listings" section ONLY if the user is an agent or admin */}
       {(user.role === 'agent' || user.role === 'admin') && (
         <MyListings />
       )}

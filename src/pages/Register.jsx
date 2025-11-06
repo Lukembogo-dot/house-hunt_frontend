@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from "../api/axios"; // Use our central api client
+import apiClient from "../api/axios"; 
 import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion'; // ✅ Import motion
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -42,7 +43,13 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg dark:border dark:border-gray-700">
+      {/* ✅ Added motion */}
+      <motion.div 
+        className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg dark:border dark:border-gray-700"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Create your account
@@ -116,7 +123,8 @@ const Register = () => {
             <button
               type="submit"
               disabled={submitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition ${
+              // ✅ Added click animation
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
                 submitting ? 'opacity-50 cursor-not-allowed dark:bg-blue-800' : 'dark:hover:bg-blue-500'
               }`}
             >
@@ -124,7 +132,7 @@ const Register = () => {
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

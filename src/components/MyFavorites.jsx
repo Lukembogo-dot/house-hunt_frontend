@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axios';
 import PropertyCard from './PropertyCard';
-import { Link } from 'react-router-dom'; // ✅ FIX: Removed the extra 'S' here
+import { Link } from 'react-router-dom'; 
+import { motion } from 'framer-motion'; // ✅ 1. Import motion
 
 const MyFavorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -10,10 +11,10 @@ const MyFavorites = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // ... (fetchFavorites function is unchanged)
     const fetchFavorites = async () => {
       try {
         setLoading(true);
-        // This endpoint gets the *populated* list of properties
         const { data } = await apiClient.get('/users/favorites', {
           withCredentials: true,
         });
@@ -27,10 +28,16 @@ const MyFavorites = () => {
     };
 
     fetchFavorites();
-  }, []); // Runs once on component mount
+  }, []); 
 
   return (
-    <section className="mt-12">
+    // ✅ 2. Add scroll-in animation
+    <motion.section 
+      className="mt-12"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }} // Delay slightly after page load
+    >
       <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">
         My Saved Properties ({favorites.length})
       </h2>
@@ -45,6 +52,7 @@ const MyFavorites = () => {
             <Link to="/rent" className="text-blue-500 underline ml-1">Browse properties</Link>
           </p>
         ) : (
+          // PropertyCards inside here are already animated
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map((property) => (
               <PropertyCard key={property._id} property={property} />
@@ -52,7 +60,7 @@ const MyFavorites = () => {
           </div>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 };
 

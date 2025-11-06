@@ -5,6 +5,17 @@ import { FaStar, FaWhatsapp, FaHeart, FaRegHeart } from "react-icons/fa";
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
+import { motion } from 'framer-motion'; // ✅ 1. Import motion
+
+// ✅ 2. Define a re-usable animation for sections
+const sectionVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
 
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
@@ -78,7 +89,6 @@ const PropertyDetails = () => {
     }
   };
   
-  // ✅ FIX: Check if favorites is an array before using .includes()
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(id);
 
   const handleFavoriteClick = () => {
@@ -93,7 +103,6 @@ const PropertyDetails = () => {
       addFavoriteContext(id);
     }
   };
-
 
   if (loading) {
     return (
@@ -129,7 +138,9 @@ const PropertyDetails = () => {
               {property.title}
             </h1>
             {user && (
-              <button
+              // ✅ 3. Add click animation
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={handleFavoriteClick}
                 className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
               >
@@ -144,7 +155,7 @@ const PropertyDetails = () => {
                     <span className="text-gray-700 dark:text-gray-200">Save Property</span>
                   </>
                 )}
-              </button>
+              </motion.button>
             )}
           </div>
           
@@ -154,7 +165,14 @@ const PropertyDetails = () => {
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
-          <div className="mb-6">
+          {/* ✅ 4. Add scroll animation to Image Gallery */}
+          <motion.div 
+            className="mb-6"
+            variants={sectionVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+          >
             <img
               src={activeImage}
               alt="Main"
@@ -168,30 +186,54 @@ const PropertyDetails = () => {
                     src={imgUrl}
                     alt={`Thumbnail ${index + 1}`}
                     onClick={() => setActiveImage(imgUrl)}
+                    // ✅ 5. Add click feedback to thumbnails
                     className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${
                       activeImage === imgUrl 
                         ? 'ring-2 ring-blue-500' 
                         : 'opacity-70 hover:opacity-100'
-                    }`}
+                    } active:scale-95`}
                   />
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
           
-          <div className="mb-8">
+          {/* ✅ 6. Add scroll animation to Description */}
+          <motion.div 
+            className="mb-8"
+            variants={sectionVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.5 }}
+          >
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
-          </div>
-           <div className="mb-8">
+          </motion.div>
+          
+           {/* ✅ 7. Add scroll animation to Map */}
+           <motion.div 
+            className="mb-8"
+            variants={sectionVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+           >
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location Map</h2>
             {property.coordinates && property.coordinates.lat ? (
               <MapComponent coordinates={property.coordinates} />
             ) : (
               <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>
             )}
-          </div>
-          <div className="mb-8">
+          </motion.div>
+
+          {/* ✅ 8. Add scroll animation to Reviews */}
+          <motion.div 
+            className="mb-8"
+            variants={sectionVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+          >
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Reviews ({comments.length}) ⭐ {avgRating}
             </h2>
@@ -202,7 +244,7 @@ const PropertyDetails = () => {
                     <FaStar
                       key={i}
                       size={24}
-                      className={`cursor-pointer ${
+                      className={`cursor-pointer transition-colors ${
                         i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
                       }`}
                       onMouseEnter={() => setHoverRating(i + 1)}
@@ -221,7 +263,8 @@ const PropertyDetails = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition ${
+                  // ✅ 9. Add click animation
+                  className={`bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] ${
                     submitting ? "opacity-50 cursor-not-allowed dark:bg-blue-800" : "dark:hover:bg-blue-500"
                   }`}
                 >
@@ -256,11 +299,17 @@ const PropertyDetails = () => {
             ) : (
               <p className="text-gray-500 dark:text-gray-400">No reviews yet.</p>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Sidebar */}
-        <div>
+        {/* ✅ 10. Add scroll animation to Sidebar */}
+        <motion.div
+          variants={sectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
             <ul className="text-gray-700 dark:text-gray-300 space-y-2">
@@ -293,7 +342,8 @@ const PropertyDetails = () => {
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
                 <Link 
                   to={`/agent/${property.agent._id}`} 
-                  className="flex items-center space-x-3 group"
+                  // ✅ 11. Add click animation
+                  className="flex items-center space-x-3 group transition-transform duration-150 active:scale-[0.99]"
                 >
                   <img 
                     src={property.agent.profilePicture} 
@@ -312,7 +362,8 @@ const PropertyDetails = () => {
                     href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition"
+                    // ✅ 12. Add click animation
+                    className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-all duration-150 active:scale-[0.98]"
                   >
                     <FaWhatsapp size={20} />
                     <span>Chat on WhatsApp</span>
@@ -321,7 +372,7 @@ const PropertyDetails = () => {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* "More from this Agent" Section */}

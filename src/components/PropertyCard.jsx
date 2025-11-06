@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { motion } from 'framer-motion'; // ✅ 1. Import motion
 
 const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Image";
 
@@ -29,7 +30,6 @@ export default function PropertyCard({ property }) {
     navigate(`/properties/${property._id}`);
   };
 
-  // ✅ FIX: Check if favorites is an array before using .includes()
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property._id);
 
   const handleFavoriteClick = (e) => {
@@ -49,23 +49,32 @@ export default function PropertyCard({ property }) {
 
 
   return (
-    <div 
+    // ✅ 2. Convert <div> to <motion.div> and add scroll animations
+    <motion.div 
       className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:border dark:border-gray-700 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => {
         setIsHovering(false);
         setCurrentImageIndex(0);
       }}
+      // --- Animation Props ---
+      initial={{ opacity: 0, y: 20 }} // Start invisible and 20px down
+      whileInView={{ opacity: 1, y: 0 }} // Animate to visible and 0px
+      viewport={{ once: true, amount: 0.2 }} // Run once when 20% is in view
+      transition={{ duration: 0.4, ease: "easeOut" }} // Smooth easing
+      // -----------------------
     >
       <div className="relative">
         {user && (
-          <button
+          // ✅ 3. Add click animation to the heart button
+          <motion.button
+            whileTap={{ scale: 0.9 }} // Bouncy click
             onClick={handleFavoriteClick}
             className="absolute top-3 right-3 z-10 p-2 bg-black/40 backdrop-blur-sm rounded-full text-white hover:bg-black/60 transition"
             title={isFavorited ? "Remove from favorites" : "Add to favorites"}
           >
             {isFavorited ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
-          </button>
+          </motion.button>
         )}
 
         <img
@@ -114,11 +123,12 @@ export default function PropertyCard({ property }) {
 
         <button
           onClick={handleViewDetails}
-          className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition"
+          // ✅ 4. Add simple click animation to the main button
+          className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition transition-transform duration-150 active:scale-[0.98]"
         >
           View Details
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

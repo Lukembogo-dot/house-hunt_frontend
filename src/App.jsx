@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+// ✅ 1. Import useLocation
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
 import About from "./pages/About";
 import Buy from "./pages/Buy";
@@ -21,22 +22,31 @@ import MyProfile from "./pages/MyProfile";
 import EditProfileSettings from "./pages/EditProfileSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AgentPublicProfile from "./pages/AgentPublicProfile";
-import ScrollToTop from "./components/ScrollToTop"; // ✅ Import the new component
+import ScrollToTop from "./components/ScrollToTop"; 
 
-function App() {
+// ✅ 2. Import AnimatePresence and AnimatedPage
+import { AnimatePresence } from "framer-motion";
+import AnimatedPage from "./components/AnimatedPage";
+
+// The <Router> is moved to main.jsx, so we just need the App content
+// We create a new component to contain the routes for AnimatePresence
+function AppRoutes() {
   const { user, loading } = useAuth(); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const canListProperty = user && (user.role === 'admin' || user.role === 'agent');
+  
+  // ✅ 3. Get the location
+  const location = useLocation();
 
   return (
-    <Router>
-      <ScrollToTop /> {/* ✅ Add the component here */}
+    <>
       <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
         
         {/* ================= HEADER ================= */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
+          {/* ... (Your entire <header>... code is unchanged) ... */}
           <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
@@ -130,64 +140,65 @@ function App() {
         </header>
 
         {/* ================= ROUTES ================= */}
-        <Routes>
-          {/* ... Public Routes ... */}
-          <Route path="/" element={
-            <>
-              <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80')" }}>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-                <div className="relative z-10 px-6 max-w-3xl">
-                  <h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
-                    Find Your Dream Home in Kenya
-                  </h1>
-                  {/* ✅ FIX: This <p> tag is now correctly closed */}
-                  <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed">
-                    Explore verified listings — from affordable rentals to luxury homes across Kenya.
-                  </p>
-                </div>
-              </section>
-              {/* ✅ FIX: The <main> and <section> tags are now correctly structured */}
-              <main id="properties" className="flex-grow">
-                <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                  <div className="max-w-6xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-                      Featured Properties
-                    </h2>
-                    <PropertyList />
-                  </div>
-                </section>
-              </main>
-            </>
-          } />
-          <Route path="/buy" element={<Buy />} />
-          <Route path="/rent" element={<Rent />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/properties/:id" element={<PropertyDetails />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
-          
-          {/* Protected Routes for all logged-in users */}
-          <Route path="" element={<ProtectedRoute />}>
-            <Route path="/profile" element={<MyProfile />} />
-            <Route path="/profile/edit" element={<EditProfileSettings />} />
-          </Route>
-          
-          {/* Admin-Only Route */}
-          <Route path="" element={<AdminRoute />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          </Route>
+        {/* ✅ 4. Wrap Routes with AnimatePresence */}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            {/* ✅ 5. Wrap EVERY route's element in <AnimatedPage> */}
+            <Route path="/" element={
+              <AnimatedPage>
+                <>
+                  <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80')" }}>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
+                    <div className="relative z-10 px-6 max-w-3xl">
+                      <h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg">
+                        Find Your Dream Home in Kenya
+                      </h1>
+                      <p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed">
+                        Explore verified listings — from affordable rentals to luxury homes across Kenya.
+                      </p>
+                    </div>
+                  </section>
+                  <main id="properties" className="flex-grow">
+                    <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                      <div className="max-w-6xl mx-auto">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
+                          Featured Properties
+                        </h2>
+                        <PropertyList />
+                      </div>
+                    </section>
+                  </main>
+                </>
+              </AnimatedPage>
+            } />
+            <Route path="/buy" element={<AnimatedPage><Buy /></AnimatedPage>} />
+            <Route path="/rent" element={<AnimatedPage><Rent /></AnimatedPage>} />
+            <Route path="/about" element={<AnimatedPage><About /></AnimatedPage>} />
+            <Route path="/contact" element={<AnimatedPage><Contact /></AnimatedPage>} />
+            <Route path="/properties/:id" element={<AnimatedPage><PropertyDetails /></AnimatedPage>} />
+            <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
+            <Route path="/register" element={<AnimatedPage><Register /></AnimatedPage>} />
+            <Route path="/agent/:agentId" element={<AnimatedPage><AgentPublicProfile /></AnimatedPage>} />
+            
+            <Route path="" element={<ProtectedRoute />}>
+              <Route path="/profile" element={<AnimatedPage><MyProfile /></AnimatedPage>} />
+              <Route path="/profile/edit" element={<AnimatedPage><EditProfileSettings /></AnimatedPage>} />
+            </Route>
+            
+            <Route path="" element={<AdminRoute />}>
+              <Route path="/admin/dashboard" element={<AnimatedPage><AdminDashboard /></AnimatedPage>} />
+            </Route>
 
-          {/* Agent & Admin Routes */}
-          <Route path="" element={<AgentRoute />}>
-            <Route path="/add-property" element={<AddProperty />} />
-            <Route path="/admin/property/:id/edit" element={<EditProperty />} />
-          </Route>
-        </Routes>
+            <Route path="" element={<AgentRoute />}>
+              <Route path="/add-property" element={<AnimatedPage><AddProperty /></AnimatedPage>} />
+              <Route path="/admin/property/:id/edit" element={<AnimatedPage><EditProperty /></AnimatedPage>} />
+            </Route>
+          </Routes>
+        </AnimatePresence>
 
         {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
+          {/* ... (Your entire <footer>... code is unchanged) ... */}
           <div className="max-w-6xl mx-auto px-6 grid gap-12 md:grid-cols-3">
             <div>
               <h3 className="text-lg font-semibold mb-3 text-white">HouseHunt</h3>
@@ -216,8 +227,18 @@ function App() {
           </p>
         </footer>
       </div>
-    </Router>
+    </>
   );
+}
+
+// ✅ 6. Main App component now just sets up the Router
+function App() {
+  return (
+    <Router>
+      <ScrollToTop />
+      <AppRoutes /> {/* All content, including header/footer, is in AppRoutes */}
+    </Router>
+  )
 }
 
 export default App;

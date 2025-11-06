@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { FaTimes } from 'react-icons/fa'; 
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion'; // ✅ Import motion
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0 }) => (
   <div>
@@ -24,17 +25,16 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
 );
 
 const EditProperty = () => {
-  const { user } = useAuth(); // Get user
+  const { user } = useAuth(); 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     location: '',
     price: '',
     bedrooms: '',
-    // bathrooms: '', // ✅ REMOVED
     type: 'apartment',
     status: 'available', 
-    listingType: 'sale', // ✅ ADDED
+    listingType: 'sale', 
   });
   
   const [existingImages, setExistingImages] = useState([]);
@@ -54,11 +54,10 @@ const EditProperty = () => {
           description: data.description,
           location: data.location,
           price: data.price,
-          bedrooms: data.bedrooms || '', // Set to empty string if undefined
-          // bathrooms: data.bathrooms, // ✅ REMOVED
+          bedrooms: data.bedrooms || '', 
           type: data.type,
           status: data.status || 'available', 
-          listingType: data.listingType || 'sale', // ✅ ADDED
+          listingType: data.listingType || 'sale', 
         });
         
         let imagesToSet = [];
@@ -125,7 +124,6 @@ const EditProperty = () => {
       setStatus({ message: `Success! Property "${response.data.title}" updated. Redirecting...`, type: 'success' });
       
       setTimeout(() => {
-        // Redirect to profile page if agent, dashboard if admin
         if (user.role === 'admin') {
           navigate('/admin/dashboard');
         } else {
@@ -146,7 +144,13 @@ const EditProperty = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700">
+      {/* ✅ Added motion */}
+      <motion.div 
+        className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+      >
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
           Edit Property
         </h1>
@@ -166,7 +170,6 @@ const EditProperty = () => {
           <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ✅ NEW: Listing Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="listingType">
                 Listing For
@@ -180,7 +183,6 @@ const EditProperty = () => {
               </select>
             </div>
             
-            {/* ✅ UPDATED: Property Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
                 Property Type
@@ -215,7 +217,6 @@ const EditProperty = () => {
               min={100} 
             />
             
-            {/* ✅ CONDITION: Only show Bedrooms if not 'land' */}
             {formData.type !== 'land' && (
               <InputField 
                 label="Bedrooms" 
@@ -227,8 +228,6 @@ const EditProperty = () => {
                 placeholder="e.g., 3" 
               />
             )}
-            
-            {/* ✅ REMOVED: Bathrooms InputField */}
           </div>
 
           <div>
@@ -252,14 +251,16 @@ const EditProperty = () => {
               {existingImages.map((imageUrl) => (
                 <div key={imageUrl} className="relative group">
                   <img src={imageUrl} alt="Property" className="w-full h-24 object-cover rounded-lg"/>
-                  <button
+                  {/* ✅ Added motion */}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
                     type="button" 
                     onClick={() => handleRemoveExistingImage(imageUrl)}
                     className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none opacity-0 group-hover:opacity-100 transition-opacity"
                     aria-label="Remove image"
                   >
                     <FaTimes size={12} />
-                  </button>
+                  </motion.button>
                 </div>
               ))}
             </div>
@@ -286,7 +287,8 @@ const EditProperty = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full flex justify-center py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition ${
+              // ✅ Added click animation
+              className={`w-full flex justify-center py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${
                 loading ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500'
               }`}
             >
@@ -294,7 +296,7 @@ const EditProperty = () => {
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

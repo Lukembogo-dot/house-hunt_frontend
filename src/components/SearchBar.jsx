@@ -1,17 +1,15 @@
 // src/components/SearchBar.jsx
-import React from 'react'; // Removed useState
+import React from 'react';
 
-// ✅ 1. Accept 'filters' and 'onChange' as props
 export default function SearchBar({ filters, onChange, onFilter }) {
   
-  // ✅ 2. Use the 'onChange' prop directly
   const handleChange = (e) => {
     onChange(e.target.name, e.target.value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onFilter(); // We just tell the parent to filter
+    onFilter(); 
   };
 
   return (
@@ -24,7 +22,6 @@ export default function SearchBar({ filters, onChange, onFilter }) {
         <input
           type="text"
           name="location"
-          // ✅ 3. Use the 'filters' prop for the value
           value={filters.location}
           onChange={handleChange}
           placeholder="e.g. Nairobi"
@@ -36,7 +33,6 @@ export default function SearchBar({ filters, onChange, onFilter }) {
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
         <select
           name="type"
-          // ✅ 3. Use the 'filters' prop for the value
           value={filters.type}
           onChange={handleChange}
           className="border rounded p-2 w-40 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -53,7 +49,6 @@ export default function SearchBar({ filters, onChange, onFilter }) {
         <input
           type="number"
           name="minPrice"
-          // ✅ 3. Use the 'filters' prop for the value
           value={filters.minPrice}
           onChange={handleChange}
           placeholder="10000"
@@ -66,7 +61,6 @@ export default function SearchBar({ filters, onChange, onFilter }) {
         <input
           type="number"
           name="maxPrice"
-          // ✅ 3. Use the 'filters' prop for the value
           value={filters.maxPrice}
           onChange={handleChange}
           placeholder="1000000"
@@ -76,7 +70,8 @@ export default function SearchBar({ filters, onChange, onFilter }) {
 
       <button
         type="submit"
-        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+        // ✅ ADDED: Click animation
+        className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition-all duration-150 active:scale-[0.97]"
       >
         Search
       </button>
