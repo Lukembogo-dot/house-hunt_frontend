@@ -1,9 +1,17 @@
 import React from "react";
+import { motion } from "framer-motion"; // ✅ Import motion
 
 const Contact = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 py-16">
-      <div className="max-w-4xl w-full bg-white dark:bg-gray-800 shadow-lg dark:border dark:border-gray-700 rounded-2xl p-10">
+      
+      {/* ✅ Animate the form card */}
+      <motion.div 
+        className="max-w-4xl w-full bg-white dark:bg-gray-800 shadow-lg dark:border dark:border-gray-700 rounded-2xl p-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         {/* Header */}
         <h1 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-4 text-center">
           Get in Touch
@@ -47,7 +55,8 @@ const Contact = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-500 transition duration-300"
+            // ✅ Add click animation
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-500 transition-all duration-150 active:scale-95"
           >
             Send Message
           </button>
@@ -64,7 +73,7 @@ const Contact = () => {
             <p className="text-gray-600 dark:text-gray-300">+254 717 109 971</p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -4,16 +4,22 @@ import apiClient from "../api/axios";
 import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
 
-export default function PropertyList({ defaultFilter = {} }) {
+export default function PropertyList({ 
+  defaultFilter = {}, 
+  filterOverrides = null, 
+  showSearchBar = true, 
+  showTitle = true 
+}) {
+  
   const [properties, setProperties] = useState([]);
   
-  // ✅ 1. Initialize the combined filter state
   const [filters, setFilters] = useState({
     location: "",
     type: "",
     minPrice: "",
     maxPrice: "",
-    ...defaultFilter, // Apply default filters (e.g., type: 'rent')
+    ...defaultFilter,
+    ...(filterOverrides || {}), 
   });
 
   const [loading, setLoading] = useState(true);
@@ -27,6 +33,13 @@ export default function PropertyList({ defaultFilter = {} }) {
         ...currentFilters, 
         page: pageNumber,
       });
+      // Clean up empty params
+      Object.keys(params).forEach(key => {
+        if (!params.get(key) || params.get(key) === 'null') {
+          params.delete(key);
+        }
+      });
+      
       const response = await apiClient.get(`/properties?${params.toString()}`);
       setProperties(response.data.properties || []);
       setPage(response.data.page || 1);
@@ -39,16 +52,31 @@ export default function PropertyList({ defaultFilter = {} }) {
   };
 
   useEffect(() => {
-    fetchProperties(filters, 1);
+    if (!filterOverrides) {
+      fetchProperties(filters, 1);
+    }
   }, []); 
 
-  // ✅ 2. This function now just triggers the fetch
+  useEffect(() => {
+    // Only refetch if filterOverrides is the *reason* for the update
+    if (filterOverrides) {
+      const newFilters = { ...defaultFilter, ...filterOverrides };
+      setFilters(newFilters);
+      setPage(1); // Reset to page 1 for new search
+      fetchProperties(newFilters, 1);
+    } else if (filterOverrides === null) {
+      // Handle the case where filters are cleared
+      setFilters(defaultFilter);
+      setPage(1);
+      fetchProperties(defaultFilter, 1);
+    }
+  }, [filterOverrides]); 
+  
   const handleFilter = () => {
     setPage(1);
     fetchProperties(filters, 1);
   };
 
-  // ✅ 3. New handler to update state from SearchBar
   const handleFilterChange = (name, value) => {
     setFilters(prevFilters => ({
       ...prevFilters,
@@ -66,27 +94,29 @@ export default function PropertyList({ defaultFilter = {} }) {
 
   return (
     <>
-      <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100">
-          Find Your Perfect Home
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Browse the latest listings to rent or buy, powered by real-time data.
-        </p>
-      </div>
-
-      <div className="mb-10 flex justify-center">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 w-full max-w-2xl border border-gray-200 dark:border-gray-700">
-          {/* ✅ 4. Pass down the filters and the new change handler */}
-          <SearchBar 
-            filters={filters}
-            onChange={handleFilterChange}
-            onFilter={handleFilter} 
-          />
+      {showTitle && (
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100">
+            Find Your Perfect Home
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Browse the latest listings to rent or buy, powered by real-time data.
+          </p>
         </div>
-      </div>
+      )}
 
-      {/* ... (rest of the file is unchanged) ... */}
+      {showSearchBar && (
+        <div className="mb-10 flex justify-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 w-full max-w-2xl border border-gray-200 dark:border-gray-700">
+            <SearchBar 
+              filters={filters}
+              onChange={handleFilterChange}
+              onFilter={handleFilter} 
+            />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center items-center min-h-[40vh]">
           <div className="w-10 h-10 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>
