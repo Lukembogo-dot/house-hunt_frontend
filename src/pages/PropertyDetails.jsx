@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom"; 
+import { useParams, Link, useNavigate } from "react-router-dom"; // ✅ 1. Import useNavigate
 import apiClient from "../api/axios";
-import { FaStar, FaWhatsapp } from "react-icons/fa";
+import { FaStar, FaWhatsapp, FaHeart, FaRegHeart } from "react-icons/fa"; // ✅ 2. Import heart icons
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
@@ -10,7 +10,10 @@ const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Im
 
 const PropertyDetails = () => {
   const { id } = useParams();
-  const { user } = useAuth(); 
+  // ✅ 3. Get user and context functions
+  const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
+  const navigate = useNavigate(); // ✅ 4. Get navigate
+  
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
@@ -21,7 +24,7 @@ const PropertyDetails = () => {
   const [activeImage, setActiveImage] = useState(null);
   const [agentProperties, setAgentProperties] = useState([]);
 
-  // ... (fetchPropertyData, useEffect, handleReviewSubmit, loading/no-property checks are unchanged) ...
+  // ... (fetchPropertyData is unchanged) ...
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
@@ -55,6 +58,7 @@ const PropertyDetails = () => {
     fetchPropertyData();
   }, [id]); 
 
+  // ... (handleReviewSubmit is unchanged) ...
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
@@ -77,6 +81,23 @@ const PropertyDetails = () => {
     }
   };
   
+  // ✅ 5. Check if favorited and handle click
+  const isFavorited = user && user.favorites.includes(id);
+
+  const handleFavoriteClick = () => {
+    if (!user) {
+      alert("Please log in to save properties.");
+      navigate("/login");
+      return;
+    }
+    if (isFavorited) {
+      removeFavoriteContext(id);
+    } else {
+      addFavoriteContext(id);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
@@ -106,14 +127,38 @@ const PropertyDetails = () => {
       <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="md:col-span-2">
-           <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-2">{property.title}</h1>
+           {/* ✅ 6. Add Favorite Button next to title */}
+           <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
+              {property.title}
+            </h1>
+            {user && ( // Only show if user is loaded
+              <button
+                onClick={handleFavoriteClick}
+                className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {isFavorited ? (
+                  <>
+                    <FaHeart className="text-red-500" />
+                    <span className="dark:text-gray-200">Saved</span>
+                  </>
+                ) : (
+                  <>
+                    <FaRegHeart className="text-gray-600 dark:text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-200">Save Property</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+          
           <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
             Ksh {property.price?.toLocaleString()}
-            {/* Add '/month' for rentals */}
             {property.listingType === 'rent' && <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/month</span>}
           </p>
           <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
+          {/* ... (Image Gallery is unchanged) ... */}
           <div className="mb-6">
             <img
               src={activeImage}
@@ -139,10 +184,13 @@ const PropertyDetails = () => {
             )}
           </div>
           
+          {/* ... (Description is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
           </div>
+
+          {/* ... (Map is unchanged) ... */}
            <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location Map</h2>
             {property.coordinates && property.coordinates.lat ? (
@@ -151,6 +199,7 @@ const PropertyDetails = () => {
               <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>
             )}
           </div>
+
           {/* ... (Reviews section is unchanged) ... */}
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
@@ -220,7 +269,7 @@ const PropertyDetails = () => {
           </div>
         </div>
 
-        {/* Sidebar */}
+        {/* ... (Sidebar is unchanged) ... */}
         <div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
@@ -235,19 +284,15 @@ const PropertyDetails = () => {
                   {property.status}
                 </span>
               </li>
-              {/* ✅ MODIFIED: Listing Type */}
               <li className="flex justify-between">
                 <span>Listing:</span>
                 <span className="font-semibold capitalize">
                   {property.listingType}
                 </span>
               </li>
-              
-              {/* ✅ CONDITION: Only show if not land */}
               {property.type !== 'land' && (
                 <li>Bedrooms: {property.bedrooms}</li>
               )}
-              {/* ✅ REMOVED: Bathrooms */}
               <li>Type: <span className="capitalize">{property.type || "N/A"}</span></li>
               <li>Location: {property.location}</li>
               <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
@@ -289,7 +334,7 @@ const PropertyDetails = () => {
         </div>
       </div>
 
-      {/* "More from this Agent" Section */}
+      {/* ... ("More from this Agent" section is unchanged) ... */}
       {agentProperties.length > 0 && (
         <section className="max-w-6xl mx-auto mt-16">
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
