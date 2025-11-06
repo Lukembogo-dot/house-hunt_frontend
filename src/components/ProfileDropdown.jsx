@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FaUserCircle } from "react-icons/fa";
-import { motion, AnimatePresence } from 'framer-motion'; // ✅ Import motion
+import { motion, AnimatePresence } from 'framer-motion'; 
 
 const ProfileDropdown = () => {
   const { user, logout } = useAuth();
@@ -30,7 +30,7 @@ const ProfileDropdown = () => {
   return (
     <div className="relative" ref={dropdownRef}>
       <motion.button
-        whileTap={{ scale: 0.95 }} // ✅ Bouncy click
+        whileTap={{ scale: 0.95 }} 
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition"
       >
@@ -38,7 +38,6 @@ const ProfileDropdown = () => {
         <span>{user?.name}</span>
       </motion.button>
 
-      {/* ✅ Animate the dropdown menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
@@ -50,7 +49,7 @@ const ProfileDropdown = () => {
           >
             <Link
               to="/profile"
-              onClick={() => setIsOpen(false)} // ✅ This is the bug fix
+              onClick={() => setIsOpen(false)} 
               className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               My Profile
@@ -59,12 +58,26 @@ const ProfileDropdown = () => {
             {user && user.role === 'admin' && (
               <Link
                 to="/admin/dashboard"
-                onClick={() => setIsOpen(false)} // ✅ This is the bug fix
+                onClick={() => setIsOpen(false)} 
                 className="block px-4 py-2 text-sm font-bold text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Admin Dashboard
               </Link>
             )}
+
+            {/* ✅ 1. Add "List Property" link for agents and admins */}
+            {user && (user.role === 'agent' || user.role === 'admin') && (
+              <Link
+                to="/add-property"
+                onClick={() => setIsOpen(false)}
+                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                List Property
+              </Link>
+            )}
+
+            {/* ✅ 2. Add a divider for visual separation */}
+            <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
             <button
               onClick={handleLogout}

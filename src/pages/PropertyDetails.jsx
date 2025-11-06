@@ -1,17 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"; // ✅ Import useState
 import { useParams, Link, useNavigate } from "react-router-dom";
 import apiClient from "../api/axios";
-// ✅ 1. Import AnimatePresence for the modal and FaTimes for the close button
 import { 
   FaStar, FaWhatsapp, FaHeart, FaRegHeart, 
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
-  FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark, FaTimes
+  FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark, FaTimes,
+  FaCalendarAlt // ✅ 1. Import new icon
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
 import { motion, AnimatePresence } from 'framer-motion';
 
+// ... (sectionVariants, placeIconMap, placeholderImage, getDistance are unchanged) ...
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
@@ -21,7 +22,6 @@ const sectionVariants = {
   }
 };
 
-// Use an object for easier lookup and to provide a label
 const placeIconMap = {
   school: { icon: <FaSchool className="text-green-500" />, label: "School" },
   hospital: { icon: <FaHospital className="text-red-500" />, label: "Hospital" },
@@ -37,7 +37,6 @@ const placeIconMap = {
 
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
-// ✅ 2. Haversine distance function to calculate proximity
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Radius of the earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -50,6 +49,136 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const d = R * c; // Distance in km
   return d.toFixed(1); // Return distance rounded to 1 decimal place
 }
+
+// ✅ 2. NEW COMPONENT: Schedule Viewing Modal
+const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    if (!scheduledDate) {
+      setError('Please select a date and time.');
+      return;
+    }
+    
+    // Check if selected date is in the past
+    if (new Date(scheduledDate) < new Date()) {
+      setError('You cannot schedule a viewing in the past.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiClient.post(`/viewings/${propertyId}`, {
+        scheduledDate,
+        message
+      });
+      setSuccess('Viewing request sent successfully! The agent will contact you to confirm.');
+      setScheduledDate('');
+      setMessage('');
+      // Keep the modal open for 3 seconds to show success message
+      setTimeout(() => {
+        onClose();
+        setSuccess(''); // Reset for next time
+      }, 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!show) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+          disabled={submitting}
+        >
+          <FaTimes size={20} />
+        </button>
+        
+        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Schedule a Viewing
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-1">
+          For: {propertyTitle}
+        </p>
+
+        {success ? (
+          <div className="text-center p-4">
+            <p className="text-lg font-semibold text-green-600 dark:text-green-400">{success}</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Preferred Date & Time
+              </label>
+              <input
+                type="datetime-local"
+                id="scheduledDate"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                required
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Message (Optional)
+              </label>
+              <textarea
+                id="message"
+                rows="3"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Any questions or specific requests for the agent?"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              ></textarea>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? "Sending..." : "Send Request"}
+            </button>
+          </form>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+};
 
 
 const PropertyDetails = () => {
@@ -68,12 +197,14 @@ const PropertyDetails = () => {
   const [agentProperties, setAgentProperties] = useState([]);
   const [nearbyPlaces, setNearbyPlaces] = useState([]);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
-
-  // ✅ 3. New state for pagination and modal
   const [amenitiesPage, setAmenitiesPage] = useState(1);
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const itemsPerPage = 8; // Show 8 amenities at a time
+  const itemsPerPage = 8;
+  
+  // ✅ 3. New state for the modal
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
+  // ... (fetchPropertyData, useEffect, handleReviewSubmit, etc. are all unchanged) ...
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
@@ -115,7 +246,6 @@ const PropertyDetails = () => {
           const { lat, lng } = property.coordinates;
           const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`);
           
-          // ✅ 4. FIX: Completed the sorting function
           const sortedData = data.sort((a, b) => 
             a.type.localeCompare(b.type) || a.name.localeCompare(b.name)
           );
@@ -171,7 +301,6 @@ const PropertyDetails = () => {
     }
   };
 
-  // ✅ 5. Pagination logic for amenities
   const totalPages = Math.ceil(nearbyPlaces.length / itemsPerPage);
   const currentAmenities = nearbyPlaces.slice(
     (amenitiesPage - 1) * itemsPerPage,
@@ -204,6 +333,7 @@ const PropertyDetails = () => {
     );
   }
   
+  // ... (avgRating, allImages declarations are unchanged) ...
   const avgRating =
     comments.length > 0
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
@@ -213,13 +343,17 @@ const PropertyDetails = () => {
     ? property.images
     : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
 
+  // ✅ 4. Check if the logged-in user is the agent
+  const isAgentOwner = user && user._id === property.agent?._id;
+
   return (
-    <> {/* ✅ 6. Use Fragment to allow modal to be a sibling */}
+    <>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="md:col-span-2">
-             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
+             {/* ... (Property title, price, location, images, description, map... all unchanged) ... */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
                 {property.title}
               </h1>
@@ -310,7 +444,6 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
-            {/* ✅ 7. "What's Nearby" SECTION - Updated with Pagination */}
             <motion.div 
               className="mb-8"
               variants={sectionVariants}
@@ -372,6 +505,7 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
+            {/* ... (Reviews section is unchanged) ... */}
             <motion.div 
               className="mb-8"
               variants={sectionVariants}
@@ -455,6 +589,7 @@ const PropertyDetails = () => {
           >
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
               <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
+              {/* ... (Property Details list is unchanged) ... */}
               <ul className="text-gray-700 dark:text-gray-300 space-y-2">
                 <li className="flex justify-between">
                   <span>Status:</span>
@@ -479,7 +614,19 @@ const PropertyDetails = () => {
                 <li>Location: {property.location}</li>
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
+              
+              {/* ✅ 5. ADDED "Schedule Viewing" Button */}
+              {user && !isAgentOwner && property.status === 'available' && (
+                <button
+                  onClick={() => setShowScheduleModal(true)}
+                  className="mt-6 w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
+                >
+                  <FaCalendarAlt />
+                  <span>Schedule a Viewing</span>
+                </button>
+              )}
 
+              {/* ... (Agent details box is unchanged) ... */}
               {property.agent && (
                 <div className="mt-6 border-t dark:border-gray-700 pt-6">
                   <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
@@ -497,11 +644,11 @@ const PropertyDetails = () => {
                         {property.agent.name}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
-  </div>
+                    </div>
                   </Link>
                   {property.agent.whatsappNumber && (
                     <a
-                      href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
+                      href={`httpshttps://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-all duration-150 active:scale-[0.98]"
@@ -516,7 +663,7 @@ const PropertyDetails = () => {
           </motion.div>
         </div>
 
-        {/* "More from this Agent" Section */}
+        {/* ... ("More from this Agent" section is unchanged) ... */}
         {agentProperties.length > 0 && (
           <section className="max-w-6xl mx-auto mt-16">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
@@ -531,7 +678,16 @@ const PropertyDetails = () => {
         )}
       </div>
 
-      {/* ✅ 8. NEW MODAL COMPONENT */}
+      {/* ✅ 6. RENDER THE MODALS */}
+      <AnimatePresence>
+        <ScheduleModal
+          show={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          propertyId={id}
+          propertyTitle={property.title}
+        />
+      </AnimatePresence>
+      
       <AnimatePresence>
         {selectedPlace && (
           <motion.div
