@@ -57,8 +57,9 @@ function AppRoutes() {
         
         {/* ================= HEADER ================= */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
-          {/* ... (Header code is unchanged) ... */}
-          <div className="container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
+          
+          {/* ✅ BUG FIX: Added 'relative' and 'z-40' to the main header bar */}
+          <div className="relative z-40 container mx-auto px-6 md:px-10 py-4 flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <span className="text-3xl">🏠</span>
               <Link to="/" className="text-2xl font-extrabold text-blue-600 dark:text-blue-500 tracking-tight">
@@ -109,9 +110,46 @@ function AppRoutes() {
           </div>
 
           {/* ================= MOBILE MENU ================= */}
+          {/* This menu already has 'z-50', so it will now correctly render on top of the 'z-40' header bar */}
           {isMobileMenuOpen && (
             <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-50">
-              {/* ... (Mobile nav code is unchanged) ... */}
+              <nav className="flex flex-col p-6 space-y-4">
+                <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Home</Link>
+                <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Buy</Link>
+                <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Rent</Link>
+                <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>About</Link>
+                <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Contact</Link>
+                
+                {user && user.role === 'admin' && (
+                  <Link to="/admin/dashboard" className="font-bold text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400 transition" onClick={closeMobileMenu}>Admin Dashboard</Link>
+                )}
+                
+                <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
+                  {loading ? (
+                    <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                  ) : user ? (
+                    <ProfileDropdown /> 
+                  ) : (
+                    <Link 
+                      to="/login" 
+                      className="block w-full text-center bg-gray-100 dark:bg-gray-700 py-2.5 rounded-lg font-medium text-gray-700 dark:text-gray-200 hover:text-blue-600 transition"
+                      onClick={closeMobileMenu}
+                    >
+                      Login
+                    </Link>
+                  )}
+                  
+                  {canListProperty && (
+                    <Link 
+                      to="/add-property" 
+                      className="block w-full text-center bg-blue-600 text-white px-5 py-2.5 rounded-full shadow-md hover:bg-blue-700 dark:hover:bg-blue-500 transition"
+                      onClick={closeMobileMenu}
+                    >
+                      List Property
+                    </Link>
+                  )}
+                </div>
+              </nav>
             </div>
           )}
         </header>
@@ -148,7 +186,6 @@ function AppRoutes() {
                 
                 <main id="properties" className="flex-grow">
                   
-                  {/* ✅ BUG FIX: Changed py-12 to pt-12 (removes bottom padding) */}
                   <section className="pt-12 px-6">
                     <div className="max-w-3xl mx-auto">
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
