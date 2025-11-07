@@ -8,16 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // This function will now work because our axios.js interceptor
+    // will automatically find the token in localStorage and send it.
     const checkLoggedIn = async () => {
       try {
-        const { data } = await apiClient.get('/auth/profile', {
-          withCredentials: true,
-        });
+        const { data } = await apiClient.get('/auth/profile'); // No longer need withCredentials
+        
         // ✅ FIX: Ensure favorites is always an array
         const userData = { ...data, favorites: data.favorites || [] };
         setUser(userData);
       } catch (error) {
         setUser(null);
+        localStorage.removeItem('token'); // Also clear token if profile check fails
       } finally {
         setLoading(false);
       }
@@ -26,6 +28,14 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
+    // ✅ --- THIS IS THE FIX ---
+    // Save the token to localStorage.
+    // The axios.js interceptor will now find and use this token.
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
+    }
+    // -------------------------
+
     // ✅ FIX: Ensure favorites is always an array on login
     const completeUserData = { ...userData, favorites: userData.favorites || [] };
     setUser(completeUserData);
@@ -33,30 +43,34 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await apiClient.post('/auth/logout', {}, {
-        withCredentials: true,
-      });
-      setUser(null);
+      // We still call the backend logout endpoint
+      await apiClient.post('/auth/logout'); 
+      
     } catch (error) {
       console.error("Failed to log out", error);
+    } finally {
+      // ✅ --- THIS IS THE FIX ---
+      // ALWAYS clear the user and remove the token from storage
+      setUser(null);
+      localStorage.removeItem('token');
+      // -------------------------
     }
   };
 
   // --- NEW FUNCTIONS FOR FAVORITES ---
+  // (These will now work because the interceptor will add the token)
   
   const addFavoriteContext = async (propertyId) => {
     if (!user) return;
 
     setUser(prevUser => ({
       ...prevUser,
-      // This is now safe because we know favorites is an array
       favorites: [...prevUser.favorites, propertyId], 
     }));
 
     try {
-      await apiClient.post(`/users/favorites/${propertyId}`, {}, {
-        withCredentials: true,
-      });
+      // This request will now be authorized
+      await apiClient.post(`/users/favorites/${propertyId}`);
     } catch (error) {
       console.error("Failed to add favorite", error);
       setUser(prevUser => ({
@@ -73,14 +87,12 @@ export const AuthProvider = ({ children }) => {
     const oldFavorites = user.favorites;
     setUser(prevUser => ({
       ...prevUser,
-      // This is now safe
       favorites: prevUser.favorites.filter(id => id !== propertyId),
     }));
 
     try {
-      await apiClient.delete(`/users/favorites/${propertyId}`, {
-        withCredentials: true,
-      });
+      // This request will now be authorized
+      await apiClient.delete(`/users/favorites/${propertyId}`);
     } catch (error) {
       console.error("Failed to remove favorite", error);
       setUser(prevUser => ({

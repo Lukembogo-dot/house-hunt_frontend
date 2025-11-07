@@ -10,7 +10,25 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const apiClient = axios.create({
   baseURL: `${API_BASE_URL}/api`,
-  withCredentials: true // ✅ FIX: Send cookies with every request
+  withCredentials: true 
 });
+
+// -----------------------------------------------------------------
+// ✅ THIS IS THE FIX: ADD THIS INTERCEPTOR
+// -----------------------------------------------------------------
+apiClient.interceptors.request.use((config) => {
+  // Get the token from localStorage
+  const token = localStorage.getItem('token');
+
+  if (token) {
+    // If the token exists, add it to the Authorization header
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  // Handle request errors
+  return Promise.reject(error);
+});
+// -----------------------------------------------------------------
 
 export default apiClient;

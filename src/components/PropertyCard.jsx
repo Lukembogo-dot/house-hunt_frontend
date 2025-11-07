@@ -123,8 +123,8 @@ export default function PropertyCard({ property }) {
 
         <button
           onClick={handleViewDetails}
-          // ✅ 4. Add simple click animation to the main button
-          className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition transition-transform duration-150 active:scale-[0.98]"
+          // ✅ 4. --- FIX IS HERE --- Removed 'transition-transform'
+          className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition duration-150 active:scale-[0.98]"
         >
           View Details
         </button>
