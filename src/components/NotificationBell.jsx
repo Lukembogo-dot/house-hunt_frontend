@@ -1,60 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { FaBell, FaRegBell } from 'react-icons/fa';
-import apiClient from '../api/axios';
+import React, { useState } from 'react';
+import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { useSocket } from '../context/SocketContext.jsx'; // ✅ 1. Import useSocket
+import { useAuth } from '../context/AuthContext'; // ✅ 1. Import useAuth
+
+// ❌ We no longer need apiClient, useSocket, useEffect, etc.
 
 const NotificationBell = () => {
-  const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const socket = useSocket(); // ✅ 2. Get the socket connection
+  
+  // ✅ 2. Get all notification data from the AuthContext
+  const { notifications, unreadCount, markNotificationsAsRead } = useAuth();
+  
+  // ❌ All local state (notifications, unreadCount) is removed.
+  // ❌ All useEffect listeners (fetchNotifications, socket.on) are removed.
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const { data } = await apiClient.get('/notifications');
-      setNotifications(data);
-      const unread = data.filter(n => !n.isRead).length;
-      setUnreadCount(unread);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
-  // ✅ 3. Add new useEffect to listen for socket events
-  useEffect(() => {
-    if (!socket) return; // Don't do anything if socket isn't connected
-
-    // Listen for the 'newNotification' event from the server
-    socket.on('newNotification', (newNotification) => {
-      // Add the new notification to the top of the list
-      setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-      // Increment the unread count
-      setUnreadCount((prevCount) => prevCount + 1);
-    });
-
-    // Clean up the listener when the component unmounts
-    return () => {
-      socket.off('newNotification');
-    };
-  }, [socket]); // Re-run this effect if the socket connection changes
-
-  const handleOpen = async () => {
+  const handleOpen = () => {
     setIsOpen(!isOpen);
     if (!isOpen && unreadCount > 0) {
-      // Mark all as read when dropdown is opened
-      try {
-        await apiClient.put('/notifications/read-all');
-        setUnreadCount(0);
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      } catch (error) {
-        console.error('Failed to mark notifications as read:', error);
-      }
+      // ✅ 3. Call the function from AuthContext
+      markNotificationsAsRead();
     }
   };
 
@@ -65,6 +30,7 @@ const NotificationBell = () => {
         className="relative text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
       >
         <FaBell size={22} />
+        {/* ✅ 4. This now reads directly from context state */}
         {unreadCount > 0 && (
           <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
             {unreadCount}
@@ -81,6 +47,7 @@ const NotificationBell = () => {
           <div className="p-3 border-b dark:border-gray-700">
             <h4 className="font-semibold text-gray-800 dark:text-gray-100">Notifications</h4>
           </div>
+          {/* ✅ 5. This now reads directly from context state */}
           {notifications.length > 0 ? (
             <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {notifications.map(noti => (
@@ -89,6 +56,7 @@ const NotificationBell = () => {
                   to={noti.link}
                   className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                 >
+                  {/* We can use noti.isRead from context to keep it bold/normal */}
                   <p className={`text-sm text-gray-700 dark:text-gray-300 ${!noti.isRead ? 'font-bold' : ''}`}>
                     {noti.message}
                   </p>

@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+// ✅ 1. IMPORT useLocation
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axios";
 import { 
   FaStar, FaWhatsapp, FaHeart, FaRegHeart, 
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark, FaTimes,
   FaCalendarAlt,
-  FaCommentDots // ✅ 1. Import new icon
+  FaCommentDots,
+  FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatDistanceToNow } from 'date-fns';
 
-// ... (sectionVariants, placeIconMap, placeholderImage, getDistance are unchanged) ...
+// ... (sectionVariants, placeIconMap, placeholderImage, getDistance, ScheduleModal... all unchanged) ...
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
@@ -51,7 +54,6 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return d.toFixed(1); // Return distance rounded to 1 decimal place
 }
 
-// ... (ScheduleModal component is unchanged) ...
 const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [message, setMessage] = useState('');
@@ -184,6 +186,8 @@ const PropertyDetails = () => {
   const { id } = useParams();
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
   const navigate = useNavigate(); 
+  // ✅ 2. INITIALIZE useLocation
+  const location = useLocation();
   
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -202,15 +206,14 @@ const PropertyDetails = () => {
   
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
-  // ✅ 2. Add new state for chat button
   const [isStartingChat, setIsStartingChat] = useState(false);
 
-  // ... (fetchPropertyData, useEffect, handleReviewSubmit, etc. are all unchanged) ...
+  // ... (fetchPropertyData, useEffects, handleReviewSubmit, isFavorited, handleFavoriteClick ... unchanged) ...
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
       setAgentProperties([]); 
-      const propertyRes = await apiClient.get(`/properties/${id}`);
+      const propertyRes = await apiClient.get(`/properties/${id}`); 
       setProperty(propertyRes.data);
       
       let imagesToSet = [];
@@ -222,11 +225,11 @@ const PropertyDetails = () => {
       setActiveImage(imagesToSet[0] || placeholderImage);
 
       if (propertyRes.data.agent?._id) {
-        const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`);
+        const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`); 
         setAgentProperties(agentRes.data.filter(p => p._id !== id));
       }
 
-      const reviewsRes = await apiClient.get(`/reviews/${id}`);
+      const reviewsRes = await apiClient.get(`/reviews/${id}`); 
       setComments(reviewsRes.data || []);
     } catch (error) {
       console.error("❌ Error fetching property data:", error);
@@ -245,7 +248,7 @@ const PropertyDetails = () => {
         try {
           setLoadingPlaces(true);
           const { lat, lng } = property.coordinates;
-          const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`);
+          const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`); 
           
           const sortedData = data.sort((a, b) => 
             a.type.localeCompare(b.type) || a.name.localeCompare(b.name)
@@ -264,13 +267,12 @@ const PropertyDetails = () => {
     }
   }, [property]); 
 
-
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0) return;
     try {
       setSubmitting(true);
-      await apiClient.post(
+      await apiClient.post( 
         `/reviews/${id}`,
         { comment: reviewText, rating },
         { withCredentials: true }
@@ -292,7 +294,7 @@ const PropertyDetails = () => {
   const handleFavoriteClick = () => {
     if (!user) {
       alert("Please log in to save properties.");
-      navigate("/login");
+      navigate("/login", { state: { from: location.pathname } });
       return;
     }
     if (isFavorited) {
@@ -302,6 +304,7 @@ const PropertyDetails = () => {
     }
   };
 
+  // ... (totalPages, currentAmenities, handleAmenityClick ... unchanged) ...
   const totalPages = Math.ceil(nearbyPlaces.length / itemsPerPage);
   const currentAmenities = nearbyPlaces.slice(
     (amenitiesPage - 1) * itemsPerPage,
@@ -317,11 +320,21 @@ const PropertyDetails = () => {
     );
     setSelectedPlace({ ...place, distance });
   };
+  
 
-  // ✅ 3. Add new handler for starting a chat
+  // ✅ 3. CREATE NEW HANDLER FOR SCHEDULE BUTTON
+  const handleScheduleClick = () => {
+    if (!user) {
+      navigate('/login', { state: { from: location.pathname } }); 
+      return;
+    }
+    setShowScheduleModal(true);
+  };
+
+  // ✅ 4. UPDATE handleStartChat TO INCLUDE REDIRECT STATE
   const handleStartChat = async () => {
     if (!user) {
-      navigate('/login');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
     setIsStartingChat(true);
@@ -329,7 +342,6 @@ const PropertyDetails = () => {
       const { data } = await apiClient.post('/chat/conversations', { 
         propertyId: id 
       });
-      // On success, navigate to the new chat page with the conversation ID
       navigate(`/chat/${data._id}`);
     } catch (error) {
       console.error('Failed to start chat:', error);
@@ -339,7 +351,37 @@ const PropertyDetails = () => {
     }
   };
 
+  // ... (Social Share Handlers ... unchanged) ...
+  const currentUrl = window.location.href;
+  const shareTitle = `Check out this amazing property on HouseHunt Kenya: ${property?.title || 'Property Listing'}`;
 
+  const shareOnFacebook = () => {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
+  };
+
+  const shareOnTwitter = () => {
+    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareTitle)}`, '_blank');
+  };
+
+  const shareOnWhatsApp = () => {
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + currentUrl)}`, '_blank');
+  };
+  
+  const shareOnLinkedIn = () => {
+    window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(shareTitle)}`, '_blank');
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(currentUrl);
+      alert('Link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      alert('Failed to copy link.');
+    }
+  };
+
+  // ... (Loading/Error states ... unchanged) ...
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
@@ -355,7 +397,6 @@ const PropertyDetails = () => {
     );
   }
   
-  // ... (avgRating, allImages declarations are unchanged) ...
   const avgRating =
     comments.length > 0
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
@@ -373,30 +414,29 @@ const PropertyDetails = () => {
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="md:col-span-2">
-             {/* ... (Property title, price, location, images, description, map... all unchanged) ... */}
+             {/* ... (All main content sections ... unchanged) ... */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
                 {property.title}
               </h1>
-              {user && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleFavoriteClick}
-                  className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
-                >
-                  {isFavorited ? (
-                    <>
-                      <FaHeart className="text-red-500" />
-                      <span className="dark:text-gray-200">Saved</span>
-                    </>
-                  ) : (
-                    <>
-                      <FaRegHeart className="text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-700 dark:text-gray-200">Save Property</span>
-                    </>
-                  )}
-                </motion.button>
-              )}
+              {/* This button handler already checks for user, so it's fine */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleFavoriteClick}
+                className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                {isFavorited ? (
+                  <>
+                    <FaHeart className="text-red-500" />
+                    <span className="dark:text-gray-200">Saved</span>
+                  </>
+                ) : (
+                  <>
+                    <FaRegHeart className="text-gray-600 dark:text-gray-400" />
+                    <span className="text-gray-700 dark:text-gray-200">Save Property</span>
+                  </>
+                )}
+              </motion.button>
             </div>
             
             <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
@@ -526,7 +566,6 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
-            {/* ... (Reviews section is unchanged) ... */}
             <motion.div 
               className="mb-8"
               variants={sectionVariants}
@@ -610,7 +649,6 @@ const PropertyDetails = () => {
           >
             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700">
               <h3 className="text-xl font-semibold mb-3 dark:text-gray-100">Property Details</h3>
-              {/* ... (Property Details list is unchanged) ... */}
               <ul className="text-gray-700 dark:text-gray-300 space-y-2">
                 <li className="flex justify-between">
                   <span>Status:</span>
@@ -628,6 +666,15 @@ const PropertyDetails = () => {
                     {property.listingType}
                   </span>
                 </li>
+                {property.createdAt && (
+                  <li className="flex justify-between">
+                    <span>Listed:</span>
+                    <span className="font-semibold">
+                      {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}
+                    </span>
+                  </li>
+                )}
+                
                 {property.type !== 'land' && (
                   <li>Bedrooms: {property.bedrooms}</li>
                 )}
@@ -636,18 +683,18 @@ const PropertyDetails = () => {
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
               
-              {/* ✅ 4. UPDATED Button Section */}
-              {user && !isAgentOwner && property.status === 'available' && (
+              {/* ✅ 5. REMOVED `user &&` CHECK - BUTTONS NOW SHOW FOR ALL */}
+              {!isAgentOwner && property.status === 'available' && (
                 <div className="mt-6 flex flex-col space-y-3">
                   <button
-                    onClick={() => setShowScheduleModal(true)}
+                    onClick={handleScheduleClick} // <-- USE NEW HANDLER
                     className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
                   >
                     <FaCalendarAlt />
                     <span>Schedule a Viewing</span>
                   </button>
                   <button
-                    onClick={handleStartChat}
+                    onClick={handleStartChat} // <-- This handler already checks for user
                     disabled={isStartingChat}
                     className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                   >
@@ -657,7 +704,6 @@ const PropertyDetails = () => {
                 </div>
               )}
 
-              {/* ... (Agent details box is unchanged) ... */}
               {property.agent && (
                 <div className="mt-6 border-t dark:border-gray-700 pt-6">
                   <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
@@ -677,24 +723,58 @@ const PropertyDetails = () => {
                       <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
                     </div>
                   </Link>
-                  {property.agent.whatsappNumber && (
-                    <a
-                      href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}`} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-all duration-150 active:scale-[0.98]"
-                    >
-                      <FaWhatsapp size={20} />
-                      <span>Chat on WhatsApp</span>
-                    </a>
-                  )}
+                  
+                  {/* ✅ 6. REMOVED WHATSAPP BUTTON BLOCK FROM HERE */}
+                  
                 </div>
               )}
+
+              {/* ... (Social Share Section ... unchanged) ... */}
+              <div className="mt-6 border-t dark:border-gray-700 pt-6">
+                <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Share This Property</h3>
+                <div className="flex flex-wrap gap-3 justify-start">
+                  <button 
+                    onClick={shareOnFacebook} 
+                    className="flex-1 min-w-[50px] flex justify-center items-center p-3 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors shadow-md"
+                    aria-label="Share on Facebook"
+                  >
+                    <FaFacebookF size={20} />
+                  </button>
+                  <button 
+                    onClick={shareOnTwitter} 
+                    className="flex-1 min-w-[50px] flex justify-center items-center p-3 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-md"
+                    aria-label="Share on Twitter"
+                  >
+                    <FaTwitter size={20} />
+                  </button>
+                  <button 
+                    onClick={shareOnWhatsApp} 
+                    className="flex-1 min-w-[50px] flex justify-center items-center p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors shadow-md"
+                    aria-label="Share on WhatsApp"
+                  >
+                    <FaWhatsapp size={20} />
+                  </button>
+                  <button 
+                    onClick={shareOnLinkedIn} 
+                    className="flex-1 min-w-[50px] flex justify-center items-center p-3 bg-blue-800 text-white rounded-lg hover:bg-blue-900 transition-colors shadow-md"
+                    aria-label="Share on LinkedIn"
+                  >
+                    <FaLinkedinIn size={20} />
+                  </button>
+                  <button 
+                    onClick={copyToClipboard} 
+                    className="flex-1 min-w-[50px] flex justify-center items-center p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-md"
+                    aria-label="Copy link to clipboard"
+                  >
+                    <FaCopy size={20} />
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
 
-        {/* ... ("More from this Agent" section is unchanged) ... */}
+        {/* ... (More from this Agent section ... unchanged) ... */}
         {agentProperties.length > 0 && (
           <section className="max-w-6xl mx-auto mt-16">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
@@ -709,7 +789,7 @@ const PropertyDetails = () => {
         )}
       </div>
 
-      {/* ... (Modals: ScheduleModal, AnimatePresence, etc. - unchanged) ... */}
+      {/* ... (All Modals ... unchanged) ... */}
       <AnimatePresence>
         <ScheduleModal
           show={showScheduleModal}
@@ -726,7 +806,7 @@ const PropertyDetails = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            onClick={() => setSelectedPlace(null)} // Click background to close
+            onClick={() => setSelectedPlace(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -734,7 +814,7 @@ const PropertyDetails = () => {
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking modal
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setSelectedPlace(null)}
