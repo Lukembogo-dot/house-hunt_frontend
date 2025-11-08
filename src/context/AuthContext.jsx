@@ -7,11 +7,9 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // ✅ 1. Add state for notifications
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // ✅ 2. Create a function to fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
       const { data } = await apiClient.get('/notifications');
@@ -20,16 +18,16 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch notifications on load", error);
     }
-  }, []); // useCallback ensures this function doesn't change on re-renders
+  }, []); 
 
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
         const { data } = await apiClient.get('/auth/profile');
+        // ✅ 1. Store the complete user object, including 'isVerified'
         const userData = { ...data, favorites: data.favorites || [] };
         setUser(userData);
         
-        // ✅ 3. Fetch notifications *after* user is successfully loaded
         await fetchNotifications(); 
         
       } catch (error) {
@@ -40,16 +38,16 @@ export const AuthProvider = ({ children }) => {
       }
     };
     checkLoggedIn();
-  }, [fetchNotifications]); // Add fetchNotifications as a dependency
+  }, [fetchNotifications]); 
 
   const login = (userData) => {
     if (userData.token) {
       localStorage.setItem('token', userData.token);
     }
+    // ✅ 2. Store the complete user object, including 'isVerified'
     const completeUserData = { ...userData, favorites: userData.favorites || [] };
     setUser(completeUserData);
     
-    // ✅ 4. Fetch notifications on login
     fetchNotifications(); 
   };
 
@@ -62,21 +60,18 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('token');
       
-      // ✅ 5. Clear notifications on logout
       setNotifications([]); 
       setUnreadCount(0);
     }
   };
 
-  // ✅ 6. Create function for the socket to add a new notification
   const addNotification = (newNotification) => {
     setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
     setUnreadCount((prevCount) => prevCount + 1);
   };
 
-  // ✅ 7. Create function for the bell to mark notifications as read
   const markNotificationsAsRead = async () => {
-    if (unreadCount === 0) return; // Don't do anything if there's nothing to mark
+    if (unreadCount === 0) return;
     
     try {
       await apiClient.put('/notifications/read-all');
@@ -88,8 +83,36 @@ export const AuthProvider = ({ children }) => {
   };
 
   // --- (Favorite functions are unchanged) ---
-  const addFavoriteContext = async (propertyId) => { /* ...no change... */ };
-  const removeFavoriteContext = async (propertyId) => { /* ...no change... */ };
+  const addFavoriteContext = async (propertyId) => {
+    if (!user) {
+      alert("Please log in to save properties.");
+      return;
+    }
+    // (rest of the function is unchanged)
+    try {
+      const { data } = await apiClient.post(`/users/profile/favorites`, { propertyId }, { withCredentials: true });
+      setUser(prevUser => ({
+        ...prevUser,
+        favorites: data.favorites,
+      }));
+    } catch (error) {
+      console.error('Failed to add favorite:', error);
+    }
+  };
+  
+  const removeFavoriteContext = async (propertyId) => {
+    if (!user) return;
+    // (rest of the function is unchanged)
+    try {
+      const { data } = await apiClient.delete(`/users/profile/favorites/${propertyId}`, { withCredentials: true });
+      setUser(prevUser => ({
+        ...prevUser,
+        favorites: data.favorites,
+      }));
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+    }
+  };
   
   return (
     <AuthContext.Provider value={{ 
@@ -100,11 +123,11 @@ export const AuthProvider = ({ children }) => {
       addFavoriteContext,
       removeFavoriteContext,
       
-      // ✅ 8. Expose all the new notification states and functions
       notifications,
       unreadCount,
       addNotification,
-      markNotificationsAsRead
+      markNotificationsAsRead,
+      setUser // ✅ 3. Expose setUser so VerifyEmail can update it
     }}>
       {children}
     </AuthContext.Provider>

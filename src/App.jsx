@@ -28,10 +28,17 @@ import SearchBar from "./components/SearchBar";
 import ChatBubble from "./components/ChatBubble";
 import NotificationBell from "./components/NotificationBell";
 
-// ✅ 1. Import new chat components
+// Chat components
 import ChatPage from './pages/ChatPage';
 import MessageStream from './components/MessageStream';
 import ChatPlaceholder from './components/ChatPlaceholder';
+
+// Password Reset components
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+
+// ✅ 1. Import new Email Verification component
+import VerifyEmail from './pages/VerifyEmail';
 
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
@@ -137,7 +144,6 @@ function AppRoutes() {
                         My Profile
                       </Link>
                       
-                      {/* ✅ 2. Add "My Messages" link to mobile menu */}
                       <Link
                         to="/chat"
                         className="block text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition"
@@ -271,7 +277,7 @@ function AppRoutes() {
               </>
             } />
 
-            {/* ... (All other routes are unchanged) ... */}
+            {/* Public Routes */}
             <Route path="/buy" element={<Buy />} />
             <Route path="/rent" element={<Rent />} />
             <Route path="/about" element={<About />} />
@@ -280,22 +286,31 @@ function AppRoutes() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
+            
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            
+            {/* ✅ 2. ADD THE VERIFY EMAIL ROUTE */}
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
+
+            {/* Protected Routes */}
             <Route path="" element={<ProtectedRoute />}>
               <Route path="/profile" element={<MyProfile />} />
               <Route path="/profile/edit" element={<EditProfileSettings />} />
               
-              {/* ✅ 3. Add the new chat routes */}
               <Route path="/chat" element={<ChatPage />}>
                 <Route index element={<ChatPlaceholder />} />
                 <Route path=":id" element={<MessageStream />} />
               </Route>
             </Route>
 
+            {/* Admin Routes */}
             <Route path="" element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
             </Route>
 
+            {/* Agent Routes */}
             <Route path="" element={<AgentRoute />}>
               <Route path="/add-property" element={<AddProperty />} />
               <Route path="/admin/property/:id/edit" element={<EditProperty />} />
@@ -305,7 +320,31 @@ function AppRoutes() {
 
         {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
-          {/* ... (Footer code is unchanged) ... */}
+          <div className="container mx-auto px-6 md:px-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+            <div>
+              <h3 className="text-xl font-semibold text-white mb-4">HouseHunt Kenya</h3>
+              <p className="text-sm">Finding your next home, simplified. Explore hundreds of verified listings for sale and rent.</p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link to="/buy" className="hover:text-blue-400 transition">Buy</Link></li>
+                <li><Link to="/rent" className="hover:text-blue-400 transition">Rent</Link></li>
+                <li><Link to="/about" className="hover:text-blue-400 transition">About Us</Link></li>
+                <li><Link to="/contact" className="hover:text-blue-400 transition">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="hover:text-blue-400 transition">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition">Privacy Policy</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="container mx-auto px-6 md:px-10 text-center mt-8 border-t border-gray-700 pt-6">
+            <p className="text-sm">&copy; {new Date().getFullYear()} HouseHunt Kenya. All rights reserved.</p>
+          </div>
         </footer>
 
         <ChatBubble />
