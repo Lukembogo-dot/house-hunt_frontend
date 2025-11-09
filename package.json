@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",
+    "@tiptap/react": "^3.10.4",
+    "@tiptap/starter-kit": "^3.10.4",
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
@@ -18,6 +20,7 @@
     "react-dom": "^19.1.1",
     "react-helmet-async": "^2.0.5",
     "react-icons": "^5.5.0",
+    "react-image-crop": "^11.0.10",
     "react-router-dom": "^7.9.4",
     "socket.io-client": "^4.8.1"
   },

@@ -1,504 +1,595 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import apiClient from '../api/axios'; 
-import { useAuth } from '../context/AuthContext';
-import { 
-  FaEdit, 
-  FaTrash, 
-  FaUserShield, 
-  FaSitemap, 
-  FaStreetView,
-  FaUserPlus, // 1. IMPORT NEW ICON
-  FaTimes,
-  FaSpinner
-} from 'react-icons/fa';
-import FailedQueries from '../components/FailedQueries';
-import PendingApprovals from '../components/PendingApprovals';
-import { motion, AnimatePresence } from 'framer-motion'; // 2. IMPORT FRAMER MOTION
+// src/pages/AdminAddService.jsx
 
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import apiClient from '../api/axios';
+import { FaSpinner, FaSave, FaPlus, FaTrash, FaImage, FaLink, FaBold, FaListUl, FaListOl, FaTimes } from 'react-icons/fa';
 
-// 3. --- NEW ASSIGN AGENT MODAL COMPONENT ---
-const AssignAgentModal = ({ show, onClose, property, agents, onAssign }) => {
-  const [selectedAgentId, setSelectedAgentId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+// 1. IMPORT TIPTAP
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 
-  const handleSubmit = async () => {
-    if (!selectedAgentId) {
-      alert('Please select an agent.');
+// 2. IMPORT REACT-IMAGE-CROP
+import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// --- Input Components (Unchanged) ---
+const InputField = ({ label, name, value, onChange, placeholder, required = true }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
+      {label}
+    </label>
+    <input
+      type="text"
+      id={name}
+      name={name}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+    />
+  </div>
+);
+
+const TextareaField = ({ label, name, value, onChange, placeholder, rows = 3, required = true }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
+      {label}
+    </label>
+    <textarea
+      id={name}
+      name={name}
+      rows={rows}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+    />
+  </div>
+);
+
+// --- Tiptap Toolbar (Unchanged) ---
+const TiptapToolbar = ({ editor }) => {
+  if (!editor) return null;
+
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('Enter URL', previousUrl);
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
-    setIsSubmitting(true);
-    await onAssign(property._id, selectedAgentId);
-    setIsSubmitting(false);
-    onClose(); // Close modal on success
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
-  
-  // Reset selected agent when property changes
-  useEffect(() => {
-    setSelectedAgentId('');
-  }, [property]);
-
-  if (!show) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
-          disabled={isSubmitting}
-        >
-          <FaTimes size={20} />
-        </button>
-        
-        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Assign Agent to Property
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-1">
-          Property: <strong>{property?.title}</strong>
-        </p>
-
-        <div className="mb-4">
-          <label htmlFor="agentSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Select an Agent
-          </label>
-          <select
-            id="agentSelect"
-            value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="">-- Please choose an agent --</option>
-            {agents.map(agent => (
-              <option key={agent._id} value={agent._id}>
-                {agent.name} ({agent.email})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting || !selectedAgentId}
-            className="w-32 flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Agent'}
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
+    <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-t-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H1">
+        H1
+      </button>
+      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H2">
+        H2
+      </button>
+      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 3 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H3">
+        H3
+      </button>
+      <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`p-2 rounded ${editor.isActive('bold') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Bold">
+        <FaBold />
+      </button>
+      <button type="button" onClick={setLink} className={`p-2 rounded ${editor.isActive('link') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Link">
+        <FaLink />
+      </button>
+      <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-2 rounded ${editor.isActive('bulletList') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Bullet List">
+        <FaListUl />
+      </button>
+      <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-2 rounded ${editor.isActive('orderedList') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Ordered List">
+        <FaListOl />
+      </button>
+    </div>
   );
 };
-// ---------------------------------------------
+// ------------------------------------
 
+// 3. --- HELPER TO GET CROPPED IMAGE ---
+function getCroppedImg(image, crop, canvas) {
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+  canvas.width = crop.width * scaleX;
+  canvas.height = crop.height * scaleY;
+  const ctx = canvas.getContext('2d');
 
-const AdminDashboard = () => {
-  const [users, setUsers] = useState([]);
-  const [properties, setProperties] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [services, setServices] = useState([]);
-  const [allAgents, setAllAgents] = useState([]); // 4. STATE FOR AGENTS
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const { user } = useAuth();
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
-  // 5. STATE FOR MODAL
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (!blob) {
+        reject(new Error('Canvas is empty'));
+        return;
+      }
+      blob.name = 'cropped-image.jpeg';
+      resolve(blob);
+    }, 'image/jpeg', 0.95); // 95% quality JPEG
+  });
+}
+// ---------------------------------------
 
-  const fetchData = useCallback(async () => {
-    try {
+const initialFormState = {
+  title: '',
+  serviceType: '',
+  location: '',
+  imageUrl: '', // For URL input
+  metaTitle: '',
+  metaDescription: '',
+};
+
+const AdminAddService = () => {
+  const [formData, setFormData] = useState(initialFormState);
+  const [content, setContent] = useState('');
+  const [faqs, setFaqs] = useState([{ question: '', answer: '' }]);
+  const [imageUpload, setImageUpload] = useState(null); // Will store the CROPPED blob
+  const [imageUploadPreview, setImageUploadPreview] = useState('');
+  const [imageInputMode, setImageInputMode] = useState('url');
+  
+  // 4. --- NEW STATE FOR CROP MODAL ---
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [imgSrc, setImgSrc] = useState(''); // Original image for cropper
+  const [crop, setCrop] = useState();
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const [aspect, setAspect] = useState(16 / 9); // 16:9 aspect ratio
+  const imgRef = useRef(null);
+  const previewCanvasRef = useRef(null);
+  // ----------------------------------
+
+  const [status, setStatus] = useState({ message: '', type: '' });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+  
+  const editor = useEditor({
+    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), Link.configure({ openOnClick: false })],
+    content: content,
+    onUpdate: ({ editor }) => { setContent(editor.getHTML()); },
+  });
+
+  useEffect(() => {
+    if (isEditMode) {
       setLoading(true);
-      setError('');
+      const fetchService = async () => {
+        try {
+          const { data } = await apiClient.get(`/services/${id}`);
+          const fetchedData = {
+            title: data.title || '',
+            serviceType: data.serviceType || '',
+            location: data.location || '',
+            imageUrl: data.imageUrl || '',
+            metaTitle: data.metaTitle || '',
+            metaDescription: data.metaDescription || '',
+          };
+          setFormData(fetchedData);
+          
+          const dbContent = data.content || '';
+          setContent(dbContent);
+          if (editor) editor.commands.setContent(dbContent);
+          
+          setFaqs(data.faqs && data.faqs.length > 0 ? data.faqs : [{ question: '', answer: '' }]);
+        } catch (err) {
+          setStatus({ message: 'Failed to load service data.', type: 'error' });
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchService();
+    }
+  }, [id, isEditMode, editor]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFaqChange = (index, field, value) => {
+    const newFaqs = [...faqs];
+    newFaqs[index][field] = value;
+    setFaqs(newFaqs);
+  };
+
+  const addFaq = () => {
+    setFaqs([...faqs, { question: '', answer: '' }]);
+  };
+
+  const removeFaq = (index) => {
+    const newFaqs = faqs.filter((_, i) => i !== index);
+    setFaqs(newFaqs);
+  };
+
+  // 5. --- UPDATED IMAGE FILE HANDLER ---
+  const handleImageFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setCrop(undefined); // Reset crop
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setImgSrc(reader.result.toString() || '');
+        setCropModalOpen(true); // OPEN THE MODAL
+      });
+      reader.readAsDataURL(file);
+      setFormData(prev => ({ ...prev, imageUrl: '' })); // Clear URL field
+    }
+  };
+  
+  // 6. --- NEW CROP HANDLERS ---
+  function onImageLoad(e) {
+    const { width, height } = e.currentTarget;
+    const newCrop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 90,
+        },
+        aspect,
+        width,
+        height
+      ),
+      width,
+      height
+    );
+    setCrop(newCrop);
+    imgRef.current = e.currentTarget; // Save reference to image element
+  }
+
+  const handleCropSave = async () => {
+    if (completedCrop && previewCanvasRef.current && imgRef.current) {
+      try {
+        const croppedBlob = await getCroppedImg(
+          imgRef.current,
+          completedCrop,
+          previewCanvasRef.current
+        );
+        setImageUpload(croppedBlob); // This is the file we will upload
+        setImageUploadPreview(URL.createObjectURL(croppedBlob)); // This creates a local preview URL
+        setCropModalOpen(false);
+      } catch (e) {
+        console.error('Error cropping image:', e);
+        setStatus({ message: 'Failed to crop image. Please try again.', type: 'error' });
+      }
+    }
+  };
+  // -----------------------------
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus({ message: '', type: '' });
+
+    const dataToSend = new FormData();
+    Object.keys(formData).forEach(key => {
+      dataToSend.append(key, formData[key]);
+    });
+    
+    dataToSend.append('content', content);
+    dataToSend.append('faqs', JSON.stringify(faqs.filter(f => f.question && f.answer)));
+    
+    // 7. --- APPEND THE CROPPED IMAGE BLOB ---
+    if (imageUpload) {
+      dataToSend.append('image', imageUpload, 'cropped-image.jpeg');
+    }
+    // --------------------------------------
+
+    try {
+      if (isEditMode) {
+        await apiClient.put(`/services/${id}`, dataToSend, { 
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true 
+        });
+        setStatus({ message: 'Service post updated successfully!', type: 'success' });
+      } else {
+        await apiClient.post('/services', dataToSend, { 
+          headers: { 'Content-Type': 'multipart/form-data' },
+          withCredentials: true 
+        });
+        setStatus({ message: 'Service post created successfully!', type: 'success' });
+      }
       
-      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes] = await Promise.all([
-        apiClient.get('/users', { withCredentials: true }),
-        apiClient.get('/properties'),
-        apiClient.get('/reviews', { withCredentials: true }),
-        apiClient.get('/services'), 
-        apiClient.get('/users/all-agents', { withCredentials: true }) // 6. FETCH ALL AGENTS
-      ]);
-      setUsers(usersRes.data);
-      setProperties(propertiesRes.data.properties);
-      setReviews(reviewsRes.data);
-      setServices(servicesRes.data.services);
-      setAllAgents(agentsRes.data); // 7. SET AGENTS STATE
+      setTimeout(() => navigate('/admin/dashboard'), 2000);
 
     } catch (err) {
-      setError('Failed to fetch admin data. You may not be authorized.');
-      console.error(err);
+      setStatus({ message: err.response?.data?.message || 'An error occurred.', type: 'error' });
     } finally {
       setLoading(false);
     }
-  }, []); // 8. Use useCallback
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const deleteProperty = async (id) => {
-    if (window.confirm('Are you sure you want to delete this property?')) {
-      try {
-        await apiClient.delete(`/properties/${id}`, { withCredentials: true });
-        fetchData();
-      } catch (err) {
-        alert('Failed to delete property.');
-      }
-    }
   };
-
-  const deleteReview = async (id) => {
-    if (window.confirm('Are you sure you want to delete this review?')) {
-      try {
-        await apiClient.delete(`/reviews/${id}`, { withCredentials: true });
-        fetchData();
-      } catch (err) {
-        alert('Failed to delete review.');
-      }
-    }
-  };
-  
-  const deleteUser = async (id) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      if (id === user._id) {
-        alert("You cannot delete your own admin account.");
-        return;
-      }
-      try {
-        await apiClient.delete(`/users/${id}`, { withCredentials: true });
-        fetchData();
-      } catch (err) {
-        alert('Failed to delete user.');
-      }
-    }
-  };
-
-  const deleteService = async (id) => {
-    if (window.confirm('Are you sure you want to delete this service post?')) {
-      try {
-        await apiClient.delete(`/services/${id}`, { withCredentials: true });
-        fetchData(); // Refresh data
-      } catch (err) {
-        alert('Failed to delete service post.');
-      }
-    }
-  };
-
-  const updateUserRole = async (id, newRole) => {
-    if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
-      try {
-        await apiClient.put(`/users/${id}`, { role: newRole }, { withCredentials: true });
-        fetchData(); // Refresh the user list
-      } catch (err) {
-        alert('Failed to update user role.');
-      }
-    }
-  };
-  
-  // 9. --- NEW MODAL HANDLERS ---
-  const openAssignModal = (property) => {
-    setSelectedProperty(property);
-    setIsAssignModalOpen(true);
-  };
-
-  const closeAssignModal = () => {
-    setSelectedProperty(null);
-    setIsAssignModalOpen(false);
-  };
-
-  const handleAssignAgent = async (propertyId, agentId) => {
-    try {
-      const { data } = await apiClient.put(
-        `/admin/properties/${propertyId}/assign-agent`, 
-        { agentId },
-        { withCredentials: true }
-      );
-      alert(data.message);
-      fetchData(); // Refresh all data on success
-    } catch (err) {
-      alert(`Failed to assign agent: ${err.response?.data?.message || 'Server Error'}`);
-      console.error(err);
-    }
-  };
-  // ----------------------------------
-
-  if (loading) return <div className="p-10 text-center dark:text-gray-300">Loading Admin Dashboard...</div>;
-  if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
 
   return (
     <>
-      <div className="container mx-auto p-6 md:p-10 bg-gray-50 dark:bg-gray-950 min-h-screen">
-        <h1 className="text-3xl font-bold mb-8 dark:text-white">Admin Dashboard</h1>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700">
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
+            {isEditMode ? 'Edit Service Post' : 'Add New Service Post'}
+          </h1>
+          
+          {status.message && (
+            <div className={`p-4 mb-6 text-sm rounded-lg ${
+              status.type === 'success' 
+                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
+                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
+            }`} role="alert">
+              {status.message}
+            </div>
+          )}
 
-        {/* 🚀 SEO Management Link/Card & Stats */}
-        <section className="mb-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Link 
-                  to="/admin/seo-manager" 
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            <InputField 
+              label="Post Title" 
+              name="title" 
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g., Best Plumbers in Kilimani" 
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField 
+                label="Service Type" 
+                name="serviceType" 
+                value={formData.serviceType}
+                onChange={handleChange}
+                placeholder="e.g., Plumbing, Electrician, Internet" 
+              />
+              <InputField 
+                label="Location" 
+                name="location" 
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g., Kilimani" 
+              />
+            </div>
+
+            {/* --- FEATURED IMAGE SECTION (Updated) --- */}
+            <div className="space-y-2 pt-6 border-t dark:border-gray-700">
+              <h2 className="text-lg font-medium text-gray-900 dark:text-white">Featured Image</h2>
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setImageInputMode('url')}
+                  className={`px-4 py-2 rounded-md ${imageInputMode === 'url' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}`}
+                >
+                  <FaLink className="inline mr-2" /> Use URL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageInputMode('upload')}
+                  className={`px-4 py-2 rounded-md ${imageInputMode === 'upload' ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 dark:text-gray-300'}`}
+                >
+                  <FaImage className="inline mr-2" /> Upload
+                </button>
+              </div>
+
+              {imageInputMode === 'url' ? (
+                <InputField 
+                  label="Image URL" 
+                  name="imageUrl" 
+                  value={formData.imageUrl}
+                  onChange={handleChange}
+                  placeholder="https://... (link to an image)"
+                  required={!imageUpload}
+                />
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="imageUpload">
+                    Upload Image File (Max 2MB)
+                  </label>
+                  <input
+                    type="file"
+                    id="imageUpload"
+                    name="imageUpload"
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleImageFileChange} // Use new handler
+                    className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
+                  />
+                </div>
+              )}
+              
+              {/* Show preview for URL or Upload */}
+              {(formData.imageUrl || imageUploadPreview) && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image Preview:</p>
+                  <img 
+                    src={imageUploadPreview || formData.imageUrl} 
+                    alt="Preview" 
+                    className="w-full h-48 object-cover rounded-lg border dark:border-gray-700" 
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* --- TIPTAP EDITOR --- */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Content (Blog Post)
+              </label>
+              <div className="bg-white text-gray-900 rounded-lg border border-gray-300 dark:border-gray-600">
+                <TiptapToolbar editor={editor} />
+                <EditorContent 
+                  editor={editor} 
+                  className="prose prose-lg max-w-none p-4 min-h-[200px] text-black"
+                />
+              </div>
+            </div>
+
+            {/* --- FAQ SECTION --- */}
+            <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                FAQ Schema Builder
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Add FAQs to generate an automatic schema for Google.
+              </p>
+              
+              {faqs.map((faq, index) => (
+                <div key={index} className="p-4 border dark:border-gray-700 rounded-lg space-y-4 relative">
+                  <InputField 
+                    label={`Question ${index + 1}`}
+                    name={`faq-q-${index}`}
+                    value={faq.question}
+                    onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                    placeholder="e.g., What is the best internet provider?"
+                    required={false}
+                  />
+                  <TextareaField
+                    label={`Answer ${index + 1}`}
+                    name={`faq-a-${index}`}
+                    value={faq.answer}
+                    onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                    placeholder="The best provider is..."
+                    required={false}
+                  />
+                  {faqs.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeFaq(index)}
+                      className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full p-1.5 leading-none shadow-md"
+                    >
+                      <FaTrash size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                onClick={addFaq}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
               >
-                  <FaSitemap className="text-4xl text-blue-500" />
-                  <div>
-                      <h3 className="text-xl font-semibold dark:text-gray-100">SEO Manager</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Manage all meta tags & schema.</p>
-                  </div>
-              </Link>
+                <FaPlus />
+                <span>Add FAQ</span>
+              </button>
+            </div>
 
-              <Link 
-                  to="#manage-services" // Link to the new section ID
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
+            {/* --- SEO Details --- */}
+            <div className="space-y-6 pt-6 border-t dark:border-gray-700">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                SEO Details
+              </h2>
+              <InputField 
+                label="Meta Title" 
+                name="metaTitle" 
+                value={formData.metaTitle}
+                onChange={handleChange}
+                placeholder="SEO-friendly title (max 60 chars)"
+                required={false}
+              />
+              <TextareaField
+                label="Meta Description"
+                name="metaDescription"
+                value={formData.metaDescription}
+                onChange={handleChange}
+                placeholder="SEO description for Google (max 160 chars)"
+                rows={3}
+                required={false}
+              />
+            </div>
+            
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full flex justify-center items-center space-x-2 py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${
+                  loading 
+                    ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500'
+                }`}
               >
-                  <FaStreetView className="text-4xl text-green-500" />
-                  <div>
-                      <h3 className="text-xl font-semibold dark:text-gray-100">Neighbourhood Watch</h3>
-                      <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{services.length}</p>
-                  </div>
-              </Link>
-
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
+                {loading ? <FaSpinner className="animate-spin" /> : <FaSave />}
+                <span>{isEditMode ? 'Update Post' : 'Create Post'}</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      {/* 8. --- NEW: CROP MODAL --- */}
+      <AnimatePresence>
+        {cropModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 relative"
+            >
+              <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                Crop Your Image
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Select a 16:9 (widescreen) area for your featured image.
+              </p>
+              
+              <div className="max-h-[60vh] overflow-y-auto">
+                {imgSrc && (
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={aspect}
+                    minWidth={200}
+                  >
+                    <img
+                      ref={imgRef}
+                      alt="Crop me"
+                      src={imgSrc}
+                      onLoad={onImageLoad}
+                      className="w-full"
+                    />
+                  </ReactCrop>
+                )}
               </div>
               
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
+              {/* This canvas is hidden but used to draw the cropped image */}
+              <canvas ref={previewCanvasRef} className="hidden" />
+
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setCropModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCropSave}
+                  className="w-32 flex items-center justify-center bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Save Crop
+                </button>
               </div>
-          </div>
-        </section>
-        {/* ------------------- */}
-
-        <PendingApprovals />
-
-        {/* === Manage Properties === */}
-        <section className="mb-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties ({properties.length})</h2>
-            <Link to="/add-property" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-500">
-              + Add Property
-            </Link>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            {/* --- FIX: REMOVED WHITESPACE --- */}
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Title</th>
-                  <th className="p-3 text-left dark:text-gray-300">Location</th>
-                  <th className="p-3 text-left dark:text-gray-300">Price (Ksh)</th>
-                  <th className="p-3 text-left dark:text-gray-300">Agent</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {properties.map((prop) => (
-                  <tr key={prop._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-200">{prop.title}</td>
-                    <td className="p-3 dark:text-gray-200">{prop.location}</td>
-                    <td className="p-3 dark:text-gray-200">{prop.price.toLocaleString()}</td>
-                    <td className="p-3 dark:text-gray-200 text-sm">
-                      {prop.agent ? (
-                        <span className="font-semibold">{prop.agent.name}</span>
-                      ) : prop.ownerDetails && prop.ownerDetails.name ? (
-                        <span className="italic opacity-70">{prop.ownerDetails.name}</span>
-                      ) : (
-                        <button
-                          onClick={() => openAssignModal(prop)}
-                          className="flex items-center space-x-1 text-xs px-2 py-1 rounded-md bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800 transition"
-                        >
-                          <FaUserPlus />
-                          <span>Assign Agent</span>
-                        </button>
-                      )}
-                    </td>
-                    <td className="p-3 flex space-x-3">
-                      <Link to={`/admin/property/${prop._id}/edit`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
-                        <FaEdit />
-                      </Link>
-                      <button onClick={() => deleteProperty(prop._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                        <FaTrash />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* --- END OF FIX --- */}
-          </div>
-        </section>
-
-        {/* === Manage Neighbourhood Watch === */}
-        <section id="manage-services" className="mb-12">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Neighbourhood Watch ({services.length})</h2>
-            <Link to="/admin/add-service" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 dark:hover:bg-green-500">
-              + Add Service Post
-            </Link>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            {/* --- FIX: REMOVED WHITESPACE --- */}
-            <table className="w-full min-w-[600px]">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Title</th>
-                  <th className="p-3 text-left dark:text-gray-300">Service Type</th>
-                  <th className="p-3 text-left dark:text-gray-300">Location</th>
-                  <th className="p-3 text-left dark:text-gray-300">Reviews</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {services.map((service) => (
-                  <tr key={service._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-200">{service.title}</td>
-                    <td className="p-3 dark:text-gray-200">{service.serviceType}</td>
-                    <td className="p-3 dark:text-gray-200">{service.location}</td>
-                    <td className="p-3 dark:text-gray-200">{service.numReviews}</td>
-                    <td className="p-3 flex space-x-3">
-                      <Link to={`/admin/add-service/${service._id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
-                        <FaEdit />
-                      </Link>
-                      <button onClick={() => deleteService(service._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                        <FaTrash />
-                      </button>
-                      <Link to={`/services/slug/${service.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 dark:text-gray-400 hover:text-blue-500" title="View Post">
-                        (View)
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* --- END OF FIX --- */}
-          </div>
-        </section>
-
-        {/* === Manage Users === */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Users ({users.length})</h2>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            {/* --- FIX: REMOVED WHITESPACE --- */}
-            <table className="w-full min-w-[500px]">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Name</th>
-                  <th className="p-3 text-left dark:text-gray-300">Email</th>
-                  <th className="p-3 text-left dark:text-gray-300">Role</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-20Details">{u.name}</td>
-                    <td className="p-3 dark:text-gray-20Details">{u.email}</td>
-                    <td className="p-3">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        u.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                        : u.role === 'agent' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                      }`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td className="p-3 flex space-x-3">
-                      {u.role === 'user' && (
-                        <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent">
-                          <FaUserShield />
-                        </button>
-                      )}
-                      {u.role === 'agent' && (
-                        <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">
-                          (demote)
-                        </button>
-                      )}
-                      {u._id !== user._id && (
-                        <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                          <FaTrash />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* --- END OF FIX --- */}
-          </div>
-        </section>
-
-        <FailedQueries />
-
-        {/* === Manage Reviews === */}
-        <section>
-          <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Property Reviews ({reviews.length})</h2>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            {/* --- FIX: REMOVED WHITESPACE --- */}
-            <table className="w-full min-w-[600px]">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Comment</th>
-                  <th className="p-3 text-left dark:text-gray-300">Rating</th>
-                  <th className="p-3 text-left dark:text-gray-300">User</th>
-                  <th className="p-3 text-left dark:text-gray-300">Property</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reviews.map((review) => (
-                  <tr key={review._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 truncate max-w-xs dark:text-gray-200">{review.comment}</td>
-                    <td className="p-3 dark:text-gray-200">{review.rating} ★</td>
-                    <td className="p-3 dark:text-gray-200">{review.user?.name || 'Anonymous'}</td>
-                    <td className="p-3 truncate max-w-xs dark:text-gray-200">{review.property?.title || 'N/A'}</td>
-                    <td className="p-3">
-                      <button onClick={() => deleteReview(review._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                        <FaTrash />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* --- END OF FIX --- */}
-          </div>
-        </section>
-      </div>
-
-      {/* 13. --- RENDER THE MODAL --- */}
-      <AnimatePresence>
-        <AssignAgentModal
-          show={isAssignModalOpen}
-          onClose={closeAssignModal}
-          property={selectedProperty}
-          agents={allAgents}
-          onAssign={handleAssignAgent}
-        />
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </>
   );
 };
 
-export default AdminDashboard;
+export default AdminAddService;

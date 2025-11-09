@@ -20,6 +20,74 @@ const StarRating = ({ rating }) => {
   );
 };
 
+// 1. --- NEW: SEO INJECTOR COMPONENT ---
+// This component generates the required schema.org JSON-LD for your page.
+const ServiceSeoInjector = ({ service }) => {
+  const schemas = [];
+
+  // Schema for the blog post itself
+  schemas.push({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": service.metaTitle || service.title,
+    "description": service.metaDescription || service.content.substring(0, 160),
+    "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png", // Fallback image
+    "datePublished": service.createdAt,
+    "dateModified": service.updatedAt,
+    "publisher": {
+      "@type": "Organization",
+      "name": "House Hunt Kenya",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png" // Path to your logo
+      }
+    }
+    // 'author' is removed as it's not in the LocalService model
+  });
+
+  // Schema for the FAQs, if they exist
+  if (service.faqs && service.faqs.length > 0) {
+    schemas.push({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": service.faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    });
+  }
+
+  return (
+    <Helmet>
+      {/* Standard Meta Tags */}
+      <title>{service.metaTitle || service.title}</title>
+      <meta name="description" content={service.metaDescription || service.content.substring(0, 160)} />
+      
+      {/* Open Graph Tags (for social media) */}
+      <meta property="og:title" content={service.metaTitle || service.title} />
+      <meta property="og:description" content={service.metaDescription || service.content.substring(0, 160)} />
+      <meta property="og:image" content={service.imageUrl} />
+      <meta property="og:type" content="article" />
+      <meta property="og:url" content={window.location.href} />
+      
+      {/* Render all schemas */}
+      {schemas.map((schema, index) => (
+        <script 
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
+    </Helmet>
+  );
+};
+// ------------------------------------
+
+
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
@@ -39,7 +107,7 @@ const ServicePostDetails = () => {
     try {
       setLoading(true);
       setError('');
-      const { data } = await apiClient.get(`/services/${slug}`);
+      const { data } = await apiClient.get(`/services/slug/${slug}`);
       setService(data);
     } catch (err) {
       console.error("Error fetching service post:", err);
@@ -103,11 +171,8 @@ const ServicePostDetails = () => {
 
   return (
     <>
-      {/* Dynamic SEO for this new page */}
-      <Helmet>
-        <title>{service.metaTitle || service.title}</title>
-        <meta name="description" content={service.metaDescription || service.content.substring(0, 160)} />
-      </Helmet>
+      {/* 2. USE THE NEW SEO INJECTOR */}
+      <ServiceSeoInjector service={service} />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-4xl mx-auto">
@@ -125,29 +190,52 @@ const ServicePostDetails = () => {
             <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">
               {service.title}
             </h1>
+            
+            {/* 3. REMOVED AUTHOR SECTION (as it's not in the model) */}
             <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
-              <div className="flex items-center space-x-2">
-                <img 
-                  src={service.author.profilePicture} 
-                  alt={service.author.name} 
-                  className="w-8 h-8 rounded-full object-cover" 
-                />
-                <span>{service.author.name}</span>
-              </div>
-              <span>•</span>
               <span>
-                {formatDistanceToNow(new Date(service.createdAt), { addSuffix: true })}
+                Posted {formatDistanceToNow(new Date(service.createdAt), { addSuffix: true })}
               </span>
             </div>
           </header>
 
+          {/* Featured Image */}
+          {service.imageUrl && (
+            <img 
+              src={service.imageUrl}
+              alt={service.title}
+              className="w-full h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
+            />
+          )}
+
           {/* Article Content */}
           <article className="prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
-            {/* This is for rendering the HTML content from your admin's rich text editor.
-              Be sure to sanitize this HTML on your backend before saving to prevent XSS attacks.
-            */}
+            {/* This renders the HTML from ReactQuill */}
             <div dangerouslySetInnerHTML={{ __html: service.content }} />
           </article>
+
+          {/* 4. --- NEW: RENDER THE FAQ SECTION --- */}
+          {service.faqs && service.faqs.length > 0 && (
+            <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
+                Frequently Asked Questions
+              </h2>
+              <div className="space-y-6">
+                {service.faqs.map((faq, index) => (
+                  <div key={index} className="border-b dark:border-gray-700 pb-4 last:border-b-0">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                      {faq.question}
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {/* --------------------------------- */}
+
 
           {/* Reviews/Comments Section */}
           <section className="mt-12">
@@ -203,7 +291,7 @@ const ServicePostDetails = () => {
                   <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                     <div className="flex items-center mb-2">
                        <img 
-                        src={review.user?.profilePicture} 
+                        src={review.user?.profilePicture} // 'user' is populated, this is correct
                         alt={review.name} 
                         className="w-10 h-10 rounded-full object-cover mr-3"
                        />
