@@ -2,9 +2,32 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
-import { motion } from 'framer-motion'; // ✅ 1. Import motion
+import { motion } from 'framer-motion';
 
 const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Image";
+
+// 🚀 UTILITY FUNCTION FOR BACKWARD COMPATIBILITY
+const getSafeImageDetails = (imagesArray, propertyTitle) => {
+    if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
+        return [];
+    }
+
+    return imagesArray.map((img, index) => {
+        if (typeof img === 'string') {
+            // Old format (just URL string)
+            return {
+                url: img,
+                altText: `${propertyTitle} image ${index + 1}`
+            };
+        }
+        // New format (object {url, altText})
+        return {
+            url: img.url,
+            altText: img.altText || `${propertyTitle} image ${index + 1}`
+        };
+    });
+};
+
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
@@ -12,9 +35,13 @@ export default function PropertyCard({ property }) {
   const [isHovering, setIsHovering] = useState(false);
   
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
-
-  const images = (property.images && property.images.length > 0)
-    ? property.images
+  
+  // 🚀 FIX: Use the safe utility function to get compatible images
+  const safeImageDetails = getSafeImageDetails(property.images, property.title);
+  
+  // Extract URLs for display
+  const images = safeImageDetails.length > 0
+    ? safeImageDetails.map(img => img.url)
     : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
 
   useEffect(() => {
@@ -27,7 +54,8 @@ export default function PropertyCard({ property }) {
   }, [isHovering, images.length]);
 
   const handleViewDetails = () => {
-    navigate(`/properties/${property._id}`);
+    // ✅ --- THIS IS THE UPDATED LINE ---
+    navigate(`/properties/${property.slug}`);
   };
 
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property._id);
@@ -49,7 +77,6 @@ export default function PropertyCard({ property }) {
 
 
   return (
-    // ✅ 2. Convert <div> to <motion.div> and add scroll animations
     <motion.div 
       className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-2xl dark:border dark:border-gray-700 dark:hover:border-gray-600 transition-all duration-300 overflow-hidden"
       onMouseEnter={() => setIsHovering(true)}
@@ -57,18 +84,15 @@ export default function PropertyCard({ property }) {
         setIsHovering(false);
         setCurrentImageIndex(0);
       }}
-      // --- Animation Props ---
-      initial={{ opacity: 0, y: 20 }} // Start invisible and 20px down
-      whileInView={{ opacity: 1, y: 0 }} // Animate to visible and 0px
-      viewport={{ once: true, amount: 0.2 }} // Run once when 20% is in view
-      transition={{ duration: 0.4, ease: "easeOut" }} // Smooth easing
-      // -----------------------
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
       <div className="relative">
         {user && (
-          // ✅ 3. Add click animation to the heart button
           <motion.button
-            whileTap={{ scale: 0.9 }} // Bouncy click
+            whileTap={{ scale: 0.9 }}
             onClick={handleFavoriteClick}
             className="absolute top-3 right-3 z-10 p-2 bg-black/40 backdrop-blur-sm rounded-full text-white hover:bg-black/60 transition"
             title={isFavorited ? "Remove from favorites" : "Add to favorites"}
@@ -79,7 +103,8 @@ export default function PropertyCard({ property }) {
 
         <img
           src={images[currentImageIndex]} 
-          alt={property.title}
+          // 🚀 FIX: Get Alt Text from the safe details object
+          alt={safeImageDetails?.[currentImageIndex]?.altText || property.title} 
           className="w-full h-56 object-cover transition-opacity duration-300"
           loading="lazy"
           onClick={handleViewDetails} 
@@ -123,7 +148,6 @@ export default function PropertyCard({ property }) {
 
         <button
           onClick={handleViewDetails}
-          // ✅ 4. --- FIX IS HERE --- Removed 'transition-transform'
           className="mt-3 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 transition duration-150 active:scale-[0.98]"
         >
           View Details

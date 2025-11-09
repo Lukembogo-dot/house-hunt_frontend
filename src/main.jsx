@@ -1,19 +1,26 @@
+// src/main.jsx (UPDATED)
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
-import { SocketProvider } from './context/SocketContext.jsx' // ✅ 1. Import new provider
+import { SocketProvider } from './context/SocketContext.jsx' 
+// ✅ NEW IMPORT: Import HelmetProvider
+import { HelmetProvider } from 'react-helmet-async' 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <ThemeProvider>
-        <SocketProvider> {/* ✅ 2. Wrap your App */}
-          <App />
-        </SocketProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    {/* ✅ WRAP THE ENTIRE APPLICATION WITH HelmetProvider */}
+    <HelmetProvider> 
+      <AuthProvider>
+        <ThemeProvider>
+          <SocketProvider>
+            <App />
+          </SocketProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </HelmetProvider>
   </React.StrictMode>,
 )

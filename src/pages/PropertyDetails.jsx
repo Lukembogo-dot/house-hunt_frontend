@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-// ✅ 1. IMPORT useLocation
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axios";
 import { 
@@ -8,15 +7,19 @@ import {
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark, FaTimes,
   FaCalendarAlt,
   FaCommentDots,
-  FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy
+  FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy,
+  FaUserSlash,
+  FaTiktok,      // 1. IMPORT TIKTOK ICON
+  FaInstagram    // 2. IMPORT INSTAGRAM ICON
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
 import PropertyCard from "../components/PropertyCard";
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
+import { Helmet } from 'react-helmet-async';
 
-// ... (sectionVariants, placeIconMap, placeholderImage, getDistance, ScheduleModal... all unchanged) ...
+
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
@@ -53,6 +56,29 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const d = R * c; // Distance in km
   return d.toFixed(1); // Return distance rounded to 1 decimal place
 }
+
+// 🚀 UTILITY FUNCTION FOR BACKWARD COMPATIBILITY
+const getSafeImageDetails = (imagesArray, propertyTitle) => {
+    if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
+        return [];
+    }
+
+    return imagesArray.map((img, index) => {
+        if (typeof img === 'string') {
+            // Old format (just URL string)
+            return {
+                url: img,
+                altText: `${propertyTitle} image ${index + 1}`
+            };
+        }
+        // New format (object {url, altText})
+        return {
+            url: img.url,
+            altText: img.altText || `${propertyTitle} image ${index + 1}`
+        };
+    });
+};
+
 
 const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [scheduledDate, setScheduledDate] = useState('');
@@ -181,12 +207,112 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
+// 🚀 --- SEO INJECTOR COMPONENT ---
+const PropertySeoInjector = ({ seo, property }) => {
+    
+    // Use the safe utility function here
+    const safeImages = getSafeImageDetails(property.images, property.title);
+
+    const generatePropertySchema = () => {
+        const schema = [];
+        
+        // 1. FAQ Schema (if FAQs exist)
+        if (seo.faqs && seo.faqs.length > 0) {
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": seo.faqs.map(faq => ({
+                    "@type": "Question",
+                    "name": faq.question,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": faq.answer
+                    }
+                }))
+            });
+        }
+        
+        // 2. Real Estate Listing Schema (essential for SEO)
+        if (property && property.coordinates?.lat) {
+            
+            // Get the URL of the first image
+            const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
+
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": property.listingType === 'sale' ? "HouseForSale" : "RentalListing",
+                "name": seo.metaTitle || property.title,
+                "description": seo.metaDescription || property.description?.substring(0, 160),
+                "url": window.location.href,
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": property.location,
+                    "addressRegion": "Kenya",
+                },
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": property.coordinates.lat,
+                    "longitude": property.coordinates.lng
+                },
+                "numberOfBedrooms": property.bedrooms,
+                "offers": {
+                    "@type": "Offer",
+                    "price": property.price,
+                    "priceCurrency": "KES",
+                    "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                    "seller": {
+                      "@type": "RealEstateAgent",
+                      // --- UPDATED FOR SOFT DELETE & OWNER DETAILS ---
+                      // Check if agent exists, then owner, then fallback.
+                      "name": property.agent?.name || property.ownerDetails?.name || 'HouseHunt Kenya',
+                    }
+                },
+                "image": firstImageUrl,
+                "datePosted": property.createdAt,
+            });
+        }
+        
+        return schema;
+    };
+
+    const schemaData = generatePropertySchema();
+
+    return (
+        <Helmet>
+            {/* Standard Meta Tags */}
+            <title>{seo.metaTitle}</title>
+            <meta name="description" content={seo.metaDescription} />
+            <meta name="author" content="HouseHunt Kenya" />
+
+            {/* Open Graph / Social Media Tags */}
+            <meta property="og:title" content={seo.metaTitle} />
+            <meta property="og:description" content={seo.metaDescription} />
+            <meta property="og:url" content={window.location.href} />
+            <meta property="og:type" content="article" />
+            {/* Fallback to the first image URL */}
+            <meta property="og:image" content={
+                safeImages.length > 0 ? safeImages[0].url : placeholderImage
+            } /> 
+
+            {/* Schema Structured Data */}
+            {schemaData.map((schema, index) => (
+                <script 
+                    key={index}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                />
+            ))}
+        </Helmet>
+    );
+};
+// ----------------------------------------
+
 
 const PropertyDetails = () => {
-  const { id } = useParams();
+  // ✅ --- CHANGE 1: Get 'slug' from URL instead of 'id' ---
+  const { slug } = useParams();
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
   const navigate = useNavigate(); 
-  // ✅ 2. INITIALIZE useLocation
   const location = useLocation();
   
   const [property, setProperty] = useState(null);
@@ -208,39 +334,99 @@ const PropertyDetails = () => {
 
   const [isStartingChat, setIsStartingChat] = useState(false);
 
-  // ... (fetchPropertyData, useEffects, handleReviewSubmit, isFavorited, handleFavoriteClick ... unchanged) ...
+  // ✅ --- 1. ADD NEW STATE FOR LOCAL SERVICES ---
+  const [localServices, setLocalServices] = useState([]);
+
+  // ✅ NEW STATE: SEO Data
+  const [seo, setSeo] = useState({
+      metaTitle: 'Loading Property Details...',
+      metaDescription: 'Loading...',
+      faqs: [],
+      schemaDescription: '',
+  });
+
+  // Derived state for backward-compatible image access
+  const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
+  const allImageUrls = safeImageDetails.map(img => img.url);
+
+
+  // ✅ --- CHANGE 2: Restructure data fetching ---
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
       setAgentProperties([]); 
-      const propertyRes = await apiClient.get(`/properties/${id}`); 
-      setProperty(propertyRes.data);
       
-      let imagesToSet = [];
-      if (propertyRes.data.images && propertyRes.data.images.length > 0) {
-        imagesToSet = propertyRes.data.images;
-      } else if (propertyRes.data.imageUrl) {
-        imagesToSet = [propertyRes.data.imageUrl];
-      }
-      setActiveImage(imagesToSet[0] || placeholderImage);
+      // STEP 1: Fetch property by SLUG
+      const propertyRes = await apiClient.get(`/properties/slug/${slug}`); 
+      const propData = propertyRes.data;
+      const propertyId = propData._id; // Get the _id from the fetched data
+      setProperty(propData);
+      
+      // FIX 1: Set Active Image using the safe list
+      const imagesList = getSafeImageDetails(propData.images, propData.title);
+      const urlsList = imagesList.map(img => img.url);
+      setActiveImage(urlsList[0] || placeholderImage);
+      // -------------------------------------------------------------------
 
-      if (propertyRes.data.agent?._id) {
-        const agentRes = await apiClient.get(`/properties/by-agent/${propertyRes.data.agent._id}`); 
-        setAgentProperties(agentRes.data.filter(p => p._id !== id));
+      // STEP 2: Now that we have the propertyId, fetch associated data
+      
+      // Fetch agent properties
+      // --- UPDATED FOR SOFT DELETE ---
+      // Only fetch if the agent exists (is not null)
+      if (propData.agent && propData.agent._id) {
+        const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`); 
+        setAgentProperties(agentRes.data.filter(p => p._id !== propertyId)); // Use propertyId
       }
 
-      const reviewsRes = await apiClient.get(`/reviews/${id}`); 
+      // Fetch reviews
+      const reviewsRes = await apiClient.get(`/reviews/${propertyId}`); // Use propertyId
       setComments(reviewsRes.data || []);
+      
+      // 🚀 --- SEO FETCH LOGIC FOR DYNAMIC PAGE ---
+      const encodedPath = encodeURIComponent(`/properties/${slug}`); // Use slug
+      const seoRes = await apiClient.get(`/seo/${encodedPath}`);
+      
+      // Create fallbacks using property data
+      const defaultTitle = propData.title || 'Property Listing';
+      const defaultDescription = propData.description 
+        ? propData.description.substring(0, 160) + '...'
+        : 'View the full details and contact the agent for this property.';
+        
+      setSeo({
+          // Use fetched SEO data, otherwise fall back to defaults
+          metaTitle: seoRes.data.metaTitle || defaultTitle,
+          metaDescription: seoRes.data.metaDescription || defaultDescription,
+          faqs: seoRes.data.faqs || [],
+          schemaDescription: seoRes.data.schemaDescription || '',
+      });
+      // ----------------------------------------
+      
+      // ✅ --- 2. FETCH LOCAL SERVICES BASED ON PROPERTY LOCATION ---
+      if (propData.location) {
+        try {
+          // Extract the primary location (e.g., "Kilimani" from "Kilimani, Nairobi")
+          const primaryLocation = propData.location.split(',')[0].trim();
+          const servicesRes = await apiClient.get(`/services/location/${primaryLocation}`);
+          setLocalServices(servicesRes.data);
+        } catch (err) {
+          console.warn('No local services found for this location.', err);
+        }
+      }
+      // ----------------------------------------------------
+
     } catch (error) {
       console.error("❌ Error fetching property data:", error);
+      // Fallback SEO title on hard error
+      setSeo(prev => ({ ...prev, metaTitle: 'Property Not Found | HouseHunt' }));
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ --- CHANGE 3: Update useEffect dependency ---
   useEffect(() => {
     fetchPropertyData();
-  }, [id]); 
+  }, [slug]); 
 
   useEffect(() => {
     if (property && property.coordinates?.lat) {
@@ -267,17 +453,22 @@ const PropertyDetails = () => {
     }
   }, [property]); 
 
+  // ✅ --- CHANGE 4: Use property._id for review submit ---
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (!reviewText || rating === 0) return;
+    if (!reviewText || rating === 0 || !property) return;
     try {
       setSubmitting(true);
       await apiClient.post( 
-        `/reviews/${id}`,
+        `/reviews/${property._id}`, // Use property._id
         { comment: reviewText, rating },
         { withCredentials: true }
       );
+      // --- UPDATED FOR SOFT DELETE ---
+      // We must re-fetch all data, as our new comment
+      // now needs to populate the `user` field from the backend.
       fetchPropertyData();
+      // -----------------------------
       setReviewText("");
       setRating(0);
       setHoverRating(0);
@@ -289,22 +480,24 @@ const PropertyDetails = () => {
     }
   };
   
-  const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(id);
+  // ✅ --- CHANGE 5: Use property?._id for favorite check ---
+  const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property?._id);
 
   const handleFavoriteClick = () => {
-    if (!user) {
+    if (!user || !property) {
       alert("Please log in to save properties.");
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
+    // ✅ --- CHANGE 6: Use property._id for favorite context ---
     if (isFavorited) {
-      removeFavoriteContext(id);
+      removeFavoriteContext(property._id);
     } else {
-      addFavoriteContext(id);
+      addFavoriteContext(property._id);
     }
   };
 
-  // ... (totalPages, currentAmenities, handleAmenityClick ... unchanged) ...
+
   const totalPages = Math.ceil(nearbyPlaces.length / itemsPerPage);
   const currentAmenities = nearbyPlaces.slice(
     (amenitiesPage - 1) * itemsPerPage,
@@ -322,7 +515,6 @@ const PropertyDetails = () => {
   };
   
 
-  // ✅ 3. CREATE NEW HANDLER FOR SCHEDULE BUTTON
   const handleScheduleClick = () => {
     if (!user) {
       navigate('/login', { state: { from: location.pathname } }); 
@@ -331,16 +523,16 @@ const PropertyDetails = () => {
     setShowScheduleModal(true);
   };
 
-  // ✅ 4. UPDATE handleStartChat TO INCLUDE REDIRECT STATE
+  // ✅ --- CHANGE 7: Use property._id for starting chat ---
   const handleStartChat = async () => {
-    if (!user) {
+    if (!user || !property) {
       navigate('/login', { state: { from: location.pathname } });
       return;
     }
     setIsStartingChat(true);
     try {
       const { data } = await apiClient.post('/chat/conversations', { 
-        propertyId: id 
+        propertyId: property._id // Use property._id
       });
       navigate(`/chat/${data._id}`);
     } catch (error) {
@@ -351,7 +543,6 @@ const PropertyDetails = () => {
     }
   };
 
-  // ... (Social Share Handlers ... unchanged) ...
   const currentUrl = window.location.href;
   const shareTitle = `Check out this amazing property on HouseHunt Kenya: ${property?.title || 'Property Listing'}`;
 
@@ -381,7 +572,7 @@ const PropertyDetails = () => {
     }
   };
 
-  // ... (Loading/Error states ... unchanged) ...
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
@@ -402,24 +593,21 @@ const PropertyDetails = () => {
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
       : 0;
       
-  const allImages = (property.images && property.images.length > 0)
-    ? property.images
-    : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
-
-  const isAgentOwner = user && user._id === property.agent?._id;
+  const isAgentOwner = user && property.agent && user._id === property.agent._id;
 
   return (
     <>
+      {/* 🚀 INJECT DYNAMIC SEO AND SCHEMA */}
+      <PropertySeoInjector seo={seo} property={property} /> 
+
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="md:col-span-2">
-             {/* ... (All main content sections ... unchanged) ... */}
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
                 {property.title}
               </h1>
-              {/* This button handler already checks for user, so it's fine */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleFavoriteClick}
@@ -454,16 +642,16 @@ const PropertyDetails = () => {
             >
               <img
                 src={activeImage}
-                alt="Main"
+                alt={safeImageDetails?.[0]?.altText || property.title}
                 className="rounded-lg w-full h-96 object-cover mb-4"
               />
-              {allImages.length > 1 && (
+              {allImageUrls.length > 1 && (
                 <div className="grid grid-cols-5 gap-2">
-                  {allImages.map((imgUrl, index) => (
+                  {allImageUrls.map((imgUrl, index) => (
                     <img
-                      key={index}
+                      key={imgUrl}
                       src={imgUrl}
-                      alt={`Thumbnail ${index + 1}`}
+                      alt={safeImageDetails?.[index]?.altText || `Thumbnail ${index + 1}`} 
                       onClick={() => setActiveImage(imgUrl)}
                       className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${
                         activeImage === imgUrl 
@@ -566,6 +754,49 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
+            {/* ✅ --- 3. ADD THE NEW NEIGHBOURHOOD WATCH SECTION --- */}
+            {localServices.length > 0 && (
+              <motion.div 
+                className="mb-8"
+                variants={sectionVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+              >
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                  Neighbourhood Watch
+                </h2>
+                <div className="space-y-4">
+                  {localServices.map(service => (
+                    <Link 
+                      key={service._id}
+                      to={`/services/${service.slug}`} 
+                      className="block group bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition"
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 group-hover:underline">
+                          {service.title}
+                        </h3>
+                        <span className="text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0">
+                          {service.serviceType}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <FaStar className="text-yellow-400" size={16} />
+                        <span className="font-semibold text-gray-700 dark:text-gray-300 text-sm">
+                          {service.averageRating.toFixed(1)}
+                        </span>
+                        <span className="text-gray-500 dark:text-gray-400 text-sm">
+                          ({service.numReviews} review{service.numReviews !== 1 ? 's' : ''})
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+            {/* --- END OF NEW SECTION --- */}
+
             <motion.div 
               className="mb-8"
               variants={sectionVariants}
@@ -619,7 +850,12 @@ const PropertyDetails = () => {
                   {comments.map((review) => (
                     <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center mb-2">
-                         <p className="font-bold mr-2 dark:text-gray-100">{review.user?.name || "Anonymous"}</p>
+                         {/* --- 2. UPDATED FOR DELETED USER --- */}
+                         {/* If review.user exists, show their name. If it's null, show 'Deleted User'. */}
+                         <p className="font-bold mr-2 dark:text-gray-100">
+                           {review.user ? review.user.name : "Deleted User"}
+                         </p>
+                         {/* ------------------------------------ */}
                          <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <FaStar
@@ -683,18 +919,20 @@ const PropertyDetails = () => {
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
               
-              {/* ✅ 5. REMOVED `user &&` CHECK - BUTTONS NOW SHOW FOR ALL */}
-              {!isAgentOwner && property.status === 'available' && (
+              {/* --- 3. UPDATED FOR DELETED AGENT --- */}
+              {/* These buttons will only show if the agent is NOT the owner, 
+                  the property is available, AND the agent exists (is not null). */}
+              {!isAgentOwner && property.status === 'available' && property.agent && (
                 <div className="mt-6 flex flex-col space-y-3">
                   <button
-                    onClick={handleScheduleClick} // <-- USE NEW HANDLER
+                    onClick={handleScheduleClick}
                     className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
                   >
                     <FaCalendarAlt />
                     <span>Schedule a Viewing</span>
                   </button>
                   <button
-                    onClick={handleStartChat} // <-- This handler already checks for user
+                    onClick={handleStartChat}
                     disabled={isStartingChat}
                     className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
                   >
@@ -703,10 +941,14 @@ const PropertyDetails = () => {
                   </button>
                 </div>
               )}
+              {/* ------------------------------------ */}
 
-              {property.agent && (
-                <div className="mt-6 border-t dark:border-gray-700 pt-6">
-                  <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
+              {/* --- 3. UPDATED "LISTED BY" CARD --- */}
+              <div className="mt-6 border-t dark:border-gray-700 pt-6">
+                <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
+                
+                {/* Case 1: Agent EXISTS (On-platform) */}
+                {property.agent ? (
                   <Link 
                     to={`/agent/${property.agent._id}`} 
                     className="flex items-center space-x-3 group transition-transform duration-150 active:scale-[0.99]"
@@ -724,12 +966,74 @@ const PropertyDetails = () => {
                     </div>
                   </Link>
                   
-                  {/* ✅ 6. REMOVED WHATSAPP BUTTON BLOCK FROM HERE */}
-                  
-                </div>
-              )}
+                /* Case 2: OwnerDetails EXIST (Off-platform) */
+                ) : property.ownerDetails && property.ownerDetails.name ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <FaUserSlash className="text-gray-500 dark:text-gray-400" size={24} />
+                    </div>
+                    <div>
+                      <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
+                        {property.ownerDetails.name}
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Property Owner/Agent</p>
+                      {/* Social Media Links */}
+                      <div className="flex items-center space-x-3">
+                        {property.ownerDetails.whatsapp && (
+                          <a
+                            href={`https://wa.me/${property.ownerDetails.whatsapp.replace(/\+/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-500 hover:text-green-600 transition"
+                            aria-label="Chat on WhatsApp"
+                          >
+                            <FaWhatsapp size={20} />
+                          </a>
+                        )}
+                        {property.ownerDetails.instagram && (
+                          <a
+                            href={`https://instagram.com/${property.ownerDetails.instagram.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-500 hover:text-pink-600 transition"
+                            aria-label="View on Instagram"
+                          >
+                            <FaInstagram size={20} />
+                          </a>
+                        )}
+                        {property.ownerDetails.tiktok && (
+                          <a
+                            href={`https://tiktok.com/${property.ownerDetails.tiktok.startsWith('@') ? '' : '@'}${property.ownerDetails.tiktok.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition"
+                            aria-label="View on TikTok"
+                          >
+                            <FaTiktok size={18} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-              {/* ... (Social Share Section ... unchanged) ... */}
+                /* Case 3: NO Agent and NO OwnerDetails (Fallback) */
+                ) : (
+                  <div className="flex items-center space-x-3 opacity-60">
+                    <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <FaUserSlash className="text-gray-500 dark:text-gray-400" size={24} />
+                    </div>
+                    <div>
+                      <p className="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                        Agent Not Available
+                      </p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">This agent's account has been removed.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* --- END OF "LISTED BY" CARD UPDATE --- */}
+
+
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Share This Property</h3>
                 <div className="flex flex-wrap gap-3 justify-start">
@@ -774,8 +1078,9 @@ const PropertyDetails = () => {
           </motion.div>
         </div>
 
-        {/* ... (More from this Agent section ... unchanged) ... */}
-        {agentProperties.length > 0 && (
+        {/* --- UPDATED FOR DELETED AGENT --- */}
+        {/* Only show "More from" if the agent exists */}
+        {agentProperties.length > 0 && property.agent && (
           <section className="max-w-6xl mx-auto mt-16">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
               More from {property.agent.name}
@@ -789,12 +1094,12 @@ const PropertyDetails = () => {
         )}
       </div>
 
-      {/* ... (All Modals ... unchanged) ... */}
       <AnimatePresence>
+        {/* ✅ --- CHANGE 8: Pass property._id to the modal --- */}
         <ScheduleModal
           show={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
-          propertyId={id}
+          propertyId={property?._id}
           propertyTitle={property.title}
         />
       </AnimatePresence>
@@ -833,7 +1138,7 @@ const PropertyDetails = () => {
                   </h3>
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
                     {placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}
-                  </p>
+                  </p> {/* ✅ --- THIS IS THE FIX --- */}
                 </div>
               </div>
 

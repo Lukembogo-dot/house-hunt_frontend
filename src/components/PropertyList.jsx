@@ -8,7 +8,8 @@ export default function PropertyList({
   defaultFilter = {}, 
   filterOverrides = null, 
   showSearchBar = true, 
-  showTitle = true 
+  showTitle = true,
+  limit = 10 // ✅ 1. ACCEPT THE LIMIT PROP (default to 10)
 }) {
   
   const [properties, setProperties] = useState([]);
@@ -32,6 +33,7 @@ export default function PropertyList({
       const params = new URLSearchParams({
         ...currentFilters, 
         page: pageNumber,
+        limit: limit // ✅ 2. PASS THE LIMIT TO THE API
       });
       // Clean up empty params
       Object.keys(params).forEach(key => {

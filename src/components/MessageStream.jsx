@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-// ✅ 1. IMPORT FaWhatsapp
-import { FaPaperPlane, FaSpinner, FaWhatsapp } from 'react-icons/fa';
+import { 
+  FaPaperPlane, 
+  FaSpinner, 
+  FaWhatsapp,
+  FaUserSlash // 1. IMPORT THE 'USER SLASH' ICON
+} from 'react-icons/fa';
 import { useSocket } from '../context/SocketContext.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,7 +22,15 @@ const MessageStream = () => {
   const messagesEndRef = useRef(null);
   const socket = useSocket(); 
 
-  const otherParticipant = conversation?.participants.find(p => p._id !== user._id);
+  // 2. UPDATED FOR SAFETY
+  // This now checks if 'p' exists (is not null) before trying
+  // to access p._id, which prevents a crash if a user was deleted.
+  const otherParticipant = conversation?.participants.find(p => p && p._id !== user._id);
+  
+  // 3. NEW VARIABLE TO CONTROL CHAT STATE
+  // If the other participant is not found (i.e., is null/deleted),
+  // this variable will be true.
+  const isChatDisabled = !otherParticipant;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
@@ -64,7 +76,7 @@ const MessageStream = () => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || isChatDisabled) return; // Don't send if disabled
 
     setSending(true);
     try {
@@ -102,39 +114,57 @@ const MessageStream = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <img 
-          src={otherParticipant?.profilePicture} 
-          alt={otherParticipant?.name}
-          className="w-10 h-10 rounded-full object-cover"
-        />
-        <div>
-          {/* ✅ 2. ADDED FLEX CONTAINER FOR NAME + WHATSAPP ICON */}
-          <div className="flex items-center space-x-2">
-            <p className="font-semibold dark:text-white">{otherParticipant?.name}</p>
-            
-            {/* ✅ 3. ADDED WHATSAPP BUTTON */}
-            {otherParticipant?.whatsappNumber && (
-              <a
-                href={`https://wa.me/${otherParticipant.whatsappNumber.replace(/\+/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-green-500 hover:text-green-600 transition"
-                aria-label="Chat on WhatsApp"
-                title="Chat on WhatsApp"
+        {/* 4. --- NEW CONDITIONAL HEADER --- */}
+        {isChatDisabled ? (
+          // Case 1: User is DELETED
+          <>
+            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+              <FaUserSlash className="text-gray-500 dark:text-gray-400" />
+            </div>
+            <div>
+              <p className="font-semibold dark:text-white">User Not Available</p>
+              <Link 
+                to={`/properties/${conversation.property}`} 
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <FaWhatsapp size={16} />
-              </a>
-            )}
-          </div>
-          {/* --- End of new code --- */}
-
-          <Link 
-            to={`/properties/${conversation.property}`} 
-            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            View Property
-          </Link>
-        </div>
+                View Property
+              </Link>
+            </div>
+          </>
+        ) : (
+          // Case 2: User EXISTS (Normal)
+          <>
+            <img 
+              src={otherParticipant.profilePicture} 
+              alt={otherParticipant.name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <div className="flex items-center space-x-2">
+                <p className="font-semibold dark:text-white">{otherParticipant.name}</p>
+                {otherParticipant.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${otherParticipant.whatsappNumber.replace(/\+/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-500 hover:text-green-600 transition"
+                    aria-label="Chat on WhatsApp"
+                    title="Chat on WhatsApp"
+                  >
+                    <FaWhatsapp size={16} />
+                  </a>
+                )}
+              </div>
+              <Link 
+                to={`/properties/${conversation.property}`} 
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                View Property
+              </Link>
+            </div>
+          </>
+        )}
+        {/* --- END OF CONDITIONAL HEADER --- */}
       </motion.div>
 
       {/* Message List */}
@@ -176,19 +206,28 @@ const MessageStream = () => {
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            // 5. UPDATE PLACEHOLDER AND DISABLED PROP
+            placeholder={isChatDisabled ? "This user is no longer available" : "Type your message..."}
+            className="flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             autoComplete="off"
-            disabled={sending}
+            disabled={sending || isChatDisabled}
           />
           <button
             type="submit"
             className="bg-blue-600 text-white rounded-full p-3 hover:bg-blue-700 transition disabled:opacity-50"
-            disabled={sending || !newMessage.trim()}
+            // 6. UPDATE DISABLED PROP
+            disabled={sending || !newMessage.trim() || isChatDisabled}
           >
             <FaPaperPlane />
           </button>
         </form>
+        
+        {/* 7. ADD THE "NO LONGER AVAILABLE" MESSAGE */}
+        {isChatDisabled && (
+          <p className="pt-2 text-center text-sm text-gray-500 dark:text-gray-400 italic">
+            You can no longer send messages in this conversation.
+          </p>
+        )}
       </motion.div>
     </>
   );

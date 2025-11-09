@@ -302,7 +302,9 @@ const AdminDashboard = () => {
             </Link>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            <table className="w-full min-w-[800px]"><thead className="bg-gray-50 dark:bg-gray-700">
+            {/* --- FIX: REMOVED WHITESPACE --- */}
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr className="border-b dark:border-gray-600">
                   <th className="p-3 text-left dark:text-gray-300">Title</th>
                   <th className="p-3 text-left dark:text-gray-300">Location</th>
@@ -317,19 +319,21 @@ const AdminDashboard = () => {
                     <td className="p-3 dark:text-gray-200">{prop.title}</td>
                     <td className="p-3 dark:text-gray-200">{prop.location}</td>
                     <td className="p-3 dark:text-gray-200">{prop.price.toLocaleString()}</td>
-                    
-                    {/* --- 1. UPDATED AGENT COLUMN (Per your request) --- */}
                     <td className="p-3 dark:text-gray-200 text-sm">
                       {prop.agent ? (
                         <span className="font-semibold">{prop.agent.name}</span>
+                      ) : prop.ownerDetails && prop.ownerDetails.name ? (
+                        <span className="italic opacity-70">{prop.ownerDetails.name}</span>
                       ) : (
-                        <span className="font-semibold text-red-500 dark:text-red-400">
-                          Admin Property
-                        </span>
+                        <button
+                          onClick={() => openAssignModal(prop)}
+                          className="flex items-center space-x-1 text-xs px-2 py-1 rounded-md bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800 transition"
+                        >
+                          <FaUserPlus />
+                          <span>Assign Agent</span>
+                        </button>
                       )}
                     </td>
-                    
-                    {/* --- 2. UPDATED ACTIONS COLUMN --- */}
                     <td className="p-3 flex space-x-3">
                       <Link to={`/admin/property/${prop._id}/edit`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
                         <FaEdit />
@@ -337,19 +341,12 @@ const AdminDashboard = () => {
                       <button onClick={() => deleteProperty(prop._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
                         <FaTrash />
                       </button>
-                      {/* This button now appears for ALL properties */}
-                      <button 
-                        onClick={() => openAssignModal(prop)} 
-                        className="text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-400" 
-                        title="Assign/Re-assign Agent"
-                      >
-                        <FaUserPlus />
-                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {/* --- END OF FIX --- */}
           </div>
         </section>
 
@@ -362,7 +359,9 @@ const AdminDashboard = () => {
             </Link>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            <table className="w-full min-w-[600px]"><thead className="bg-gray-50 dark:bg-gray-700">
+            {/* --- FIX: REMOVED WHITESPACE --- */}
+            <table className="w-full min-w-[600px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr className="border-b dark:border-gray-600">
                   <th className="p-3 text-left dark:text-gray-300">Title</th>
                   <th className="p-3 text-left dark:text-gray-300">Service Type</th>
@@ -393,6 +392,7 @@ const AdminDashboard = () => {
                 ))}
               </tbody>
             </table>
+            {/* --- END OF FIX --- */}
           </div>
         </section>
 
@@ -400,7 +400,9 @@ const AdminDashboard = () => {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Users ({users.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            <table className="w-full min-w-[500px]"><thead className="bg-gray-50 dark:bg-gray-700">
+            {/* --- FIX: REMOVED WHITESPACE --- */}
+            <table className="w-full min-w-[500px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr className="border-b dark:border-gray-600">
                   <th className="p-3 text-left dark:text-gray-300">Name</th>
                   <th className="p-3 text-left dark:text-gray-300">Email</th>
@@ -443,6 +445,7 @@ const AdminDashboard = () => {
                 ))}
               </tbody>
             </table>
+            {/* --- END OF FIX --- */}
           </div>
         </section>
 
@@ -452,7 +455,9 @@ const AdminDashboard = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Property Reviews ({reviews.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            <table className="w-full min-w-[600px]"><thead className="bg-gray-50 dark:bg-gray-700">
+            {/* --- FIX: REMOVED WHITESPACE --- */}
+            <table className="w-full min-w-[600px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr className="border-b dark:border-gray-600">
                   <th className="p-3 text-left dark:text-gray-300">Comment</th>
                   <th className="p-3 text-left dark:text-gray-300">Rating</th>
@@ -477,6 +482,7 @@ const AdminDashboard = () => {
                 ))}
               </tbody>
             </table>
+            {/* --- END OF FIX --- */}
           </div>
         </section>
       </div>

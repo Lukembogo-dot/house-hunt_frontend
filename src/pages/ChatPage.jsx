@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { FaSpinner, FaInbox, FaArrowLeft } from 'react-icons/fa'; 
+import { 
+  FaSpinner, 
+  FaInbox, 
+  FaArrowLeft,
+  FaUserSlash // 1. IMPORT THE 'USER SLASH' ICON
+} from 'react-icons/fa'; 
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -30,7 +35,10 @@ const ChatPage = () => {
   }, []); 
 
   const getOtherParticipant = (convo) => {
-    return convo.participants.find(p => p._id !== user._id);
+    // 2. UPDATED FOR SAFETY
+    // This now checks if 'p' exists (is not null) before trying
+    // to access p._id, which prevents a crash if a user was deleted.
+    return convo.participants.find(p => p && p._id !== user._id);
   };
 
   const sidebarVariants = {
@@ -95,9 +103,44 @@ const ChatPage = () => {
                 <div className="divide-y dark:divide-gray-700">
                   {conversations.map(convo => {
                     const otherUser = getOtherParticipant(convo);
-                    if (!otherUser) return null; 
-                    
                     const lastMsg = convo.lastMessage;
+
+                    // 3. --- NEW LOGIC FOR DELETED USER ---
+                    // If the other user is null (deleted), we show a
+                    // disabled "ghost" conversation item.
+                    if (!otherUser) {
+                      return (
+                        <div
+                          key={convo._id}
+                          className="block p-4 bg-gray-50 dark:bg-gray-800 opacity-60 cursor-not-allowed"
+                        >
+                          <div className="flex items-center space-x-3">
+                            {/* Ghost Avatar */}
+                            <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                              <FaUserSlash className="text-gray-500 dark:text-gray-400" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-center">
+                                {/* --- LINT FIX: Removed redundant 'font-semibold' --- */}
+                                <p className="dark:text-white truncate font-bold">
+                                  User Not Available
+                                </p>
+                                <p className="text-xs text-gray-400 flex-shrink-0">
+                                  {lastMsg && formatDistanceToNow(new Date(lastMsg.createdAt), { addSuffix: true })}
+                                </p>
+                              </div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate italic">
+                                This conversation is no longer available.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    // --- END OF NEW LOGIC ---
+
+                    // If the user is NOT deleted, show the normal item:
                     const isUnread = lastMsg && lastMsg.receiver === user._id && !lastMsg.isRead;
 
                     return (
