@@ -1,7 +1,7 @@
 // src/pages/SEOManager.jsx (UPDATED FOR KEYWORD LIBRARY)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus } from 'react-icons/fa';
+import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner } from 'react-icons/fa'; // Added FaSpinner
 import apiClient from '../api/axios';
 
 // ✅ --- 1. NEW COMPONENT FOR THE KEYWORD LIBRARY ---
@@ -62,8 +62,10 @@ const KeywordLibrary = () => {
   const handleToggleEmphasize = async (keyword) => {
     setIsSaving(keyword._id); // Set saving state for this specific row
     try {
+      // Send the *full* keyword object, just toggling the one field
       const { data: updatedKeyword } = await apiClient.put(`/seo/keywords/${keyword._id}`, {
-        isEmphasized: !keyword.isEmphasized,
+        ...keyword, // Send all existing data
+        isEmphasized: !keyword.isEmphasized, // Toggle the flag
       });
       // Update the list in-place for a responsive UI
       setKeywords(prev => 
@@ -142,7 +144,7 @@ const KeywordLibrary = () => {
             disabled={isSaving === 'new'}
             className="md:col-span-4 w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md disabled:opacity-50"
           >
-            {isSaving === 'new' ? 'Creating...' : 'Create New Keyword'}
+            {isSaving === 'new' ? <FaSpinner className="animate-spin" /> : 'Create New Keyword'}
           </button>
         </form>
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
@@ -236,8 +238,13 @@ const PageSettingsEditor = () => {
   
   const fetchPagesList = useCallback(async () => {
     try {
-        const { data: dynamicPages } = await apiClient.get('/seo/pages');
+        const { data } = await apiClient.get('/seo/pages');
         
+        // ✅ --- THIS IS THE FIX ---
+        // Ensure 'data' is an array before trying to map over it.
+        const dynamicPages = Array.isArray(data) ? data : [];
+        // --- END OF FIX ---
+
         const allPages = [
             ...staticPages, 
             ...dynamicPages.map(p => ({
@@ -271,7 +278,6 @@ const PageSettingsEditor = () => {
     
     try {
         const encodedPath = encodeURIComponent(path);
-        // ✅ --- YOUR EXISTING getSeoDataByPath IS PERFECT ---
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
 
         setSeoData({
@@ -483,7 +489,7 @@ const PageSettingsEditor = () => {
             disabled={saving}
             className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 shadow-md disabled:opacity-50"
           >
-            {saving ? 'Saving...' : `Save SEO Settings for ${seoData.pagePath}`}
+            {saving ? <FaSpinner className="animate-spin" /> : `Save SEO Settings for ${seoData.pagePath}`}
           </button>
         </div>
       </form>
