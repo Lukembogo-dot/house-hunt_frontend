@@ -31,23 +31,16 @@ jobs:
         run: |
           echo "Submitting feature to API..."
 
-          # --- THIS IS THE FIX ---
-
           # 1. Sanitize the key: 
-          #    - tr '[:upper:]' '[:lower:]'  (make lowercase)
-          #    - sed -E 's/[^a-z0-9]+/-/g'   (use extended regex to replace 1 OR MORE special chars with a single hyphen)
-          #    - sed -E 's/^-|-$//g'         (remove leading or trailing hyphens)
           KEY=$(echo "${{ steps.parse.outputs.key }}" | tr '[:upper:]' '[:lower:]' | sed -E -e 's/[^a-z0-9]+/-/g' -e 's/^-|-$//g')
           DESC="${{ steps.parse.outputs.desc }}"
 
           echo "Sanitized Key: $KEY"
           echo "Description: $DESC"
 
-          # 2. Build the JSON payload safely using jq
-          JSON_PAYLOAD=$(jq -n \
-                            --arg key "$KEY" \
-                            --arg desc "$DESC" \
-                            '{featureKey: $key, description: $desc}')
+          # --- THIS IS THE FIX ---
+          # 2. Build the JSON payload safely using jq on a SINGLE LINE
+          JSON_PAYLOAD=$(jq -n --arg key "$KEY" --arg desc "$DESC" '{featureKey: $key, description: $desc}')
 
           echo "Sending JSON: $JSON_PAYLOAD"
 
