@@ -23,10 +23,16 @@ const KeywordLibrary = () => {
     try {
       setLoading(true);
       const { data } = await apiClient.get('/seo/keywords');
-      setKeywords(data);
+      
+      // ✅ --- THIS IS THE FIX ---
+      // We must guarantee that 'keywords' is always an array
+      setKeywords(Array.isArray(data) ? data : []);
+      // --- END OF FIX ---
+
     } catch (err) {
       setError('Failed to fetch keyword library.');
       console.error(err);
+      setKeywords([]); // Also set to empty array on error
     } finally {
       setLoading(false);
     }
@@ -191,9 +197,9 @@ const KeywordLibrary = () => {
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">{kw.path}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      kw.engine === 'property' ? 'bg-blue-100 text-blue-800' :
-                      kw.engine === 'agent' ? 'bg-green-100 text-green-800' :
-                      kw.engine === 'intel' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'
+                      kw.engine === 'property' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                      kw.engine === 'agent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                      kw.engine === 'intel' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                     }`}>
                       {kw.engine}
                     </span>
@@ -218,7 +224,7 @@ const KeywordLibrary = () => {
   );
 };
 
-// ✅ --- 2. THIS IS YOUR EXISTING COMPONENT, WRAPPED ---
+// --- (PageSettingsEditor component is unchanged) ---
 const PageSettingsEditor = () => {
   const [pagesList, setPagesList] = useState([]);
   const [selectedPagePath, setSelectedPagePath] = useState(null);
@@ -240,10 +246,8 @@ const PageSettingsEditor = () => {
     try {
         const { data } = await apiClient.get('/seo/pages');
         
-        // ✅ --- THIS IS THE FIX ---
-        // Ensure 'data' is an array before trying to map over it.
-        const dynamicPages = Array.isArray(data) ? data : [];
-        // --- END OF FIX ---
+        // --- THIS IS THE FIX ---
+        const dynamicPages = Array.isArray(data) ? data : []; 
 
         const allPages = [
             ...staticPages, 
