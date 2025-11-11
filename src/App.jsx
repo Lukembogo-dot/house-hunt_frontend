@@ -54,6 +54,8 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 // ---------------------------------
 
+import FeatureManager from './pages/FeatureManager'; // <-- 1. IMPORT THE NEW PAGE
+
 
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
@@ -149,7 +151,7 @@ function AppRoutes() {
                 <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Buy</Link>
                 <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Rent</Link>
                 <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>About</Link>
-                <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition" onClick={closeMobileMenu}>Contact</Link>
+                <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-4Choose-400 transition" onClick={closeMobileMenu}>Contact</Link>
 
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
                   {loading ? (
@@ -190,13 +192,13 @@ function AppRoutes() {
                             SEO Manager
                           </Link>
                           
-                          {/* --- HERE IS THE NEW LINK --- */}
+                          {/* --- 2. THIS LINK IS UPDATED --- */}
                           <Link
-                            to="/admin/dashboard#feature-flags"
+                            to="/admin/feature-manager"
                             className="block font-bold text-purple-600 dark:text-purple-500 hover:text-purple-800 dark:hover:text-purple-400 transition"
                             onClick={closeMobileMenu}
                           >
-                            Feature Flags
+                            Feature Manager
                           </Link>
                           {/* ----------------------------- */}
                         </>
@@ -366,6 +368,10 @@ function AppRoutes() {
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               {/* ✅ 5. ADD THE SEO MANAGER ROUTE */}
               <Route path="/admin/seo-manager" element={<SEOManager />} />
+              
+              {/* --- 3. ADD THE NEW ROUTE HERE --- */}
+              <Route path="/admin/feature-manager" element={<FeatureManager />} />
+
               {/* ✅ --- ADD THIS ROUTE --- */}
               <Route path="/admin/add-service" element={<AdminAddService />} /> 
               <Route path="/admin/add-service/:id" element={<AdminAddService />} /> 
