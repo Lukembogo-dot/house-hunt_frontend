@@ -3,18 +3,21 @@ import { useEffect, useState, useCallback } from "react";
 import apiClient from "../api/axios"; 
 import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
-import { useFeatureFlag } from "../context/FeatureFlagContext.jsx"; // <-- 1. IMPORT HOOK
-import PropertyAlertForm from "./PropertyAlertForm"; // <-- 2. IMPORT COMPONENT
+import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
+import PropertyAlertForm from "./PropertyAlertForm";
+
+// ✅ --- FIX: Define a STABLE default object ---
+// This object is created only once, so its reference never changes.
+const STABLE_DEFAULT_FILTER = {};
 
 export default function PropertyList({ 
-  defaultFilter = {}, 
+  defaultFilter = STABLE_DEFAULT_FILTER, // <-- Use the stable object here
   filterOverrides = null, 
   showSearchBar = true, 
   showTitle = true,
   limit = 10 
 }) {
   
-  // 3. CHECK THE FEATURE FLAG
   const isAlertFormEnabled = useFeatureFlag('property-alert-magnet');
 
   const [properties, setProperties] = useState([]);
@@ -32,7 +35,6 @@ export default function PropertyList({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
-  // Use useCallback to prevent unnecessary re-renders (good practice)
   const fetchProperties = useCallback(async (currentFilters = {}, pageNumber = 1) => {
     try {
       setLoading(true);
@@ -41,7 +43,6 @@ export default function PropertyList({
         page: pageNumber,
         limit: limit
       });
-      // Clean up empty params
       Object.keys(params).forEach(key => {
         if (!params.get(key) || params.get(key) === 'null') {
           params.delete(key);
@@ -54,32 +55,31 @@ export default function PropertyList({
       setTotalPages(response.data.pages || 1);
     } catch (err) {
       console.error("❌ Error fetching properties:", err);
-      // Keep properties empty on error so the alert form can still show
       setProperties([]); 
     } finally {
       setLoading(false);
     }
-  }, [limit]); // Dependency added for limit
+  }, [limit]);
 
+  // This hook now correctly fetches initial data (like on /buy or /rent)
+  // and does NOTHING when filterOverrides is present.
   useEffect(() => {
     if (!filterOverrides) {
-      fetchProperties(filters, 1);
+      fetchProperties(filters, 1); 
     }
-  }, [fetchProperties, filters, filterOverrides]); // Added missing dependencies
+  }, [fetchProperties, filters, filterOverrides]);
 
+  // This hook now correctly runs when filterOverrides is passed,
+  // and will NOT loop because defaultFilter is a stable constant.
   useEffect(() => {
     if (filterOverrides) {
       const newFilters = { ...defaultFilter, ...filterOverrides };
-      setFilters(newFilters);
-      setPage(1); // Reset to page 1 for new search
+      
+      setFilters(newFilters); 
+      setPage(1); 
       fetchProperties(newFilters, 1);
-    } else if (filterOverrides === null) {
-      // Handle the case where filters are cleared
-      setFilters(defaultFilter);
-      setPage(1);
-      fetchProperties(defaultFilter, 1);
     }
-  }, [filterOverrides, fetchProperties, defaultFilter]); 
+  }, [filterOverrides, fetchProperties, defaultFilter]); // This is safe now
   
   const handleFilter = () => {
     setPage(1);
@@ -138,7 +138,6 @@ export default function PropertyList({
             ))}
           </div>
 
-          {/* ... (Pagination is unchanged) ... */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -170,7 +169,6 @@ export default function PropertyList({
           </div>
         </>
       ) : (
-        // --- 4. CONDITIONAL RENDER: SHOW ALERT FORM IF ENABLED ---
         <div className="text-center mt-20">
           {isAlertFormEnabled ? (
             <PropertyAlertForm currentFilters={filters} />
@@ -181,7 +179,6 @@ export default function PropertyList({
             </div>
           )}
         </div>
-        // --------------------------------------------------------
       )}
     </>
   );
