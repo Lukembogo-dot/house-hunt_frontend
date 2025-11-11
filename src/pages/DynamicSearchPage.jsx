@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import apiClient from '../api/axios';
 import PropertyList from '../components/PropertyList';
 import { motion } from 'framer-motion';
+// ✅ 1. IMPORT ICONS FOR THE STATS
+import { FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome } from 'react-icons/fa';
 
 // Helper function to capitalize words: "kilimani" -> "Kilimani"
 const capitalize = (s) => {
@@ -13,41 +15,105 @@ const capitalize = (s) => {
     .join(' ');
 };
 
+// ✅ 2. NEW "MARKET SNAPSHOT" COMPONENT
+const MarketSnapshot = ({ stats, loading }) => {
+  // Skeleton loader component
+  const StatCardSkeleton = () => (
+    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 animate-pulse">
+      <div className="h-6 w-1/3 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+      <div className="h-8 w-1/2 bg-gray-300 dark:bg-gray-700 rounded"></div>
+    </div>
+  );
+
+  // If loading, show 4 skeleton cards
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+    );
+  }
+
+  // If stats are loaded but no listings found, render nothing.
+  // This allows the PropertyList's "PropertyAlertForm" to be the main UI.
+  if (!stats || stats.count === 0) {
+    return null;
+  }
+
+  // If stats are loaded and listings exist, show the data.
+  return (
+    <motion.div 
+      className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
+          <FaHome className="mr-2" /> Total Listings
+        </h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.count}</p>
+      </div>
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
+          <FaMoneyBillWave className="mr-2" /> Average Price
+        </h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">
+          Ksh {stats.avgPrice.toLocaleString()}
+        </p>
+      </div>
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
+          <FaSearchDollar className="mr-2" /> Price Low
+        </h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">
+          Ksh {stats.minPrice.toLocaleString()}
+        </p>
+      </div>
+      <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
+          <FaChartBar className="mr-2" /> Price High
+        </h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">
+          Ksh {stats.maxPrice.toLocaleString()}
+        </p>
+      </div>
+    </motion.div>
+  );
+};
+
+
 // This component will generate default SEO and also try to fetch manual overrides
 const DynamicSearchPage = () => {
-  // ✅ --- 1. READ ALL NEW PARAMS FROM THE URL ---
   const { listingType, propertyType, location, bedrooms } = useParams();
 
-  // ✅ --- 2. GENERATE UPGRADED FILTERS ---
   const filterOverrides = {
-    listingType: listingType, // e.g., "rent"
-    type: (propertyType && propertyType !== 'all') ? propertyType.replace(/-/g, ' ') : undefined, // "propertyType" from URL (e.g., "bedsitter") maps to "type" in the filter
-    location: (location && location !== 'all') ? capitalize(location.replace(/-/g, ' ')) : undefined, // "kilimani" -> "Kilimani"
-    bedrooms: bedrooms ? bedrooms.split('-')[0] : undefined, // "2-bedroom" -> "2"
+    listingType: listingType,
+    type: (propertyType && propertyType !== 'all') ? propertyType.replace(/-/g, ' ') : undefined,
+    location: (location && location !== 'all') ? capitalize(location.replace(/-/g, ' ')) : undefined,
+    bedrooms: bedrooms ? bedrooms.split('-')[0] : undefined,
   };
 
-  // ✅ --- 3. UPGRADED SEO/H1 GENERATOR ---
   const generateDefaultSeo = () => {
-    // Get clean, capitalized values
+    // ... (This function is unchanged)
     const listType = capitalize(filterOverrides.listingType);
     const propType = filterOverrides.type ? capitalize(filterOverrides.type) : 'Properties';
     const loc = filterOverrides.location ? `in ${filterOverrides.location}` : 'in Kenya';
     const beds = filterOverrides.bedrooms ? `${capitalize(filterOverrides.bedrooms)} Bedroom` : '';
 
-    // Handle plurals
     let pluralPropType = (propType.endsWith('s') || propType === 'Land') ? propType : `${propType}s`;
     
-    // Create the H1 title
     let h1 = `${beds} ${pluralPropType} for ${listType} ${loc}`;
     
-    // Cleaner H1 for specific types
     if (propType === 'Bedsitters' || propType === 'Land') {
-      h1 = `${pluralPropType} for ${listType} ${loc}`; // e.g., "Bedsitters for Rent in Kilimani"
+      h1 = `${pluralPropType} for ${listType} ${loc}`;
     } else if (propType === 'Properties' && beds) {
-      h1 = `${beds} ${pluralPropType} for ${listType} ${loc}`; // e.g., "2 Bedroom Properties for Rent in Kenya"
+      h1 = `${beds} ${pluralPropType} for ${listType} ${loc}`;
     }
 
-    // Tidy up any double spaces
     h1 = h1.replace(/\s+/g, ' ').trim();
     
     const title = `${h1} | HouseHunt`;
@@ -59,32 +125,28 @@ const DynamicSearchPage = () => {
   const [seo, setSeo] = useState(generateDefaultSeo());
   const [loadingSeo, setLoadingSeo] = useState(true);
 
-  // ✅ --- 4. UPGRADED SEO OVERRIDE FETCHER ---
+  // ✅ 3. ADD NEW STATE FOR STATS
+  const [stats, setStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // ✅ 4. UPGRADED useEffect TO FETCH STATS
   useEffect(() => {
-    // Generate defaults immediately
     setSeo(generateDefaultSeo());
     
     const fetchSeoData = async () => {
       setLoadingSeo(true);
-      
-      // Build the path exactly as it's defined in the router,
-      // based on which params are available in the URL.
       let pagePath = `/search/${listingType}`;
       if (propertyType) {
         pagePath += `/${propertyType}`;
         if (location) {
           pagePath += `/${location}`;
-          if (bedrooms) {
-            pagePath += `/${bedrooms}`;
-          }
+          if (bedrooms) pagePath += `/${bedrooms}`;
         }
       }
       
       try {
         const encodedPath = encodeURIComponent(pagePath);
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
-        
-        // If data is found, override the defaults
         setSeo(prev => ({
           ...prev,
           title: data.metaTitle || prev.title,
@@ -92,15 +154,32 @@ const DynamicSearchPage = () => {
           h1: data.h1Tag || prev.h1 
         }));
       } catch (error) {
-        // This is normal. It just means no manual entry exists.
         console.warn(`No manual SEO data for ${pagePath}. Using generated defaults.`);
       } finally {
         setLoadingSeo(false);
       }
     };
     
+    // --- NEW STATS FETCHING FUNCTION ---
+    const fetchStatsData = async () => {
+      setLoadingStats(true);
+      try {
+        // Use the same filterOverrides to build the query
+        const params = new URLSearchParams(filterOverrides);
+        const { data } = await apiClient.get(`/properties/stats?${params.toString()}`);
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch property stats:", error);
+        setStats(null); // Set to null on error
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+    
+    // --- RUN BOTH FETCHERS IN PARALLEL ---
     fetchSeoData();
-  // ✅ --- 5. UPDATE DEPENDENCIES ---
+    fetchStatsData();
+    
   }, [listingType, propertyType, location, bedrooms]); // Re-run if ANY param changes
 
   return (
@@ -127,16 +206,14 @@ const DynamicSearchPage = () => {
             </h1>
           )}
           
-          {/*
-            Here's the magic: We render our existing PropertyList component,
-            but we pass in the new, hyper-specific filters.
-          */}
+          {/* ✅ 5. RENDER THE NEW MARKET SNAPSHOT COMPONENT */}
+          <MarketSnapshot stats={stats} loading={loadingStats} />
+          
           <PropertyList 
-            // ✅ --- 6. UPDATE KEY TO BE 100% UNIQUE ---
             key={`${listingType}-${propertyType}-${location}-${bedrooms}`}
             filterOverrides={filterOverrides}
-            showSearchBar={true} // We keep the search bar so users can refine
-            showTitle={false}     // We hide the default "Find Your Perfect Home" title
+            showSearchBar={true}
+            showTitle={false}
           />
         </motion.div>
       </div>
