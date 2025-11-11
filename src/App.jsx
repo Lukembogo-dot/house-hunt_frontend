@@ -189,6 +189,16 @@ function AppRoutes() {
                           >
                             SEO Manager
                           </Link>
+                          
+                          {/* --- HERE IS THE NEW LINK --- */}
+                          <Link
+                            to="/admin/dashboard#feature-flags"
+                            className="block font-bold text-purple-600 dark:text-purple-500 hover:text-purple-800 dark:hover:text-purple-400 transition"
+                            onClick={closeMobileMenu}
+                          >
+                            Feature Flags
+                          </Link>
+                          {/* ----------------------------- */}
                         </>
                       )}
 

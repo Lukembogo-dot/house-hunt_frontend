@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; // <-- 1. IMPORT THE HOOK
 import { FaStar } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
@@ -38,7 +39,7 @@ const ServiceSeoInjector = ({ service }) => {
       "@type": "Organization",
       "name": "House Hunt Kenya",
       "logo": {
-        "@type": "ImageObject",
+        "@type":"ImageObject",
         "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png" // Path to your logo
       }
     }
@@ -91,6 +92,9 @@ const ServiceSeoInjector = ({ service }) => {
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
+  
+  // 2. CALL THE HOOK TO CHECK THE FLAG'S STATUS
+  const isNewDesignEnabled = useFeatureFlag('new-service-post-design');
 
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -169,20 +173,33 @@ const ServicePostDetails = () => {
   
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
+  // 3. DEFINE YOUR TWO DIFFERENT STYLES
+  // This is your current "boxed" style
+  const oldArticleClass = "prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700";
+  
+  // This is the "modern blog" style: no box, just centered text
+  const newArticleClass = "prose prose-lg dark:prose-invert max-w-3xl mx-auto";
+
+
   return (
     <>
       {/* 2. USE THE NEW SEO INJECTOR */}
       <ServiceSeoInjector service={service} />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
-        <div className="max-w-4xl mx-auto">
+        {/* Container is now flexible */}
+        <div className="mx-auto"> 
           
-          {/* Article Header */}
-          <header className="mb-8">
+          {/* Article Header (now constrained) */}
+          <header className="mb-8 max-w-4xl mx-auto">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full">
+              
+              {/* --- THIS IS THE FIX --- */}
+              <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-white px-3 py-1 rounded-full">
                 {service.serviceType}
               </span>
+              {/* ----------------------- */}
+
               <span className="text-sm font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-3 py-1 rounded-full">
                 {service.location}
               </span>
@@ -199,121 +216,124 @@ const ServicePostDetails = () => {
             </div>
           </header>
 
-          {/* Featured Image */}
+          {/* Featured Image (now constrained) */}
           {service.imageUrl && (
             <img 
               src={service.imageUrl}
               alt={service.title}
-              className="w-full h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
+              className="w-full max-w-4xl mx-auto h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
             />
           )}
 
-          {/* Article Content */}
-          <article className="prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
+          {/* Article Content (uses the feature flag) */}
+          <article className={isNewDesignEnabled ? newArticleClass : oldArticleClass}>
             {/* This renders the HTML from ReactQuill */}
             <div dangerouslySetInnerHTML={{ __html: service.content }} />
           </article>
 
-          {/* 4. --- NEW: RENDER THE FAQ SECTION --- */}
-          {service.faqs && service.faqs.length > 0 && (
-            <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-                Frequently Asked Questions
-              </h2>
-              <div className="space-y-6">
-                {service.faqs.map((faq, index) => (
-                  <div key={index} className="border-b dark:border-gray-700 pb-4 last:border-b-0">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                      {faq.question}
-                    </h3>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {faq.answer}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-          {/* --------------------------------- */}
-
-
-          {/* Reviews/Comments Section */}
-          <section className="mt-12">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-              Neighbourhood Feedback ({service.numReviews}) 
-              <span className="ml-2 text-yellow-400">★ {avgRating}</span>
-            </h2>
-
-            {/* Review Submission Form */}
-            {user ? (
-              <form onSubmit={handleReviewSubmit} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-                <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
-                <div className="flex items-center mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar
-                      key={i}
-                      size={24}
-                      className={`cursor-pointer transition-colors ${
-                        i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
-                      }`}
-                      onMouseEnter={() => setHoverRating(i + 1)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => setRating(i + 1)}
-                    />
+          {/* This wrapper keeps FAQs and Reviews boxed */}
+          <div className="max-w-4xl mx-auto">
+            {/* 4. --- NEW: RENDER THE FAQ SECTION --- */}
+            {service.faqs && service.faqs.length > 0 && (
+              <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
+                  Frequently Asked Questions
+                </h2>
+                <div className="space-y-6">
+                  {service.faqs.map((faq, index) => (
+                    <div key={index} className="border-b dark:border-gray-700 pb-4 last:border-b-0">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                        {faq.question}
+                      </h3>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {faq.answer}
+                      </p>
+                    </div>
                   ))}
                 </div>
-                <textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows="3"
-                  placeholder="Share your experience with this service..."
-                  className="w-full px-4 py-3 border rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                ></textarea>
-                {reviewError && <p className="text-sm text-red-500 mb-2">{reviewError}</p>}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-                >
-                  {submitting ? "Submitting..." : "Submit Feedback"}
-                </button>
-              </form>
-            ) : (
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                You must be <Link to="/login" className="text-blue-600 dark:text-blue-400 underline">logged in</Link> to leave feedback.
-              </p>
+              </section>
             )}
+            {/* --------------------------------- */}
 
-            {/* Existing Reviews List */}
-            {service.reviews.length > 0 ? (
-              <ul className="space-y-4">
-                {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
-                  <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center mb-2">
-                       <img 
-                        src={review.user?.profilePicture} // 'user' is populated, this is correct
-                        alt={review.name} 
-                        className="w-10 h-10 rounded-full object-cover mr-3"
-                       />
-                       <div>
-                        <p className="font-bold dark:text-gray-100">{review.name}</p>
-                        <div className="flex">
-                          <StarRating rating={review.rating} />
+
+            {/* Reviews/Comments Section */}
+            <section className="mt-12">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                Neighbourhood Feedback ({service.numReviews}) 
+                <span className="ml-2 text-yellow-400">★ {avgRating}</span>
+              </h2>
+
+              {/* Review Submission Form */}
+              {user ? (
+                <form onSubmit={handleReviewSubmit} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
+                  <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
+                  <div className="flex items-center mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar
+                        key={i}
+                        size={24}
+                        className={`cursor-pointer transition-colors ${
+                          i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
+                        }`}
+                        onMouseEnter={() => setHoverRating(i + 1)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => setRating(i + 1)}
+                      />
+                    ))}
+                  </div>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows="3"
+                    placeholder="Share your experience with this service..."
+                    className="w-full px-4 py-3 border rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                  ></textarea>
+                  {reviewError && <p className="text-sm text-red-500 mb-2">{reviewError}</p>}
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {submitting ? "Submitting..." : "Submit Feedback"}
+                  </button>
+                </form>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  You must be <Link to="/login" className="text-blue-600 dark:text-blue-400 underline">logged in</Link> to leave feedback.
+                </p>
+              )}
+
+              {/* Existing Reviews List */}
+              {service.reviews.length > 0 ? (
+                <ul className="space-y-4">
+                  {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
+                    <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center mb-2">
+                        <img 
+                          src={review.user?.profilePicture} // 'user' is populated, this is correct
+                          alt={review.name} 
+                          className="w-10 h-10 rounded-full object-cover mr-3"
+                        />
+                        <div>
+                          <p className="font-bold dark:text-gray-100">{review.name}</p>
+                          <div className="flex">
+                            <StarRating rating={review.rating} />
+                          </div>
                         </div>
-                       </div>
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400">No feedback yet. Be the first to share your experience!</p>
-            )}
-          </section>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">No feedback yet. Be the first to share your experience!</p>
+              )}
+            </section>
 
+          </div>
         </div>
       </div>
     </>
