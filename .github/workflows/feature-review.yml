@@ -1,6 +1,5 @@
 name: Submit Feature for Admin Review
 
-# This action runs on every push to the 'main' branch
 on:
   push:
     branches:
@@ -8,35 +7,46 @@ on:
 
 jobs:
   check-for-feature-review:
-    # This job will only run if the commit message contains "@feature-review:"
     if: contains(github.event.head_commit.message, '@feature-review:')
     runs-on: ubuntu-latest
 
     steps:
       - name: 1. Get Commit Message
-        # This step saves the full commit message into an environment variable
         run: echo "COMMIT_MSG<<EOF" >> $GITHUB_ENV; echo "${{ github.event.head_commit.message }}" >> $GITHUB_ENV; echo "EOF" >> $GITHUB_ENV
 
       - name: 2. Parse Feature Details from Commit
         id: parse
         run: |
-          # This script finds the lines starting with @feature-key: and @feature-desc:
-          # It cleans them up and saves them as output variables for the next step
-          KEY=$(echo "${{ env.COMMIT_MSG }}" | grep '@feature-key:' | cut -d':' -f2- | xargs)
-          DESC=$(echo "${{ env.COMMIT_MSG }}" | grep '@feature-desc:' | cut -d':' -f2- | xargs)
+          # Use grep/cut/sed to safely extract and trim whitespace
+          # This is safer than xargs
+          KEY_RAW=$(echo "${{ env.COMMIT_MSG }}" | grep '@feature-key:' | cut -d':' -f2- | sed 's/^[ \t]*//;s/[ \t]*$//')
+          DESC_RAW=$(echo "${{ env.COMMIT_MSG }}" | grep '@feature-desc:' | cut -d':' -f2- | sed 's/^[ \t]*//;s/[ \t]*$//')
 
-          echo "key=$KEY" >> $GITHUB_OUTPUT
-          echo "desc=$DESC" >> $GITHUB_OUTPUT
+          echo "key=$KEY_RAW" >> $GITHUB_OUTPUT
+          echo "desc=$DESC_RAW" >> $GITHUB_OUTPUT
 
       - name: 3. Call Feature Approval API
-        # This step only runs if both a key and description were successfully parsed
         if: steps.parse.outputs.key && steps.parse.outputs.desc
         run: |
           echo "Submitting feature to API..."
+
+          # --- THIS IS THE FIX ---
+
+          # 1. Sanitize the key: lowercase, replace spaces/special chars with a single hyphen
+          KEY=$(echo "${{ steps.parse.outputs.key }}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' -e 's/--\+/-/g' -e 's/^-//' -e 's/-$//')
+          DESC="${{ steps.parse.outputs.desc }}"
+
+          echo "Sanitized Key: $KEY"
+          echo "Description: $DESC"
+
+          # 2. Build the JSON payload safely using printf
+          # This correctly handles any special characters
+          JSON_PAYLOAD=$(printf '{"featureKey":"%s","description":"%s"}' "$KEY" "$DESC")
+
+          echo "Sending JSON: $JSON_PAYLOAD"
+
+          # 3. Send the request
           curl -X POST "${{ secrets.API_URL }}/api/service/submit-update" \
           -H "Content-Type: application/json" \
           -H "x-api-key: ${{ secrets.SERVICE_API_KEY }}" \
-          -d '{
-                "featureKey": "${{ steps.parse.outputs.key }}",
-                "description": "${{ steps.parse.outputs.desc }}"
-              }'
+          -d "$JSON_PAYLOAD"
