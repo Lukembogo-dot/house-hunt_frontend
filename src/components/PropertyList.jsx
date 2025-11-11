@@ -1,17 +1,22 @@
 // src/components/PropertyList.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import apiClient from "../api/axios"; 
 import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
+import { useFeatureFlag } from "../context/FeatureFlagContext.jsx"; // <-- 1. IMPORT HOOK
+import PropertyAlertForm from "./PropertyAlertForm"; // <-- 2. IMPORT COMPONENT
 
 export default function PropertyList({ 
   defaultFilter = {}, 
   filterOverrides = null, 
   showSearchBar = true, 
   showTitle = true,
-  limit = 10 // ✅ 1. ACCEPT THE LIMIT PROP (default to 10)
+  limit = 10 
 }) {
   
+  // 3. CHECK THE FEATURE FLAG
+  const isAlertFormEnabled = useFeatureFlag('property-alert-magnet');
+
   const [properties, setProperties] = useState([]);
   
   const [filters, setFilters] = useState({
@@ -26,14 +31,15 @@ export default function PropertyList({
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
-  const fetchProperties = async (currentFilters = {}, pageNumber = 1) => {
+  
+  // Use useCallback to prevent unnecessary re-renders (good practice)
+  const fetchProperties = useCallback(async (currentFilters = {}, pageNumber = 1) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
         ...currentFilters, 
         page: pageNumber,
-        limit: limit // ✅ 2. PASS THE LIMIT TO THE API
+        limit: limit
       });
       // Clean up empty params
       Object.keys(params).forEach(key => {
@@ -48,19 +54,20 @@ export default function PropertyList({
       setTotalPages(response.data.pages || 1);
     } catch (err) {
       console.error("❌ Error fetching properties:", err);
+      // Keep properties empty on error so the alert form can still show
+      setProperties([]); 
     } finally {
       setLoading(false);
     }
-  };
+  }, [limit]); // Dependency added for limit
 
   useEffect(() => {
     if (!filterOverrides) {
       fetchProperties(filters, 1);
     }
-  }, []); 
+  }, [fetchProperties, filters, filterOverrides]); // Added missing dependencies
 
   useEffect(() => {
-    // Only refetch if filterOverrides is the *reason* for the update
     if (filterOverrides) {
       const newFilters = { ...defaultFilter, ...filterOverrides };
       setFilters(newFilters);
@@ -72,7 +79,7 @@ export default function PropertyList({
       setPage(1);
       fetchProperties(defaultFilter, 1);
     }
-  }, [filterOverrides]); 
+  }, [filterOverrides, fetchProperties, defaultFilter]); 
   
   const handleFilter = () => {
     setPage(1);
@@ -131,6 +138,7 @@ export default function PropertyList({
             ))}
           </div>
 
+          {/* ... (Pagination is unchanged) ... */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -162,10 +170,18 @@ export default function PropertyList({
           </div>
         </>
       ) : (
-        <div className="text-center text-gray-500 dark:text-gray-400 mt-20">
-          <p className="text-lg">No properties found.</p>
-          <p className="text-sm">Try changing filters or search terms.</p>
+        // --- 4. CONDITIONAL RENDER: SHOW ALERT FORM IF ENABLED ---
+        <div className="text-center mt-20">
+          {isAlertFormEnabled ? (
+            <PropertyAlertForm currentFilters={filters} />
+          ) : (
+            <div className="text-gray-500 dark:text-gray-400">
+              <p className="text-lg">No properties found.</p>
+              <p className="text-sm">Try changing filters or search terms.</p>
+            </div>
+          )}
         </div>
+        // --------------------------------------------------------
       )}
     </>
   );
