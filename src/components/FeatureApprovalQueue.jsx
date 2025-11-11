@@ -50,7 +50,8 @@ const FeatureApprovalQueue = () => {
     setIsSubmitting(true);
     try {
       const sanitizedKey = newKey.toLowerCase().trim().replace(/\s+/g, '-');
-      const { data } = await apiClient.post('/admin/updates/submit', 
+      // --- THIS IS THE FIX: Removed "/submit" ---
+      const { data } = await apiClient.post('/admin/updates', 
         { featureKey: sanitizedKey, description: newDesc },
         { withCredentials: true }
       );
