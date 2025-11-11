@@ -14,7 +14,6 @@ import AddProperty from './pages/AddProperty';
 import EditProperty from "./pages/EditProperty";
 import { useAuth } from "./context/AuthContext";
 import ProfileDropdown from "./components/ProfileDropdown";
-// ✅ 1. Import FaWhatsapp
 import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa"; 
 import ThemeToggle from "./components/ThemeToggle";
 import AgentRoute from "./components/AgentRoute";
@@ -38,32 +37,36 @@ import ChatPlaceholder from './components/ChatPlaceholder';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
-// ✅ 1. Import new Email Verification component
 import VerifyEmail from './pages/VerifyEmail';
-// ✅ 3. Import new SEO Manager component
 import SEOManager from './pages/SEOManager'; 
-import TopAgents from "./components/TopAgents"; // ✅ 1. Import new component
+import TopAgents from "./components/TopAgents"; 
 
-// ✅ --- 1. IMPORT THE NEW COMPONENTS ---
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 import ServicePostDetails from "./pages/ServicePostDetails";
-import AdminAddService from "./pages/AdminAddService"; // ✅ --- ADD THIS IMPORT ---
+import AdminAddService from "./pages/AdminAddService"; 
 
-// --- 1. IMPORT NEW LEGAL PAGES ---
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-// ---------------------------------
 
-import FeatureManager from './pages/FeatureManager'; // <-- 1. IMPORT THE NEW PAGE
-import ForAgents from './pages/ForAgents'; // <-- 1. IMPORT THE NEW PAGE
+import FeatureManager from './pages/FeatureManager'; 
+import ForAgents from './pages/ForAgents'; 
+
+import AgentAnalytics from './pages/AgentAnalytics';
+
+// ✅ --- 1. IMPORT THE NEW PREVIEW BANNER ---
+import PreviewBanner from './components/PreviewBanner';
+
 
 function AppRoutes() {
-  const { user, loading, logout } = useAuth();
+  // ✅ --- 2. GET NEW VALUES FROM AUTH CONTEXT ---
+  const { user, loading, logout, realUser, previewRole } = useAuth(); //
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const navigate = useNavigate();
 
-  const canListProperty = user && (user.role === 'admin' || user.role === 'agent');
+  // This logic remains the same, as it should respect the *preview* user
+  const canListProperty = user && (user.role === 'admin' || user.role === 'agent'); //
   const location = useLocation();
 
   const [homeFilters, setHomeFilters] = useState({
@@ -111,12 +114,14 @@ function AppRoutes() {
               <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</Link>
             </nav>
             
-            {/* --- ✅ DESKTOP ICON SPACING CHANGED TO space-x-3 --- */}
             <div className="hidden md:flex items-center space-x-3">
               <ThemeToggle />
               {loading ? (
                 <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-              ) : user ? (
+              
+              // ✅ --- 3. CHECK FOR 'realUser' INSTEAD OF 'user' ---
+              // This keeps your admin controls visible even during 'guest' preview
+              ) : realUser ? ( //
                 <>
                   <NotificationBell />
                   <ProfileDropdown />
@@ -128,16 +133,15 @@ function AppRoutes() {
               )}
             </div>
             
-            {/* --- ✅ MOBILE ICON SPACING CHANGED TO space-x-3 --- */}
             <div className="md:hidden flex items-center space-x-3">
               <ThemeToggle />
-              {user && !loading && <NotificationBell />}
+              {/* ✅ --- 4. CHECK FOR 'realUser' FOR THE MOBILE BELL --- */}
+              {realUser && !loading && <NotificationBell />} 
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 focus:outline-none"
                 aria-label="Toggle menu"
               >
-                {/* --- ✅ ICON SIZE CHANGED TO 22 --- */}
                 {isMobileMenuOpen ? <FaTimes size={22} /> : <FaBars size={22} />}
               </button>
             </div>
@@ -156,7 +160,10 @@ function AppRoutes() {
                 <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
                   {loading ? (
                     <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-                  ) : user ? (
+                  
+                  // ✅ --- 5. CHECK FOR 'realUser' FOR THE ENTIRE MOBILE MENU ---
+                  // This keeps your admin menu visible even during 'guest' preview
+                  ) : realUser ? ( //
                     <>
                       <Link
                         to="/profile"
@@ -174,7 +181,8 @@ function AppRoutes() {
                         My Messages
                       </Link>
 
-                      {user.role === 'admin' && (
+                      {/* This logic is correct: it uses 'user' (effective role) */}
+                      {user && user.role === 'admin' && ( //
                         <>
                           <Link
                             to="/admin/dashboard"
@@ -183,7 +191,6 @@ function AppRoutes() {
                           >
                             Admin Dashboard
                           </Link>
-                          {/* ✅ 4. ADD SEO MANAGER LINK TO MOBILE MENU */}
                           <Link
                             to="/admin/seo-manager"
                             className="block font-bold text-blue-600 dark:text-blue-500 hover:text-blue-800 dark:hover:text-blue-400 transition"
@@ -191,8 +198,6 @@ function AppRoutes() {
                           >
                             SEO Manager
                           </Link>
-                          
-                          {/* --- 2. THIS LINK IS UPDATED --- */}
                           <Link
                             to="/admin/feature-manager"
                             className="block font-bold text-purple-600 dark:text-purple-500 hover:text-purple-800 dark:hover:text-purple-400 transition"
@@ -200,11 +205,11 @@ function AppRoutes() {
                           >
                             Feature Manager
                           </Link>
-                          {/* ----------------------------- */}
                         </>
                       )}
 
-                      {canListProperty && (
+                      {/* This logic is correct: it uses 'user' (effective role) */}
+                      {canListProperty && ( //
                         <Link
                           to="/add-property"
                           className="block text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition"
@@ -236,9 +241,17 @@ function AppRoutes() {
           )}
         </header>
 
+        {/* ✅ --- 6. ADD THE PREVIEW BANNER --- */}
+        {/* This will only render if 'previewRole' is not null */}
+        {previewRole && <PreviewBanner />} 
+        {/* ---------------------------------- */}
+
+
         {/* ================= ROUTES ================= */}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+
+            {/* ... (All your <Route> components remain unchanged) ... */}
 
             <Route path="/" element={
               <>
@@ -295,13 +308,13 @@ function AppRoutes() {
                           />
                         </div>
                       </section>
-                      <TopAgents /> {/* ✅ 2. Add TopAgents here */}
+                      <TopAgents /> 
                       <TrendingProperties />
                     </>
                   ) : (
                     // DEFAULT VIEW
                     <>
-                      <TopAgents /> {/* ✅ 3. Add TopAgents here */}
+                      <TopAgents /> 
                       <TrendingProperties />
                       <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                         <div className="max-w-6xl mx-auto">
@@ -316,7 +329,6 @@ function AppRoutes() {
                           />
                         </div>
                       </section>
-                      {/* ✅ --- 2. ADD THE NEW COMPONENT TO THE HOME PAGE --- */}
                       <NeighbourhoodWatchHome />
                     </>
                   )}
@@ -330,7 +342,6 @@ function AppRoutes() {
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             
-            {/* ✅ --- THIS ROUTE IS NOW UPDATED --- ✅ */}
             <Route path="/properties/:slug" element={<PropertyDetails />} />
             
             <Route path="/login" element={<Login />} />
@@ -340,18 +351,13 @@ function AppRoutes() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             
-            {/* ✅ 2. ADD THE VERIFY EMAIL ROUTE */}
             <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
-            {/* ✅ --- 3. ADD THE NEW DYNAMIC ROUTE FOR SERVICE POSTS --- */}
             <Route path="/services/:slug" element={<ServicePostDetails />} />
 
-            {/* --- 2. ADD NEW LEGAL ROUTES --- */}
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            {/* --------------------------------- */}
             
-            {/* --- 2. ADD THE NEW ROUTE --- */}
             <Route path="/for-agents" element={<ForAgents />} />
 
 
@@ -369,13 +375,10 @@ function AppRoutes() {
             {/* Admin Routes */}
             <Route path="" element={<AdminRoute />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              {/* ✅ 5. ADD THE SEO MANAGER ROUTE */}
               <Route path="/admin/seo-manager" element={<SEOManager />} />
               
-              {/* --- 3. ADD THE NEW ROUTE HERE --- */}
               <Route path="/admin/feature-manager" element={<FeatureManager />} />
 
-              {/* ✅ --- ADD THIS ROUTE --- */}
               <Route path="/admin/add-service" element={<AdminAddService />} /> 
               <Route path="/admin/add-service/:id" element={<AdminAddService />} /> 
             </Route>
@@ -384,13 +387,14 @@ function AppRoutes() {
             <Route path="" element={<AgentRoute />}>
               <Route path="/add-property" element={<AddProperty />} />
               <Route path="/admin/property/:id/edit" element={<EditProperty />} />
+              <Route path="/profile/analytics" element={<AgentAnalytics />} />
             </Route>
           </Routes>
         </AnimatePresence>
 
         {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
-          {/* ✅ 2. Change grid to 4 columns on desktop, 2 on tablet */}
+          {/* ... (footer is unchanged) ... */}
           <div className="container mx-auto px-6 md:px-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center md:text-left">
             <div>
               <h3 className="text-xl font-semibold text-white mb-4">HouseHunt Kenya</h3>
@@ -407,14 +411,11 @@ function AppRoutes() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
-              {/* --- 3. UPDATE FOOTER LINKS --- */}
               <ul className="space-y-2 text-sm">
                 <li><Link to="/terms-of-service" className="hover:text-blue-400 transition">Terms of Service</Link></li>
                 <li><Link to="/privacy-policy" className="hover:text-blue-400 transition">Privacy Policy</Link></li>
               </ul>
-              {/* ------------------------------- */}
             </div>
-            {/* ✅ 3. Add new Contact column */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Contact Us</h3>
               <ul className="space-y-2 text-sm">

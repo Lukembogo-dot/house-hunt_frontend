@@ -3,14 +3,43 @@ import apiClient from '../api/axios';
 
 const AuthContext = createContext(null);
 
+// --- 1. Create mock user objects for preview ---
+// We create these outside so they are stable
+const PREVIEW_USER_OBJECT = {
+  // This can be a generic object representing a basic user
+  name: 'Preview User',
+  email: 'user@preview.com',
+  role: 'user',
+  isVerified: true,
+  favorites: [],
+  // Add any other fields your app expects
+};
+
+const PREVIEW_AGENT_OBJECT = {
+  // This can be a generic object representing a basic agent
+  name: 'Preview Agent',
+  email: 'agent@preview.com',
+  role: 'agent',
+  isVerified: true,
+  favorites: [],
+  // Add any other fields your app expects
+};
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // --- 2. Rename 'user' to 'realUser' ---
+  const [realUser, setRealUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
+  // --- 3. Add new state for Preview Mode ---
+  const [previewRole, setPreviewRole] = useState(null); // e.g., 'guest', 'user', 'agent'
+
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchNotifications = useCallback(async () => {
+    // No notifications in preview mode
+    if (previewRole) return; 
+    
     try {
       const { data } = await apiClient.get('/notifications');
       setNotifications(data);
@@ -18,20 +47,20 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch notifications on load", error);
     }
-  }, []); 
+  }, [previewRole]); // Add previewRole as dependency
 
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
         const { data } = await apiClient.get('/auth/profile');
-        // ✅ 1. Store the complete user object, including 'isVerified'
         const userData = { ...data, favorites: data.favorites || [] };
-        setUser(userData);
+        // --- 4. Update 'realUser' ---
+        setRealUser(userData);
         
         await fetchNotifications(); 
         
       } catch (error) {
-        setUser(null);
+        setRealUser(null);
         localStorage.removeItem('token');
       } finally {
         setLoading(false);
@@ -44,9 +73,9 @@ export const AuthProvider = ({ children }) => {
     if (userData.token) {
       localStorage.setItem('token', userData.token);
     }
-    // ✅ 2. Store the complete user object, including 'isVerified'
     const completeUserData = { ...userData, favorites: userData.favorites || [] };
-    setUser(completeUserData);
+    // --- 5. Update 'realUser' ---
+    setRealUser(completeUserData);
     
     fetchNotifications(); 
   };
@@ -57,14 +86,48 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to log out", error);
     } finally {
-      setUser(null);
+      // --- 6. Clear 'realUser' AND 'previewRole' ---
+      setRealUser(null);
+      setPreviewRole(null); // Exit preview on logout
       localStorage.removeItem('token');
       
       setNotifications([]); 
       setUnreadCount(0);
     }
   };
+  
+  // --- 7. Add new functions to control preview mode ---
+  const startPreview = (role) => {
+    if (realUser && realUser.role === 'admin') {
+      setPreviewRole(role);
+    }
+  };
 
+  const stopPreview = () => {
+    setPreviewRole(null);
+  };
+  
+  // --- 8. Create the "effectiveUser" for the app ---
+  // This is the magic!
+  let effectiveUser = realUser;
+  
+  if (realUser && realUser.role === 'admin' && previewRole) {
+    switch (previewRole) {
+      case 'guest':
+        effectiveUser = null; // Simulate being logged out
+        break;
+      case 'user':
+        effectiveUser = PREVIEW_USER_OBJECT; // Simulate a basic user
+        break;
+      case 'agent':
+        effectiveUser = PREVIEW_AGENT_OBJECT; // Simulate a basic agent
+        break;
+      default:
+        effectiveUser = realUser;
+    }
+  }
+
+  // (Notification functions are unchanged)
   const addNotification = (newNotification) => {
     setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
     setUnreadCount((prevCount) => prevCount + 1);
@@ -84,14 +147,15 @@ export const AuthProvider = ({ children }) => {
 
   // --- (Favorite functions are unchanged) ---
   const addFavoriteContext = async (propertyId) => {
-    if (!user) {
+    if (!effectiveUser) { // Use effectiveUser
       alert("Please log in to save properties.");
       return;
     }
-    // (rest of the function is unchanged)
     try {
+      // Note: In preview, this might fail, which is OK.
       const { data } = await apiClient.post(`/users/profile/favorites`, { propertyId }, { withCredentials: true });
-      setUser(prevUser => ({
+      // This will only update the 'realUser' object if not in preview
+      setRealUser(prevUser => ({
         ...prevUser,
         favorites: data.favorites,
       }));
@@ -101,11 +165,10 @@ export const AuthProvider = ({ children }) => {
   };
   
   const removeFavoriteContext = async (propertyId) => {
-    if (!user) return;
-    // (rest of the function is unchanged)
+    if (!effectiveUser) return; // Use effectiveUser
     try {
       const { data } = await apiClient.delete(`/users/profile/favorites/${propertyId}`, { withCredentials: true });
-      setUser(prevUser => ({
+      setRealUser(prevUser => ({
         ...prevUser,
         favorites: data.favorites,
       }));
@@ -114,9 +177,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
+  // --- 9. Create a clean way to update user verification ---
+  const updateUserVerification = (isVerified) => {
+    setRealUser(prev => prev ? { ...prev, isVerified } : null);
+  };
+
   return (
     <AuthContext.Provider value={{ 
-      user, 
+      // --- 10. Update the provided value ---
+      user: effectiveUser, // 👈 The "fake" user for the app
+      realUser: realUser,    // 👈 The "real" admin user
+      previewRole,         // 👈 The current preview role
+      startPreview,        // 👈 Function to start preview
+      stopPreview,         // 👈 Function to stop preview
+      
       login, 
       logout, 
       loading, 
@@ -127,7 +201,7 @@ export const AuthProvider = ({ children }) => {
       unreadCount,
       addNotification,
       markNotificationsAsRead,
-      setUser // ✅ 3. Expose setUser so VerifyEmail can update it
+      updateUserVerification // 👈 Replaces the old 'setUser'
     }}>
       {children}
     </AuthContext.Provider>

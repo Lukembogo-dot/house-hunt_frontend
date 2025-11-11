@@ -345,6 +345,18 @@ const PropertyDetails = () => {
       schemaDescription: '',
   });
 
+  // ✅ --- 1. ADD HANDLER TO LOG LEADS (FOR ANALYTICS) ---
+  const handleLogLead = () => {
+    // Ensure property and _id exist before firing
+    if (!property || !property._id) return; 
+
+    // Fire-and-forget: We don't care about the response.
+    // This runs in the background.
+    apiClient.post(`/properties/${property._id}/log-lead`)
+      .catch(err => console.error("Error logging lead:", err)); // Log for debugging
+  };
+  // ----------------------------------------------------
+
   // Derived state for backward-compatible image access
   const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
   const allImageUrls = safeImageDetails.map(img => img.url);
@@ -514,12 +526,13 @@ const PropertyDetails = () => {
     setSelectedPlace({ ...place, distance });
   };
   
-
+  
   const handleScheduleClick = () => {
     if (!user) {
       navigate('/login', { state: { from: location.pathname } }); 
       return;
     }
+    handleLogLead(); // ✅ --- 2. ADD LEAD LOG ---
     setShowScheduleModal(true);
   };
 
@@ -529,6 +542,7 @@ const PropertyDetails = () => {
       navigate('/login', { state: { from: location.pathname } });
       return;
     }
+    handleLogLead(); // ✅ --- 3. ADD LEAD LOG ---
     setIsStartingChat(true);
     try {
       const { data } = await apiClient.post('/chat/conversations', { 
@@ -986,6 +1000,7 @@ const PropertyDetails = () => {
                             rel="noopener noreferrer"
                             className="text-green-500 hover:text-green-600 transition"
                             aria-label="Chat on WhatsApp"
+                            onClick={handleLogLead} 
                           >
                             <FaWhatsapp size={20} />
                           </a>
@@ -997,6 +1012,7 @@ const PropertyDetails = () => {
                             rel="noopener noreferrer"
                             className="text-pink-500 hover:text-pink-600 transition"
                             aria-label="View on Instagram"
+                            onClick={handleLogLead} 
                           >
                             <FaInstagram size={20} />
                           </a>
@@ -1008,6 +1024,7 @@ const PropertyDetails = () => {
                             rel="noopener noreferrer"
                             className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition"
                             aria-label="View on TikTok"
+                            onClick={handleLogLead} 
                           >
                             <FaTiktok size={18} />
                           </a>

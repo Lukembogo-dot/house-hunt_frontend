@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag } from '../context/FeatureFlagContext';
 import { FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion'; 
 
 const ProfileDropdown = () => {
-  const { user, logout } = useAuth();
+  // ✅ 1. Get the new values from useAuth
+  const { user, logout, realUser, startPreview } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null); 
+
+  const isAnalyticsEnabled = useFeatureFlag('agent-analytics-dashboard');
 
   const handleLogout = async () => {
     await logout();
@@ -35,6 +39,7 @@ const ProfileDropdown = () => {
         className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition"
       >
         <FaUserCircle size={24} />
+        {/* ✅ 2. This will now show your "preview" name or your real name */}
         <span>{user?.name}</span>
       </motion.button>
 
@@ -55,7 +60,6 @@ const ProfileDropdown = () => {
               My Profile
             </Link>
 
-            {/* ✅ 1. Add "My Messages" Link */}
             <Link
               to="/chat"
               onClick={() => setIsOpen(false)}
@@ -64,25 +68,93 @@ const ProfileDropdown = () => {
               My Messages
             </Link>
             
-            {user && user.role === 'admin' && (
-              <Link
-                to="/admin/dashboard"
-                onClick={() => setIsOpen(false)} 
-                className="block px-4 py-2 text-sm font-bold text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Admin Dashboard
-              </Link>
-            )}
+            {/* ✅ 3. These links will now correctly show/hide based on your preview role */}
+            {user && user.role === 'agent' && (
+              <>
+                <Link
+                  to="/add-property"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  List Property
+                </Link>
 
-            {user && (user.role === 'agent' || user.role === 'admin') && (
-              <Link
-                to="/add-property"
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                List Property
-              </Link>
+                {isAnalyticsEnabled && (
+                  <Link
+                    to="/profile/analytics"
+                    onClick={() => setIsOpen(false)} 
+                    className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    My Analytics
+                  </Link>
+                )}
+              </>
             )}
+            
+            {/* This block also correctly hides/shows based on preview */}
+            {user && user.role === 'admin' && (
+              <>
+                <Link
+                  to="/add-property"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  List Property
+                </Link>
+                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                <Link
+                  to="/admin/dashboard"
+                  onClick={() => setIsOpen(false)} 
+                  className="block px-4 py-2 text-sm font-bold text-red-600 dark:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Admin Dashboard
+                </Link>
+                <Link
+                  to="/admin/seo-manager"
+                  onClick={() => setIsOpen(false)} 
+                  className="block px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  SEO Manager
+                </Link>
+                <Link
+                  to="/admin/feature-manager"
+                  onClick={() => setIsOpen(false)} 
+                  className="block px-4 py-2 text-sm font-bold text-purple-600 dark:text-purple-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Feature Manager
+                </Link>
+              </>
+            )}
+            
+            {/* ✅ 4. ADD THE NEW PREVIEW SECTION */}
+            {/* This block is ONLY visible if your REAL user is an admin */}
+            {realUser && realUser.role === 'admin' && (
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                  Preview As...
+                </div>
+                <button
+                  onClick={() => { startPreview('guest'); setIsOpen(false); }}
+                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Guest Visitor
+                </button>
+                <button
+                  onClick={() => { startPreview('user'); setIsOpen(false); }}
+                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Basic User
+                </button>
+                <button
+                  onClick={() => { startPreview('agent'); setIsOpen(false); }}
+                  className="w-full text-left block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Agent
+                </button>
+              </>
+            )}
+            {/* --- END OF NEW SECTION --- */}
 
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
