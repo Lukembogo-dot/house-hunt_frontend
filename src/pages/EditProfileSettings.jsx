@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/axios';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaWhatsapp, FaCamera, FaLock, FaInfoCircle } from 'react-icons/fa'; // ✅ 1. Import new icon
+import { FaUser, FaWhatsapp, FaCamera, FaLock, FaInfoCircle, FaPhone } from 'react-icons/fa'; // ✅ 1. Import new icon
 
 // (VerifyEmailPrompt component is unchanged)
 const VerifyEmailPrompt = ({ user }) => {
@@ -39,12 +39,12 @@ const EditProfileSettings = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user.name);
-  const [whatsappNumber, setWhatsappNumber] = useState(user.whatsappNumber || '');
-  
-  // ✅ 2. Add 'about' state
-  const [about, setAbout] = useState(user.about || '');
-  
+  // --- 2. Simplified state initialization ---
+  const [name, setName] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [about, setAbout] = useState('');
+  const [voiceCallNumber, setVoiceCallNumber] = useState(''); // <-- NEW STATE
+
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewImage, setPreviewImage] = useState(user.profilePicture);
   const [loading, setLoading] = useState(false);
@@ -58,6 +58,21 @@ const EditProfileSettings = () => {
   const [isAgent, setIsAgent] = useState(user.role === 'agent');
   const [pendingRequest, setPendingRequest] = useState(null);
   const [checkingRequest, setCheckingRequest] = useState(true);
+
+  // --- 3. NEW useEffect to sync state with context ---
+  // This ensures the form is always populated with the latest data from useAuth
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      setWhatsappNumber(user.whatsappNumber || '');
+      setAbout(user.about || '');
+      // Show pending number if it exists, otherwise show approved number
+      setVoiceCallNumber(user.pendingVoiceCallNumber || user.voiceCallNumber || '');
+      setPreviewImage(user.profilePicture);
+      setIsAgent(user.role === 'agent');
+    }
+  }, [user]);
+  // --------------------------------------------------
 
   // (useEffect for pending request is unchanged)
   useEffect(() => {
@@ -102,9 +117,8 @@ const EditProfileSettings = () => {
     const formData = new FormData();
     formData.append('name', name);
     formData.append('whatsappNumber', whatsappNumber);
-    
-    // ✅ 3. Append 'about' to formData
     formData.append('about', about);
+    formData.append('voiceCallNumber', voiceCallNumber); // <-- 4. Append new field
     
     if (profilePicture) {
       formData.append('profilePicture', profilePicture);
@@ -119,21 +133,25 @@ const EditProfileSettings = () => {
         validateStatus: (status) => status >= 200 && status < 300,
       });
 
-      const { data, status } = response;
+      const { data, status: httpStatus } = response;
 
-      if (status === 202) {
-        // 202: Accepted (Pending Approval)
+      // This is the new simplified logic:
+      // The backend always returns the updated user object.
+      // We update the context, and the useEffect will sync the form.
+      login(data.user); 
+
+      if (httpStatus === 202) {
+        // 202: Accepted (Pending Approval for name/whatsapp)
         setStatus({ message: data.message, type: 'info' });
-        setPendingRequest(data.request); // Assuming backend sends pending request in 'request' field
-        if (data.user) {
-          // This happens if pic/about was also updated
-          login(data.user);
-        }
+        fetchPendingRequest(); // Re-check for pending request
       } else {
         // 200: OK (Instant Update)
-        login(data.user); // Update user context
         setStatus({ message: data.message, type: 'success' });
       }
+      
+      // Clear the file input
+      setProfilePicture(null);
+
     } catch (err) {
       setStatus({
         message: err.response?.data?.message || 'Failed to update profile.',
@@ -298,37 +316,72 @@ const EditProfileSettings = () => {
             </div>
           </div>
 
-          {/* ✅ 4. Add 'About Me' Textarea for agents */}
+          {/* ✅ 5. Add 'About Me' and 'Voice Call' sections for agents */}
           {isAgent && (
-            <div>
-              <label
-                htmlFor="about"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                About Me (Public Bio)
-              </label>
-              <div className="relative">
-                <span className="absolute top-3 left-0 flex items-center pl-3">
-                  <FaInfoCircle className="h-5 w-5 text-gray-400" />
-                </span>
-                <textarea
-                  id="about"
-                  rows="4"
-                  value={about}
-                  onChange={(e) => setAbout(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Tell clients a bit about yourself..."
-                  disabled={loading} // This field is NOT locked
-                />
+            <>
+              <div>
+                <label
+                  htmlFor="about"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  About Me (Public Bio)
+                </label>
+                <div className="relative">
+                  <span className="absolute top-3 left-0 flex items-center pl-3">
+                    <FaInfoCircle className="h-5 w-5 text-gray-400" />
+                  </span>
+                  <textarea
+                    id="about"
+                    rows="4"
+                    value={about}
+                    onChange={(e) => setAbout(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="Tell clients a bit about yourself..."
+                    disabled={loading} // This field is NOT locked
+                  />
+                </div>
               </div>
-            </div>
+              
+              {/* --- 6. NEW VOICE CALL NUMBER FIELD --- */}
+              <div>
+                <label
+                  htmlFor="voiceCallNumber"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Public Voice Call Number (Optional)
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <FaPhone className="h-5 w-5 text-gray-400" />
+                  </span>
+                  <input
+                    type="tel"
+                    id="voiceCallNumber"
+                    value={voiceCallNumber}
+                    onChange={(e) => setVoiceCallNumber(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    placeholder="+254712345678"
+                    disabled={loading} // This field is NOT locked
+                  />
+                </div>
+                {/* --- 7. NEW PENDING BANNER for this field --- */}
+                {user.isVoiceCallNumberPending && (
+                  <div className="mt-2 p-3 rounded-lg bg-yellow-50 border border-yellow-300 dark:bg-gray-800 dark:border-yellow-700">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Your new number (<b>{user.pendingVoiceCallNumber}</b>) is awaiting admin approval. 
+                      Your current public number is <b>{user.voiceCallNumber || 'not set'}</b>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           <div>
             <button
               type="submit"
-              // ✅ 5. Update disable logic
-              disabled={loading || (fieldsLocked && !profilePicture && about === user.about)}
+              // ✅ 8. Update disable logic
+              disabled={loading || (fieldsLocked && !profilePicture && about === user.about && voiceCallNumber === (user.pendingVoiceCallNumber || user.voiceCallNumber || ''))}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               {loading ? 'Updating...' : 'Update Profile'}
@@ -343,6 +396,73 @@ const EditProfileSettings = () => {
           </h2>
           <form onSubmit={handleChangePassword} className="space-y-6">
             {/* ... (password fields are unchanged) ... */}
+             <div>
+              <label
+                htmlFor="oldPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Old Password
+              </label>
+              <input
+                type="password"
+                id="oldPassword"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                New Password
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="confirmNewPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                id="confirmNewPassword"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+            </div>
+
+            {passwordStatus.message && (
+              <div
+                className={`p-3 text-sm rounded-lg ${
+                  passwordStatus.type === 'success'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                }`}
+              >
+                {passwordStatus.message}
+              </div>
+            )}
+
+            <div>
+              <button
+                type="submit"
+                disabled={passwordLoading}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
+              >
+                {passwordLoading ? 'Changing...' : 'Change Password'}
+              </button>
+            </div>
           </form>
         </div>
       </div>

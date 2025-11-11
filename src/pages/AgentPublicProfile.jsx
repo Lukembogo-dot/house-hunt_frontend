@@ -6,10 +6,12 @@ import PropertyCard from '../components/PropertyCard';
 import { 
   FaComments, 
   FaStar,
-  FaUserSlash // 1. IMPORT THE 'USER SLASH' ICON
+  FaUserSlash, // 1. IMPORT THE 'USER SLASH' ICON
+  FaPhone     // <-- 1. IMPORT THE NEW ICON
 } from 'react-icons/fa'; // ✅ 2. Import FaComments, remove FaWhatsapp
 import AgentReviews from '../components/AgentReviews';
 import { useAuth } from '../context/AuthContext'; // ✅ 3. Import your auth hook
+import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; // <-- 1. IMPORT THE HOOK
 
 // --- START: FIX FOR STARRATING ---
 // Star Rating Display Component
@@ -56,11 +58,14 @@ const AgentPublicProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // <-- 2. CALL THE HOOK TO CHECK THE FLAG'S STATUS -->
+  const isCallButtonEnabled = useFeatureFlag('agent-call-button');
+
   useEffect(() => {
     const fetchAgentData = async () => {
       try {
         setLoading(true);
-        // 1. Get the agent's public info (this now includes 'about' and 'rating')
+        // 1. Get the agent's public info (this now includes 'about', 'rating', and 'voiceCallNumber')
         const agentRes = await apiClient.get(`/users/${agentId}/public`);
         setAgent(agentRes.data);
 
@@ -143,34 +148,41 @@ const AgentPublicProfile = () => {
               <StarRating rating={agent.averageRating} count={agent.numReviews} />
             </div>
 
-            {/* --- ✅ 6. NEW CONDITIONAL CHAT BUTTON --- */}
-            <div className="mt-4">
+            {/* --- 3. UPDATED BUTTONS SECTION --- */}
+            <div className="flex flex-col md:flex-row gap-3 mt-4">
               { user ? (
                 // --- User is LOGGED IN ---
-                // Link to your in-house chat page.
-                // We pass the 'agent' object in the link's state
-                // so the chat page knows who to open a conversation with.
                 <Link
                   to="/chat"
                   state={{ recipient: agent }}
-                  className="inline-flex items-center space-x-2 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+                  className="inline-flex items-center justify-center space-x-2 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
                 >
                   <FaComments size={20} />
                   <span>Chat with Agent</span>
                 </Link>
               ) : (
                 // --- User is LOGGED OUT ---
-                // Show a button that *looks* the same but triggers the login redirect
                 <button
                   onClick={handleLoginRedirect}
-                  className="inline-flex items-center space-x-2 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+                  className="inline-flex items-center justify-center space-x-2 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
                 >
                   <FaComments size={20} />
                   <span>Chat with Agent</span>
                 </button>
               )}
+              
+              {/* --- 4. NEW "CALL" BUTTON (CONDITIONAL) --- */}
+              {isCallButtonEnabled && agent.voiceCallNumber && (
+                <a
+                  href={`tel:${agent.voiceCallNumber}`}
+                  className="inline-flex items-center justify-center space-x-2 bg-green-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-600 transition"
+                >
+                  <FaPhone size={18} />
+                  <span>Call Agent</span>
+                </a>
+              )}
             </div>
-            {/* --- END OF NEW BUTTON LOGIC --- */}
+            {/* --- END OF BUTTON LOGIC --- */}
             
           </div>
         </div>
@@ -189,9 +201,11 @@ const AgentPublicProfile = () => {
                   <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
                     About {agent.name}
                   </h3>
+                  {/* --- THIS IS THE FIX --- */}
                   <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                     {agent.about}
                   </p>
+                  {/* --------------------- */}
                 </div>
               )}
 
@@ -207,9 +221,11 @@ const AgentPublicProfile = () => {
                     ))}
                   </div>
                 ) : (
+                  // --- THIS IS THE FIX ---
                   <p className="text-center lg:text-left text-gray-500 dark:text-gray-400">
                     This agent has no active listings.
                   </p>
+                  // ---------------------
                 )}
               </div>
             </div>
