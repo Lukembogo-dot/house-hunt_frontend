@@ -65,22 +65,18 @@ import AgentFinderPage from './pages/AgentFinderPage';
 
 import NeighbourhoodIntelPage from './pages/NeighbourhoodIntelPage';
 
-// ✅ --- 1. IMPORT THE NEW CALCULATOR PAGE ---
 import CostOfLivingCalculator from './pages/CostOfLivingCalculator';
 
-// ✅ --- 1. IMPORT THE NEW UGC PAGE ---
 import CreateIntelPost from './pages/CreateIntelPost';
 
 
-// (Static arrays are already deleted, which is correct)
+// (Static arrays are deleted, which is correct)
 
 
 function AppRoutes() {
   const { user, loading, logout, realUser, previewRole } = useAuth(); 
   
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
-  
-  // ✅ --- 2. ADD THE NEW FEATURE FLAG CHECK ---
   const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator');
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -105,17 +101,28 @@ function AppRoutes() {
     other: [],
   });
 
+  // ✅ --- THIS IS THE CORRECTED CODE ---
   useEffect(() => {
     const fetchEmphasizedKeywords = async () => {
       try {
         const { data } = await apiClient.get('/seo/emphasized');
-        setEmphasizedKeywords(data);
+        
+        // Define the default shape to guarantee no errors
+        const initialState = { property: [], agent: [], intel: [], other: [] };
+        
+        // Merge the loaded data with the default shape.
+        // If 'data' is null or {}, the initialState arrays will be used.
+        // If 'data' is { property: [...] }, it will merge correctly.
+        setEmphasizedKeywords({ ...initialState, ...data });
+
       } catch (error) {
         console.error("Failed to fetch emphasized keywords:", error);
+        // On error, the state remains as its initial (safe) value
       }
     };
     fetchEmphasizedKeywords();
-  }, []);
+  }, []); // Empty array means this runs only once on app load
+  // --- END OF FIX ---
 
   const handleHomeFilterChange = (name, value) => {
     setHomeFilters(prev => ({ ...prev, [name]: value }));
@@ -365,11 +372,36 @@ function AppRoutes() {
 
                       {/* ... (Popular Searches section is unchanged) ... */}
                       <section className="py-20 px-6">
-                        {/* ... (Popular searches content) ... */}
+                        <div className="container mx-auto max-w-6xl">
+                          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center mb-12">
+                            Popular Searches
+                          </h2>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {emphasizedKeywords.property.map((search) => (
+                              <Link
+                                key={search.path}
+                                to={search.path}
+                                className="block font-semibold text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-lg transition-all"
+                              >
+                                {search.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
                       </section>
 
                       <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                        {/* ... (Featured Properties content) ... */}
+                        <div className="max-w-6xl mx-auto">
+                          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
+                            Featured Properties
+                          </h2>
+                          <PropertyList
+                            filterOverrides={null}
+                            showSearchBar={false}
+                            showTitle={false}
+                            limit={20}
+                          />
+                        </div>
                       </section>
                       <NeighbourhoodWatchHome />
                     </>
