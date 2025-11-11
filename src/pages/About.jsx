@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 // ✅ NEW IMPORTS
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
+import { useFeatureFlag } from "../context/FeatureFlagContext.jsx"; // <-- 1. IMPORT THE HOOK
 
 
 // Define a re-usable animation variant
@@ -26,6 +27,9 @@ export default function About() {
     'Learn about HouseHunt Kenya: our mission to simplify property ownership, our vision for a transparent marketplace, and our core values of integrity and customer satisfaction.' // Default Description
   );
   
+  // 2. CHECK FOR THE NEW FEATURE FLAG
+  const isAgentCtaEnabled = useFeatureFlag('agent-landing-page-cta');
+
   return (
     <>
       {/* ✅ 2. Inject SEO Tags */}
@@ -124,6 +128,30 @@ export default function About() {
               </ul>
             </motion.div>
           </div>
+
+          {/* --- 3. ADD THIS NEW SECTION (IT'S WRAPPED IN THE FLAG) --- */}
+          {isAgentCtaEnabled && (
+            <motion.div
+              className="mt-20 py-16 px-8 bg-blue-600 dark:bg-blue-800 rounded-2xl shadow-xl text-white"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.5 }}
+              variants={fadeInSlideUp}
+            >
+              <h4 className="text-3xl font-extrabold mb-4">Are You an Agent or Property Manager?</h4>
+              <p className="text-lg text-blue-100 max-w-2xl mx-auto mb-8">
+                Learn how HouseHunt Kenya is built specifically for real estate firms to grow their business, connect with clients, and boost sales—all for free.
+              </p>
+              <Link
+                to="/for-agents"
+                className="bg-white text-blue-700 font-bold px-8 py-3 rounded-lg hover:bg-gray-100 transition-all duration-150 active:scale-95"
+              >
+                Learn More for Agents
+              </Link>
+            </motion.div>
+          )}
+          {/* --- END OF NEW SECTION --- */}
+
 
           {/* ✅ Animate Call to Action */}
           <motion.div 

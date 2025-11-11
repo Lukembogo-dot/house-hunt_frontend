@@ -55,7 +55,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 // ---------------------------------
 
 import FeatureManager from './pages/FeatureManager'; // <-- 1. IMPORT THE NEW PAGE
-
+import ForAgents from './pages/ForAgents'; // <-- 1. IMPORT THE NEW PAGE
 
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
@@ -350,6 +350,9 @@ function AppRoutes() {
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             {/* --------------------------------- */}
+            
+            {/* --- 2. ADD THE NEW ROUTE --- */}
+            <Route path="/for-agents" element={<ForAgents />} />
 
 
             {/* Protected Routes */}
