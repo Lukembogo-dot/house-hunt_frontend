@@ -1,28 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import apiClient from '../api/axios';
-import { FaUserEdit, FaCheck, FaTimes, FaSpinner, FaBuilding, FaUser } from 'react-icons/fa'; // Added new icons
+import { FaUserEdit, FaCheck, FaTimes, FaSpinner, FaBuilding, FaUser } from 'react-icons/fa';
 
 const PendingApprovals = () => {
-  const [propertyRequests, setPropertyRequests] = useState([]); // Renamed
-  const [userRequests, setUserRequests] = useState([]); // <-- 1. NEW STATE
+  const [propertyRequests, setPropertyRequests] = useState([]);
+  const [userRequests, setUserRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState({}); // <-- State for loading on individual buttons
-  const [activeTab, setActiveTab] = useState('property'); // <-- 2. NEW STATE FOR TABS
+  const [actionLoading, setActionLoading] = useState({});
+  const [activeTab, setActiveTab] = useState('property');
 
-  const fetchData = useCallback(async () => { // <-- Wrapped in useCallback
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      // 3. FETCH BOTH PROPERTY AND USER APPROVALS
-      // Fetch property approvals (your existing fetch)
+      // Fetch property approvals
       const propRes = await apiClient.get('/admin/pending-approvals', {
         withCredentials: true,
       });
       setPropertyRequests(propRes.data);
 
-      // Fetch users and filter for pending number approvals
-      const userRes = await apiClient.get('/api/users', { withCredentials: true });
+      // --- THIS IS THE FIX ---
+      // Removed the extra '/api' from the URL.
+      const userRes = await apiClient.get('/users', { withCredentials: true });
+      // -----------------------
+
       const pendingUsers = userRes.data.filter(
         (user) => user.isVoiceCallNumberPending === true
       );
@@ -34,13 +36,13 @@ const PendingApprovals = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array, fetchData is stable
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Run when fetchData changes (which is once)
+  }, [fetchData]);
 
-  const handlePropertyReview = async (id, action) => { // Renamed
+  const handlePropertyReview = async (id, action) => {
     if (
       !window.confirm(
         `Are you sure you want to ${action} this change?`
@@ -48,24 +50,22 @@ const PendingApprovals = () => {
     )
       return;
 
-    setActionLoading(prev => ({ ...prev, [id]: true })); // <-- Set loading for this button
+    setActionLoading(prev => ({ ...prev, [id]: true }));
     try {
       await apiClient.post(
         `/admin/review-approval/${id}`,
         { action },
         { withCredentials: true }
       );
-      // Refresh the list by removing the reviewed item
       setPropertyRequests((prev) => prev.filter((req) => req._id !== id));
     } catch (err) {
       alert(`Failed to ${action} request.`);
       console.error(err);
     } finally {
-      setActionLoading(prev => ({ ...prev, [id]: false })); // <-- Unset loading
+      setActionLoading(prev => ({ ...prev, [id]: false }));
     }
   };
   
-  // --- 4. NEW User Approval Handlers ---
   const handleApproveUser = async (id) => {
     if (!window.confirm('Are you sure you want to APPROVE this number?')) return;
     
@@ -76,7 +76,6 @@ const PendingApprovals = () => {
         {},
         { withCredentials: true }
       );
-      // Remove approved user from the list
       setUserRequests(userRequests.filter((req) => req._id !== id));
     } catch (err) {
       alert(`Failed to approve request: ${err.response?.data?.message || 'Server Error'}`);
@@ -118,7 +117,7 @@ const PendingApprovals = () => {
         </h2>
       </div>
 
-      {/* --- 5. NEW TAB NAVIGATION --- */}
+      {/* --- TAB NAVIGATION --- */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
         <button
           onClick={() => setActiveTab('property')}
@@ -151,7 +150,7 @@ const PendingApprovals = () => {
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
           
-          {/* --- 6. Property Requests Tab --- */}
+          {/* --- Property Requests Tab --- */}
           {activeTab === 'property' && propertyRequests.length > 0 && (
             <table className="w-full min-w-[700px]">
               <thead className="bg-gray-50 dark:bg-gray-700">
@@ -164,12 +163,11 @@ const PendingApprovals = () => {
                 </tr>
               </thead>
               <tbody>
-                {propertyRequests.flatMap((req) => { // Use flatMap to flatten
+                {propertyRequests.flatMap((req) => {
                   const rows = [];
                   if (req.newName) {
                     rows.push(
                       <tr key={`${req._id}-name`} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        {/* ... (rest of this row is your original code) ... */}
                         <td className="p-3 dark:text-gray-200">
                           <div>{req.agent.name}</div>
                           <div className="text-xs text-gray-500">
@@ -205,7 +203,6 @@ const PendingApprovals = () => {
                   if (req.newWhatsappNumber) {
                     rows.push(
                       <tr key={`${req._id}-whatsapp`} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                        {/* ... (rest of this row is your original code) ... */}
                         {!req.newName && (
                           <td className="p-3 dark:text-gray-200">
                             <div>{req.agent.name}</div>
@@ -250,7 +247,7 @@ const PendingApprovals = () => {
             </table>
           )}
           
-          {/* --- 7. NEW User Requests Tab --- */}
+          {/* --- User Requests Tab --- */}
           {activeTab === 'user' && userRequests.length > 0 && (
             <table className="w-full min-w-[600px]">
               <thead className="bg-gray-50 dark:bg-gray-700">
