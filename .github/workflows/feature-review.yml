@@ -38,14 +38,14 @@ jobs:
           echo "Sanitized Key: $KEY"
           echo "Description: $DESC"
 
-          # --- THIS IS THE FIX ---
-          # 2. Build the JSON payload safely using jq on a SINGLE LINE
-          JSON_PAYLOAD=$(jq -n --arg key "$KEY" --arg desc "$DESC" '{featureKey: $key, description: $desc}')
+          # 2. Build the JSON payload safely using jq
+          JSON_PAYLOAD=$(jq -n \
+                            --arg key "$KEY" \
+                            --arg desc "$DESC" \
+                            '{featureKey: $key, description: $desc}')
 
           echo "Sending JSON: $JSON_PAYLOAD"
 
-          # 3. Send the request
-          curl -X POST "${{ secrets.API_URL }}/api/service/submit-update" \
-          -H "Content-Type: application/json" \
-          -H "x-api-key: ${{ secrets.SERVICE_API_KEY }}" \
-          -d "$JSON_PAYLOAD"
+          # --- THIS IS THE FIX ---
+          # 3. Send the request on a SINGLE LINE
+          curl -X POST "${{ secrets.API_URL }}/api/service/submit-update" -H "Content-Type: application/json" -H "x-api-key: ${{ secrets.SERVICE_API_KEY }}" -d "$JSON_PAYLOAD"
