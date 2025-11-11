@@ -5,6 +5,10 @@ import apiClient from '../api/axios';
 import { motion } from 'framer-motion';
 import { FaStar, FaBuilding, FaUserTie, FaPencilAlt, FaExclamationTriangle, FaUtensils, FaTools, FaCommentAlt } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
+// ✅ 1. IMPORT THE FEATURE FLAG HOOK
+import { useFeatureFlag } from '../context/FeatureFlagContext';
+// ✅ 2. IMPORT THE AUTH HOOK
+import { useAuth } from '../context/AuthContext';
 
 // --- Reusable Helper Functions ---
 const capitalize = (s) => {
@@ -59,15 +63,36 @@ const ServicePostCard = ({ post }) => (
         className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3"
         dangerouslySetInnerHTML={{ __html: post.content.replace(/<[^>]+>/g, '') }} // Basic strip HTML for preview
       />
-      <p className="text-xs text-gray-400 dark:text-gray-500 mt-3">
+      
+      {/* ✅ 3. ADDED AUTHOR DISPLAY BLOCK --- */}
+      <div className="flex items-center mt-4 pt-4 border-t dark:border-gray-700">
+        {post.author ? (
+          <>
+            <img 
+              src={post.author.profilePicture || `https://ui-avatars.com/api/?name=${post.author.name}&background=random`} 
+              alt={post.author.name}
+              className="w-8 h-8 rounded-full object-cover mr-2"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {post.author.name}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            Posted by Admin
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
         Posted {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
       </p>
+      {/* --- END OF AUTHOR BLOCK --- */}
     </div>
   </Link>
 );
 
 // --- The "Empty Page" Solution Component ---
-const EmptyState = ({ location, topic }) => (
+const EmptyState = ({ location, topic, isUgcEnabled }) => ( // ✅ 4. PASS IN FLAG
   <div className="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700">
     <div className="text-6xl mx-auto mb-6 text-blue-500">
       {topic === 'safety' && <FaExclamationTriangle />}
@@ -81,12 +106,13 @@ const EmptyState = ({ location, topic }) => (
     <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
       Be the first to share your knowledge! Your insights help build a safer, smarter, and more connected community.
     </p>
-    {/* In the future, we can link this to a "Add Post" page for users */}
+    
+    {/* ✅ 5. UPDATE LINK TO BE DYNAMIC --- */}
     <Link
-      to="/contact" 
+      to={isUgcEnabled ? "/create-intel-post" : "/contact"} 
       className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg"
     >
-      Share Your Intel
+      {isUgcEnabled ? "Share Your Intel" : "Contact Us"}
     </Link>
   </div>
 );
@@ -96,6 +122,10 @@ const EmptyState = ({ location, topic }) => (
 export default function NeighbourhoodIntelPage() {
   // 1. Read location and topic from the URL
   const { location: locationParam, topic: topicParam } = useParams();
+  
+  // ✅ 6. GET USER AND FEATURE FLAG STATUS
+  const { user } = useAuth();
+  const isUgcEnabled = useFeatureFlag('user-generated-intel');
   
   // Clean up params
   const location = capitalize(locationParam) || 'Kenya';
@@ -112,42 +142,37 @@ export default function NeighbourhoodIntelPage() {
 
   // 3. Generate Default SEO based on topic
   const generateDefaultSeo = () => {
+    // ... (This function is unchanged) ...
     const topicHeadlines = {
       'safety': `Safety, Security & Alerts in ${location}`,
       'lifestyle': `Lifestyle, Restaurants & Cafes in ${location}`,
       'services': `Home Services & Utilities in ${location}`,
       'reviews': `Reviews & Guides for Living in ${location}`
     };
-    
     const topicDescriptions = {
       'safety': `Get the latest safety updates, security tips, and community alerts for ${location}. Stay informed with HouseHunt.`,
       'lifestyle': `Discover the best restaurants, cafes, nightlife, and leisure spots in ${location}.`,
       'services': `Find top-rated home services in ${location}, from internet providers and plumbers to laundry and cleaning.`,
       'reviews': `Read honest reviews, pros & cons, and guides for living in ${location}. Find your perfect neighbourhood.`
     };
-
     const h1 = topicHeadlines[topic] || `${capitalize(topic)} in ${location}`;
     const title = `${h1} | HouseHunt Kenya`;
     const description = topicDescriptions[topic] || `Get the latest intel on ${topic} in ${location} on HouseHunt Kenya.`;
-    
     return { title, description, h1 };
   };
 
   // 4. useEffect to fetch both SEO and Post data
   useEffect(() => {
-    // Generate defaults immediately
+    // ... (This function is unchanged) ...
     const defaultSeo = generateDefaultSeo();
     setSeo(defaultSeo);
     setLoading(true);
 
     const fetchData = async () => {
-      // --- Fetch SEO Overrides ---
       const pagePath = `/neighbourhood/${locationParam}/${topicParam}`;
       try {
         const encodedPath = encodeURIComponent(pagePath);
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
-        
-        // If manual SEO is found, use it
         setSeo(prev => ({
           ...prev,
           title: data.metaTitle || prev.title,
@@ -158,7 +183,6 @@ export default function NeighbourhoodIntelPage() {
         console.warn(`No manual SEO for ${pagePath}. Using defaults.`);
       }
 
-      // --- Fetch Post Data ---
       try {
         const { data } = await apiClient.get(`/services/find?location=${locationParam}&topic=${topicParam}`);
         setPosts(data);
@@ -181,14 +205,30 @@ export default function NeighbourhoodIntelPage() {
           
           {/* --- Main Content (Column 1) --- */}
           <div className="lg:col-span-2">
-            <motion.h1 
-              className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              {seo.h1}
-            </motion.h1>
+          
+            {/* ✅ 7. ADDED FLEX WRAPPER FOR H1 AND NEW BUTTON --- */}
+            <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+              <motion.h1 
+                className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {seo.h1}
+              </motion.h1>
+
+              {/* ✅ 8. ADD THE FLAGGED "CREATE POST" BUTTON --- */}
+              {user && isUgcEnabled && (
+                <Link
+                  to="/create-intel-post"
+                  className="inline-block bg-blue-600 text-white font-bold py-2 px-5 rounded-lg text-sm hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg"
+                >
+                  <FaPencilAlt className="inline mr-2" />
+                  Share Your Intel
+                </Link>
+              )}
+            </div>
+            {/* --- END OF FLEX WRAPPER --- */}
             
             {loading ? (
               // --- Loading State ---
@@ -211,7 +251,11 @@ export default function NeighbourhoodIntelPage() {
               </div>
             ) : (
               // --- No Posts Found (Empty Page Solution) ---
-              <EmptyState location={location} topic={topic} />
+              <EmptyState 
+                location={location} 
+                topic={topic} 
+                isUgcEnabled={isUgcEnabled} // ✅ 9. PASS THE FLAG DOWN
+              />
             )}
           </div>
           
