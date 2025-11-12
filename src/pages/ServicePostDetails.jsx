@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; // <-- 1. IMPORT THE HOOK
-import { FaStar } from 'react-icons/fa';
+import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
+import { FaStar, FaUserAlt } from 'react-icons/fa'; // Added FaUserAlt
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
+import { motion } from 'framer-motion'; 
 
 // Re-usable Star Rating Component (safe version)
 const StarRating = ({ rating }) => {
@@ -35,6 +36,11 @@ const ServiceSeoInjector = ({ service }) => {
     "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png", // Fallback image
     "datePublished": service.createdAt,
     "dateModified": service.updatedAt,
+    // ✅ 3. ADDED AUTHOR SCHEMA
+    "author": {
+      "@type": "Person",
+      "name": service.author?.name || "HouseHunt Admin"
+    },
     "publisher": {
       "@type": "Organization",
       "name": "House Hunt Kenya",
@@ -43,7 +49,6 @@ const ServiceSeoInjector = ({ service }) => {
         "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png" // Path to your logo
       }
     }
-    // 'author' is removed as it's not in the LocalService model
   });
 
   // Schema for the FAQs, if they exist
@@ -88,12 +93,21 @@ const ServiceSeoInjector = ({ service }) => {
 };
 // ------------------------------------
 
+// ✅ 2. ADD ANIMATION VARIANTS
+const sectionVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+};
+
 
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
   
-  // 2. CALL THE HOOK TO CHECK THE FLAG'S STATUS
   const isNewDesignEnabled = useFeatureFlag('new-service-post-design');
 
   const [service, setService] = useState(null);
@@ -173,33 +187,29 @@ const ServicePostDetails = () => {
   
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
-  // 3. DEFINE YOUR TWO DIFFERENT STYLES
-  // This is your current "boxed" style
-  const oldArticleClass = "prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700";
-  
-  // This is the "modern blog" style: no box, just centered text
-  const newArticleClass = "prose prose-lg dark:prose-invert max-w-3xl mx-auto";
+  // ✅ --- FIX: UPGRADED ARTICLE CLASS FOR READABILITY AND CONTRAST ---
+  const articleClass = "prose prose-xl dark:prose-invert max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg";
 
 
   return (
     <>
-      {/* 2. USE THE NEW SEO INJECTOR */}
       <ServiceSeoInjector service={service} />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
-        {/* Container is now flexible */}
         <div className="mx-auto"> 
           
-          {/* Article Header (now constrained) */}
-          <header className="mb-8 max-w-4xl mx-auto">
+          {/* ✅ 4. ALIGN & ANIMATE HEADER */}
+          <motion.header 
+            className="mb-8 max-w-3xl mx-auto" // Aligned to max-w-3xl
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              
-              {/* --- THIS IS THE FIX --- */}
               <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-white px-3 py-1 rounded-full">
                 {service.serviceType}
               </span>
-              {/* ----------------------- */}
-
               <span className="text-sm font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-3 py-1 rounded-full">
                 {service.location}
               </span>
@@ -208,32 +218,62 @@ const ServicePostDetails = () => {
               {service.title}
             </h1>
             
-            {/* 3. REMOVED AUTHOR SECTION (as it's not in the model) */}
+            {/* ✅ 3. RESTORED AUTHOR BLOCK */}
             <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
+              <div className="flex items-center">
+                {service.author ? (
+                  <img 
+                    src={service.author.profilePicture || `https://ui-avatars.com/api/?name=${service.author.name}&background=random`}
+                    alt={service.author.name}
+                    className="w-10 h-10 rounded-full object-cover mr-3"
+                  />
+                ) : (
+                  <FaUserAlt className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 p-2 mr-3" />
+                )}
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  By {service.author?.name || 'HouseHunt Staff'}
+                </span>
+              </div>
+              <span className="hidden md:inline">|</span>
               <span>
                 Posted {formatDistanceToNow(new Date(service.createdAt), { addSuffix: true })}
               </span>
             </div>
-          </header>
+          </motion.header>
 
-          {/* Featured Image (now constrained) */}
+          {/* ✅ 4. ALIGN & ANIMATE IMAGE */}
           {service.imageUrl && (
-            <img 
+            <motion.img 
               src={service.imageUrl}
               alt={service.title}
-              className="w-full max-w-4xl mx-auto h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
+              className="w-full max-w-3xl mx-auto h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
+              variants={sectionVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ duration: 0.5, delay: 0.2 }}
             />
           )}
 
-          {/* Article Content (uses the feature flag) */}
-          <article className={isNewDesignEnabled ? newArticleClass : oldArticleClass}>
-            {/* This renders the HTML from ReactQuill */}
+          {/* ✅ 5. ANIMATE ARTICLE - NOW HAS BETTER BACKGROUND & PADDING */}
+          <motion.article 
+            className={articleClass} // Uses the new, larger, defined class
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
             <div dangerouslySetInnerHTML={{ __html: service.content }} />
-          </article>
+          </motion.article>
 
-          {/* This wrapper keeps FAQs and Reviews boxed */}
-          <div className="max-w-4xl mx-auto">
-            {/* 4. --- NEW: RENDER THE FAQ SECTION --- */}
+          {/* ✅ 4. ALIGN & ANIMATE REVIEWS/FAQS */}
+          <motion.div 
+            className="max-w-3xl mx-auto" // Aligned to max-w-3xl
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            {/* --- RENDER THE FAQ SECTION --- */}
             {service.faqs && service.faqs.length > 0 && (
               <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
                 <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
@@ -269,16 +309,17 @@ const ServicePostDetails = () => {
                   <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
                   <div className="flex items-center mb-2">
                     {[...Array(5)].map((_, i) => (
-                      <FaStar
-                        key={i}
-                        size={24}
-                        className={`cursor-pointer transition-colors ${
-                          i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
-                        }`}
-                        onMouseEnter={() => setHoverRating(i + 1)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        onClick={() => setRating(i + 1)}
-                      />
+                      <motion.div key={i} whileTap={{ scale: 1.2, y: -2 }}>
+                        <FaStar
+                          size={24}
+                          className={`cursor-pointer transition-colors ${
+                            i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
+                          }`}
+                          onMouseEnter={() => setHoverRating(i + 1)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          onClick={() => setRating(i + 1)}
+                        />
+                      </motion.div>
                     ))}
                   </div>
                   <textarea
@@ -289,13 +330,14 @@ const ServicePostDetails = () => {
                     className="w-full px-4 py-3 border rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   ></textarea>
                   {reviewError && <p className="text-sm text-red-500 mb-2">{reviewError}</p>}
-                  <button
+                  <motion.button
                     type="submit"
                     disabled={submitting}
                     className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                    whileHover={{ y: -3 }} // Bouncy interaction
                   >
                     {submitting ? "Submitting..." : "Submit Feedback"}
-                  </button>
+                  </motion.button>
                 </form>
               ) : (
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
@@ -309,13 +351,17 @@ const ServicePostDetails = () => {
                   {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
                     <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center mb-2">
-                        <img 
-                          src={review.user?.profilePicture} // 'user' is populated, this is correct
-                          alt={review.name} 
-                          className="w-10 h-10 rounded-full object-cover mr-3"
-                        />
+                        {review.user ? (
+                           <img 
+                            src={review.user.profilePicture || `https://ui-avatars.com/api/?name=${review.name}&background=random`}
+                            alt={review.name} 
+                            className="w-10 h-10 rounded-full object-cover mr-3"
+                          />
+                        ) : (
+                          <FaUserAlt className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 p-2 mr-3" />
+                        )}
                         <div>
-                          <p className="font-bold dark:text-gray-100">{review.name}</p>
+                          <p className="font-bold dark:text-gray-100">{review.user?.name || review.name}</p>
                           <div className="flex">
                             <StarRating rating={review.rating} />
                           </div>
@@ -333,7 +379,7 @@ const ServicePostDetails = () => {
               )}
             </section>
 
-          </div>
+          </motion.div>
         </div>
       </div>
     </>
