@@ -1,10 +1,11 @@
 // src/pages/SEOManager.jsx (UPDATED FOR KEYWORD LIBRARY)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner } from 'react-icons/fa'; // Added FaSpinner
+import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter } from 'react-icons/fa'; // Added FaSpinner, FaFacebook, FaTwitter
 import apiClient from '../api/axios';
 
 // ✅ --- 1. NEW COMPONENT FOR THE KEYWORD LIBRARY ---
+// (This component is unchanged and correct)
 const KeywordLibrary = () => {
   const [keywords, setKeywords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -275,6 +276,7 @@ const PageSettingsEditor = () => {
     }
   }, [selectedPagePath]);
   
+  // ✅ --- 2. UPDATE fetchSeoData TO INCLUDE NEW FIELDS ---
   const fetchSeoData = useCallback(async (path) => {
     if (!path) return;
     setSaving(false);
@@ -288,6 +290,12 @@ const PageSettingsEditor = () => {
             pagePath: path,
             metaTitle: data.metaTitle || '',
             metaDescription: data.metaDescription || '',
+            // --- Add new fields here ---
+            ogTitle: data.ogTitle || '',
+            ogDescription: data.ogDescription || '',
+            twitterTitle: data.twitterTitle || '',
+            twitterDescription: data.twitterDescription || '',
+            // --- (End of new fields) ---
             schemaFocusKeyword: data.schemaFocusKeyword || '',
             schemaDescription: data.schemaDescription || '',
             breadCrumbTitle: data.breadCrumbTitle || '',
@@ -325,6 +333,11 @@ const PageSettingsEditor = () => {
     setSuccess('');
   };
 
+  // ✅ --- 3. 'handleSave' IS ALREADY PERFECT ---
+  // Since it sends the *entire* seoData object, and we
+  // added the new fields to fetchSeoData and handleInputChange,
+  // this function will automatically save the new fields.
+  // No change is needed here.
   const handleSave = async (e) => {
     e.preventDefault();
     if (!seoData) return;
@@ -471,12 +484,116 @@ const PageSettingsEditor = () => {
           </div>
         </section>
 
+        {/* ✅ --- 4. NEW SOCIAL MEDIA TAGS SECTION --- */}
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
+            <FaFacebook className="mr-2 text-blue-600" /> <FaTwitter className="mr-2 text-blue-400" /> Social Media Tags
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            These tags control how your page looks when shared on social media. If left blank, they will default to your Meta Title & Description.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="ogTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Facebook / Open Graph Title
+              </label>
+              <input
+                type="text"
+                id="ogTitle"
+                name="ogTitle"
+                value={seoData.ogTitle}
+                onChange={handleInputChange}
+                maxLength={60}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="e.g., Check out these awesome properties in Kilimani"
+              />
+            </div>
+            <div>
+              <label htmlFor="ogDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Facebook / Open Graph Description
+              </label>
+              <textarea
+                id="ogDescription"
+                name="ogDescription"
+                value={seoData.ogDescription}
+                onChange={handleInputChange}
+                maxLength={150}
+                rows={2}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="A short description for Facebook and LinkedIn."
+              />
+            </div>
+            <div>
+              <label htmlFor="twitterTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Twitter Title
+              </label>
+              <input
+                type="text"
+                id="twitterTitle"
+                name="twitterTitle"
+                value={seoData.twitterTitle}
+                onChange={handleInputChange}
+                maxLength={60}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="A shorter title for Twitter (X)."
+              />
+            </div>
+            <div>
+              <label htmlFor="twitterDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Twitter Description
+              </label>
+              <textarea
+                id="twitterDescription"
+                name="twitterDescription"
+                value={seoData.twitterDescription}
+                onChange={handleInputChange}
+                maxLength={150}
+                rows={2}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="A short description for Twitter (X)."
+              />
+            </div>
+          </div>
+        </section>
+
         {/* === Schema/Structured Data Section === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaSitemap className="mr-2 text-green-500" /> Schema (Structured Data)
           </h2>
-          {/* ... (rest of your existing form is unchanged) ... */}
+          {/* ✅ --- 5. ADDED NEW SCHEMA FIELDS --- */}
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="schemaFocusKeyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Schema Focus Keyword
+              </label>
+              <input
+                type="text"
+                id="schemaFocusKeyword"
+                name="schemaFocusKeyword"
+                value={seoData.schemaFocusKeyword}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="e.g., 'Bedsitter Rent Kilimani'"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="schemaDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Schema Description
+              </label>
+              <textarea
+                id="schemaDescription"
+                name="schemaDescription"
+                value={seoData.schemaDescription}
+                onChange={handleInputChange}
+                rows={3}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="A detailed description for search engines (can be longer than meta)."
+              />
+            </div>
+          </div>
+          {/* --- (Your FAQ section UI would go here) --- */}
         </section>
 
         {/* === On-Page Audit Notes Section (Now Editable) === */}
