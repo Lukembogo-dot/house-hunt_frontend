@@ -1,3 +1,5 @@
+// App.jsx (UPDATED)
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
@@ -15,7 +17,7 @@ import EditProperty from "./pages/EditProperty";
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
 import ProfileDropdown from "./components/ProfileDropdown";
-import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa"; 
+import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa"; // <-- THIS LINE IS NOW FIXED
 import ThemeToggle from "./components/ThemeToggle";
 import AgentRoute from "./components/AgentRoute";
 import MyProfile from "./pages/MyProfile";
@@ -52,6 +54,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 
 import FeatureManager from './pages/FeatureManager'; 
 import ForAgents from './pages/ForAgents'; 
+import OurPlatform from './pages/OurPlatform'; // <-- 1. IMPORTED THE NEW PAGE
 
 import AgentAnalytics from './pages/AgentAnalytics';
 
@@ -426,6 +429,9 @@ function AppRoutes() {
             <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/for-agents" element={<ForAgents />} />
+            
+            <Route path="/our-platform" element={<OurPlatform />} /> {/* <-- 2. ADDED THE NEW ROUTE */}
+
             <Route path="/find-my-neighbourhood" element={<NeighbourhoodQuiz />} />
             <Route path="/tools/cost-of-living" element={<CostOfLivingCalculator />} />
             {/* ... (pSEO Routes are unchanged) ... */}

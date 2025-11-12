@@ -27,8 +27,9 @@ export default function About() {
     'Learn about HouseHunt Kenya: our mission to simplify property ownership, our vision for a transparent marketplace, and our core values of integrity and customer satisfaction.' // Default Description
   );
   
-  // 2. CHECK FOR THE NEW FEATURE FLAG
+  // 2. CHECK FOR THE FEATURE FLAGS
   const isAgentCtaEnabled = useFeatureFlag('agent-landing-page-cta');
+  const isPlatformCtaEnabled = useFeatureFlag('platform-overview-cta'); // <-- 1. ADD NEW FLAG CHECK
 
   return (
     <>
@@ -129,7 +130,32 @@ export default function About() {
             </motion.div>
           </div>
 
-          {/* --- 3. ADD THIS NEW SECTION (IT'S WRAPPED IN THE FLAG) --- */}
+
+          {/* --- 2. ADD THIS NEW "PLATFORM" CTA SECTION --- */}
+          {isPlatformCtaEnabled && (
+            <motion.div
+              className="mt-20 py-16 px-8 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl text-gray-900 dark:text-white"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.5 }}
+              variants={fadeInSlideUp}
+            >
+              <h4 className="text-3xl font-extrabold mb-4">Our Revolutionary Platform</h4>
+              <p className="text-lg text-gray-700 dark:text-gray-200 max-w-2xl mx-auto mb-8">
+                Learn *why* we built HouseHunt Kenya, what's broken in the market, and how our free model is a game-changer for everyone.
+              </p>
+              <Link
+                to="/our-platform"
+                className="bg-blue-600 text-white font-bold px-8 py-3 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-95"
+              >
+                Discover Our "Why"
+              </Link>
+            </motion.div>
+          )}
+          {/* --- END OF NEW "PLATFORM" SECTION --- */}
+
+
+          {/* --- AGENT CTA SECTION (Unchanged) --- */}
           {isAgentCtaEnabled && (
             <motion.div
               className="mt-20 py-16 px-8 bg-blue-600 dark:bg-blue-800 rounded-2xl shadow-xl text-white"
@@ -150,7 +176,7 @@ export default function About() {
               </Link>
             </motion.div>
           )}
-          {/* --- END OF NEW SECTION --- */}
+          {/* --- END OF AGENT SECTION --- */}
 
 
           {/* ✅ Animate Call to Action */}
