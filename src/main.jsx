@@ -11,6 +11,18 @@ import { HelmetProvider } from 'react-helmet-async'
 // This import is now corrected to .jsx
 import { FeatureFlagProvider } from './context/FeatureFlagContext.jsx' // <-- 1. IMPORT THE NEW PROVIDER
 
+// 1. Import ReactGA
+import ReactGA from 'react-ga4';
+
+// 2. Get the Measurement ID from the .env file
+const gaMeasurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+
+// 3. Initialize GA4
+if (gaMeasurementId) {
+  ReactGA.initialize(gaMeasurementId);
+  console.log("GA4 Initialized with ID:", gaMeasurementId);
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HelmetProvider>

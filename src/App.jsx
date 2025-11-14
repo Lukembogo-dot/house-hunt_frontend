@@ -4,6 +4,9 @@ import React, { useState, useEffect, Suspense, lazy } from "react"; // 1. IMPORT
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
 
+// 1. Import ReactGA
+import ReactGA from 'react-ga4';
+
 // 2. CONVERT ALL PAGE IMPORTS TO React.lazy
 const About = lazy(() => import("./pages/About"));
 const Buy = lazy(() => import("./pages/Buy"));
@@ -83,6 +86,18 @@ function AppRoutes() {
 
   const canListProperty = user && (user.role === 'admin' || user.role === 'agent');
   const location = useLocation();
+
+  // 2. --- ADD THIS useEffect HOOK FOR GA4 PAGE TRACKING ---
+  useEffect(() => {
+    // Send a "pageview" event to Google Analytics every time the page changes
+    ReactGA.send({ 
+      hitType: "pageview", 
+      page: location.pathname + location.search, 
+      title: document.title // Send the page title (Helmet will update this)
+    });
+    console.log("GA Pageview Sent:", location.pathname + location.search);
+  }, [location]); // This dependency array is key
+  // --- END OF NEW CODE ---
 
   const [homeFilters, setHomeFilters] = useState({
     location: "",
