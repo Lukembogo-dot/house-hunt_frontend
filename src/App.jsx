@@ -1,29 +1,54 @@
 // App.jsx (UPDATED)
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react"; // 1. IMPORT lazy and Suspense
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import PropertyList from "./components/PropertyList";
-import About from "./pages/About";
-import Buy from "./pages/Buy";
-import Rent from "./pages/Rent";
-import Contact from "./pages/Contact";
-import PropertyDetails from "./pages/PropertyDetails";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AdminDashboard from './pages/AdminDashboard';
+
+// 2. CONVERT ALL PAGE IMPORTS TO React.lazy
+const About = lazy(() => import("./pages/About"));
+const Buy = lazy(() => import("./pages/Buy"));
+const Rent = lazy(() => import("./pages/Rent"));
+const Contact = lazy(() => import("./pages/Contact"));
+const PropertyDetails = lazy(() => import("./pages/PropertyDetails"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AddProperty = lazy(() => import('./pages/AddProperty'));
+const EditProperty = lazy(() => import("./pages/EditProperty"));
+const MyProfile = lazy(() => import("./pages/MyProfile"));
+const EditProfileSettings = lazy(() => import("./pages/EditProfileSettings"));
+const AgentPublicProfile = lazy(() => import("./pages/AgentPublicProfile"));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const MessageStream = lazy(() => import('./components/MessageStream'));
+const ChatPlaceholder = lazy(() => import('./components/ChatPlaceholder'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const SEOManager = lazy(() => import('./pages/SEOManager'));
+const ServicePostDetails = lazy(() => import("./pages/ServicePostDetails"));
+const AdminAddService = lazy(() => import("./pages/AdminAddService"));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const FeatureManager = lazy(() => import('./pages/FeatureManager'));
+const ForAgents = lazy(() => import('./pages/ForAgents'));
+const OurPlatform = lazy(() => import('./pages/OurPlatform'));
+const AgentAnalytics = lazy(() => import('./pages/AgentAnalytics'));
+const NeighbourhoodQuiz = lazy(() => import('./pages/NeighbourhoodQuiz'));
+const DynamicSearchPage = lazy(() => import('./pages/DynamicSearchPage'));
+const AgentFinderPage = lazy(() => import('./pages/AgentFinderPage'));
+const NeighbourhoodIntelPage = lazy(() => import('./pages/NeighbourhoodIntelPage'));
+const CostOfLivingCalculator = lazy(() => import('./pages/CostOfLivingCalculator'));
+const CreateIntelPost = lazy(() => import('./pages/CreateIntelPost'));
+
+// --- Component Imports (These are small, no need to lazy load) ---
 import AdminRoute from './components/AdminRoute';
-import AddProperty from './pages/AddProperty';
-import EditProperty from "./pages/EditProperty";
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
 import ProfileDropdown from "./components/ProfileDropdown";
-import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa"; // <-- THIS LINE IS NOW FIXED
+import { FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
 import ThemeToggle from "./components/ThemeToggle";
 import AgentRoute from "./components/AgentRoute";
-import MyProfile from "./pages/MyProfile";
-import EditProfileSettings from "./pages/EditProfileSettings";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AgentPublicProfile from "./pages/AgentPublicProfile";
 import ScrollToTop from "./components/ScrollToTop";
 import { AnimatePresence, motion } from "framer-motion";
 import TrendingProperties from "./components/TrendingProperties";
@@ -31,49 +56,19 @@ import SearchBar from "./components/SearchBar";
 import ChatBubble from "./components/ChatBubble";
 import NotificationBell from "./components/NotificationBell";
 import apiClient from "./api/axios";
-
-// Chat components
-import ChatPage from './pages/ChatPage';
-import MessageStream from './components/MessageStream';
-import ChatPlaceholder from './components/ChatPlaceholder';
-
-// Password Reset components
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-
-import VerifyEmail from './pages/VerifyEmail';
-import SEOManager from './pages/SEOManager'; 
-import TopAgents from "./components/TopAgents"; 
-
+import TopAgents from "./components/TopAgents";
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
-import ServicePostDetails from "./pages/ServicePostDetails";
-import AdminAddService from "./pages/AdminAddService"; 
-
-import TermsOfService from './pages/TermsOfService';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-
-import FeatureManager from './pages/FeatureManager'; 
-import ForAgents from './pages/ForAgents'; 
-import OurPlatform from './pages/OurPlatform'; // <-- 1. IMPORTED THE NEW PAGE
-
-import AgentAnalytics from './pages/AgentAnalytics';
-
 import PreviewBanner from './components/PreviewBanner';
-
-import NeighbourhoodQuiz from './pages/NeighbourhoodQuiz';
-
-import DynamicSearchPage from './pages/DynamicSearchPage';
-
-import AgentFinderPage from './pages/AgentFinderPage';
-
-import NeighbourhoodIntelPage from './pages/NeighbourhoodIntelPage';
-
-import CostOfLivingCalculator from './pages/CostOfLivingCalculator';
-
-import CreateIntelPost from './pages/CreateIntelPost';
 
 
 // (Static arrays are deleted, which is correct)
+
+// 3. CREATE A LOADING FALLBACK COMPONENT
+const PageLoader = () => (
+  <div className="flex justify-center items-center min-h-[70vh]">
+    <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 
 function AppRoutes() {
@@ -290,196 +285,194 @@ function AppRoutes() {
 
 
         {/* ================= ROUTES ================= */}
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
+        {/* 4. WRAP YOUR ROUTES IN <Suspense> */}
+        <Suspense fallback={<PageLoader />}>
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
 
-            <Route path="/" element={
-              <>
-                {/* ... (Home <section> is unchanged) ... */}
-                <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-                  <div className="relative z-10 px-6 max-w-3xl">
+              <Route path="/" element={
+                <>
+                  {/* ... (Home <section> is unchanged) ... */}
+                  <section id="home" className="relative bg-cover bg-center h-[80vh] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
+                    <div className="relative z-10 px-6 max-w-3xl">
 
-                    <motion.h1
-                      className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                    >
-                      Find Your Dream Home in Kenya
-                    </motion.h1>
+                      <motion.h1
+                        className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
+                      >
+                        Find Your Dream Home in Kenya
+                      </motion.h1>
 
-                    <motion.p
-                      className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-                    >
-                      Explore verified listings — from affordable rentals to luxury homes across Kenya.
-                    </motion.p>
-                  </div>
-                </section>
-
-                <main id="properties" className="flex-grow">
-
-                  <section className="pt-12 px-6">
-                    <div className="max-w-3xl mx-auto">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
-                        <SearchBar
-                          filters={homeFilters}
-                          onChange={handleHomeFilterChange}
-                          onFilter={handleHomeFilterSubmit}
-                        />
-                      </div>
+                      <motion.p
+                        className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto leading-relaxed"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+                      >
+                        Explore verified listings — from affordable rentals to luxury homes across Kenya.
+                      </motion.p>
                     </div>
                   </section>
 
-                  {submittedHomeFilters ? (
-                    // AFTER SEARCHING
-                    <>
-                      {/* ... (Search results PropertyList) ... */}
-                      <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                        <div className="max-w-6xl mx-auto">
-                          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-                            Search Results
-                          </h2>
-                          <PropertyList
-                            filterOverrides={submittedHomeFilters}
-                            showSearchBar={false}
-                            showTitle={false}
+                  <main id="properties" className="flex-grow">
+
+                    <section className="pt-12 px-6">
+                      <div className="max-w-3xl mx-auto">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
+                          <SearchBar
+                            filters={homeFilters}
+                            onChange={handleHomeFilterChange}
+                            onFilter={handleHomeFilterSubmit}
                           />
                         </div>
-                      </section>
-                      <TopAgents />
-                      <TrendingProperties />
-                    </>
-                  ) : (
-                    // DEFAULT VIEW
-                    <>
-                      {/* ... (Quiz Banner is unchanged) ... */}
-                      {isQuizEnabled && (
-                        <section className="py-16 px-6 bg-blue-50 dark:bg-gray-800">
-                          {/* ... (Quiz banner content) ... */}
-                        </section>
-                      )}
-                      
-                      {/* ... (Cost Calculator Banner is unchanged) ... */}
-                      {isCostCalculatorEnabled && (
-                        <section className="py-16 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-                         {/* ... (Calculator banner content) ... */}
-                        </section>
-                      )}
+                      </div>
+                    </section>
 
-                      <TopAgents />
-                      <TrendingProperties />
-
-                      {/* ... (Popular Searches section is unchanged) ... */}
-                      <section className="py-20 px-6">
-                        <div className="container mx-auto max-w-6xl">
-                          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center mb-12">
-                            Popular Searches
-                          </h2>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {emphasizedKeywords.property.map((search) => (
-                              <Link
-                                key={search.path}
-                                to={search.path}
-                                className="block font-semibold text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-lg transition-all"
-                              >
-                                {search.name}
-                              </Link>
-                            ))}
+                    {submittedHomeFilters ? (
+                      // AFTER SEARCHING
+                      <>
+                        {/* ... (Search results PropertyList) ... */}
+                        <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                          <div className="max-w-6xl mx-auto">
+                            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
+                              Search Results
+                            </h2>
+                            <PropertyList
+                              filterOverrides={submittedHomeFilters}
+                              showSearchBar={false}
+                              showTitle={false}
+                            />
                           </div>
-                        </div>
-                      </section>
+                        </section>
+                        <TopAgents />
+                        <TrendingProperties />
+                      </>
+                    ) : (
+                      // DEFAULT VIEW
+                      <>
+                        {/* ... (Quiz Banner is unchanged) ... */}
+                        {isQuizEnabled && (
+                          <section className="py-16 px-6 bg-blue-50 dark:bg-gray-800">
+                            {/* ... (Quiz banner content) ... */}
+                          </section>
+                        )}
+                        
+                        {/* ... (Cost Calculator Banner is unchanged) ... */}
+                        {isCostCalculatorEnabled && (
+                          <section className="py-16 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                          {/* ... (Calculator banner content) ... */}
+                          </section>
+                        )}
 
-                      <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-                        <div className="max-w-6xl mx-auto">
-                          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-                            Featured Properties
-                          </h2>
-                          <PropertyList
-                            filterOverrides={null}
-                            showSearchBar={false}
-                            showTitle={false}
-                            limit={20}
-                          />
-                        </div>
-                      </section>
-                      <NeighbourhoodWatchHome />
-                    </>
-                  )}
-                </main>
-              </>
-            } />
+                        <TopAgents />
+                        <TrendingProperties />
 
-            {/* ... (All other Public Routes are unchanged) ... */}
-            <Route path="/buy" element={<Buy />} />
-            <Route path="/rent" element={<Rent />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/properties/:slug" element={<PropertyDetails />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-            <Route path="/verify-email/:token" element={<VerifyEmail />} />
-            <Route path="/services/:slug" element={<ServicePostDetails />} />
-            <Route path="/terms-of-service" element={<TermsOfService />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/for-agents" element={<ForAgents />} />
-            
-            <Route path="/our-platform" element={<OurPlatform />} />
+                        {/* ... (Popular Searches section is unchanged) ... */}
+                        <section className="py-20 px-6">
+                          <div className="container mx-auto max-w-6xl">
+                            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center mb-12">
+                              Popular Searches
+                            </h2>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              {emphasizedKeywords.property.map((search) => (
+                                <Link
+                                  key={search.path}
+                                  to={search.path}
+                                  className="block font-semibold text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-lg transition-all"
+                                >
+                                  {search.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
 
-            <Route path="/find-my-neighbourhood" element={<NeighbourhoodQuiz />} />
-            <Route path="/tools/cost-of-living" element={<CostOfLivingCalculator />} />
-            {/* ... (pSEO Routes are unchanged) ... */}
-            <Route path="/search/:listingType/:propertyType/:location/:bedrooms" element={<DynamicSearchPage />} />
-            <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />
-            <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
-            <Route path="/search/:listingType" element={<DynamicSearchPage />} />
-            <Route path="/agents" element={<AgentFinderPage />} />
-            <Route path="/agents/:location" element={<AgentFinderPage />} />
-            
-            {/* ================================================================
-                THIS IS THE FIX: Changed "NeighbourM/intelPage" to "NeighbourhoodIntelPage"
-                ================================================================
-            */}
-            <Route path="/neighbourhood/:location/:topic" element={<NeighbourhoodIntelPage />} />
-            <Route path="/neighbourhood/:location" element={<NeighbourhoodIntelPage />} />
+                        <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+                          <div className="max-w-6xl mx-auto">
+                            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
+                              Featured Properties
+                            </h2>
+                            <PropertyList
+                              filterOverrides={null}
+                              showSearchBar={false}
+                              showTitle={false}
+                              limit={20}
+                            />
+                          </div>
+                        </section>
+                        <NeighbourhoodWatchHome />
+                      </>
+                    )}
+                  </main>
+                </>
+              } />
 
-
-            {/* Protected Routes */}
-            <Route path="" element={<ProtectedRoute />}>
-              <Route path="/profile" element={<MyProfile />} />
-              <Route path="/profile/edit" element={<EditProfileSettings />} />
+              {/* ... (All other Public Routes are unchanged) ... */}
+              <Route path="/buy" element={<Buy />} />
+              <Route path="/rent" element={<Rent />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/properties/:slug" element={<PropertyDetails />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route path="/verify-email/:token" element={<VerifyEmail />} />
+              <Route path="/services/:slug" element={<ServicePostDetails />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/for-agents" element={<ForAgents />} />
               
-              {/* ✅ --- 2. ADD THE NEW UGC ROUTE --- */}
-              {/* This is for logged-in, verified users */}
-              <Route path="/create-intel-post" element={<CreateIntelPost />} />
-              
-              <Route path="/chat" element={<ChatPage />}>
-                <Route index element={<ChatPlaceholder />} />
-                <Route path=":id" element={<MessageStream />} />
+              <Route path="/our-platform" element={<OurPlatform />} />
+
+              <Route path="/find-my-neighbourhood" element={<NeighbourhoodQuiz />} />
+              <Route path="/tools/cost-of-living" element={<CostOfLivingCalculator />} />
+              {/* ... (pSEO Routes are unchanged) ... */}
+              <Route path="/search/:listingType/:propertyType/:location/:bedrooms" element={<DynamicSearchPage />} />
+              <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />
+              <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
+              <Route path="/search/:listingType" element={<DynamicSearchPage />} />
+              <Route path="/agents" element={<AgentFinderPage />} />
+              <Route path="/agents/:location" element={<AgentFinderPage />} />
+              <Route path="/neighbourhood/:location/:topic" element={<NeighbourhoodIntelPage />} />
+              <Route path="/neighbourhood/:location" element={<NeighbourhoodIntelPage />} />
+
+
+              {/* Protected Routes */}
+              <Route path="" element={<ProtectedRoute />}>
+                <Route path="/profile" element={<MyProfile />} />
+                <Route path="/profile/edit" element={<EditProfileSettings />} />
+                
+                {/* ✅ --- 2. ADD THE NEW UGC ROUTE --- */}
+                {/* This is for logged-in, verified users */}
+                <Route path="/create-intel-post" element={<CreateIntelPost />} />
+                
+                <Route path="/chat" element={<ChatPage />}>
+                  <Route index element={<ChatPlaceholder />} />
+                  <Route path=":id" element={<MessageStream />} />
+                </Route>
               </Route>
-            </Route>
 
-            {/* ... (Admin and Agent Routes are unchanged) ... */}
-            <Route path="" element={<AdminRoute />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/seo-manager" element={<SEOManager />} />
-              <Route path="/admin/feature-manager" element={<FeatureManager />} />
-              <Route path="/admin/add-service" element={<AdminAddService />} />
-              <Route path="/admin/add-service/:id" element={<AdminAddService />} />
-            </Route>
-            <Route path="" element={<AgentRoute />}>
-              <Route path="/add-property" element={<AddProperty />} />
-              <Route path="/admin/property/:id/edit" element={<EditProperty />} />
-              <Route path="/profile/analytics" element={<AgentAnalytics />} />
-            </Route>
-          </Routes>
-        </AnimatePresence>
+              {/* ... (Admin and Agent Routes are unchanged) ... */}
+              <Route path="" element={<AdminRoute />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route path="/admin/seo-manager" element={<SEOManager />} />
+                <Route path="/admin/feature-manager" element={<FeatureManager />} />
+                <Route path="/admin/add-service" element={<AdminAddService />} />
+                <Route path="/admin/add-service/:id" element={<AdminAddService />} />
+              </Route>
+              <Route path="" element={<AgentRoute />}>
+                <Route path="/add-property" element={<AddProperty />} />
+                <Route path="/admin/property/:id/edit" element={<EditProperty />} />
+                <Route path="/profile/analytics" element={<AgentAnalytics />} />
+              </Route>
+            </Routes>
+          </AnimatePresence>
+        </Suspense>
 
         {/* ================= FOOTER ================= */}
         <footer className="bg-gray-900 dark:bg-black text-gray-300 dark:text-gray-400 py-12 border-t border-gray-800 dark:border-gray-900">
