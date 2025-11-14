@@ -28,10 +28,10 @@ const StarRating = ({ rating }) => {
 // 1. --- NEW: SEO INJECTOR COMPONENT ---
 // This component generates the required schema.org JSON-LD for your page.
 const ServiceSeoInjector = ({ service }) => {
-  const schemas = [];
-
-  // Schema for the blog post itself
-  schemas.push({
+  
+  // ▼▼▼ THIS IS THE FIX ▼▼▼
+  // 1. Start with the main BlogPosting schema
+  const blogPostingSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": service.metaTitle || service.title,
@@ -39,7 +39,6 @@ const ServiceSeoInjector = ({ service }) => {
     "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png", // Fallback image
     "datePublished": service.createdAt,
     "dateModified": service.updatedAt,
-    // ✅ 3. ADDED AUTHOR SCHEMA
     "author": {
       "@type": "Person",
       "name": service.author?.name || "HouseHunt Admin"
@@ -51,13 +50,14 @@ const ServiceSeoInjector = ({ service }) => {
         "@type":"ImageObject",
         "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png" // Path to your logo
       }
-    }
-  });
+    },
+    // 2. Prepare mainEntity (it might be FAQPage or just text)
+    "mainEntity": undefined, 
+  };
 
-  // Schema for the FAQs, if they exist
+  // 3. If FAQs exist, nest them correctly as the mainEntity
   if (service.faqs && service.faqs.length > 0) {
-    schemas.push({
-      "@context": "https://schema.org",
+    blogPostingSchema.mainEntity = {
       "@type": "FAQPage",
       "mainEntity": service.faqs.map(faq => ({
         "@type": "Question",
@@ -67,8 +67,13 @@ const ServiceSeoInjector = ({ service }) => {
           "text": faq.answer
         }
       }))
-    });
+    };
+  } else {
+    // 4. If no FAQs, just use the article body as the mainEntity (less common, but valid)
+    // Or, you can just remove the mainEntity property. We'll remove it.
+    delete blogPostingSchema.mainEntity;
   }
+  // ▲▲▲ END OF FIX ▲▲▲
 
   return (
     <Helmet>
@@ -83,14 +88,11 @@ const ServiceSeoInjector = ({ service }) => {
       <meta property="og:type" content="article" />
       <meta property="og:url" content={window.location.href} />
       
-      {/* Render all schemas */}
-      {schemas.map((schema, index) => (
-        <script 
-          key={index}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-        />
-      ))}
+      {/* 5. Render the single, combined schema */}
+      <script 
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+      />
     </Helmet>
   );
 };
