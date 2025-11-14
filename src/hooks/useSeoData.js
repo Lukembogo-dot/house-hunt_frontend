@@ -1,48 +1,77 @@
 // src/hooks/useSeoData.js
+// --- NEW DYNAMIC VERSION ---
 
 import { useState, useEffect } from 'react';
 import apiClient from '../api/axios';
 
 /**
- * Fetches SEO data for a given page path from the backend.
- * @param {string} path - The path of the page (e.g., '/buy', '/rent', '/about').
- * @param {string} defaultTitle - The default title to use if no custom SEO is found.
- * @param {string} defaultDescription - The default description to use if no custom SEO is found.
- * @returns {object} The fetched or default SEO metadata.
+ * A dynamic hook to fetch SEO data for a specific page.
+ * It will fetch data from /api/seo/:pagePath and fall back to the provided defaults.
  */
-const useSeoData = (path, defaultTitle, defaultDescription) => {
-    const [seoData, setSeoData] = useState({
-        metaTitle: defaultTitle,
-        metaDescription: defaultDescription,
-        faqs: [],
-        schemaDescription: '',
-    });
-    // Encode the path to safely include the forward slash in the URL
-    const encodedPath = encodeURIComponent(path); 
+const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescription = 'Find your next home in Kenya.') => {
+  const [seo, setSeo] = useState({
+    metaTitle: defaultTitle,
+    metaDescription: defaultDescription,
+    ogTitle: '',
+    ogDescription: '',
+    twitterTitle: '',
+    twitterDescription: '',
+    canonicalUrl: '',
+    focusKeyword: '',
+  });
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchSeo = async () => {
-            try {
-                // Fetch data for the specific path
-                const { data } = await apiClient.get(`/seo/${encodedPath}`);
+  useEffect(() => {
+    if (!pagePath) {
+      setLoading(false);
+      return;
+    }
 
-                // If a record is returned, update the state with fetched data, falling back to defaults
-                setSeoData({
-                    metaTitle: data.metaTitle || defaultTitle,
-                    metaDescription: data.metaDescription || defaultDescription,
-                    faqs: data.faqs || [],
-                    schemaDescription: data.schemaDescription || '',
-                });
-            } catch (error) {
-                console.error(`Failed to fetch SEO for path: ${path}`, error);
-                // On error, the state retains the initial default values.
-            }
-        };
+    const fetchSeoData = async () => {
+      try {
+        setLoading(true);
+        const encodedPath = encodeURIComponent(pagePath);
+        // This API call now fetches all the data you saved from the SEOManager
+        const { data } = await apiClient.get(`/api/seo/${encodedPath}`);
 
-        fetchSeo();
-    }, [path, defaultTitle, defaultDescription, encodedPath]);
+        // Merge fetched data with defaults.
+        // Fetched data (from your manager) takes priority.
+        setSeo({
+          metaTitle: data.metaTitle || defaultTitle,
+          metaDescription: data.metaDescription || defaultDescription,
+          ogTitle: data.ogTitle || data.metaTitle || defaultTitle,
+          ogDescription: data.ogDescription || data.metaDescription || defaultDescription,
+          twitterTitle: data.twitterTitle || data.metaTitle || defaultTitle,
+          twitterDescription: data.twitterDescription || data.metaDescription || defaultDescription,
+          canonicalUrl: data.canonicalUrl || '', // Get canonical from DB
+          focusKeyword: data.focusKeyword || '', // Get focus keyword from DB
+        });
 
-    return seoData;
+      } catch (err) {
+        console.error(`Failed to fetch SEO for ${pagePath}:`, err);
+        setError(err);
+        // On error, just use the defaults
+        setSeo({
+          metaTitle: defaultTitle,
+          metaDescription: defaultDescription,
+          ogTitle: defaultTitle,
+          ogDescription: defaultDescription,
+          twitterTitle: defaultTitle,
+          twitterDescription: defaultDescription,
+          canonicalUrl: '',
+          focusKeyword: '',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSeoData();
+  }, [pagePath, defaultTitle, defaultDescription]); // Re-run if any of these change
+
+  return { seo, loading, error }; // Return the full object
 };
 
 export default useSeoData;

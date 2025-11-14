@@ -1,16 +1,14 @@
-// src/pages/SEOManager.jsx (UPDATED FOR KEYWORD LIBRARY)
+// src/pages/SEOManager.jsx (UPDATED)
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter } from 'react-icons/fa'; // Added FaSpinner, FaFacebook, FaTwitter
+import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter } from 'react-icons/fa';
 import apiClient from '../api/axios';
 
-// ✅ --- 1. NEW COMPONENT FOR THE KEYWORD LIBRARY ---
-// (This component is unchanged and correct)
-const KeywordLibrary = () => {
-  const [keywords, setKeywords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isSaving, setIsSaving] = useState(null); // Will store the ID of the keyword being saved
+// --- KeywordLibrary Component ---
+// NOW receives keyword data as a prop instead of fetching it.
+const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
+  const [isSaving, setIsSaving] = useState(null);
+  const [formError, setFormError] = useState('');
 
   // State for the new keyword form
   const [newKeyword, setNewKeyword] = useState({
@@ -18,30 +16,6 @@ const KeywordLibrary = () => {
     path: '',
     engine: 'property',
   });
-
-  // Fetch all keywords on component mount
-  const fetchKeywords = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data } = await apiClient.get('/seo/keywords');
-      
-      // ✅ --- THIS IS THE FIX ---
-      // We must guarantee that 'keywords' is always an array
-      setKeywords(Array.isArray(data) ? data : []);
-      // --- END OF FIX ---
-
-    } catch (err) {
-      setError('Failed to fetch keyword library.');
-      console.error(err);
-      setKeywords([]); // Also set to empty array on error
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchKeywords();
-  }, [fetchKeywords]);
 
   // Handle changes in the "Create New" form
   const handleFormChange = (e) => {
@@ -52,14 +26,14 @@ const KeywordLibrary = () => {
   // Handle creating a new keyword
   const handleCreateKeyword = async (e) => {
     e.preventDefault();
-    setIsSaving('new'); // Set saving state for the form
-    setError('');
+    setIsSaving('new');
+    setFormError('');
     try {
       await apiClient.post('/seo/keywords', newKeyword);
-      setNewKeyword({ name: '', path: '', engine: 'property' }); // Reset form
-      fetchKeywords(); // Refresh the list
+      setNewKeyword({ name: '', path: '', engine: 'property' });
+      fetchKeywords(); // Tell the parent to refresh the list
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create keyword.');
+      setFormError(err.response?.data?.message || 'Failed to create keyword.');
     } finally {
       setIsSaving(null);
     }
@@ -67,19 +41,15 @@ const KeywordLibrary = () => {
 
   // Handle toggling the "isEmphasized" flag
   const handleToggleEmphasize = async (keyword) => {
-    setIsSaving(keyword._id); // Set saving state for this specific row
+    setIsSaving(keyword._id);
     try {
-      // Send the *full* keyword object, just toggling the one field
-      const { data: updatedKeyword } = await apiClient.put(`/seo/keywords/${keyword._id}`, {
-        ...keyword, // Send all existing data
-        isEmphasized: !keyword.isEmphasized, // Toggle the flag
+      await apiClient.put(`/seo/keywords/${keyword._id}`, {
+        ...keyword,
+        isEmphasized: !keyword.isEmphasized,
       });
-      // Update the list in-place for a responsive UI
-      setKeywords(prev => 
-        prev.map(kw => (kw._id === keyword._id ? updatedKeyword : kw))
-      );
+      fetchKeywords(); // Tell the parent to refresh
     } catch (err) {
-      setError('Failed to update keyword.');
+      setFormError('Failed to update keyword.');
     } finally {
       setIsSaving(null);
     }
@@ -88,12 +58,12 @@ const KeywordLibrary = () => {
   // Handle deleting a keyword
   const handleDeleteKeyword = async (id) => {
     if (window.confirm('Are you sure you want to delete this keyword? This cannot be undone.')) {
-      setIsSaving(id); // Use saving state for delete
+      setIsSaving(id);
       try {
         await apiClient.delete(`/seo/keywords/${id}`);
-        fetchKeywords(); // Refresh the list
+        fetchKeywords(); // Tell the parent to refresh
       } catch (err) {
-        setError('Failed to delete keyword.');
+        setFormError('Failed to delete keyword.');
       } finally {
         setIsSaving(null);
       }
@@ -154,13 +124,14 @@ const KeywordLibrary = () => {
             {isSaving === 'new' ? <FaSpinner className="animate-spin" /> : 'Create New Keyword'}
           </button>
         </form>
+        {formError && <p className="text-sm text-red-500 mt-2">{formError}</p>}
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
       </section>
 
       {/* --- Keyword List Table --- */}
       <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <h3 className="text-xl font-semibold p-6 dark:text-gray-100">
-          Your Keyword Library ({keywords.length})
+          Your Keyword Library ({keywordLibrary.length})
         </h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -174,7 +145,7 @@ const KeywordLibrary = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {keywords.map(kw => (
+              {keywordLibrary.map(kw => (
                 <tr key={kw._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button
@@ -225,8 +196,9 @@ const KeywordLibrary = () => {
   );
 };
 
-// --- (PageSettingsEditor component is unchanged) ---
-const PageSettingsEditor = () => {
+// --- PageSettingsEditor Component ---
+// NOW receives keywordLibrary as a prop
+const PageSettingsEditor = ({ keywordLibrary }) => {
   const [pagesList, setPagesList] = useState([]);
   const [selectedPagePath, setSelectedPagePath] = useState(null);
   const [seoData, setSeoData] = useState(null);
@@ -234,6 +206,9 @@ const PageSettingsEditor = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // --- NEW STATE for the keyword suggestions ---
+  const [keywordSuggestions, setKeywordSuggestions] = useState([]);
   
   const staticPages = [
       { pagePath: '/', metaTitle: 'Homepage', breadCrumbTitle: 'Home' },
@@ -246,8 +221,6 @@ const PageSettingsEditor = () => {
   const fetchPagesList = useCallback(async () => {
     try {
         const { data } = await apiClient.get('/seo/pages');
-        
-        // --- THIS IS THE FIX ---
         const dynamicPages = Array.isArray(data) ? data : []; 
 
         const allPages = [
@@ -276,7 +249,6 @@ const PageSettingsEditor = () => {
     }
   }, [selectedPagePath]);
   
-  // ✅ --- 2. UPDATE fetchSeoData TO INCLUDE NEW FIELDS ---
   const fetchSeoData = useCallback(async (path) => {
     if (!path) return;
     setSaving(false);
@@ -290,12 +262,11 @@ const PageSettingsEditor = () => {
             pagePath: path,
             metaTitle: data.metaTitle || '',
             metaDescription: data.metaDescription || '',
-            // --- Add new fields here ---
             ogTitle: data.ogTitle || '',
             ogDescription: data.ogDescription || '',
             twitterTitle: data.twitterTitle || '',
             twitterDescription: data.twitterDescription || '',
-            // --- (End of new fields) ---
+            focusKeyword: data.focusKeyword || '', // Added
             schemaFocusKeyword: data.schemaFocusKeyword || '',
             schemaDescription: data.schemaDescription || '',
             breadCrumbTitle: data.breadCrumbTitle || '',
@@ -326,18 +297,29 @@ const PageSettingsEditor = () => {
     }
   }, [selectedPagePath, fetchSeoData]);
 
-
+  // --- UPDATED Input Handler ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSeoData(prev => ({ ...prev, [name]: value }));
     setSuccess('');
+
+    // --- NEW: Logic for keyword suggestions ---
+    if (name === 'focusKeyword' && value.trim() !== '') {
+      const suggestions = keywordLibrary
+        .filter(kw => kw.name.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 5); // Show top 5 matches
+      setKeywordSuggestions(suggestions);
+    } else {
+      setKeywordSuggestions([]); // Clear suggestions
+    }
   };
 
-  // ✅ --- 3. 'handleSave' IS ALREADY PERFECT ---
-  // Since it sends the *entire* seoData object, and we
-  // added the new fields to fetchSeoData and handleInputChange,
-  // this function will automatically save the new fields.
-  // No change is needed here.
+  // --- NEW: Handler for clicking a suggestion ---
+  const handleSuggestionClick = (keywordName) => {
+    setSeoData(prev => ({ ...prev, focusKeyword: keywordName }));
+    setKeywordSuggestions([]); // Hide dropdown
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!seoData) return;
@@ -349,6 +331,7 @@ const PageSettingsEditor = () => {
     try {
         const encodedPath = encodeURIComponent(seoData.pagePath);
         
+        // This will now automatically send the 'focusKeyword'
         await apiClient.put(`/seo/${encodedPath}`, seoData);
         
         setSuccess(`SEO settings for ${seoData.pagePath} saved successfully!`);
@@ -429,6 +412,39 @@ const PageSettingsEditor = () => {
             <FaTag className="mr-2 text-purple-500" /> Page Meta Tags
           </h2>
           <div className="space-y-4">
+            
+            {/* --- NEW: Focus Keyword Field --- */}
+            <div className="relative">
+              <label htmlFor="focusKeyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Focus Keyword
+              </label>
+              <input
+                type="text"
+                id="focusKeyword"
+                name="focusKeyword"
+                value={seoData.focusKeyword}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="Enter the main keyword for this page"
+                autoComplete="off"
+              />
+              {/* --- NEW: Suggestions Dropdown --- */}
+              {keywordSuggestions.length > 0 && (
+                <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {keywordSuggestions.map((kw) => (
+                    <li
+                      key={kw._id}
+                      onClick={() => handleSuggestionClick(kw.name)}
+                      className="p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    >
+                      {kw.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {/* --- END: Focus Keyword Field --- */}
+
             <div>
               <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Meta Title (Max 65 chars)
@@ -484,7 +500,7 @@ const PageSettingsEditor = () => {
           </div>
         </section>
 
-        {/* ✅ --- 4. NEW SOCIAL MEDIA TAGS SECTION --- */}
+        {/* === Social Media Tags Section === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaFacebook className="mr-2 text-blue-600" /> <FaTwitter className="mr-2 text-blue-400" /> Social Media Tags
@@ -619,9 +635,37 @@ const PageSettingsEditor = () => {
 };
 
 
-// ✅ --- 3. THIS IS THE NEW MAIN COMPONENT ---
+// --- MAIN SEOManager Component ---
+// Now fetches keywords and passes them down as props
 const SEOManager = () => {
   const [activeTab, setActiveTab] = useState('pageSettings'); // 'pageSettings' or 'keywordLibrary'
+
+  // --- NEW: Lifted state for keyword library ---
+  const [keywordLibrary, setKeywordLibrary] = useState([]);
+  const [keywordsLoading, setKeywordsLoading] = useState(true);
+  const [keywordsError, setKeywordsError] = useState('');
+
+  // --- NEW: Function to fetch keywords ---
+  const fetchKeywords = useCallback(async () => {
+    try {
+      setKeywordsLoading(true);
+      setKeywordsError('');
+      const { data } = await apiClient.get('/seo/keywords');
+      setKeywordLibrary(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setKeywordsError('Failed to fetch keyword library.');
+      console.error(err);
+      setKeywordLibrary([]);
+    } finally {
+      setKeywordsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchKeywords();
+  }, [fetchKeywords]);
+  // --- END: New keyword logic ---
+
 
   const TabButton = ({ tabName, label, icon }) => (
     <button
@@ -657,10 +701,21 @@ const SEOManager = () => {
         />
       </div>
 
-      {/* --- Tab Content --- */}
+      {/* --- Tab Content (Pass props) --- */}
       <div>
-        {activeTab === 'pageSettings' && <PageSettingsEditor />}
-        {activeTab === 'keywordLibrary' && <KeywordLibrary />}
+        {activeTab === 'pageSettings' && (
+          <PageSettingsEditor 
+            keywordLibrary={keywordLibrary} // Pass keywords as a prop
+          />
+        )}
+        {activeTab === 'keywordLibrary' && (
+          <KeywordLibrary 
+            keywordLibrary={keywordLibrary} // Pass keywords as a prop
+            loading={keywordsLoading}
+            error={keywordsError}
+            fetchKeywords={fetchKeywords} // Pass the refresh function
+          />
+        )}
       </div>
     </div>
   );
