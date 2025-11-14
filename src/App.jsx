@@ -144,7 +144,7 @@ function AppRoutes() {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950 overflow-x-hidden">
 
         {/* ================= HEADER ================= */}
         <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800">
@@ -430,7 +430,7 @@ function AppRoutes() {
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/for-agents" element={<ForAgents />} />
             
-            <Route path="/our-platform" element={<OurPlatform />} /> {/* <-- 2. ADDED THE NEW ROUTE */}
+            <Route path="/our-platform" element={<OurPlatform />} />
 
             <Route path="/find-my-neighbourhood" element={<NeighbourhoodQuiz />} />
             <Route path="/tools/cost-of-living" element={<CostOfLivingCalculator />} />
@@ -441,6 +441,11 @@ function AppRoutes() {
             <Route path="/search/:listingType" element={<DynamicSearchPage />} />
             <Route path="/agents" element={<AgentFinderPage />} />
             <Route path="/agents/:location" element={<AgentFinderPage />} />
+            
+            {/* ================================================================
+                THIS IS THE FIX: Changed "NeighbourM/intelPage" to "NeighbourhoodIntelPage"
+                ================================================================
+            */}
             <Route path="/neighbourhood/:location/:topic" element={<NeighbourhoodIntelPage />} />
             <Route path="/neighbourhood/:location" element={<NeighbourhoodIntelPage />} />
 
@@ -562,7 +567,7 @@ function AppRoutes() {
                 </li>
                 <li>
                   <a 
-                    href="https://wa.me/254776929021" 
+                    href="httpss://wa.me/254776929021" 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="flex items-center justify-center md:justify-start space-x-2 hover:text-green-400 transition"

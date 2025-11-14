@@ -1,3 +1,6 @@
+// src/pages/ServicePostDetails.jsx
+// (UPDATED)
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
@@ -187,8 +190,11 @@ const ServicePostDetails = () => {
   
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
-  // ✅ --- FIX: UPGRADED ARTICLE CLASS FOR READABILITY AND CONTRAST ---
-  const articleClass = "prose prose-xl dark:prose-invert max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg";
+  // ================================================================
+  // --- ✅ THIS IS THE FIX ---
+  // Added Tailwind 'prose-img:*' classes to auto-style all images in the post.
+  // ================================================================
+  const articleClass = "prose prose-xl dark:prose-invert max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg prose-img:w-full prose-img:rounded-lg prose-img:shadow-md prose-img:my-6";
 
 
   return (

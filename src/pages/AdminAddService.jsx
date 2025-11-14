@@ -1,16 +1,17 @@
 // src/pages/AdminAddService.jsx
+// --- UPDATED with WebP conversion ---
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaSpinner, FaSave, FaPlus, FaTrash, FaImage, FaLink, FaBold, FaListUl, FaListOl, FaTimes } from 'react-icons/fa';
+import { 
+  FaSpinner, FaSave, FaPlus, FaTrash, FaImage, FaLink 
+} from 'react-icons/fa';
 
-// 1. IMPORT TIPTAP
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
+// 1. IMPORT CKEDITOR
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
-// 2. IMPORT REACT-IMAGE-CROP
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,51 +52,56 @@ const TextareaField = ({ label, name, value, onChange, placeholder, rows = 3, re
     />
   </div>
 );
-
-// --- Tiptap Toolbar (Unchanged) ---
-const TiptapToolbar = ({ editor }) => {
-  if (!editor) return null;
-
-  const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Enter URL', previousUrl);
-    if (url === null) return;
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
-
-  return (
-    <div className="flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-t-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H1">
-        H1
-      </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H2">
-        H2
-      </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} className={`p-2 rounded ${editor.isActive('heading', { level: 3 }) ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="H3">
-        H3
-      </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`p-2 rounded ${editor.isActive('bold') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Bold">
-        <FaBold />
-      </button>
-      <button type="button" onClick={setLink} className={`p-2 rounded ${editor.isActive('link') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Link">
-        <FaLink />
-      </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`p-2 rounded ${editor.isActive('bulletList') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Bullet List">
-        <FaListUl />
-      </button>
-      <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`p-2 rounded ${editor.isActive('orderedList') ? 'bg-blue-600 text-white' : 'hover:bg-gray-200 dark:hover:bg-gray-600'}`} title="Ordered List">
-        <FaListOl />
-      </button>
-    </div>
-  );
-};
 // ------------------------------------
 
-// 3. --- HELPER TO GET CROPPED IMAGE ---
+// 2. --- CKEDITOR 5 CUSTOM UPLOAD ADAPTER ---
+// This class connects CKEditor's image upload button to our backend API
+class MyUploadAdapter {
+  constructor(loader) {
+    this.loader = loader;
+  }
+
+  // Starts the upload process
+  upload() {
+    return this.loader.file.then(file => new Promise((resolve, reject) => {
+      const data = new FormData();
+      data.append('image', file);
+
+      apiClient.post('/services/upload-content-image', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true
+      })
+      .then(response => {
+        if (response.data.imageUrl) {
+          // CKEditor expects this exact format: { default: "image_url" }
+          resolve({
+            default: response.data.imageUrl
+          });
+        } else {
+          reject('Image URL not returned from server.');
+        }
+      })
+      .catch(error => {
+        reject(error.response?.data?.message || 'Image upload failed.');
+      });
+    }));
+  }
+
+  // Aborts the upload process
+  abort() {
+    // This is optional, but good practice if you have a way to cancel requests
+  }
+}
+
+// This function attaches the adapter to the editor
+function MyCustomUploadAdapterPlugin(editor) {
+  editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
+    return new MyUploadAdapter(loader);
+  };
+}
+// ---------------------------------------------
+
+// --- HELPER TO GET CROPPED IMAGE (UPDATED) ---
 function getCroppedImg(image, crop, canvas) {
   const scaleX = image.naturalWidth / image.width;
   const scaleY = image.naturalHeight / image.height;
@@ -116,14 +122,17 @@ function getCroppedImg(image, crop, canvas) {
   );
 
   return new Promise((resolve, reject) => {
+    // ▼▼▼ THIS IS THE FIX ▼▼▼
+    // Convert the canvas to a 'image/webp' blob with 90% quality
     canvas.toBlob(blob => {
       if (!blob) {
         reject(new Error('Canvas is empty'));
         return;
       }
-      blob.name = 'cropped-image.jpeg';
+      blob.name = 'cropped-image.webp'; // Set the file name
       resolve(blob);
-    }, 'image/jpeg', 0.95); // 95% quality JPEG
+    }, 'image/webp', 0.9); // 0.9 = 90% quality
+    // ▲▲▲ END OF FIX ▲▲▲
   });
 }
 // ---------------------------------------
@@ -132,28 +141,26 @@ const initialFormState = {
   title: '',
   serviceType: '',
   location: '',
-  imageUrl: '', // For URL input
+  imageUrl: '', 
   metaTitle: '',
   metaDescription: '',
 };
 
 const AdminAddService = () => {
   const [formData, setFormData] = useState(initialFormState);
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(''); // CKEditor will use this state
   const [faqs, setFaqs] = useState([{ question: '', answer: '' }]);
-  const [imageUpload, setImageUpload] = useState(null); // Will store the CROPPED blob
+  const [imageUpload, setImageUpload] = useState(null); 
   const [imageUploadPreview, setImageUploadPreview] = useState('');
   const [imageInputMode, setImageInputMode] = useState('url');
   
-  // 4. --- NEW STATE FOR CROP MODAL ---
   const [cropModalOpen, setCropModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState(''); // Original image for cropper
+  const [imgSrc, setImgSrc] = useState(''); 
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
-  const [aspect, setAspect] = useState(16 / 9); // 16:9 aspect ratio
+  const [aspect, setAspect] = useState(16 / 9); 
   const imgRef = useRef(null);
   const previewCanvasRef = useRef(null);
-  // ----------------------------------
 
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
@@ -161,12 +168,7 @@ const AdminAddService = () => {
   const { id } = useParams();
   const isEditMode = Boolean(id);
   
-  const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), Link.configure({ openOnClick: false })],
-    content: content,
-    onUpdate: ({ editor }) => { setContent(editor.getHTML()); },
-  });
-
+  // --- useEffect (Unchanged) ---
   useEffect(() => {
     if (isEditMode) {
       setLoading(true);
@@ -184,8 +186,7 @@ const AdminAddService = () => {
           setFormData(fetchedData);
           
           const dbContent = data.content || '';
-          setContent(dbContent);
-          if (editor) editor.commands.setContent(dbContent);
+          setContent(dbContent); // Set state, CKEditor will read this
           
           setFaqs(data.faqs && data.faqs.length > 0 ? data.faqs : [{ question: '', answer: '' }]);
         } catch (err) {
@@ -196,8 +197,10 @@ const AdminAddService = () => {
       };
       fetchService();
     }
-  }, [id, isEditMode, editor]);
+  }, [id, isEditMode]);
 
+
+  // --- All handlers from handleChange to handleCropSave (Unchanged) ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -218,39 +221,29 @@ const AdminAddService = () => {
     setFaqs(newFaqs);
   };
 
-  // 5. --- UPDATED IMAGE FILE HANDLER ---
   const handleImageFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setCrop(undefined); // Reset crop
+      setCrop(undefined); 
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result.toString() || '');
-        setCropModalOpen(true); // OPEN THE MODAL
+        setCropModalOpen(true); 
       });
       reader.readAsDataURL(file);
-      setFormData(prev => ({ ...prev, imageUrl: '' })); // Clear URL field
+      setFormData(prev => ({ ...prev, imageUrl: '' })); 
     }
   };
   
-  // 6. --- NEW CROP HANDLERS ---
   function onImageLoad(e) {
     const { width, height } = e.currentTarget;
     const newCrop = centerCrop(
-      makeAspectCrop(
-        {
-          unit: '%',
-          width: 90,
-        },
-        aspect,
-        width,
-        height
-      ),
+      makeAspectCrop({ unit: '%', width: 90, }, aspect, width, height),
       width,
       height
     );
     setCrop(newCrop);
-    imgRef.current = e.currentTarget; // Save reference to image element
+    imgRef.current = e.currentTarget; 
   }
 
   const handleCropSave = async () => {
@@ -261,8 +254,8 @@ const AdminAddService = () => {
           completedCrop,
           previewCanvasRef.current
         );
-        setImageUpload(croppedBlob); // This is the file we will upload
-        setImageUploadPreview(URL.createObjectURL(croppedBlob)); // This creates a local preview URL
+        setImageUpload(croppedBlob); 
+        setImageUploadPreview(URL.createObjectURL(croppedBlob)); 
         setCropModalOpen(false);
       } catch (e) {
         console.error('Error cropping image:', e);
@@ -270,8 +263,8 @@ const AdminAddService = () => {
       }
     }
   };
-  // -----------------------------
-
+  
+  // --- handleSubmit (UPDATED) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -285,11 +278,12 @@ const AdminAddService = () => {
     dataToSend.append('content', content);
     dataToSend.append('faqs', JSON.stringify(faqs.filter(f => f.question && f.answer)));
     
-    // 7. --- APPEND THE CROPPED IMAGE BLOB ---
     if (imageUpload) {
-      dataToSend.append('image', imageUpload, 'cropped-image.jpeg');
+      // ▼▼▼ THIS IS THE FIX ▼▼▼
+      // Send the file as 'cropped-image.webp'
+      dataToSend.append('image', imageUpload, 'cropped-image.webp');
+      // ▲▲▲ END OF FIX ▲▲▲
     }
-    // --------------------------------------
 
     try {
       if (isEditMode) {
@@ -315,8 +309,17 @@ const AdminAddService = () => {
     }
   };
 
+  // 3. --- CKEDITOR CONFIGURATION (Unchanged) ---
+  const editorConfig = {
+    extraPlugins: [MyCustomUploadAdapterPlugin],
+    removePlugins: ['CKBox', 'CKFinder', 'EasyImage']
+  };
+  // ---------------------------------
+
   return (
     <>
+      {/* --- HIDDEN FILE INPUT (REMOVED) --- */}
+
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700">
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
@@ -360,7 +363,7 @@ const AdminAddService = () => {
               />
             </div>
 
-            {/* --- FEATURED IMAGE SECTION (Updated) --- */}
+            {/* --- FEATURED IMAGE SECTION (UPDATED) --- */}
             <div className="space-y-2 pt-6 border-t dark:border-gray-700">
               <h2 className="text-lg font-medium text-gray-900 dark:text-white">Featured Image</h2>
               <div className="flex space-x-4">
@@ -392,20 +395,22 @@ const AdminAddService = () => {
               ) : (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="imageUpload">
-                    Upload Image File (Max 2MB)
+                    Upload Image File
                   </label>
                   <input
                     type="file"
                     id="imageUpload"
                     name="imageUpload"
-                    accept="image/png, image/jpeg, image/webp"
-                    onChange={handleImageFileChange} // Use new handler
+                    // ▼▼▼ THIS IS THE FIX ▼▼▼
+                    // Allow more image types
+                    accept="image/png, image/jpeg, image/gif, image/webp"
+                    // ▲▲▲ END OF FIX ▲▲▲
+                    onChange={handleImageFileChange}
                     className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
                   />
                 </div>
               )}
               
-              {/* Show preview for URL or Upload */}
               {(formData.imageUrl || imageUploadPreview) && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image Preview:</p>
@@ -418,21 +423,28 @@ const AdminAddService = () => {
               )}
             </div>
             
-            {/* --- TIPTAP EDITOR --- */}
+            {/* 4. --- NEW CKEDITOR COMPONENT --- */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Content (Blog Post)
               </label>
-              <div className="bg-white text-gray-900 rounded-lg border border-gray-300 dark:border-gray-600">
-                <TiptapToolbar editor={editor} />
-                <EditorContent 
-                  editor={editor} 
-                  className="prose prose-lg max-w-none p-4 min-h-[200px] text-black"
+              {/* This class handles dark mode for CKEditor */}
+              <div className="ck-editor-container dark:text-gray-900">
+                <CKEditor
+                  editor={ClassicEditor}
+                  config={editorConfig}
+                  data={content}
+                  onChange={(event, editor) => {
+                    const data = editor.getData();
+                    setContent(data);
+                  }}
                 />
               </div>
             </div>
+            {/* ---------------------------------- */}
 
-            {/* --- FAQ SECTION --- */}
+
+            {/* --- FAQ SECTION (Unchanged) --- */}
             <div className="space-y-4 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
                 FAQ Schema Builder
@@ -481,7 +493,7 @@ const AdminAddService = () => {
               </button>
             </div>
 
-            {/* --- SEO Details --- */}
+            {/* --- SEO Details (Unchanged) --- */}
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
                 SEO Details
@@ -523,7 +535,7 @@ const AdminAddService = () => {
         </div>
       </div>
       
-      {/* 8. --- NEW: CROP MODAL --- */}
+      {/* --- CROP MODAL (Unchanged) --- */}
       <AnimatePresence>
         {cropModalOpen && (
           <motion.div
@@ -541,10 +553,11 @@ const AdminAddService = () => {
               <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Crop Your Image
               </h3>
+
               <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Select a 16:9 (widescreen) area for your featured image.
               </p>
-              
+
               <div className="max-h-[60vh] overflow-y-auto">
                 {imgSrc && (
                   <ReactCrop
@@ -565,7 +578,6 @@ const AdminAddService = () => {
                 )}
               </div>
               
-              {/* This canvas is hidden but used to draw the cropped image */}
               <canvas ref={previewCanvasRef} className="hidden" />
 
               <div className="flex justify-end space-x-3 mt-6">

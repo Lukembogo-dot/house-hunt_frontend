@@ -10,9 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.0.0",
     "@react-google-maps/api": "^2.20.7",
-    "@tiptap/react": "^3.10.4",
-    "@tiptap/starter-kit": "^3.10.4",
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
