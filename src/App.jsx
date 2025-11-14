@@ -42,6 +42,7 @@ const AgentFinderPage = lazy(() => import('./pages/AgentFinderPage'));
 const NeighbourhoodIntelPage = lazy(() => import('./pages/NeighbourhoodIntelPage'));
 const CostOfLivingCalculator = lazy(() => import('./pages/CostOfLivingCalculator'));
 const CreateIntelPost = lazy(() => import('./pages/CreateIntelPost'));
+const NotFound = lazy(() => import('./pages/NotFound')); // Added 404 page
 
 // --- Component Imports (These are small, no need to lazy load) ---
 import AdminRoute from './components/AdminRoute';
@@ -63,8 +64,9 @@ import TopAgents from "./components/TopAgents";
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 import PreviewBanner from './components/PreviewBanner';
 
+// --- 1. IMPORT THE NEW GLOBAL SCHEMA INJECTOR ---
+import GlobalSchemaInjector from './components/GlobalSchemaInjector';
 
-// (Static arrays are deleted, which is correct)
 
 // 3. CREATE A LOADING FALLBACK COMPONENT
 const PageLoader = () => (
@@ -295,7 +297,9 @@ function AppRoutes() {
           )}
         </header>
 
-        {/* ... (Preview Banner is unchanged) ... */}
+        {/* --- 2. ADD THE GLOBAL SCHEMA INJECTOR --- */}
+        <GlobalSchemaInjector />
+        
         {previewRole && <PreviewBanner />}
 
 
@@ -485,6 +489,10 @@ function AppRoutes() {
                 <Route path="/admin/property/:id/edit" element={<EditProperty />} />
                 <Route path="/profile/analytics" element={<AgentAnalytics />} />
               </Route>
+
+              {/* --- THIS IS THE 404 ROUTE --- */}
+              <Route path="*" element={<NotFound />} />
+
             </Routes>
           </AnimatePresence>
         </Suspense>
