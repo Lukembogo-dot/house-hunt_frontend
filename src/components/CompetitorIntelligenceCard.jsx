@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaArrowUp, FaArrowDown, Faminus, FaLightbulb } from 'react-icons/fa';
+// ✅ FIX: Changed Faminus to FaMinus
+import { FaArrowUp, FaArrowDown, FaMinus, FaLightbulb } from 'react-icons/fa';
 
 const CompetitorIntelligenceCard = ({ data }) => {
   if (!data) return null;
@@ -13,10 +14,11 @@ const CompetitorIntelligenceCard = ({ data }) => {
   // Determine status color and icon
   const isHigher = priceDiffPercentage > 0;
   const isLower = priceDiffPercentage < 0;
+  // eslint-disable-next-line no-unused-vars
   const isEqual = priceDiffPercentage === 0;
 
   let colorClass = "text-gray-500";
-  let Icon = Faminus;
+  let Icon = FaMinus; // ✅ FIX: Use correct icon variable
   let message = "Your pricing is perfectly aligned with the market average.";
 
   if (isHigher) {
