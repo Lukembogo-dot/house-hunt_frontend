@@ -6,7 +6,7 @@ import apiClient from '../api/axios';
 
 /**
  * A dynamic hook to fetch SEO data for a specific page.
- * It will fetch data from /api/seo/:pagePath and fall back to the provided defaults.
+ * It will fetch data from /seo/:pagePath and fall back to the provided defaults.
  */
 const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescription = 'Find your next home in Kenya.') => {
   const [seo, setSeo] = useState({
@@ -33,8 +33,10 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
       try {
         setLoading(true);
         const encodedPath = encodeURIComponent(pagePath);
-        // This API call now fetches all the data you saved from the SEOManager
-        const { data } = await apiClient.get(`/api/seo/${encodedPath}`);
+        
+        // ✅ FIX: Removed '/api' prefix because apiClient base URL already includes it
+        // Request is now: [BaseURL]/seo/[path]
+        const { data } = await apiClient.get(`/seo/${encodedPath}`);
 
         // Merge fetched data with defaults.
         // Fetched data (from your manager) takes priority.
