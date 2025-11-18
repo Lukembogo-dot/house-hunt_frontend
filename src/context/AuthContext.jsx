@@ -145,16 +145,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // --- (Favorite functions are unchanged) ---
+  // --- (Favorite functions updated) ---
   const addFavoriteContext = async (propertyId) => {
-    if (!effectiveUser) { // Use effectiveUser
+    if (!effectiveUser) { 
       alert("Please log in to save properties.");
       return;
     }
     try {
-      // Note: In preview, this might fail, which is OK.
-      const { data } = await apiClient.post(`/users/profile/favorites`, { propertyId }, { withCredentials: true });
-      // This will only update the 'realUser' object if not in preview
+      // ✅ FIX: Correct URL structure. ID goes in URL, empty body.
+      // Was: /users/profile/favorites (404)
+      // Now: /users/favorites/:propertyId
+      const { data } = await apiClient.post(`/users/favorites/${propertyId}`, {}, { withCredentials: true });
+      
       setRealUser(prevUser => ({
         ...prevUser,
         favorites: data.favorites,
@@ -165,9 +167,13 @@ export const AuthProvider = ({ children }) => {
   };
   
   const removeFavoriteContext = async (propertyId) => {
-    if (!effectiveUser) return; // Use effectiveUser
+    if (!effectiveUser) return;
     try {
-      const { data } = await apiClient.delete(`/users/profile/favorites/${propertyId}`, { withCredentials: true });
+      // ✅ FIX: Correct URL structure
+      // Was: /users/profile/favorites/:id (404)
+      // Now: /users/favorites/:id
+      const { data } = await apiClient.delete(`/users/favorites/${propertyId}`, { withCredentials: true });
+      
       setRealUser(prevUser => ({
         ...prevUser,
         favorites: data.favorites,
