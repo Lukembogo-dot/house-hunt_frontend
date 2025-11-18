@@ -1,15 +1,16 @@
 // src/pages/EditProperty.jsx
 
-import React, { useState, useEffect } from 'react'; // 1. IMPORT useEffect
+import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa'; // 2. IMPORT ICONS
+import { FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa'; 
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import MapComponent from '../components/MapComponent'; // 3. IMPORT MAP COMPONENT
+import MapComponent from '../components/MapComponent'; 
+import SmartPricingWidget from '../components/SmartPricingWidget'; // ✅ 1. IMPORT WIDGET
 
 const MAX_FILE_SIZE_MB = 2;
-const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; // 4. DEFAULT COORDS
+const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true }) => (
   <div>
@@ -442,6 +443,15 @@ const EditProperty = () => {
               />
             )}
           </div>
+
+          {/* ✅ 11. ADDED SMART PRICING WIDGET HERE */}
+          <SmartPricingWidget 
+            location={formData.location}
+            type={formData.type}
+            bedrooms={formData.bedrooms}
+            currentPrice={formData.price}
+          />
+          {/* ---------------------------------- */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">

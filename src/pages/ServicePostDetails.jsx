@@ -9,7 +9,7 @@ import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
 import { FaStar, FaUserAlt } from 'react-icons/fa'; // Added FaUserAlt
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion'; // ✅ 1. IMPORT MOTION
 
 // Re-usable Star Rating Component (safe version)
 const StarRating = ({ rating }) => {

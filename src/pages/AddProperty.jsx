@@ -1,14 +1,20 @@
 // src/pages/AddProperty.jsx
+// --- UPDATED with Payment Logic & Smart Pricing ---
 
-import React, { useState, useEffect } from 'react'; // 1. IMPORT useEffect
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from "../api/axios"; 
 import { useAuth } from '../context/AuthContext';
-import { FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa'; // 2. IMPORT ICONS
-import MapComponent from '../components/MapComponent'; // 3. IMPORT MAP COMPONENT
+import { FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner, FaStar } from 'react-icons/fa';
+import { useFeatureFlag } from '../context/FeatureFlagContext';
+import MapComponent from '../components/MapComponent';
+import SmartPricingWidget from '../components/SmartPricingWidget'; // ✅ 1. IMPORT WIDGET
 
 const MAX_FILE_SIZE_MB = 2; 
-const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; // 4. DEFAULT COORDS
+const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
+
+// --- 1. SET THE PRICE FOR FEATURED LISTINGS ---
+const FEATURE_PRICE_PER_DAY = 170; // Approx 500 KES / 3 days
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true }) => (
   <div>
@@ -29,6 +35,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
   </div>
 );
 
+// --- 2. ADD featuredDays to INITIAL STATE ---
 const initialFormState = {
   title: '',
   description: '',
@@ -36,8 +43,10 @@ const initialFormState = {
   price: '',
   bedrooms: '',
   type: 'apartment',
-  status: 'available',
+  status: 'available', // We'll let the backend change this to 'pending' if featured
   listingType: 'sale',
+  isFeatured: false,
+  featuredDays: 3, // Default to 3 days
   ownerDetails: {
     name: '',
     whatsapp: '',
@@ -45,15 +54,14 @@ const initialFormState = {
     instagram: '',
   },
 };
+// ------------------------------------------
 
 const AddProperty = () => {
   const [formData, setFormData] = useState(initialFormState);
   
-  // 5. --- NEW STATE FOR MAP ---
   const [coordinates, setCoordinates] = useState(NAIROBI_COORDS);
   const [mapCenter, setMapCenter] = useState(NAIROBI_COORDS);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  // ---------------------------
   
   const [imageFiles, setImageFiles] = useState([]); 
   const [imageAltTexts, setImageAltTexts] = useState({}); 
@@ -62,9 +70,12 @@ const AddProperty = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // 6. --- NEW: Geocode on first load to center map ---
+  const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
+  
+  // --- 3. CALCULATE DYNAMIC PRICE ---
+  const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
+  
   useEffect(() => {
-    // This just centers the map on "Nairobi" when the page loads
     const getInitialLocation = async () => {
       try {
         const { data } = await apiClient.get(`/maps/geocode?address=Nairobi, Kenya`);
@@ -78,13 +89,22 @@ const AddProperty = () => {
       }
     };
     getInitialLocation();
-  }, []); // Runs once on mount
+  }, []);
 
+  // --- 4. UPDATE handleChange TO SUPPORT CHECKBOXES & NUMBERS ---
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    
+    let processedValue = value;
+    if (type === 'checkbox') {
+      processedValue = checked;
+    } else if (name === 'featuredDays') {
+      processedValue = Number(value);
+    }
+    
     setFormData(prevData => ({
       ...prevData,
-      [name]: value,
+      [name]: processedValue,
     }));
   };
   
@@ -108,8 +128,6 @@ const AddProperty = () => {
 
   const handleFileChange = (e) => {
     const newlySelectedFiles = Array.from(e.target.files);
-    
-    // ... (file handling logic is unchanged) ...
     const combinedFiles = [...imageFiles, ...newlySelectedFiles];
     if (combinedFiles.length > 5) {
       setStatus({ 
@@ -140,19 +158,16 @@ const AddProperty = () => {
     e.target.value = null; 
   };
   
-  // 7. --- NEW: Handle clicks on the map ---
   const handleMapClick = async (e) => {
     const clickedCoords = {
       lat: e.latLng.lat(),
       lng: e.latLng.lng(),
     };
-    setCoordinates(clickedCoords); // Update marker position
-    setIsGeocoding(true); // Show loading spinner
+    setCoordinates(clickedCoords);
+    setIsGeocoding(true);
     
     try {
-      // Call our new backend route
       const { data } = await apiClient.get(`/maps/reverse-geocode?lat=${clickedCoords.lat}&lng=${clickedCoords.lng}`);
-      // Update the location text field
       setFormData(prev => ({ ...prev, location: data.address }));
     } catch (error) {
       console.error("Reverse geocoding failed:", error);
@@ -162,7 +177,6 @@ const AddProperty = () => {
     }
   };
   
-  // 8. --- NEW: Geocode the typed address ---
   const handleGeocodeAddress = async () => {
     if (!formData.location) {
       setStatus({ message: 'Please enter a location to find on map.', type: 'error' });
@@ -174,7 +188,7 @@ const AddProperty = () => {
       if (data.results && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
         setCoordinates({ lat, lng });
-        setMapCenter({ lat, lng }); // Re-center the map
+        setMapCenter({ lat, lng });
       } else {
         setStatus({ message: 'Could not find coordinates for that address.', type: 'error' });
       }
@@ -186,6 +200,7 @@ const AddProperty = () => {
     }
   };
 
+  // --- 5. UPDATED handleSubmit WITH PAYMENT LOGIC ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (imageFiles.length === 0) {
@@ -197,25 +212,25 @@ const AddProperty = () => {
 
     const dataToSend = new FormData();
     
-    // Append all top-level form data
+    // Append all form data
     Object.keys(formData).forEach(key => {
-      if (key !== 'ownerDetails') {
+      if (key === 'ownerDetails') {
+        // Handle nested object
+        if (user && user.role === 'admin' && formData.ownerDetails.name) {
+          dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
+          dataToSend.append('ownerDetails[whatsapp]', formData.ownerDetails.whatsapp);
+          dataToSend.append('ownerDetails[tiktok]', formData.ownerDetails.tiktok);
+          dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
+        }
+      } else {
+        // Append all other fields
         dataToSend.append(key, formData[key]);
       }
     });
     
-    // 9. --- APPEND COORDINATES TO FORM DATA ---
     if (coordinates) {
       dataToSend.append('coordinates[lat]', coordinates.lat);
       dataToSend.append('coordinates[lng]', coordinates.lng);
-    }
-    // -----------------------------------------
-    
-    if (user && user.role === 'admin' && formData.ownerDetails.name) {
-      dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
-      dataToSend.append('ownerDetails[whatsapp]', formData.ownerDetails.whatsapp);
-      dataToSend.append('ownerDetails[tiktok]', formData.ownerDetails.tiktok);
-      dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
     }
     
     const altTextsArray = [];
@@ -226,14 +241,29 @@ const AddProperty = () => {
     dataToSend.append('imageAltTexts', JSON.stringify(altTextsArray)); 
 
     try {
+      // --- This first API call is now to create the property AND the payment order ---
       const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setStatus({ message: `Success! Property "${response.data.title}" added. Redirecting...`, type: 'success' });
-      setTimeout(() => {
-        navigate(`/properties/${response.data.slug}`);
-      }, 2000);
+
+      // --- NEW PAYMENT REDIRECT LOGIC ---
+      if (formData.isFeatured && response.data.paymentRedirectUrl) {
+        // If "isFeatured" was checked AND we got a payment URL back...
+        setStatus({ message: 'Property saved! Redirecting to payment...', type: 'success' });
+        
+        // Redirect to Pesapal checkout
+        window.location.href = response.data.paymentRedirectUrl;
+
+      } else {
+        // This is a standard (non-featured) listing
+        setStatus({ message: `Success! Property "${response.data.title}" added. Redirecting...`, type: 'success' });
+        setTimeout(() => {
+          navigate(`/properties/${response.data.slug}`);
+        }, 2000);
+      }
+      // --- END OF NEW LOGIC ---
+
     } catch (error) {
       console.error("Error creating property:", error.response?.data || error.message);
       setStatus({ 
@@ -408,6 +438,15 @@ const AddProperty = () => {
               </select>
             </div>
           </div>
+
+          {/* ✅ 11. ADDED SMART PRICING WIDGET HERE */}
+          <SmartPricingWidget 
+            location={formData.location}
+            type={formData.type}
+            bedrooms={formData.bedrooms}
+            currentPrice={formData.price}
+          />
+          {/* ---------------------------------- */}
           
           {/* --- Image Upload --- */}
           <div>
@@ -522,6 +561,63 @@ const AddProperty = () => {
 
             </div>
           )}
+
+          {/* --- 6. UPDATED "FEATURE LISTING" SECTION --- */}
+          {isFeaturedListingEnabled && (
+            <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Boost Your Listing (Optional)
+              </h2>
+              <div className="relative flex items-start bg-blue-50 dark:bg-blue-900/30 border border-blue-500/30 p-4 rounded-lg">
+                <div className="flex-shrink-0">
+                  <FaStar className="h-6 w-6 text-yellow-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <label htmlFor="isFeatured" className="block text-lg font-bold text-gray-900 dark:text-white">
+                    Feature this Listing
+                  </label>
+                  <p id="isFeatured-description" className="text-gray-700 dark:text-gray-300">
+                    Your listing will be highlighted and shown on the homepage.
+                  </p>
+                  
+                  {/* --- NEW: DURATION DROPDOWN (appears when checked) --- */}
+                  {formData.isFeatured && (
+                    <div className="mt-4">
+                      <label htmlFor="featuredDays" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Select Duration
+                      </label>
+                      <select
+                        id="featuredDays"
+                        name="featuredDays"
+                        value={formData.featuredDays}
+                        onChange={handleChange}
+                        className="mt-1 block w-full md:w-1/2 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-2"
+                      >
+                        <option value={3}>3 Days</option>
+                        <option value={7}>7 Days</option>
+                        <option value={14}>14 Days</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-2">
+                    Total Price: Ksh {calculatedPrice}
+                  </p>
+                </div>
+                <div className="flex items-center h-5">
+                  <input
+                    id="isFeatured"
+                    name="isFeatured"
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={handleChange}
+                    className="h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          {/* --- END OF NEW SECTION --- */}
           
           <div className="pt-4">
             <button

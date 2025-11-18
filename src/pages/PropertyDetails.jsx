@@ -1,3 +1,6 @@
+// src/pages/PropertyDetails.jsx
+// (UPDATED - Added Breadcrumbs for SEO)
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axios";
@@ -9,8 +12,8 @@ import {
   FaCommentDots,
   FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy,
   FaUserSlash,
-  FaTiktok,      // 1. IMPORT TIKTOK ICON
-  FaInstagram    // 2. IMPORT INSTAGRAM ICON
+  FaTiktok,      
+  FaInstagram    
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
@@ -18,6 +21,9 @@ import PropertyCard from "../components/PropertyCard";
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
+import useSeoData from "../hooks/useSeoData"; 
+// ✅ 1. IMPORT BREADCRUMBS
+import Breadcrumbs from "../components/Breadcrumbs";
 
 
 const sectionVariants = {
@@ -45,7 +51,7 @@ const placeIconMap = {
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
 function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the earth in km
+  const R = 6371; 
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -53,11 +59,10 @@ function getDistance(lat1, lon1, lat2, lon2) {
     Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d.toFixed(1); // Return distance rounded to 1 decimal place
+  const d = R * c; 
+  return d.toFixed(1); 
 }
 
-// 🚀 UTILITY FUNCTION FOR BACKWARD COMPATIBILITY
 const getSafeImageDetails = (imagesArray, propertyTitle) => {
     if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
         return [];
@@ -65,13 +70,11 @@ const getSafeImageDetails = (imagesArray, propertyTitle) => {
 
     return imagesArray.map((img, index) => {
         if (typeof img === 'string') {
-            // Old format (just URL string)
             return {
                 url: img,
                 altText: `${propertyTitle} image ${index + 1}`
             };
         }
-        // New format (object {url, altText})
         return {
             url: img.url,
             altText: img.altText || `${propertyTitle} image ${index + 1}`
@@ -207,109 +210,107 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
-// 🚀 --- SEO INJECTOR COMPONENT ---
 const PropertySeoInjector = ({ seo, property }) => {
     
-    // Use the safe utility function here
     const safeImages = getSafeImageDetails(property.images, property.title);
+    const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
+    
+    const pageUrl = window.location.href;
+    const canonical = seo.canonicalUrl 
+      ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`)
+      : pageUrl;
 
     const generatePropertySchema = () => {
-        const schema = [];
-        
-        // 1. FAQ Schema (if FAQs exist)
-        if (seo.faqs && seo.faqs.length > 0) {
-            schema.push({
-                "@context": "https://schema.org",
-                "@type": "FAQPage",
-                "mainEntity": seo.faqs.map(faq => ({
-                    "@type": "Question",
-                    "name": faq.question,
-                    "acceptedAnswer": {
-                        "@type": "Answer",
-                        "text": faq.answer
-                    }
-                }))
-            });
-        }
-        
-        // 2. Real Estate Listing Schema (essential for SEO)
-        if (property && property.coordinates?.lat) {
-            
-            // Get the URL of the first image
-            const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
+        const listingSchema = {
+            "@context": "https://schema.org",
+            "@type": property.listingType === 'sale' ? "HouseForSale" : "RentalListing",
+            "name": seo.metaTitle || property.title,
+            "description": seo.metaDescription || property.description?.substring(0, 160),
+            "url": pageUrl,
+            "image": firstImageUrl,
+            "datePosted": property.createdAt,
+            "offers": {
+                "@type": "Offer",
+                "price": property.price,
+                "priceCurrency": "KES",
+                "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                "seller": {
+                  "@type": "RealEstateAgent",
+                  "name": property.agent?.name || property.ownerDetails?.name || 'HouseHunt Kenya',
+                }
+            },
+            ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
+            ...(property.bathrooms && { "numberOfBathroomsTotal": property.bathrooms }),
+            ...(property.size && { "floorSize": { "@type": "QuantitativeValue", "value": property.size, "unitCode": "SQF" } }), 
+            ...(property.coordinates?.lat && {
+              "geo": {
+                  "@type": "GeoCoordinates",
+                  "latitude": property.coordinates.lat,
+                  "longitude": property.coordinates.lng
+              }
+            }),
+            ...(property.location && {
+              "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": property.location.split(',')[0].trim(), 
+                  "addressRegion": "Nairobi", 
+                  "addressCountry": "KE"
+              }
+            }),
+            "mainEntity": undefined,
+        };
 
-            schema.push({
-                "@context": "https://schema.org",
-                "@type": property.listingType === 'sale' ? "HouseForSale" : "RentalListing",
-                "name": seo.metaTitle || property.title,
-                "description": seo.metaDescription || property.description?.substring(0, 160),
-                "url": window.location.href,
-                "address": {
-                    "@type": "PostalAddress",
-                    "addressLocality": property.location,
-                    "addressRegion": "Kenya",
-                },
-                "geo": {
-                    "@type": "GeoCoordinates",
-                    "latitude": property.coordinates.lat,
-                    "longitude": property.coordinates.lng
-                },
-                "numberOfBedrooms": property.bedrooms,
-                "offers": {
-                    "@type": "Offer",
-                    "price": property.price,
-                    "priceCurrency": "KES",
-                    "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                    "seller": {
-                      "@type": "RealEstateAgent",
-                      // --- UPDATED FOR SOFT DELETE & OWNER DETAILS ---
-                      // Check if agent exists, then owner, then fallback.
-                      "name": property.agent?.name || property.ownerDetails?.name || 'HouseHunt Kenya',
-                    }
-                },
-                "image": firstImageUrl,
-                "datePosted": property.createdAt,
-            });
+        if (seo.faqs && seo.faqs.length > 0) {
+            listingSchema.mainEntity = {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": seo.faqs.map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer
+                }
+              }))
+            };
+        } else {
+            delete listingSchema.mainEntity; 
         }
         
-        return schema;
+        return listingSchema;
     };
 
     const schemaData = generatePropertySchema();
 
     return (
         <Helmet>
-            {/* Standard Meta Tags */}
             <title>{seo.metaTitle}</title>
             <meta name="description" content={seo.metaDescription} />
-            <meta name="author" content="HouseHunt Kenya" />
+            {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
+            <link rel="canonical" href={canonical} />
 
-            {/* Open Graph / Social Media Tags */}
-            <meta property="og:title" content={seo.metaTitle} />
-            <meta property="og:description" content={seo.metaDescription} />
-            <meta property="og:url" content={window.location.href} />
+            <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
+            <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
+            <meta property="og:url" content={pageUrl} />
             <meta property="og:type" content="article" />
-            {/* Fallback to the first image URL */}
-            <meta property="og:image" content={
-                safeImages.length > 0 ? safeImages[0].url : placeholderImage
-            } /> 
+            <meta property="og:image" content={firstImageUrl} /> 
 
-            {/* Schema Structured Data */}
-            {schemaData.map((schema, index) => (
-                <script 
-                    key={index}
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-                />
-            ))}
+            <meta property="twitter:card" content="summary_large_image" />
+            <meta property="twitter:url" content={pageUrl} />
+            <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
+            <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
+            <meta property="twitter:image" content={firstImageUrl} /> 
+
+            <script 
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+            />
         </Helmet>
     );
 };
-// ----------------------------------------
 
 
 const PropertyDetails = () => {
-  // ✅ --- CHANGE 1: Get 'slug' from URL instead of 'id' ---
   const { slug } = useParams();
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
   const navigate = useNavigate(); 
@@ -334,89 +335,49 @@ const PropertyDetails = () => {
 
   const [isStartingChat, setIsStartingChat] = useState(false);
 
-  // ✅ --- 1. ADD NEW STATE FOR LOCAL SERVICES ---
   const [localServices, setLocalServices] = useState([]);
 
-  // ✅ NEW STATE: SEO Data
-  const [seo, setSeo] = useState({
-      metaTitle: 'Loading Property Details...',
-      metaDescription: 'Loading...',
-      faqs: [],
-      schemaDescription: '',
-  });
+  const pagePath = `/properties/${slug}`;
+  const { seo, loading: seoLoading } = useSeoData(
+    pagePath,
+    'Property Listing | HouseHunt Kenya', 
+    'View details for this property listing on HouseHunt Kenya.' 
+  );
 
-  // ✅ --- 1. ADD HANDLER TO LOG LEADS (FOR ANALYTICS) ---
+  // ✅ LEAD TRACKER FUNCTION
   const handleLogLead = () => {
-    // Ensure property and _id exist before firing
     if (!property || !property._id) return; 
-
-    // Fire-and-forget: We don't care about the response.
-    // This runs in the background.
     apiClient.post(`/properties/${property._id}/log-lead`)
-      .catch(err => console.error("Error logging lead:", err)); // Log for debugging
+      .catch(err => console.error("Error logging lead:", err));
   };
-  // ----------------------------------------------------
-
-  // Derived state for backward-compatible image access
+  
   const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
   const allImageUrls = safeImageDetails.map(img => img.url);
 
-
-  // ✅ --- CHANGE 2: Restructure data fetching ---
   const fetchPropertyData = async () => {
     try {
       setLoading(true);
       setAgentProperties([]); 
       
-      // STEP 1: Fetch property by SLUG
       const propertyRes = await apiClient.get(`/properties/slug/${slug}`); 
       const propData = propertyRes.data;
-      const propertyId = propData._id; // Get the _id from the fetched data
+      const propertyId = propData._id;
       setProperty(propData);
       
-      // FIX 1: Set Active Image using the safe list
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
       setActiveImage(urlsList[0] || placeholderImage);
-      // -------------------------------------------------------------------
 
-      // STEP 2: Now that we have the propertyId, fetch associated data
-      
-      // Fetch agent properties
-      // --- UPDATED FOR SOFT DELETE ---
-      // Only fetch if the agent exists (is not null)
       if (propData.agent && propData.agent._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`); 
-        setAgentProperties(agentRes.data.filter(p => p._id !== propertyId)); // Use propertyId
+        setAgentProperties(agentRes.data.filter(p => p._id !== propertyId));
       }
 
-      // Fetch reviews
-      const reviewsRes = await apiClient.get(`/reviews/${propertyId}`); // Use propertyId
+      const reviewsRes = await apiClient.get(`/reviews/${propertyId}`);
       setComments(reviewsRes.data || []);
       
-      // 🚀 --- SEO FETCH LOGIC FOR DYNAMIC PAGE ---
-      const encodedPath = encodeURIComponent(`/properties/${slug}`); // Use slug
-      const seoRes = await apiClient.get(`/seo/${encodedPath}`);
-      
-      // Create fallbacks using property data
-      const defaultTitle = propData.title || 'Property Listing';
-      const defaultDescription = propData.description 
-        ? propData.description.substring(0, 160) + '...'
-        : 'View the full details and contact the agent for this property.';
-        
-      setSeo({
-          // Use fetched SEO data, otherwise fall back to defaults
-          metaTitle: seoRes.data.metaTitle || defaultTitle,
-          metaDescription: seoRes.data.metaDescription || defaultDescription,
-          faqs: seoRes.data.faqs || [],
-          schemaDescription: seoRes.data.schemaDescription || '',
-      });
-      // ----------------------------------------
-      
-      // ✅ --- 2. FETCH LOCAL SERVICES BASED ON PROPERTY LOCATION ---
       if (propData.location) {
         try {
-          // Extract the primary location (e.g., "Kilimani" from "Kilimani, Nairobi")
           const primaryLocation = propData.location.split(',')[0].trim();
           const servicesRes = await apiClient.get(`/services/location/${primaryLocation}`);
           setLocalServices(servicesRes.data);
@@ -424,18 +385,14 @@ const PropertyDetails = () => {
           console.warn('No local services found for this location.', err);
         }
       }
-      // ----------------------------------------------------
 
     } catch (error) {
       console.error("❌ Error fetching property data:", error);
-      // Fallback SEO title on hard error
-      setSeo(prev => ({ ...prev, metaTitle: 'Property Not Found | HouseHunt' }));
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ --- CHANGE 3: Update useEffect dependency ---
   useEffect(() => {
     fetchPropertyData();
   }, [slug]); 
@@ -465,22 +422,17 @@ const PropertyDetails = () => {
     }
   }, [property]); 
 
-  // ✅ --- CHANGE 4: Use property._id for review submit ---
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewText || rating === 0 || !property) return;
     try {
       setSubmitting(true);
       await apiClient.post( 
-        `/reviews/${property._id}`, // Use property._id
+        `/reviews/${property._id}`,
         { comment: reviewText, rating },
         { withCredentials: true }
       );
-      // --- UPDATED FOR SOFT DELETE ---
-      // We must re-fetch all data, as our new comment
-      // now needs to populate the `user` field from the backend.
       fetchPropertyData();
-      // -----------------------------
       setReviewText("");
       setRating(0);
       setHoverRating(0);
@@ -492,7 +444,6 @@ const PropertyDetails = () => {
     }
   };
   
-  // ✅ --- CHANGE 5: Use property?._id for favorite check ---
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property?._id);
 
   const handleFavoriteClick = () => {
@@ -501,7 +452,6 @@ const PropertyDetails = () => {
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    // ✅ --- CHANGE 6: Use property._id for favorite context ---
     if (isFavorited) {
       removeFavoriteContext(property._id);
     } else {
@@ -532,21 +482,20 @@ const PropertyDetails = () => {
       navigate('/login', { state: { from: location.pathname } }); 
       return;
     }
-    handleLogLead(); // ✅ --- 2. ADD LEAD LOG ---
+    handleLogLead();
     setShowScheduleModal(true);
   };
 
-  // ✅ --- CHANGE 7: Use property._id for starting chat ---
   const handleStartChat = async () => {
     if (!user || !property) {
       navigate('/login', { state: { from: location.pathname } });
       return;
     }
-    handleLogLead(); // ✅ --- 3. ADD LEAD LOG ---
+    handleLogLead();
     setIsStartingChat(true);
     try {
       const { data } = await apiClient.post('/chat/conversations', { 
-        propertyId: property._id // Use property._id
+        propertyId: property._id
       });
       navigate(`/chat/${data._id}`);
     } catch (error) {
@@ -555,6 +504,19 @@ const PropertyDetails = () => {
     } finally {
       setIsStartingChat(false);
     }
+  };
+
+  // ✅ --- SMART WHATSAPP MESSAGE GENERATOR ---
+  const generateWhatsAppMessage = (agentName) => {
+    const greeting = agentName ? `Hello ${agentName},` : "Hello,";
+    const title = property?.title || "this property";
+    const location = property?.location || "Nairobi";
+    const price = property?.price ? ` listed for Ksh ${property.price.toLocaleString()}` : "";
+    const link = window.location.href;
+
+    return encodeURIComponent(
+      `${greeting} I am interested in *${title}* located in *${location}*${price}. Is it still available? \n\nLink: ${link}`
+    );
   };
 
   const currentUrl = window.location.href;
@@ -569,7 +531,8 @@ const PropertyDetails = () => {
   };
 
   const shareOnWhatsApp = () => {
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareTitle + ' ' + currentUrl)}`, '_blank');
+    const message = `Check out this property: ${property?.title} \n${currentUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank');
   };
   
   const shareOnLinkedIn = () => {
@@ -585,7 +548,6 @@ const PropertyDetails = () => {
       alert('Failed to copy link.');
     }
   };
-
 
   if (loading) {
     return (
@@ -611,11 +573,16 @@ const PropertyDetails = () => {
 
   return (
     <>
-      {/* 🚀 INJECT DYNAMIC SEO AND SCHEMA */}
       <PropertySeoInjector seo={seo} property={property} /> 
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+          
+          {/* ✅ 2. ADD BREADCRUMBS HERE, BEFORE THE CONTENT GRID */}
+          <div className="md:col-span-3">
+            <Breadcrumbs />
+          </div>
+
           {/* Main Content */}
           <div className="md:col-span-2">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
@@ -768,7 +735,6 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
-            {/* ✅ --- 3. ADD THE NEW NEIGHBOURHOOD WATCH SECTION --- */}
             {localServices.length > 0 && (
               <motion.div 
                 className="mb-8"
@@ -809,7 +775,6 @@ const PropertyDetails = () => {
                 </div>
               </motion.div>
             )}
-            {/* --- END OF NEW SECTION --- */}
 
             <motion.div 
               className="mb-8"
@@ -864,12 +829,9 @@ const PropertyDetails = () => {
                   {comments.map((review) => (
                     <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                       <div className="flex items-center mb-2">
-                         {/* --- 2. UPDATED FOR DELETED USER --- */}
-                         {/* If review.user exists, show their name. If it's null, show 'Deleted User'. */}
                          <p className="font-bold mr-2 dark:text-gray-100">
                            {review.user ? review.user.name : "Deleted User"}
                          </p>
-                         {/* ------------------------------------ */}
                          <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <FaStar
@@ -933,11 +895,22 @@ const PropertyDetails = () => {
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
               
-              {/* --- 3. UPDATED FOR DELETED AGENT --- */}
-              {/* These buttons will only show if the agent is NOT the owner, 
-                  the property is available, AND the agent exists (is not null). */}
               {!isAgentOwner && property.status === 'available' && property.agent && (
                 <div className="mt-6 flex flex-col space-y-3">
+                  {/* SIDEBAR: WHATSAPP AGENT BUTTON */}
+                  {property.agent.whatsappNumber && (
+                    <a
+                      href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.agent.name)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={handleLogLead} 
+                      className="w-full flex items-center justify-center space-x-2 bg-green-500 text-white py-2.5 rounded-lg hover:bg-green-600 transition-all duration-150 active:scale-[0.98]"
+                    >
+                      <FaWhatsapp size={20} />
+                      <span>WhatsApp Agent</span>
+                    </a>
+                  )}
+
                   <button
                     onClick={handleScheduleClick}
                     className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98]"
@@ -955,32 +928,43 @@ const PropertyDetails = () => {
                   </button>
                 </div>
               )}
-              {/* ------------------------------------ */}
 
-              {/* --- 3. UPDATED "LISTED BY" CARD --- */}
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
                 
-                {/* Case 1: Agent EXISTS (On-platform) */}
                 {property.agent ? (
-                  <Link 
-                    to={`/agent/${property.agent._id}`} 
-                    className="flex items-center space-x-3 group transition-transform duration-150 active:scale-[0.99]"
-                  >
-                    <img 
-                      src={property.agent.profilePicture} 
-                      alt={property.agent.name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                        {property.agent.name}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
-                    </div>
-                  </Link>
+                  <div className="flex items-center justify-between">
+                    <Link 
+                        to={`/agent/${property.agent._id}`} 
+                        className="flex items-center space-x-3 group transition-transform duration-150 active:scale-[0.99]"
+                    >
+                        <img 
+                        src={property.agent.profilePicture} 
+                        alt={property.agent.name}
+                        className="w-16 h-16 rounded-full object-cover"
+                        />
+                        <div>
+                        <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                            {property.agent.name}
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
+                        </div>
+                    </Link>
+                    
+                    {property.agent.whatsappNumber && (
+                        <a
+                            href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.agent.name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-3 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full hover:bg-green-200 dark:hover:bg-green-900/50 transition shadow-sm"
+                            aria-label="Chat on WhatsApp"
+                            onClick={handleLogLead}
+                        >
+                            <FaWhatsapp size={20} />
+                        </a>
+                    )}
+                  </div>
                   
-                /* Case 2: OwnerDetails EXIST (Off-platform) */
                 ) : property.ownerDetails && property.ownerDetails.name ? (
                   <div className="flex items-center space-x-3">
                     <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -991,11 +975,10 @@ const PropertyDetails = () => {
                         {property.ownerDetails.name}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Property Owner/Agent</p>
-                      {/* Social Media Links */}
                       <div className="flex items-center space-x-3">
                         {property.ownerDetails.whatsapp && (
                           <a
-                            href={`https://wa.me/${property.ownerDetails.whatsapp.replace(/\+/g, '')}`}
+                            href={`https://wa.me/${property.ownerDetails.whatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.ownerDetails.name)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-green-500 hover:text-green-600 transition"
@@ -1033,7 +1016,6 @@ const PropertyDetails = () => {
                     </div>
                   </div>
 
-                /* Case 3: NO Agent and NO OwnerDetails (Fallback) */
                 ) : (
                   <div className="flex items-center space-x-3 opacity-60">
                     <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -1048,7 +1030,6 @@ const PropertyDetails = () => {
                   </div>
                 )}
               </div>
-              {/* --- END OF "LISTED BY" CARD UPDATE --- */}
 
 
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
@@ -1095,8 +1076,6 @@ const PropertyDetails = () => {
           </motion.div>
         </div>
 
-        {/* --- UPDATED FOR DELETED AGENT --- */}
-        {/* Only show "More from" if the agent exists */}
         {agentProperties.length > 0 && property.agent && (
           <section className="max-w-6xl mx-auto mt-16">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
@@ -1112,7 +1091,6 @@ const PropertyDetails = () => {
       </div>
 
       <AnimatePresence>
-        {/* ✅ --- CHANGE 8: Pass property._id to the modal --- */}
         <ScheduleModal
           show={showScheduleModal}
           onClose={() => setShowScheduleModal(false)}
@@ -1155,7 +1133,7 @@ const PropertyDetails = () => {
                   </h3>
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
                     {placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}
-                  </p> {/* ✅ --- THIS IS THE FIX --- */}
+                  </p> 
                 </div>
               </div>
 

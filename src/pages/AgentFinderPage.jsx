@@ -1,9 +1,16 @@
+// src/pages/AgentFinderPage.jsx
+// (UPDATED)
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import apiClient from '../api/axios';
 import { motion } from 'framer-motion';
 import { FaStar, FaUserCheck, FaPhone, FaWhatsapp, FaBuilding } from 'react-icons/fa';
+
+// --- 1. IMPORT THE NEW HOOKS ---
+import useSeoData from '../hooks/useSeoData';
+import SeoInjector from '../components/SeoInjector';
 
 // Helper function to capitalize words: "kilimani" -> "Kilimani"
 const capitalize = (s) => {
@@ -73,58 +80,37 @@ const AgentFinderPage = () => {
   const { location } = useParams();
   const cleanLocation = location ? capitalize(location) : 'Kenya';
 
-  // 2. State for agents, SEO, and loading
+  // 2. State for agents and loading
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [seo, setSeo] = useState({
-    title: `Loading Agents...`,
-    description: 'Find the best real estate agents in your area.',
-    h1: 'Finding Top Agents...'
-  });
 
-  // 3. Generate Default SEO
-  const generateDefaultSeo = () => {
-    let title, description, h1;
-    
-    if (location) {
-      h1 = `Top Real Estate Agents in ${cleanLocation}`;
-      title = `${h1} | HouseHunt Kenya`;
-      description = `Find, review, and contact the best and most active real estate agents in ${cleanLocation}. View their listings and ratings.`;
-    } else {
-      h1 = `Top Real Estate Agents in Kenya`;
-      title = `Find All Real Estate Agents in Kenya | HouseHunt`;
-      description = `Browse a directory of all verified real estate agents in Kenya. Find top-rated agents by location and activity.`;
-    }
-    return { title, description, h1 };
-  };
+  // 3. --- NEW DYNAMIC SEO ---
+  // Generate the unique path for this pSEO page
+  const pagePath = location ? `/agents/${location}` : '/agents';
 
-  // 4. useEffect to fetch both SEO and Agent data
+  // Generate default titles and descriptions for fallback
+  const defaultTitle = location
+    ? `Top Real Estate Agents in ${cleanLocation} | HouseHunt Kenya`
+    : `Find All Real Estate Agents in Kenya | HouseHunt`;
+  
+  const defaultDescription = location
+    ? `Find, review, and contact the best real estate agents in ${cleanLocation}. View their listings and ratings.`
+    : `Browse a directory of all verified real estate agents in Kenya. Find top-rated agents.`;
+
+  // Call our upgraded dynamic hook
+  const { seo, loading: seoLoading } = useSeoData(
+    pagePath,
+    defaultTitle,
+    defaultDescription
+  );
+  // --- END OF NEW SEO ---
+
+
+  // 4. useEffect to fetch only Agent data
   useEffect(() => {
-    // Generate defaults immediately
-    const defaultSeo = generateDefaultSeo();
-    setSeo(defaultSeo);
     setLoading(true);
 
-    const fetchData = async () => {
-      // --- Fetch SEO Overrides ---
-      const pagePath = location ? `/agents/${location}` : '/agents/all';
-      try {
-        const encodedPath = encodeURIComponent(pagePath);
-        const { data } = await apiClient.get(`/seo/${encodedPath}`);
-        
-        // If manual SEO is found, use it
-        setSeo(prev => ({
-          ...prev,
-          title: data.metaTitle || prev.title,
-          description: data.metaDescription || prev.description,
-          h1: data.h1Tag || prev.h1
-        }));
-      } catch (error) {
-        // This is normal, just means no manual entry
-        console.warn(`No manual SEO for ${pagePath}. Using defaults.`);
-      }
-
-      // --- Fetch Agent Data ---
+    const fetchAgentData = async () => {
       try {
         const query = location ? `?location=${location}` : '';
         const { data } = await apiClient.get(`/users/find${query}`);
@@ -136,17 +122,16 @@ const AgentFinderPage = () => {
       }
     };
     
-    fetchData();
-  }, [location, cleanLocation]); // Re-run if the location in the URL changes
+    fetchAgentData();
+  }, [location]); // Re-run if the location in the URL changes
+  
+  // Combine loading states
+  const pageLoading = loading || seoLoading;
 
   return (
     <>
-      <Helmet>
-        <title>{seo.title}</title>
-        <meta name="description" content={seo.description} />
-        <meta property="og:title" content={seo.title} />
-        <meta property="og:description" content={seo.description} />
-      </Helmet>
+      {/* 5. REPLACE HELMET WITH SEOINJECTOR */}
+      <SeoInjector seo={seo} />
       
       <div className="container mx-auto max-w-6xl px-4 py-12">
         <motion.div
@@ -154,11 +139,16 @@ const AgentFinderPage = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-12">
-            {seo.h1}
-          </h1>
+          {/* 6. H1 IS NOW DYNAMICALLY CONTROLLED BY THE SEO MANAGER */}
+          {pageLoading ? (
+            <div className="mb-12 h-12 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+          ) : (
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-12">
+              {seo.metaTitle} 
+            </h1>
+          )}
           
-          {loading ? (
+          {pageLoading ? (
             // --- Loading State ---
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[...Array(4)].map((_, i) => (

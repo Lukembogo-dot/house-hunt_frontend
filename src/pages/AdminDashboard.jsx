@@ -1,3 +1,6 @@
+// src/pages/AdminDashboard.jsx
+// (UPDATED with Watermark Migration Tool)
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios'; 
@@ -11,13 +14,17 @@ import {
   FaUserPlus,
   FaTimes,
   FaSpinner,
-  // Removed feature flag icons
-  FaFlag // <-- 1. ADDED NEW ICON
+  FaFlag,
+  FaMoneyBillWave, 
+  FaClock,
+  FaLink,
+  // ✅ 1. IMPORT NEW ICON
+  FaImage
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
-// import FeatureApprovalQueue from '../components/FeatureApprovalQueue'; // <-- 2. REMOVED
 import { motion, AnimatePresence } from 'framer-motion'; 
+import { format } from 'date-fns'; 
 
 
 // --- ASSIGN AGENT MODAL (Unchanged) ---
@@ -33,10 +40,9 @@ const AssignAgentModal = ({ show, onClose, property, agents, onAssign }) => {
     setIsSubmitting(true);
     await onAssign(property._id, selectedAgentId);
     setIsSubmitting(false);
-    onClose(); // Close modal on success
+    onClose(); 
   };
   
-  // Reset selected agent when property changes
   useEffect(() => {
     setSelectedAgentId('');
   }, [property]);
@@ -115,7 +121,6 @@ const AssignAgentModal = ({ show, onClose, property, agents, onAssign }) => {
     </motion.div>
   );
 };
-// ---------------------------------------------
 
 
 const AdminDashboard = () => {
@@ -124,39 +129,38 @@ const AdminDashboard = () => {
   const [reviews, setReviews] = useState([]);
   const [services, setServices] = useState([]);
   const [allAgents, setAllAgents] = useState([]); 
-  // const [featureFlags, setFeatureFlags] = useState([]); // <-- 3. REMOVED
+  const [orders, setOrders] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // ✅ 2. NEW LOADING STATE FOR MIGRATION
+  const [isMigrating, setIsMigrating] = useState(false);
+  
   const { user } = useAuth();
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
-
-  // --- 4. ALL FEATURE FLAG STATE REMOVED ---
-  // const [newFeatureKey, setNewFeatureKey] = useState('');
-  // const [newFeatureDesc, setNewFeatureDesc] = useState('');
-  // const [isCreatingFeature, setIsCreatingFeature] = useState(false);
-  // const [selectedUserMap, setSelectedUserMap] = useState({});
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       
-      // --- 5. REMOVED 'featuresRes' from Promise.all ---
-      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes] = await Promise.all([
+      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
         apiClient.get('/properties'),
         apiClient.get('/reviews', { withCredentials: true }),
         apiClient.get('/services'), 
         apiClient.get('/users/all-agents', { withCredentials: true }), 
+        apiClient.get('/payments', { withCredentials: true }), 
       ]);
+      
       setUsers(usersRes.data);
       setProperties(propertiesRes.data.properties);
       setReviews(reviewsRes.data);
       setServices(servicesRes.data.services);
       setAllAgents(agentsRes.data); 
-      // setFeatureFlags(featuresRes.data); // <-- 6. REMOVED
+      setOrders(ordersRes.data); 
 
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
@@ -170,7 +174,6 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData]);
 
-  // --- (All delete... and updateUserRole functions are unchanged) ---
   const deleteProperty = async (id) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
       try {
@@ -212,7 +215,7 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to delete this service post?')) {
       try {
         await apiClient.delete(`/services/${id}`, { withCredentials: true });
-        fetchData(); // Refresh data
+        fetchData(); 
       } catch (err) {
         alert('Failed to delete service post.');
       }
@@ -223,14 +226,13 @@ const AdminDashboard = () => {
     if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       try {
         await apiClient.put(`/users/${id}`, { role: newRole }, { withCredentials: true });
-        fetchData(); // Refresh the user list
+        fetchData(); 
       } catch (err) {
         alert('Failed to update user role.');
       }
     }
   };
   
-  // --- (Modal handlers are unchanged) ---
   const openAssignModal = (property) => {
     setSelectedProperty(property);
     setIsAssignModalOpen(true);
@@ -249,28 +251,79 @@ const AdminDashboard = () => {
         { withCredentials: true }
       );
       alert(data.message);
-      fetchData(); // Refresh all data on success
+      fetchData(); 
     } catch (err) {
       alert(`Failed to assign agent: ${err.response?.data?.message || 'Server Error'}`);
       console.error(err);
     }
   };
+  
+  const handleRegisterIPN = async () => {
+    if (!window.confirm("This will register the IPN URL with Pesapal. Proceed?")) return;
+    try {
+      const { data } = await apiClient.post('/payments/register-ipn');
+      alert(`IPN Registered! ID: ${data.ipn_id} | URL: ${data.url}`);
+    } catch (err) {
+      alert('Failed to register IPN. Check console.');
+      console.error(err);
+    }
+  };
 
-  // --- 7. ALL FEATURE FLAG HANDLERS REMOVED ---
-  // handleCreateFeature, handleStrategyChange, handleAddUserToFlag, etc.
-
+  // ✅ 3. NEW HANDLER FOR MIGRATION
+  const handleWatermarkMigration = async () => {
+    if (!window.confirm("Warning: This will update image URLs for ALL properties to include the watermark. This cannot be undone easily. Proceed?")) return;
+    
+    setIsMigrating(true);
+    try {
+      const { data } = await apiClient.get('/properties/migrate-watermarks', { withCredentials: true });
+      alert(data.message);
+    } catch (err) {
+      alert(`Migration Failed: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
 
   if (loading) return <div className="p-10 text-center dark:text-gray-300">Loading Admin Dashboard...</div>;
   if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
+
+  const totalRevenue = orders
+    .filter(o => o.status === 'completed')
+    .reduce((acc, order) => acc + order.amount, 0);
+  
+  const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   return (
     <>
       <div className="container mx-auto p-6 md:p-10 bg-gray-50 dark:bg-gray-950 min-h-screen">
         <h1 className="text-3xl font-bold mb-8 dark:text-white">Admin Dashboard</h1>
 
-        {/* --- 8. STATS SECTION UPDATED --- */}
         <section className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Revenue Card */}
+              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                  <FaMoneyBillWave className="text-4xl text-green-500 mb-2" />
+                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Revenue</h3>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">Ksh {totalRevenue.toLocaleString()}</p>
+              </div>
+
+              {/* Pending Orders Card */}
+              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                  <FaClock className="text-4xl text-yellow-500 mb-2" />
+                  <h3 className="text-xl font-semibold dark:text-gray-100">Pending Orders</h3>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{pendingOrders}</p>
+              </div>
+              
+              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
+              </div>
+              
+              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
+                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
+              </div>
+              
               <Link 
                   to="/admin/seo-manager" 
                   className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
@@ -282,7 +335,6 @@ const AdminDashboard = () => {
                   </div>
               </Link>
               
-              {/* --- 9. NEW CARD ADDED --- */}
               <Link 
                   to="/admin/feature-manager" 
                   className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
@@ -293,26 +345,35 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">Manage approvals & rollouts.</p>
                   </div>
               </Link>
-
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
-              </div>
-              
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
-              </div>
           </div>
         </section>
         
+        {/* ✅ 4. NEW SYSTEM MAINTENANCE SECTION */}
+        <section className="mb-12 p-6 bg-yellow-50 dark:bg-gray-800/50 rounded-xl border-l-4 border-yellow-400">
+            <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
+              <FaSitemap /> System Maintenance
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Use these tools cautiously. Actions here affect global system data.
+            </p>
+            <div className="flex gap-4">
+                <button 
+                  onClick={handleWatermarkMigration} 
+                  disabled={isMigrating}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${
+                    isMigrating 
+                      ? 'bg-gray-400 cursor-not-allowed text-white' 
+                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                  }`}
+                >
+                  {isMigrating ? <FaSpinner className="animate-spin" /> : <FaImage />}
+                  {isMigrating ? 'Processing...' : 'Apply Watermark to Old Photos'}
+                </button>
+            </div>
+        </section>
+        {/* ----------------------------------- */}
+        
         <PendingApprovals />
-
-        {/* --- 10. ALL FEATURE FLAG SECTIONS REMOVED --- */}
-        {/* <FeatureApprovalQueue /> */}
-        {/* <section id="feature-flags" ... > ... </section> */}
-
-        {/* --- (All other sections are unchanged) --- */}
 
         {/* === Manage Properties === */}
         <section className="mb-12">
@@ -465,8 +526,72 @@ const AdminDashboard = () => {
         </section>
 
         <FailedQueries />
+        
+        <section id="revenue-management" className="mb-12">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold dark:text-gray-100">
+              Revenue & Subscriptions ({orders.length})
+            </h2>
+            <button 
+              onClick={handleRegisterIPN} 
+              className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition"
+            >
+              <FaLink /> Register IPN
+            </button>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr className="border-b dark:border-gray-600">
+                  <th className="p-3 text-left dark:text-gray-300">Date</th>
+                  <th className="p-3 text-left dark:text-gray-300">Agent</th>
+                  <th className="p-3 text-left dark:text-gray-300">Product</th>
+                  <th className="p-3 text-left dark:text-gray-300">Property</th>
+                  <th className="p-3 text-left dark:text-gray-300">Amount (Ksh)</th>
+                  <th className="p-3 text-left dark:text-gray-300">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="p-3 dark:text-gray-200">
+                      {format(new Date(order.createdAt), 'dd MMM yyyy')}
+                    </td>
+                    <td className="p-3 dark:text-gray-200">
+                      {order.user?.name || 'User Not Found'}
+                    </td>
+                    <td className="p-3 dark:text-gray-200">
+                      {order.productName}
+                    </td>
+                    <td className="p-3 dark:text-gray-200">
+                      <Link 
+                        to={`/properties/${order.property?.slug}`} 
+                        className="text-blue-500 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {order.property?.title || 'Property Not Found'}
+                      </Link>
+                    </td>
+                    <td className="p-3 font-semibold dark:text-white">
+                      {order.amount.toLocaleString()}
+                    </td>
+                    <td className="p-3">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        order.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
+                        : order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-        {/* === Manage Reviews === */}
         <section>
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Property Reviews ({reviews.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
@@ -499,7 +624,6 @@ const AdminDashboard = () => {
         </section>
       </div>
 
-      {/* --- (Modal is Unchanged) --- */}
       <AnimatePresence>
         <AssignAgentModal
           show={isAssignModalOpen}

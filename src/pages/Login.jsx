@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; 
 import apiClient from "../api/axios"; 
 import { useAuth } from "../context/AuthContext";
 import { motion } from 'framer-motion';
+import { FaSpinner, FaShieldAlt, FaKey } from 'react-icons/fa'; // ✅ Added FaKey
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +12,14 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const location = useLocation(); 
+
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [tempToken, setTempToken] = useState("");
+  
+  // ✅ --- NEW STATE FOR BACKUP CODE MODE ---
+  const [useBackupCode, setUseBackupCode] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,15 +37,53 @@ const Login = () => {
         { withCredentials: true }
       );
 
-      login(response.data);
-      // ✅ 1. Redirect to "from" location or home
-      const from = navigate.state?.from || '/';
-      navigate(from);
+      if (response.data.twoFactorRequired) {
+        setTempToken(response.data.tempToken);
+        setTwoFactorRequired(true);
+        setSubmitting(false); 
+      } else {
+        login(response.data);
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      }
 
     } catch (err) {
       const message = err.response?.data?.message || "Login failed. Please try again.";
       setError(message);
       console.error("Login error:", err);
+    } finally {
+      if (!twoFactorRequired) {
+        setSubmitting(false);
+      }
+    }
+  };
+
+  const handle2FAVerify = async (e) => {
+    e.preventDefault();
+    // ✅ Check length based on mode (6 for app, 8 for backup)
+    const requiredLength = useBackupCode ? 8 : 6;
+    
+    if (twoFactorCode.length < requiredLength) {
+      setError(`Please enter your ${requiredLength}-character code.`);
+      return;
+    }
+    setSubmitting(true); 
+    setError("");
+
+    try {
+      const response = await apiClient.post(
+        "/auth/2fa/validate",
+        { tempToken, twoFactorCode },
+        { withCredentials: true }
+      );
+      
+      login(response.data);
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+
+    } catch (err) {
+      const message = err.response?.data?.message || "Login failed. Please try again.";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -52,77 +99,148 @@ const Login = () => {
       >
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
+            {twoFactorRequired ? "Enter Your Code" : "Sign in to your account"}
           </h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md text-center">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
+        
+        {twoFactorRequired ? (
+          // --- 2FA FORM ---
+          <form className="mt-8 space-y-6" onSubmit={handle2FAVerify}>
+            <p className="text-center text-sm text-gray-600 dark:text-gray-300">
+              {useBackupCode 
+                ? "Enter one of your 8-character backup codes." 
+                : "Check your authenticator app for your 6-digit code."}
+            </p>
+            {error && (
+              <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md text-center">
+                {error}
+              </div>
+            )}
             <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email address
+              <label htmlFor="2fa-code" className="sr-only">
+                Code
               </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                  {useBackupCode ? <FaKey className="h-5 w-5 text-gray-400" /> : <FaShieldAlt className="h-5 w-5 text-gray-400" />}
+                </span>
+                <input
+                  id="2fa-code"
+                  name="2fa-code"
+                  type="text"
+                  // Change input mode based on backup code (alphanumeric) vs app code (numeric)
+                  inputMode={useBackupCode ? "text" : "numeric"}
+                  autoComplete="one-time-code"
+                  required
+                  className="appearance-none relative block w-full px-3 py-3 pl-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  placeholder={useBackupCode ? "backup-code" : "123456"}
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  maxLength={useBackupCode ? 8 : 6} // ✅ Dynamic Length
+                />
+              </div>
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
+                  submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
+                }`}
+              >
+                {submitting ? <FaSpinner className="animate-spin" /> : "Verify & Sign In"}
+              </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                Don't have an account? Sign up
-              </Link>
+            {/* ✅ --- TOGGLE BACKUP CODE MODE --- */}
+            <div className="text-center mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setUseBackupCode(!useBackupCode);
+                  setTwoFactorCode(""); // Clear input when switching
+                  setError("");
+                }}
+                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {useBackupCode 
+                  ? "Use Authenticator App instead" 
+                  : "Lost your phone? Use a backup code"}
+              </button>
             </div>
-            
-            {/* ✅ 2. ADDED "FORGOT PASSWORD" LINK HERE */}
-            <div className="text-sm">
-              <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
-                submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
-              }`}
-            >
-              {submitting ? "Signing in..." : "Sign in"}
-            </button>
-          </div>
-        </form>
+          </form>
+        ) : (
+          // --- ORIGINAL LOGIN FORM ---
+          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+            {error && (
+              <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md text-center">
+                {error}
+              </div>
+            )}
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <label htmlFor="email-address" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="email-address"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                  Don't have an account? Sign up
+                </Link>
+              </div>
+              
+              <div className="text-sm">
+                <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                  Forgot your password?
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
+                  submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
+                }`}
+              >
+                {submitting ? "Signing in..." : "Sign in"}
+              </button>
+            </div>
+          </form>
+        )}
       </motion.div>
     </div>
   );

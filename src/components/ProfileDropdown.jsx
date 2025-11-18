@@ -68,15 +68,33 @@ const ProfileDropdown = () => {
               My Messages
             </Link>
             
-            {/* ✅ 3. These links will now correctly show/hide based on your preview role */}
+            {/* ✅ 3. AGENT LINKS - UPDATED FOR DASHBOARD & WALLET */}
             {user && user.role === 'agent' && (
               <>
+                {/* Dashboard Link */}
+                <Link
+                  to="/agent/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  My Listings
+                </Link>
+
+                {/* ✅ NEW WALLET LINK */}
+                <Link
+                  to="/agent/wallet"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  My Wallet
+                </Link>
+
                 <Link
                   to="/add-property"
                   onClick={() => setIsOpen(false)}
                   className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  List Property
+                  Post New Property
                 </Link>
 
                 {isAnalyticsEnabled && (
@@ -126,8 +144,7 @@ const ProfileDropdown = () => {
               </>
             )}
             
-            {/* ✅ 4. ADD THE NEW PREVIEW SECTION */}
-            {/* This block is ONLY visible if your REAL user is an admin */}
+            {/* ✅ 4. PREVIEW SECTION */}
             {realUser && realUser.role === 'admin' && (
               <>
                 <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
@@ -154,7 +171,7 @@ const ProfileDropdown = () => {
                 </button>
               </>
             )}
-            {/* --- END OF NEW SECTION --- */}
+            {/* --- END OF PREVIEW SECTION --- */}
 
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
 
