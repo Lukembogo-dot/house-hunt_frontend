@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { FaEdit, FaTrash, FaEye, FaChartLine, FaPlus, FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+// ✅ 1. IMPORT THE VIEWINGS COMPONENT
+import ScheduledViewings from '../components/ScheduledViewings'; 
 
 // Status badge component
 const StatusBadge = ({ status }) => {
@@ -114,6 +116,12 @@ export default function AgentDashboard() {
             <span className="block sm:inline">{error}</span>
           </div>
         )}
+
+        {/* ✅ 2. PENDING APPROVALS SECTION ADDED */}
+        <div className="mb-10">
+          <ScheduledViewings />
+        </div>
+        {/* --- End of Approvals Section --- */}
 
         {/* Listings Table */}
         {listings.length === 0 ? (
