@@ -6,23 +6,19 @@ const AuthContext = createContext(null);
 // --- 1. Create mock user objects for preview ---
 // We create these outside so they are stable
 const PREVIEW_USER_OBJECT = {
-  // This can be a generic object representing a basic user
   name: 'Preview User',
   email: 'user@preview.com',
   role: 'user',
   isVerified: true,
   favorites: [],
-  // Add any other fields your app expects
 };
 
 const PREVIEW_AGENT_OBJECT = {
-  // This can be a generic object representing a basic agent
   name: 'Preview Agent',
   email: 'agent@preview.com',
   role: 'agent',
   isVerified: true,
   favorites: [],
-  // Add any other fields your app expects
 };
 
 export const AuthProvider = ({ children }) => {
@@ -47,18 +43,15 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to fetch notifications on load", error);
     }
-  }, [previewRole]); // Add previewRole as dependency
+  }, [previewRole]); 
 
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
         const { data } = await apiClient.get('/auth/profile');
         const userData = { ...data, favorites: data.favorites || [] };
-        // --- 4. Update 'realUser' ---
         setRealUser(userData);
-        
         await fetchNotifications(); 
-        
       } catch (error) {
         setRealUser(null);
         localStorage.removeItem('token');
@@ -74,9 +67,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', userData.token);
     }
     const completeUserData = { ...userData, favorites: userData.favorites || [] };
-    // --- 5. Update 'realUser' ---
     setRealUser(completeUserData);
-    
     fetchNotifications(); 
   };
 
@@ -86,17 +77,14 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Failed to log out", error);
     } finally {
-      // --- 6. Clear 'realUser' AND 'previewRole' ---
       setRealUser(null);
-      setPreviewRole(null); // Exit preview on logout
+      setPreviewRole(null); 
       localStorage.removeItem('token');
-      
       setNotifications([]); 
       setUnreadCount(0);
     }
   };
   
-  // --- 7. Add new functions to control preview mode ---
   const startPreview = (role) => {
     if (realUser && realUser.role === 'admin') {
       setPreviewRole(role);
@@ -107,35 +95,23 @@ export const AuthProvider = ({ children }) => {
     setPreviewRole(null);
   };
   
-  // --- 8. Create the "effectiveUser" for the app ---
-  // This is the magic!
   let effectiveUser = realUser;
-  
   if (realUser && realUser.role === 'admin' && previewRole) {
     switch (previewRole) {
-      case 'guest':
-        effectiveUser = null; // Simulate being logged out
-        break;
-      case 'user':
-        effectiveUser = PREVIEW_USER_OBJECT; // Simulate a basic user
-        break;
-      case 'agent':
-        effectiveUser = PREVIEW_AGENT_OBJECT; // Simulate a basic agent
-        break;
-      default:
-        effectiveUser = realUser;
+      case 'guest': effectiveUser = null; break;
+      case 'user': effectiveUser = PREVIEW_USER_OBJECT; break;
+      case 'agent': effectiveUser = PREVIEW_AGENT_OBJECT; break;
+      default: effectiveUser = realUser;
     }
   }
 
-  // (Notification functions are unchanged)
   const addNotification = (newNotification) => {
-    setNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-    setUnreadCount((prevCount) => prevCount + 1);
+    setNotifications((prev) => [newNotification, ...prev]);
+    setUnreadCount((prev) => prev + 1);
   };
 
   const markNotificationsAsRead = async () => {
     if (unreadCount === 0) return;
-    
     try {
       await apiClient.put('/notifications/read-all');
       setUnreadCount(0);
@@ -145,69 +121,97 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // --- (Favorite functions updated) ---
+  // ✅ --- UPDATED: Optimistic Add Favorite ---
   const addFavoriteContext = async (propertyId) => {
     if (!effectiveUser) { 
       alert("Please log in to save properties.");
       return;
     }
+
+    // 1. Immediate Visual Update (Optimistic)
+    setRealUser(prevUser => ({
+      ...prevUser,
+      favorites: [...(prevUser.favorites || []), propertyId]
+    }));
+
+    // 2. Optional: Visual Alert
+    // alert("Added to favorites!"); 
+
     try {
-      // ✅ FIX: Correct URL structure. ID goes in URL, empty body.
-      // Was: /users/profile/favorites (404)
-      // Now: /users/favorites/:propertyId
+      // 3. Background API Call
       const { data } = await apiClient.post(`/users/favorites/${propertyId}`, {}, { withCredentials: true });
       
-      setRealUser(prevUser => ({
-        ...prevUser,
-        favorites: data.favorites,
-      }));
+      // 4. Sync with Server (just in case)
+      if (data.favorites) {
+        setRealUser(prevUser => ({
+          ...prevUser,
+          favorites: data.favorites,
+        }));
+      }
     } catch (error) {
       console.error('Failed to add favorite:', error);
-    }
-  };
-  
-  const removeFavoriteContext = async (propertyId) => {
-    if (!effectiveUser) return;
-    try {
-      // ✅ FIX: Correct URL structure
-      // Was: /users/profile/favorites/:id (404)
-      // Now: /users/favorites/:id
-      const { data } = await apiClient.delete(`/users/favorites/${propertyId}`, { withCredentials: true });
-      
+      // 5. Revert on Failure
       setRealUser(prevUser => ({
         ...prevUser,
-        favorites: data.favorites,
+        favorites: prevUser.favorites.filter(id => id !== propertyId)
       }));
-    } catch (error) {
-      console.error('Failed to remove favorite:', error);
+      alert("Failed to save favorite. Please try again.");
     }
   };
   
-  // --- 9. Create a clean way to update user verification ---
+  // ✅ --- UPDATED: Optimistic Remove Favorite ---
+  const removeFavoriteContext = async (propertyId) => {
+    if (!effectiveUser) return;
+
+    // 1. Immediate Visual Update (Optimistic)
+    setRealUser(prevUser => ({
+      ...prevUser,
+      favorites: prevUser.favorites.filter(id => id !== propertyId)
+    }));
+
+    try {
+      // 2. Background API Call
+      const { data } = await apiClient.delete(`/users/favorites/${propertyId}`, { withCredentials: true });
+      
+      // 3. Sync with Server
+      if (data.favorites) {
+        setRealUser(prevUser => ({
+          ...prevUser,
+          favorites: data.favorites,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to remove favorite:', error);
+      // 4. Revert on Failure
+      setRealUser(prevUser => ({
+        ...prevUser,
+        favorites: [...prevUser.favorites, propertyId]
+      }));
+      alert("Failed to remove favorite.");
+    }
+  };
+  
   const updateUserVerification = (isVerified) => {
     setRealUser(prev => prev ? { ...prev, isVerified } : null);
   };
 
   return (
     <AuthContext.Provider value={{ 
-      // --- 10. Update the provided value ---
-      user: effectiveUser, // 👈 The "fake" user for the app
-      realUser: realUser,    // 👈 The "real" admin user
-      previewRole,         // 👈 The current preview role
-      startPreview,        // 👈 Function to start preview
-      stopPreview,         // 👈 Function to stop preview
-      
+      user: effectiveUser, 
+      realUser: realUser,    
+      previewRole,        
+      startPreview,       
+      stopPreview,        
       login, 
       logout, 
       loading, 
       addFavoriteContext,
       removeFavoriteContext,
-      
       notifications,
       unreadCount,
       addNotification,
       markNotificationsAsRead,
-      updateUserVerification // 👈 Replaces the old 'setUser'
+      updateUserVerification 
     }}>
       {children}
     </AuthContext.Provider>
