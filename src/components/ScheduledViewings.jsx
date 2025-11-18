@@ -1,12 +1,12 @@
 // src/components/ScheduledViewings.jsx
-// (UPDATED - Added missing data fetching, loading state, and update handler)
+// (UPDATED - Fixed crash on deleted properties)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/axios';
-import { FaSpinner, FaCheck, FaTimes, FaWhatsapp, FaUserCircle, FaClock, FaCalendarAlt, FaTimesCircle, FaInfoCircle } from 'react-icons/fa'; // Added FaCalendarAlt, FaTimesCircle, FaInfoCircle
+import { FaSpinner, FaCheck, FaTimes, FaWhatsapp, FaUserCircle, FaClock, FaCalendarAlt, FaTimesCircle, FaInfoCircle, FaHome } from 'react-icons/fa'; // Added FaHome
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns'; // Added for formatting date/time
+import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
 
@@ -184,10 +184,16 @@ const AgentBookingCard = ({ booking, onUpdate, formatDateTime }) => (
     <div>
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Requested viewing for: 
-        {/* This is safe because if the property was deleted, the booking would be gone */}
-        <Link to={`/properties/${booking.property.slug}`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline ml-1">
-          {booking.property.title}
-        </Link>
+        {/* ✅ SAFETY CHECK: Only render link if property exists */}
+        {booking.property ? (
+          <Link to={`/properties/${booking.property.slug}`} className="font-semibold text-blue-600 dark:text-blue-400 hover:underline ml-1">
+            {booking.property.title}
+          </Link>
+        ) : (
+          <span className="font-semibold text-red-500 italic ml-1">
+            Property Unavailable (Deleted)
+          </span>
+        )}
       </p>
       <p className="font-semibold text-gray-800 dark:text-gray-200 mt-1">
         <FaClock className="inline mr-2" />
@@ -226,24 +232,38 @@ const AgentBookingCard = ({ booking, onUpdate, formatDateTime }) => (
 const UserViewingCard = ({ viewing, formatDateTime }) => (
   <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md border dark:border-gray-700">
     <div className="flex flex-col sm:flex-row items-start">
+      {/* ✅ SAFETY CHECK: Handle missing property image */}
       <img 
-        src={viewing.property.images?.[0]?.url || 'https://placehold.co/150x150/e2e8f0/64748b?text=Property'} 
-        alt={viewing.property.title}
+        src={viewing.property?.images?.[0]?.url || 'https://placehold.co/150x150/e2e8f0/64748b?text=Deleted'} 
+        alt={viewing.property?.title || 'Deleted Property'}
         className="w-full sm:w-32 h-32 object-cover rounded-lg mb-3 sm:mb-0 sm:mr-4"
       />
       <div className="flex-1">
         <div className="flex justify-between items-start">
-          <Link to={`/properties/${viewing.property._id}`}>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">
-              {viewing.property.title}
+          {/* ✅ SAFETY CHECK: Handle missing property link */}
+          {viewing.property ? (
+            <Link to={`/properties/${viewing.property.slug || viewing.property._id}`}>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                {viewing.property.title}
+                </h3>
+            </Link>
+          ) : (
+            <h3 className="text-lg font-semibold text-red-500 italic">
+                Property Deleted
             </h3>
-          </Link>
+          )}
           <StatusBadge status={viewing.status} />
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">{viewing.property.location}</p>
-        <p className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-1">
-          Ksh {viewing.property.price?.toLocaleString()}
-        </p>
+        
+        {/* ✅ SAFETY CHECK: Only show location/price if property exists */}
+        {viewing.property && (
+            <>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{viewing.property.location}</p>
+                <p className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-1">
+                Ksh {viewing.property.price?.toLocaleString()}
+                </p>
+            </>
+        )}
         
         <div className="border-t dark:border-gray-700 my-3"></div>
 
