@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (UPDATED with FAQ Hub Link)
+// (UPDATED with Shadow Account Approval Logic)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -19,8 +19,9 @@ import {
   FaClock,
   FaLink,
   FaImage,
-  // ✅ 1. IMPORT NEW ICON FOR FAQ
-  FaQuestionCircle
+  FaQuestionCircle,
+  // ✅ 1. IMPORT NEW ICON FOR CLAIM APPROVAL
+  FaUserCheck
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
@@ -123,6 +124,80 @@ const AssignAgentModal = ({ show, onClose, property, agents, onAssign }) => {
   );
 };
 
+// ✅ --- NEW: APPROVE CLAIM MODAL ---
+const ApproveClaimModal = ({ show, onClose, user, onApprove }) => {
+    const [realEmail, setRealEmail] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+  
+    const handleSubmit = async () => {
+      if (!realEmail) return alert("Please enter the real agent's email.");
+      if (!window.confirm(`Are you sure you want to transfer "${user.name}" to "${realEmail}"? This action is irreversible.`)) return;
+      
+      setIsSubmitting(true);
+      await onApprove(user._id, realEmail);
+      setIsSubmitting(false);
+      onClose();
+    };
+  
+    if (!show) return null;
+  
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+            <FaTimes size={20} />
+          </button>
+          
+          <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            Approve Profile Claim
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+            Transferring ownership of <strong>{user.name}</strong> ({user.whatsappNumber}).
+          </p>
+  
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Enter Real Agent's Email (from notification)
+            </label>
+            <input
+              type="email"
+              value={realEmail}
+              onChange={(e) => setRealEmail(e.target.value)}
+              placeholder="e.g., realagent@gmail.com"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+  
+          <div className="flex justify-end space-x-3">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200">
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50"
+            >
+              {isSubmitting ? 'Merging...' : 'Approve & Merge'}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -140,6 +215,10 @@ const AdminDashboard = () => {
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
+
+  // ✅ NEW STATE FOR CLAIM APPROVAL
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [selectedShadowUser, setSelectedShadowUser] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -257,6 +336,25 @@ const AdminDashboard = () => {
       console.error(err);
     }
   };
+
+  // ✅ NEW: Handle Claim Approval
+  const openClaimModal = (user) => {
+    setSelectedShadowUser(user);
+    setIsClaimModalOpen(true);
+  };
+
+  const handleApproveClaim = async (userId, realEmail) => {
+    try {
+        const { data } = await apiClient.post('/users/approve-claim', { 
+            userId, 
+            realEmail 
+        });
+        alert(data.message);
+        fetchData(); // Refresh list
+    } catch (err) {
+        alert(`Failed to approve claim: ${err.response?.data?.message || 'Error'}`);
+    }
+  };
   
   const handleRegisterIPN = async () => {
     if (!window.confirm("This will register the IPN URL with Pesapal. Proceed?")) return;
@@ -334,7 +432,6 @@ const AdminDashboard = () => {
                   </div>
               </Link>
 
-              {/* ✅ 2. NEW FAQ HUB LINK */}
               <Link 
                   to="/admin/faq-manager" 
                   className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
@@ -499,7 +596,13 @@ const AdminDashboard = () => {
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-20Details">{u.name}</td>
+                    <td className="p-3 dark:text-gray-20Details">
+                      {u.name}
+                      {/* ✅ SHOW SHADOW BADGE */}
+                      {u.isAccountClaimed === false && (
+                        <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full">Shadow</span>
+                      )}
+                    </td>
                     <td className="p-3 dark:text-gray-20Details">{u.email}</td>
                     <td className="p-3">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -511,6 +614,17 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="p-3 flex space-x-3">
+                      {/* ✅ APPROVE CLAIM BUTTON */}
+                      {u.isAccountClaimed === false && (
+                        <button 
+                            onClick={() => openClaimModal(u)} 
+                            className="text-green-600 dark:text-green-400 hover:text-green-800"
+                            title="Approve & Merge Claim"
+                        >
+                            <FaUserCheck size={18} />
+                        </button>
+                      )}
+
                       {u.role === 'user' && (
                         <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent">
                           <FaUserShield />
@@ -640,6 +754,14 @@ const AdminDashboard = () => {
           property={selectedProperty}
           agents={allAgents}
           onAssign={handleAssignAgent}
+        />
+        
+        {/* ✅ NEW MODAL RENDERED HERE */}
+        <ApproveClaimModal
+          show={isClaimModalOpen}
+          onClose={() => setIsClaimModalOpen(false)}
+          user={selectedShadowUser}
+          onApprove={handleApproveClaim}
         />
       </AnimatePresence>
     </>

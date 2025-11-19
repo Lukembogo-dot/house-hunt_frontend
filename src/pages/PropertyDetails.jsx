@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Added PropertyFaqSection)
+// (UPDATED - Prioritize Owner/Shadow Agent Display)
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
@@ -13,7 +13,8 @@ import {
   FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy,
   FaUserSlash,
   FaTiktok,      
-  FaInstagram    
+  FaInstagram,
+  FaUserCircle    
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
@@ -23,7 +24,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import useSeoData from "../hooks/useSeoData"; 
 import Breadcrumbs from "../components/Breadcrumbs";
-// ✅ 1. IMPORT NEW FAQ COMPONENT
 import PropertyFaqSection from "../components/PropertyFaqSection";
 
 
@@ -237,7 +237,7 @@ const PropertySeoInjector = ({ seo, property }) => {
                 "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                 "seller": {
                   "@type": "RealEstateAgent",
-                  "name": property.agent?.name || property.ownerDetails?.name || 'HouseHunt Kenya',
+                  "name": property.ownerDetails?.name || property.agent?.name || 'HouseHunt Kenya',
                 }
             },
             ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
@@ -345,7 +345,6 @@ const PropertyDetails = () => {
     'View details for this property listing on HouseHunt Kenya.' 
   );
 
-  // ✅ LEAD TRACKER FUNCTION
   const handleLogLead = () => {
     if (!property || !property._id) return; 
     apiClient.post(`/properties/${property._id}/log-lead`)
@@ -507,7 +506,6 @@ const PropertyDetails = () => {
     }
   };
 
-  // ✅ --- SMART WHATSAPP MESSAGE GENERATOR ---
   const generateWhatsAppMessage = (agentName) => {
     const greeting = agentName ? `Hello ${agentName},` : "Hello,";
     const title = property?.title || "this property";
@@ -570,6 +568,22 @@ const PropertyDetails = () => {
       ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1)
       : 0;
       
+  // ✅ DETERMINE WHICH AGENT TO DISPLAY
+  // Priority: Shadow Agent (ownerDetails) > Registered Agent (property.agent)
+  const hasShadowAgent = property.ownerDetails && property.ownerDetails.name;
+  const displayAgent = hasShadowAgent ? property.ownerDetails : property.agent;
+  
+  // If it's a shadow agent, use their specific social links. 
+  // If it's a registered agent, use their profile fields.
+  const agentName = hasShadowAgent ? displayAgent.name : displayAgent?.name;
+  const agentWhatsapp = hasShadowAgent ? displayAgent.whatsapp : displayAgent?.whatsappNumber;
+  // Shadow agent doesn't have a profile pic, use placeholder
+  const agentImage = hasShadowAgent ? null : displayAgent?.profilePicture;
+  
+  // Shadow Socials
+  const shadowTiktok = hasShadowAgent ? displayAgent.tiktok : null;
+  const shadowInstagram = hasShadowAgent ? displayAgent.instagram : null;
+
   const isAgentOwner = user && property.agent && user._id === property.agent._id;
 
   return (
@@ -776,7 +790,6 @@ const PropertyDetails = () => {
               </motion.div>
             )}
 
-            {/* ✅ 2. INSERT FAQ SECTION HERE */}
             <PropertyFaqSection location={property.location.split(',')[0]} />
 
             <motion.div 
@@ -898,12 +911,13 @@ const PropertyDetails = () => {
                 <li>Price: Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && '/month'}</li>
               </ul>
               
-              {!isAgentOwner && property.status === 'available' && property.agent && (
+              {/* ✅ CONDITIONAL SIDEBAR BUTTONS */}
+              {!isAgentOwner && property.status === 'available' && (
                 <div className="mt-6 flex flex-col space-y-3">
                   {/* SIDEBAR: WHATSAPP AGENT BUTTON */}
-                  {property.agent.whatsappNumber && (
+                  {agentWhatsapp && (
                     <a
-                      href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.agent.name)}`}
+                      href={`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={handleLogLead} 
@@ -921,42 +935,97 @@ const PropertyDetails = () => {
                     <FaCalendarAlt />
                     <span>Schedule a Viewing</span>
                   </button>
-                  <button
-                    onClick={handleStartChat}
-                    disabled={isStartingChat}
-                    className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    <FaCommentDots />
-                    <span>{isStartingChat ? 'Starting...' : 'Chat with Agent'}</span>
-                  </button>
+                  
+                  {!hasShadowAgent && (
+                    <button
+                        onClick={handleStartChat}
+                        disabled={isStartingChat}
+                        className="w-full flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
+                    >
+                        <FaCommentDots />
+                        <span>{isStartingChat ? 'Starting...' : 'Chat with Agent'}</span>
+                    </button>
+                  )}
                 </div>
               )}
 
               <div className="mt-6 border-t dark:border-gray-700 pt-6">
                 <h3 className="text-xl font-semibold mb-4 dark:text-gray-100">Listed By</h3>
                 
-                {property.agent ? (
+                {/* ✅ ✅ ✅ UPDATED "LISTED BY" SECTION TO SHOW SHADOW AGENT ✅ ✅ ✅ */}
+                {displayAgent ? (
                   <div className="flex items-center justify-between">
-                    <Link 
-                        to={`/agent/${property.agent._id}`} 
-                        className="flex items-center space-x-3 group transition-transform duration-150 active:scale-[0.99]"
-                    >
-                        <img 
-                        src={property.agent.profilePicture} 
-                        alt={property.agent.name}
-                        className="w-16 h-16 rounded-full object-cover"
-                        />
+                    <div className="flex items-center space-x-3 group">
+                        {agentImage ? (
+                            <Link to={`/agent/${displayAgent._id}`}>
+                                <img 
+                                    src={agentImage} 
+                                    alt={agentName}
+                                    className="w-16 h-16 rounded-full object-cover transition hover:opacity-90"
+                                />
+                            </Link>
+                        ) : (
+                            <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <FaUserCircle className="text-gray-500 dark:text-gray-400" size={40} />
+                            </div>
+                        )}
+                        
                         <div>
-                        <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
-                            {property.agent.name}
-                        </p>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm">{property.agent.email}</p>
+                            <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
+                                {hasShadowAgent ? agentName : (
+                                    <Link to={`/agent/${displayAgent._id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition">
+                                        {agentName}
+                                    </Link>
+                                )}
+                            </p>
+                            
+                            {/* Show Socials for Shadow Agent */}
+                            {hasShadowAgent ? (
+                                <div className="flex items-center space-x-2 mt-1">
+                                    {agentWhatsapp && (
+                                        <a
+                                            href={`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-green-500 hover:text-green-600 transition"
+                                            onClick={handleLogLead}
+                                        >
+                                            <FaWhatsapp size={18} />
+                                        </a>
+                                    )}
+                                    {shadowTiktok && (
+                                        <a
+                                            href={`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition"
+                                            onClick={handleLogLead}
+                                        >
+                                            <FaTiktok size={16} />
+                                        </a>
+                                    )}
+                                    {shadowInstagram && (
+                                        <a
+                                            href={`https://instagram.com/${shadowInstagram.replace('@', '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-pink-500 hover:text-pink-600 transition"
+                                            onClick={handleLogLead}
+                                        >
+                                            <FaInstagram size={18} />
+                                        </a>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">Registered Agent</p>
+                            )}
                         </div>
-                    </Link>
+                    </div>
                     
-                    {property.agent.whatsappNumber && (
+                    {/* Quick Whatsapp Button on Right */}
+                    {agentWhatsapp && (
                         <a
-                            href={`https://wa.me/${property.agent.whatsappNumber.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.agent.name)}`}
+                            href={`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-3 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full hover:bg-green-200 dark:hover:bg-green-900/50 transition shadow-sm"
@@ -968,57 +1037,6 @@ const PropertyDetails = () => {
                     )}
                   </div>
                   
-                ) : property.ownerDetails && property.ownerDetails.name ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                      <FaUserSlash className="text-gray-500 dark:text-gray-400" size={24} />
-                    </div>
-                    <div>
-                      <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
-                        {property.ownerDetails.name}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Property Owner/Agent</p>
-                      <div className="flex items-center space-x-3">
-                        {property.ownerDetails.whatsapp && (
-                          <a
-                            href={`https://wa.me/${property.ownerDetails.whatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(property.ownerDetails.name)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-500 hover:text-green-600 transition"
-                            aria-label="Chat on WhatsApp"
-                            onClick={handleLogLead} 
-                          >
-                            <FaWhatsapp size={20} />
-                          </a>
-                        )}
-                        {property.ownerDetails.instagram && (
-                          <a
-                            href={`https://instagram.com/${property.ownerDetails.instagram.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-pink-500 hover:text-pink-600 transition"
-                            aria-label="View on Instagram"
-                            onClick={handleLogLead} 
-                          >
-                            <FaInstagram size={20} />
-                          </a>
-                        )}
-                        {property.ownerDetails.tiktok && (
-                          <a
-                            href={`https://tiktok.com/${property.ownerDetails.tiktok.startsWith('@') ? '' : '@'}${property.ownerDetails.tiktok.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition"
-                            aria-label="View on TikTok"
-                            onClick={handleLogLead} 
-                          >
-                            <FaTiktok size={18} />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
                 ) : (
                   <div className="flex items-center space-x-3 opacity-60">
                     <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -1079,7 +1097,8 @@ const PropertyDetails = () => {
           </motion.div>
         </div>
 
-        {agentProperties.length > 0 && property.agent && (
+        {/* Show Agent Properties if it's a registered agent */}
+        {!hasShadowAgent && agentProperties.length > 0 && property.agent && (
           <section className="max-w-6xl mx-auto mt-16">
             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
               More from {property.agent.name}

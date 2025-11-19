@@ -1,22 +1,31 @@
 // src/pages/EditProperty.jsx
+// (UPDATED with Smart Shadow Agent Search)
 
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa'; 
+import { 
+  FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
+  FaSpinner, FaUserCheck, FaSearch 
+} from 'react-icons/fa'; 
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent'; 
-import SmartPricingWidget from '../components/SmartPricingWidget'; // ✅ 1. IMPORT WIDGET
+import SmartPricingWidget from '../components/SmartPricingWidget'; 
 
 const MAX_FILE_SIZE_MB = 2;
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
 
-const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true }) => (
-  <div>
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
+  <div className="relative">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
+    {icon && (
+      <div className="absolute inset-y-0 left-0 pl-3 pt-6 flex items-center pointer-events-none text-gray-400">
+        {icon}
+      </div>
+    )}
     <input
       type={type}
       id={name}
@@ -26,7 +35,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       onChange={onChange}
       min={min}
       required={required}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+      className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${icon ? 'pl-10 pr-4' : 'px-4'}`}
     />
   </div>
 );
@@ -58,6 +67,7 @@ const EditProperty = () => {
     type: 'apartment',
     status: 'available', 
     listingType: 'sale',
+    agentId: '', // ✅ NEW: To link/relink to shadow profile
     ownerDetails: {
       name: '',
       whatsapp: '',
@@ -66,25 +76,44 @@ const EditProperty = () => {
     },
   });
   
-  // 5. --- NEW STATE FOR MAP ---
   const [coordinates, setCoordinates] = useState(null);
   const [mapCenter, setMapCenter] = useState(NAIROBI_COORDS);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  // ---------------------------
   
   const [existingImages, setExistingImages] = useState([]); 
   const [newImageFiles, setNewImageFiles] = useState([]);
   const [newImageAltTexts, setNewImageAltTexts] = useState({});
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
+
+  // ✅ NEW STATE FOR SMART AGENT SEARCH
+  const [existingAgents, setExistingAgents] = useState([]);
+  const [filteredAgents, setFilteredAgents] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const navigate = useNavigate();
   const { id: propertyId } = useParams();
 
   useEffect(() => {
-    const fetchProperty = async () => {
+    const fetchPropertyAndAgents = async () => {
       try {
         setLoading(true);
+        
+        // 1. Fetch Property Data
         const { data } = await apiClient.get(`/properties/${propertyId}`);
+        
+        // 2. Fetch Agents for Smart Search (if Admin)
+        let agentsList = [];
+        if (user && user.role === 'admin') {
+            try {
+                const agentsRes = await apiClient.get('/users/all-agents', { withCredentials: true });
+                agentsList = agentsRes.data;
+                setExistingAgents(agentsList);
+            } catch (err) {
+                console.error("Failed to fetch agents list", err);
+            }
+        }
+
         setFormData({
           title: data.title,
           description: data.description,
@@ -94,17 +123,17 @@ const EditProperty = () => {
           type: data.type,
           status: data.status || 'available', 
           listingType: data.listingType || 'sale',
+          // If property has a linked agent (even shadow), store ID here
+          agentId: data.agent ? data.agent._id : '', 
           ownerDetails: data.ownerDetails || { name: '', whatsapp: '', tiktok: '', instagram: '' },
         });
         
-        // 6. --- SET MAP COORDINATES FROM LOADED DATA ---
         if (data.coordinates && data.coordinates.lat) {
           setCoordinates(data.coordinates);
           setMapCenter(data.coordinates);
         } else {
-          setCoordinates(NAIROBI_COORDS); // Fallback
+          setCoordinates(NAIROBI_COORDS);
         }
-        // ---------------------------------------------
         
         let imagesToSet = [];
         if (data.images && data.images.length > 0) {
@@ -120,8 +149,8 @@ const EditProperty = () => {
         setLoading(false);
       }
     };
-    fetchProperty();
-  }, [propertyId]);
+    fetchPropertyAndAgents();
+  }, [propertyId, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -133,13 +162,46 @@ const EditProperty = () => {
 
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
+    
+    // 1. Update Form
     setFormData(prevData => ({
       ...prevData,
       ownerDetails: {
         ...prevData.ownerDetails,
         [name]: value,
       },
+      // If user types name manually, we might be creating a NEW shadow profile
+      // or searching for one. We don't clear agentId immediately unless they change name completely.
     }));
+
+    // 2. ✅ SMART SEARCH LOGIC
+    if (name === 'name' && user.role === 'admin') {
+      if (value.length > 1) {
+        const matches = existingAgents.filter(agent => 
+          agent.name.toLowerCase().includes(value.toLowerCase()) || 
+          (agent.whatsappNumber && agent.whatsappNumber.includes(value))
+        );
+        setFilteredAgents(matches);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  // ✅ NEW: Handle Selecting an Existing Shadow Agent
+  const selectShadowAgent = (agent) => {
+    setFormData(prev => ({
+      ...prev,
+      agentId: agent._id, // Link the property to this user ID
+      ownerDetails: {
+        name: agent.name,
+        whatsapp: agent.whatsappNumber || '',
+        tiktok: agent.tiktokHandle || '',
+        instagram: agent.instagramHandle || '',
+      }
+    }));
+    setShowSuggestions(false);
   };
   
   const handleExistingAltTextChange = (index, value) => {
@@ -156,12 +218,12 @@ const EditProperty = () => {
   };
 
   const handleFileChange = (e) => {
-    // ... (file handling logic is unchanged) ...
+    // ... (unchanged file logic) ...
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedNewFiles = [...newImageFiles, ...newlySelectedFiles];
     if (combinedNewFiles.length > 5) {
       setStatus({ 
-        message: `Error: You can only add a maximum of 5 NEW images total. You have selected ${combinedNewFiles.length} files.`, 
+        message: `Error: Max 5 new images allowed.`, 
         type: 'error' 
       });
       e.target.value = null; 
@@ -170,7 +232,7 @@ const EditProperty = () => {
     const oversizedFiles = combinedNewFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       setStatus({ 
-        message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.`, 
+        message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, 
         type: 'error' 
       });
       e.target.value = null;
@@ -192,19 +254,16 @@ const EditProperty = () => {
     setExistingImages(existingImages.filter(img => img.url !== imageUrlToRemove));
   };
   
-  // 7. --- NEW: Handle clicks on the map ---
   const handleMapClick = async (e) => {
     const clickedCoords = {
       lat: e.latLng.lat(),
       lng: e.latLng.lng(),
     };
-    setCoordinates(clickedCoords); // Update marker position
-    setIsGeocoding(true); // Show loading spinner
+    setCoordinates(clickedCoords); 
+    setIsGeocoding(true); 
     
     try {
-      // Call our new backend route
       const { data } = await apiClient.get(`/maps/reverse-geocode?lat=${clickedCoords.lat}&lng=${clickedCoords.lng}`);
-      // Update the location text field
       setFormData(prev => ({ ...prev, location: data.address }));
     } catch (error) {
       console.error("Reverse geocoding failed:", error);
@@ -214,7 +273,6 @@ const EditProperty = () => {
     }
   };
   
-  // 8. --- NEW: Geocode the typed address ---
   const handleGeocodeAddress = async () => {
     if (!formData.location) {
       setStatus({ message: 'Please enter a location to find on map.', type: 'error' });
@@ -226,7 +284,7 @@ const EditProperty = () => {
       if (data.results && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
         setCoordinates({ lat, lng });
-        setMapCenter({ lat, lng }); // Re-center the map
+        setMapCenter({ lat, lng }); 
       } else {
         setStatus({ message: 'Could not find coordinates for that address.', type: 'error' });
       }
@@ -244,19 +302,16 @@ const EditProperty = () => {
     setStatus({ message: '', type: '' });
 
     const dataToSend = new FormData();
-    // Append all top-level form data
     Object.keys(formData).forEach(key => {
       if (key !== 'ownerDetails') {
         dataToSend.append(key, formData[key]);
       }
     });
 
-    // 9. --- APPEND COORDINATES TO FORM DATA ---
     if (coordinates) {
       dataToSend.append('coordinates[lat]', coordinates.lat);
       dataToSend.append('coordinates[lng]', coordinates.lng);
     }
-    // -----------------------------------------
 
     if (user && user.role === 'admin') {
       dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
@@ -357,7 +412,7 @@ const EditProperty = () => {
             </div>
           </div>
           
-          {/* 10. --- NEW MAP & LOCATION SECTION --- */}
+          {/* Map Section */}
           <div className="space-y-6 pt-6 border-t dark:border-gray-700">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
               Location
@@ -382,35 +437,25 @@ const EditProperty = () => {
                   disabled={isGeocoding}
                   className="w-full h-11 flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 disabled:opacity-50"
                 >
-                  {isGeocoding ? (
-                    <FaSpinner className="animate-spin" />
-                  ) : (
-                    <FaMapMarkerAlt />
-                  )}
+                  {isGeocoding ? <FaSpinner className="animate-spin" /> : <FaMapMarkerAlt />}
                   <span>Find on Map</span>
                 </button>
               </div>
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Click on the map to set a precise location. The marker will appear at the clicked spot.
-            </p>
-            
             <div className="h-80 w-full rounded-lg overflow-hidden border dark:border-gray-700">
-              {/* Only render map if we have valid coordinates */}
               {coordinates && (
                 <MapComponent
                   coordinates={mapCenter}
-                  places={[]} // We don't need to show nearby places
+                  places={[]} 
                   onMapClick={handleMapClick}
-                  markerPosition={coordinates} // This will show the single marker
+                  markerPosition={coordinates} 
                   isDraggable={true}
-                  onMarkerDragEnd={handleMapClick} // Re-use the click handler for drag
+                  onMarkerDragEnd={handleMapClick} 
                 />
               )}
             </div>
           </div>
-          {/* ------------------------------- */}
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">Description</label>
@@ -439,19 +484,17 @@ const EditProperty = () => {
                 onChange={handleChange}
                 min={0} 
                 placeholder="e.g., 3"
-                required={false} // Bedrooms not strictly required
+                required={false} 
               />
             )}
           </div>
 
-          {/* ✅ 11. ADDED SMART PRICING WIDGET HERE */}
           <SmartPricingWidget 
             location={formData.location}
             type={formData.type}
             bedrooms={formData.bedrooms}
             currentPrice={formData.price}
           />
-          {/* ---------------------------------- */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
@@ -466,10 +509,10 @@ const EditProperty = () => {
             </select>
           </div>
           
-          {/* --- Existing Images --- */}
+          {/* Existing Images Logic Unchanged */}
           {existingImages.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Edit Existing Images (Alt Text)</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Edit Existing Images</h3>
               {existingImages.map((img, index) => (
                 <div key={img.url} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm">
                   <div className="md:col-span-1 relative">
@@ -483,7 +526,6 @@ const EditProperty = () => {
                         type="button" 
                         onClick={() => handleRemoveExistingImage(img.url)}
                         className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none shadow-md transition"
-                        aria-label="Remove image"
                     >
                         <FaTimes size={12} />
                     </motion.button>
@@ -500,10 +542,10 @@ const EditProperty = () => {
             </div>
           )}
           
-          {/* --- Add New Images --- */}
+          {/* New Images Logic Unchanged */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="new-images">
-              Add New Images (Select up to 5 total)
+              Add New Images
             </label>
             <input
               type="file"
@@ -513,16 +555,13 @@ const EditProperty = () => {
               multiple
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-            {newImageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files (Max {MAX_FILE_SIZE_MB}MB each)</p>}
+            {newImageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files</p>}
           </div>
           
-          {/* --- Alt Text for New Images --- */}
+          {/* New Alt Texts Logic Unchanged */}
           {newImageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">New Image Alt Text</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Provide alt text for new images.
-              </p>
               {newImageFiles.map((file, index) => (
                 <AltTextInputField
                   key={index}
@@ -534,79 +573,80 @@ const EditProperty = () => {
             </div>
           )}
           
-          {/* --- Owner & Social Media Details (ADMIN ONLY) --- */}
+          {/* --- ✅ UPDATED: Owner & Social Media Details with SMART SEARCH --- */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                Owner & Social Media Details
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaUserCheck className="text-blue-500" /> Owner & Social Media Details
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                (Admin Only) Add/Edit details for properties where the agent is not on the platform.
+                (Admin Only) Search for a Shadow Profile to consolidate this property under their account.
               </p>
               
+              <div className="relative">
+                <InputField 
+                  label="Owner/Agent Name (Searchable)" 
+                  name="name" 
+                  value={formData.ownerDetails.name}
+                  onChange={handleOwnerChange}
+                  placeholder="e.g., Jane Doe"
+                  required={false}
+                  icon={<FaSearch />}
+                />
+                
+                {showSuggestions && filteredAgents.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                    {filteredAgents.map((agent) => (
+                      <li 
+                        key={agent._id}
+                        onClick={() => selectShadowAgent(agent)}
+                        className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800 dark:text-gray-200">{agent.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{agent.whatsappNumber || 'No WhatsApp'}</p>
+                          </div>
+                          {!agent.isAccountClaimed && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Shadow</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                {formData.agentId && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-center gap-2">
+                    <FaUserCheck /> Linked to Profile: <strong>{formData.ownerDetails.name}</strong>
+                  </div>
+                )}
+              </div>
+              
               <InputField 
-                label="Owner/Agent Name" 
-                name="name" 
-                value={formData.ownerDetails.name}
-                onChange={handleOwnerChange}
-                placeholder="e.g., Jane Doe"
+                label="Owner WhatsApp" 
+                name="whatsapp" 
+                value={formData.ownerDetails.whatsapp} 
+                onChange={handleOwnerChange} 
+                icon={<FaWhatsapp />}
                 required={false}
               />
-              
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="whatsapp">
-                  Owner WhatsApp
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaWhatsapp className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="whatsapp"
-                  name="whatsapp"
-                  placeholder="e.g., 254712345678"
-                  value={formData.ownerDetails.whatsapp}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="tiktok">
-                  Owner TikTok Handle
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaTiktok className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="tiktok"
-                  name="tiktok"
-                  placeholder="e.g., @janedoe"
-                  value={formData.ownerDetails.tiktok}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
-
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="instagram">
-                  Owner Instagram Handle
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaInstagram className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="instagram"
-                  name="instagram"
-                  placeholder="e.g., @janedoe"
-                  value={formData.ownerDetails.instagram}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
-
+              <InputField 
+                label="Owner TikTok Handle" 
+                name="tiktok" 
+                value={formData.ownerDetails.tiktok} 
+                onChange={handleOwnerChange} 
+                icon={<FaTiktok />}
+                required={false}
+              />
+              <InputField 
+                label="Owner Instagram Handle" 
+                name="instagram" 
+                value={formData.ownerDetails.instagram} 
+                onChange={handleOwnerChange} 
+                icon={<FaInstagram />}
+                required={false}
+              />
             </div>
           )}
 

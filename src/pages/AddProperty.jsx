@@ -1,26 +1,34 @@
 // src/pages/AddProperty.jsx
-// --- UPDATED with Payment Logic & Smart Pricing ---
+// --- UPDATED with Payment Logic, Smart Pricing & Smart Shadow Agent Search ---
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from "../api/axios"; 
 import { useAuth } from '../context/AuthContext';
-import { FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, FaSpinner, FaStar } from 'react-icons/fa';
+import { 
+  FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
+  FaSpinner, FaStar, FaUserCheck, FaSearch 
+} from 'react-icons/fa';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 import MapComponent from '../components/MapComponent';
-import SmartPricingWidget from '../components/SmartPricingWidget'; // ✅ 1. IMPORT WIDGET
+import SmartPricingWidget from '../components/SmartPricingWidget'; 
 
 const MAX_FILE_SIZE_MB = 2; 
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
 
 // --- 1. SET THE PRICE FOR FEATURED LISTINGS ---
-const FEATURE_PRICE_PER_DAY = 170; // Approx 500 KES / 3 days
+const FEATURE_PRICE_PER_DAY = 170; 
 
-const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true }) => (
-  <div>
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
+  <div className="relative">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
+    {icon && (
+      <div className="absolute inset-y-0 left-0 pl-3 pt-6 flex items-center pointer-events-none text-gray-400">
+        {icon}
+      </div>
+    )}
     <input
       type={type}
       id={name}
@@ -30,12 +38,11 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       onChange={onChange}
       min={min}
       required={required}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+      className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${icon ? 'pl-10 pr-4' : 'px-4'}`}
     />
   </div>
 );
 
-// --- 2. ADD featuredDays to INITIAL STATE ---
 const initialFormState = {
   title: '',
   description: '',
@@ -43,10 +50,11 @@ const initialFormState = {
   price: '',
   bedrooms: '',
   type: 'apartment',
-  status: 'available', // We'll let the backend change this to 'pending' if featured
+  status: 'available', 
   listingType: 'sale',
   isFeatured: false,
-  featuredDays: 3, // Default to 3 days
+  featuredDays: 3, 
+  agentId: '', // ✅ NEW: To link to an existing shadow profile
   ownerDetails: {
     name: '',
     whatsapp: '',
@@ -54,7 +62,6 @@ const initialFormState = {
     instagram: '',
   },
 };
-// ------------------------------------------
 
 const AddProperty = () => {
   const [formData, setFormData] = useState(initialFormState);
@@ -67,12 +74,17 @@ const AddProperty = () => {
   const [imageAltTexts, setImageAltTexts] = useState({}); 
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
+  
+  // ✅ NEW STATE FOR SMART AGENT SEARCH
+  const [existingAgents, setExistingAgents] = useState([]);
+  const [filteredAgents, setFilteredAgents] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
   
-  // --- 3. CALCULATE DYNAMIC PRICE ---
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
   
   useEffect(() => {
@@ -89,9 +101,22 @@ const AddProperty = () => {
       }
     };
     getInitialLocation();
-  }, []);
 
-  // --- 4. UPDATE handleChange TO SUPPORT CHECKBOXES & NUMBERS ---
+    // ✅ NEW: Fetch all agents/shadow profiles if User is Admin
+    const fetchAgents = async () => {
+      if (user && user.role === 'admin') {
+        try {
+          const { data } = await apiClient.get('/users/all-agents', { withCredentials: true });
+          setExistingAgents(data);
+        } catch (err) {
+          console.error("Failed to fetch existing agents for smart search", err);
+        }
+      }
+    };
+    fetchAgents();
+
+  }, [user]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -110,13 +135,47 @@ const AddProperty = () => {
   
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
+    
+    // 1. Update the form data
     setFormData(prevData => ({
       ...prevData,
       ownerDetails: {
         ...prevData.ownerDetails,
         [name]: value,
       },
+      // If user types manually, clear the linked agentId to prevent data mismatch
+      // unless they are just tweaking the name slightly
+      agentId: name === 'name' ? '' : prevData.agentId 
     }));
+
+    // 2. ✅ SMART SEARCH LOGIC
+    if (name === 'name' && user.role === 'admin') {
+      if (value.length > 1) {
+        const matches = existingAgents.filter(agent => 
+          agent.name.toLowerCase().includes(value.toLowerCase()) || 
+          (agent.whatsappNumber && agent.whatsappNumber.includes(value))
+        );
+        setFilteredAgents(matches);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  // ✅ NEW: Handle Selecting an Existing Shadow Agent
+  const selectShadowAgent = (agent) => {
+    setFormData(prev => ({
+      ...prev,
+      agentId: agent._id, // Link the property to this user ID
+      ownerDetails: {
+        name: agent.name,
+        whatsapp: agent.whatsappNumber || '',
+        tiktok: agent.tiktokHandle || '',
+        instagram: agent.instagramHandle || '',
+      }
+    }));
+    setShowSuggestions(false);
   };
 
   const handleAltTextChange = (index, value) => {
@@ -131,7 +190,7 @@ const AddProperty = () => {
     const combinedFiles = [...imageFiles, ...newlySelectedFiles];
     if (combinedFiles.length > 5) {
       setStatus({ 
-        message: `Error: You can only upload a maximum of 5 images total. You have selected ${combinedFiles.length} files.`, 
+        message: `Error: You can only upload a maximum of 5 images total.`, 
         type: 'error' 
       });
       e.target.value = null; 
@@ -140,7 +199,7 @@ const AddProperty = () => {
     const oversizedFiles = combinedFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       setStatus({ 
-        message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit. Please re-select.`, 
+        message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.`, 
         type: 'error' 
       });
       e.target.value = null; 
@@ -200,7 +259,6 @@ const AddProperty = () => {
     }
   };
 
-  // --- 5. UPDATED handleSubmit WITH PAYMENT LOGIC ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (imageFiles.length === 0) {
@@ -212,10 +270,8 @@ const AddProperty = () => {
 
     const dataToSend = new FormData();
     
-    // Append all form data
     Object.keys(formData).forEach(key => {
       if (key === 'ownerDetails') {
-        // Handle nested object
         if (user && user.role === 'admin' && formData.ownerDetails.name) {
           dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
           dataToSend.append('ownerDetails[whatsapp]', formData.ownerDetails.whatsapp);
@@ -223,7 +279,6 @@ const AddProperty = () => {
           dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
         }
       } else {
-        // Append all other fields
         dataToSend.append(key, formData[key]);
       }
     });
@@ -241,28 +296,20 @@ const AddProperty = () => {
     dataToSend.append('imageAltTexts', JSON.stringify(altTextsArray)); 
 
     try {
-      // --- This first API call is now to create the property AND the payment order ---
       const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // --- NEW PAYMENT REDIRECT LOGIC ---
       if (formData.isFeatured && response.data.paymentRedirectUrl) {
-        // If "isFeatured" was checked AND we got a payment URL back...
         setStatus({ message: 'Property saved! Redirecting to payment...', type: 'success' });
-        
-        // Redirect to Pesapal checkout
         window.location.href = response.data.paymentRedirectUrl;
-
       } else {
-        // This is a standard (non-featured) listing
         setStatus({ message: `Success! Property "${response.data.title}" added. Redirecting...`, type: 'success' });
         setTimeout(() => {
           navigate(`/properties/${response.data.slug}`);
         }, 2000);
       }
-      // --- END OF NEW LOGIC ---
 
     } catch (error) {
       console.error("Error creating property:", error.response?.data || error.message);
@@ -379,21 +426,20 @@ const AddProperty = () => {
             </div>
 
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Click on the map to set a precise location. The marker will appear at the clicked spot.
+              Click on the map to set a precise location.
             </p>
             
             <div className="h-80 w-full rounded-lg overflow-hidden border dark:border-gray-700">
               <MapComponent
                 coordinates={mapCenter}
-                places={[]} // We don't need to show nearby places
+                places={[]} 
                 onMapClick={handleMapClick}
-                markerPosition={coordinates} // This will show the single marker
+                markerPosition={coordinates} 
                 isDraggable={true}
-                onMarkerDragEnd={handleMapClick} // Re-use the click handler for drag
+                onMarkerDragEnd={handleMapClick} 
               />
             </div>
           </div>
-          {/* ------------------------------- */}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
@@ -421,7 +467,7 @@ const AddProperty = () => {
                 onChange={handleChange}
                 min={0} 
                 placeholder="e.g., 3"
-                required={false} // Bedrooms are not strictly required
+                required={false} 
               />
             )}
             
@@ -439,16 +485,13 @@ const AddProperty = () => {
             </div>
           </div>
 
-          {/* ✅ 11. ADDED SMART PRICING WIDGET HERE */}
           <SmartPricingWidget 
             location={formData.location}
             type={formData.type}
             bedrooms={formData.bedrooms}
             currentPrice={formData.price}
           />
-          {/* ---------------------------------- */}
           
-          {/* --- Image Upload --- */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="image">
               Property Images (Select up to 5)
@@ -465,13 +508,9 @@ const AddProperty = () => {
              {imageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFiles.length} files (Max {MAX_FILE_SIZE_MB}MB each)</p>}
           </div>
 
-          {/* --- Image Alt Text --- */}
           {imageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Image SEO Alt Text</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Provide descriptive alt text for each image to improve SEO and accessibility.
-              </p>
               {imageFiles.map((file, index) => (
                 <InputField
                   key={index}
@@ -486,83 +525,91 @@ const AddProperty = () => {
             </div>
           )}
 
-          {/* --- Owner & Social Media Details (ADMIN ONLY) --- */}
+          {/* --- ✅ UPDATED: Owner & Social Media Details with SMART SEARCH --- */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                Owner & Social Media Details
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaUserCheck className="text-blue-500" /> Owner & Social Media Details
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                (Admin Only) Add these details for properties where the agent is not on the platform.
+                (Admin Only) Start typing a name to search existing Shadow Profiles. Selecting one will consolidate this property under their account.
               </p>
               
-              <InputField 
-                label="Owner/Agent Name" 
-                name="name" 
-                value={formData.ownerDetails.name}
-                onChange={handleOwnerChange}
-                placeholder="e.g., Jane Doe"
-                required={false}
-              />
+              {/* SMART NAME INPUT */}
+              <div className="relative">
+                <InputField 
+                  label="Owner/Agent Name (Searchable)" 
+                  name="name" 
+                  value={formData.ownerDetails.name}
+                  onChange={handleOwnerChange}
+                  placeholder="e.g., Jane Doe"
+                  required={false}
+                  icon={<FaSearch />}
+                />
+                
+                {/* SUGGESTIONS DROPDOWN */}
+                {showSuggestions && filteredAgents.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                    {filteredAgents.map((agent) => (
+                      <li 
+                        key={agent._id}
+                        onClick={() => selectShadowAgent(agent)}
+                        className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-gray-800 dark:text-gray-200">{agent.name}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{agent.whatsappNumber || 'No WhatsApp'}</p>
+                          </div>
+                          {!agent.isAccountClaimed && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Shadow</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                
+                {formData.agentId && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-center gap-2">
+                    <FaUserCheck /> Linked to Shadow Profile: <strong>{formData.ownerDetails.name}</strong>
+                  </div>
+                )}
+              </div>
               
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="whatsapp">
-                  Owner WhatsApp
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaWhatsapp className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="whatsapp"
-                  name="whatsapp"
-                  placeholder="e.g., 254712345678"
-                  value={formData.ownerDetails.whatsapp}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
+              <InputField 
+                label="Owner WhatsApp"
+                name="whatsapp"
+                value={formData.ownerDetails.whatsapp}
+                onChange={handleOwnerChange}
+                placeholder="e.g., 254712345678"
+                required={false}
+                icon={<FaWhatsapp />}
+              />
 
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="tiktok">
-                  Owner TikTok Handle
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaTiktok className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="tiktok"
-                  name="tiktok"
-                  placeholder="e.g., @janedoe"
-                  value={formData.ownerDetails.tiktok}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
+              <InputField 
+                label="Owner TikTok Handle"
+                name="tiktok"
+                value={formData.ownerDetails.tiktok}
+                onChange={handleOwnerChange}
+                placeholder="e.g., @janedoe"
+                required={false}
+                icon={<FaTiktok />}
+              />
 
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="instagram">
-                  Owner Instagram Handle
-                </label>
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FaInstagram className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  id="instagram"
-                  name="instagram"
-                  placeholder="e.g., @janedoe"
-                  value={formData.ownerDetails.instagram}
-                  onChange={handleOwnerChange}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                />
-              </div>
+              <InputField 
+                label="Owner Instagram Handle"
+                name="instagram"
+                value={formData.ownerDetails.instagram}
+                onChange={handleOwnerChange}
+                placeholder="e.g., @janedoe"
+                required={false}
+                icon={<FaInstagram />}
+              />
 
             </div>
           )}
 
-          {/* --- 6. UPDATED "FEATURE LISTING" SECTION --- */}
           {isFeaturedListingEnabled && (
             <div className="space-y-4 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -580,7 +627,6 @@ const AddProperty = () => {
                     Your listing will be highlighted and shown on the homepage.
                   </p>
                   
-                  {/* --- NEW: DURATION DROPDOWN (appears when checked) --- */}
                   {formData.isFeatured && (
                     <div className="mt-4">
                       <label htmlFor="featuredDays" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -617,7 +663,6 @@ const AddProperty = () => {
               </div>
             </div>
           )}
-          {/* --- END OF NEW SECTION --- */}
           
           <div className="pt-4">
             <button
