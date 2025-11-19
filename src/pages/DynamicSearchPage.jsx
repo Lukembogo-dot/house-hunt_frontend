@@ -1,3 +1,6 @@
+// src/pages/DynamicSearchPage.jsx
+// (UPDATED with Knowledge Hub Card)
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -5,12 +8,10 @@ import apiClient from '../api/axios';
 import PropertyList from '../components/PropertyList';
 import { motion } from 'framer-motion';
 // 1. IMPORT ICONS
-import { FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome } from 'react-icons/fa';
-// 2. IMPORT THE GENERATOR (Updated to import generateFAQSchema)
+import { FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome, FaQuestionCircle, FaChevronRight } from 'react-icons/fa';
+// 2. IMPORT THE GENERATOR
 import { generateDynamicLocationContent, generateFAQSchema } from '../utils/seoContentGenerator';
-// 3. IMPORT SMART OWNER BANNER
 import SmartOwnerBanner from '../components/SmartOwnerBanner';
-// 4. IMPORT BREADCRUMBS
 import Breadcrumbs from '../components/Breadcrumbs';
 
 // Helper function
@@ -21,7 +22,7 @@ const capitalize = (s) => {
     .join(' ');
 };
 
-// --- MARKET SNAPSHOT COMPONENT ---
+// --- MARKET SNAPSHOT COMPONENT (Unchanged) ---
 const MarketSnapshot = ({ stats, loading }) => {
   const StatCardSkeleton = () => (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 animate-pulse">
@@ -87,7 +88,6 @@ const MarketSnapshot = ({ stats, loading }) => {
 const DynamicSearchPage = () => {
   const { listingType, propertyType, location, bedrooms } = useParams();
   
-  // Prepare Filters
   const filterOverrides = {
     listingType: listingType,
     type: (propertyType && propertyType !== 'all') ? propertyType.replace(/-/g, ' ') : undefined,
@@ -95,10 +95,11 @@ const DynamicSearchPage = () => {
     bedrooms: bedrooms ? bedrooms.split('-')[0] : undefined,
   };
 
-  // State for Stats & SEO Content
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [seoData, setSeoData] = useState({ title: '', intro: '', marketInsight: '' });
+  // ✅ 3. STATE FOR LOCATION FAQS
+  const [locationFaqs, setLocationFaqs] = useState([]);
 
   useEffect(() => {
     const fetchStatsAndGenerateContent = async () => {
@@ -106,13 +107,24 @@ const DynamicSearchPage = () => {
       try {
         const params = new URLSearchParams(filterOverrides);
         
-        // 1. Fetch Real Stats from your API
+        // 1. Fetch Real Stats
         const { data } = await apiClient.get(`/properties/stats?${params.toString()}`);
         setStats(data);
 
-        // 2. Generate Dynamic SEO Content based on the fetched stats
-        // If location exists, we generate specific content. 
-        // If not (e.g. just /search/buy), we generate generic content.
+        // 2. Fetch Location Specific FAQs (The Knowledge Hub)
+        if (filterOverrides.location) {
+          try {
+            // Call the API with a search query for the location
+            const { data: faqData } = await apiClient.get(`/faqs?search=${filterOverrides.location}`);
+            setLocationFaqs(faqData.slice(0, 3)); // Take top 3 relevant FAQs
+          } catch (e) {
+            console.error("FAQ Fetch error", e);
+          }
+        } else {
+          setLocationFaqs([]);
+        }
+
+        // 3. Generate Generic Content
         const loc = filterOverrides.location || 'Nairobi';
         const content = generateDynamicLocationContent(
           loc,
@@ -125,7 +137,6 @@ const DynamicSearchPage = () => {
       } catch (error) {
         console.error("Failed to fetch property stats:", error);
         setStats(null);
-        // Fallback content in case of error
         setSeoData({
             title: `Find ${listingType} Properties`, 
             intro: 'Browse our latest verified listings.', 
@@ -143,7 +154,6 @@ const DynamicSearchPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
       
-      {/* --- 1. DYNAMIC META TAGS --- */}
       <Helmet>
         <title>{seoData.title} | HouseHunt Kenya</title>
         <meta name="description" content={seoData.intro} />
@@ -152,7 +162,6 @@ const DynamicSearchPage = () => {
         <meta property="og:title" content={seoData.title} />
         <meta property="og:description" content={seoData.intro} />
         
-        {/* ✅ INJECT FAQ SCHEMA AUTOMATICALLY */}
         {stats && (
             <script type="application/ld+json">
               {generateFAQSchema(filterOverrides.location, listingType, stats.avgPrice)}
@@ -162,39 +171,75 @@ const DynamicSearchPage = () => {
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
         
-        {/* ✅ 2. INSERT BREADCRUMBS */}
         <div className="mb-6">
           <Breadcrumbs />
         </div>
 
-        {/* --- 3. SEO RICH HEADER --- */}
-        <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
-            {loadingStats ? (
-                <div className="h-8 w-2/3 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mb-4"></div>
-            ) : (
-                <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
-                  {seoData.title}
-                </h1>
-            )}
-            
-            <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-              {seoData.intro}
-            </p>
+        {/* --- SEO RICH HEADER GRID --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          
+          {/* Left: Generic Text (SEO Intro) */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              {loadingStats ? (
+                  <div className="h-8 w-2/3 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mb-4"></div>
+              ) : (
+                  <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
+                    {seoData.title}
+                  </h1>
+              )}
+              
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                {seoData.intro}
+              </p>
 
-            {/* Market Insight Box */}
-            {seoData.marketInsight && !loadingStats && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r">
-                <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">
-                  Market Insight: {filterOverrides.location || 'Nairobi'}
-                </h3>
-                <p className="text-sm text-blue-700 dark:text-blue-200">
-                  {seoData.marketInsight}
-                </p>
+              {seoData.marketInsight && !loadingStats && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r">
+                  <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">
+                    Market Insight: {filterOverrides.location || 'Nairobi'}
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">
+                    {seoData.marketInsight}
+                  </p>
+                </div>
+              )}
+          </div>
+
+          {/* Right: Knowledge Hub Card (The New Addition) */}
+          {locationFaqs.length > 0 && (
+            <div className="lg:col-span-1 bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg shadow-sm border border-blue-100 dark:border-gray-700">
+              <div className="flex items-center mb-4">
+                 <FaQuestionCircle className="text-orange-500 mr-2" />
+                 <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                   {filterOverrides.location} Knowledge Hub
+                 </h3>
               </div>
-            )}
+              <div className="space-y-3">
+                {locationFaqs.map(faq => (
+                  <Link 
+                    key={faq._id} 
+                    to={`/faq/${faq.slug}`}
+                    className="block p-3 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition group"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
+                        {faq.question}
+                      </span>
+                      <FaChevronRight className="text-xs text-gray-400 group-hover:text-blue-500" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link 
+                to="/faqs" 
+                className="block mt-4 text-center text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
+              >
+                View all Knowledge Base
+              </Link>
+            </div>
+          )}
+
         </div>
 
-        {/* ✅ 4. INSERT THE SMART OWNER BANNER */}
         {filterOverrides.location && stats && (
           <SmartOwnerBanner 
             location={filterOverrides.location} 
@@ -203,10 +248,8 @@ const DynamicSearchPage = () => {
           />
         )}
 
-        {/* --- 5. MARKET SNAPSHOT STATS --- */}
         <MarketSnapshot stats={stats} loading={loadingStats} />
 
-        {/* --- 6. PROPERTY LIST --- */}
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -220,7 +263,6 @@ const DynamicSearchPage = () => {
             />
         </motion.div>
 
-        {/* --- 7. AUTOMATIC INTERNAL LINKING (THE SPIDERWEB) --- */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
             <h3 className="font-bold text-lg mb-4 dark:text-white">Explore Nearby Locations</h3>

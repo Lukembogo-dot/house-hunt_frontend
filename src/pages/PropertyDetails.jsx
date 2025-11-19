@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Added Breadcrumbs for SEO)
+// (UPDATED - Added PropertyFaqSection)
 
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
@@ -22,8 +22,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import useSeoData from "../hooks/useSeoData"; 
-// ✅ 1. IMPORT BREADCRUMBS
 import Breadcrumbs from "../components/Breadcrumbs";
+// ✅ 1. IMPORT NEW FAQ COMPONENT
+import PropertyFaqSection from "../components/PropertyFaqSection";
 
 
 const sectionVariants = {
@@ -578,7 +579,6 @@ const PropertyDetails = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           
-          {/* ✅ 2. ADD BREADCRUMBS HERE, BEFORE THE CONTENT GRID */}
           <div className="md:col-span-3">
             <Breadcrumbs />
           </div>
@@ -775,6 +775,9 @@ const PropertyDetails = () => {
                 </div>
               </motion.div>
             )}
+
+            {/* ✅ 2. INSERT FAQ SECTION HERE */}
+            <PropertyFaqSection location={property.location.split(',')[0]} />
 
             <motion.div 
               className="mb-8"

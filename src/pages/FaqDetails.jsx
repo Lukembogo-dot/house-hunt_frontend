@@ -1,5 +1,5 @@
 // src/pages/FaqDetails.jsx
-// (UPDATED: Fixed Text Size, Dark Mode Visibility, and Links)
+// (UPDATED: Adds Social Share & Helpful Voting)
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { 
   FaArrowLeft, FaQuestionCircle, FaLightbulb, FaShareAlt, FaThumbsUp, FaRegThumbsUp, FaHome 
 } from 'react-icons/fa';
+// ✅ 1. IMPORT PROPERTY LIST
 import PropertyList from '../components/PropertyList';
 
 // --- SEO COMPONENT (Unchanged) ---
@@ -57,7 +58,10 @@ const FaqDetails = () => {
   const [faq, setFaq] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // State for interactions
   const [liked, setLiked] = useState(false);
+  const [voteCount, setVoteCount] = useState(0);
 
   useEffect(() => {
     const fetchFaq = async () => {
@@ -66,6 +70,7 @@ const FaqDetails = () => {
         setError('');
         const { data } = await apiClient.get(`/faqs/slug/${slug}`);
         setFaq(data);
+        setVoteCount(data.helpfulVotes || 0); // Initialize with DB value
       } catch (err) {
         console.error(err);
         setError('Question not found.');
@@ -76,26 +81,67 @@ const FaqDetails = () => {
     fetchFaq();
   }, [slug]);
 
+  // ✅ 2. SMART FILTERS: Extract intent from the question
   const smartFilters = useMemo(() => {
     if (!faq) return null;
     const text = faq.question.toLowerCase();
     const filters = {};
 
-    const locations = ['kilimani', 'westlands', 'kileleshwa', 'lavington', 'karen', 'ruaka', 'ngong', 'thika', 'nairobi'];
+    // Detect Location
+    const locations = ['kilimani', 'westlands', 'kileleshwa', 'lavington', 'karen', 'ruaka', 'ngong', 'thika', 'nairobi', 'mombasa', 'nakuru'];
     const foundLocation = locations.find(loc => text.includes(loc));
     if (foundLocation) {
       filters.location = foundLocation.charAt(0).toUpperCase() + foundLocation.slice(1);
     }
 
+    // Detect Type
     if (text.includes('apartment') || text.includes('flat')) filters.type = 'Apartment';
-    if (text.includes('house') || text.includes('mansion')) filters.type = 'House';
+    if (text.includes('house') || text.includes('mansion') || text.includes('bungalow')) filters.type = 'House';
     if (text.includes('land') || text.includes('plot')) filters.type = 'Land';
+    if (text.includes('office')) filters.type = 'Commercial';
 
+    // Detect Intent
     if (text.includes('rent') || text.includes('let')) filters.listingType = 'rent';
     if (text.includes('buy') || text.includes('sale') || text.includes('price')) filters.listingType = 'sale';
 
     return Object.keys(filters).length > 0 ? filters : null;
   }, [faq]);
+
+  // ✅ NEW: Handle Social Share
+  const handleShare = async () => {
+    const shareData = {
+      title: faq.question,
+      text: `Check out this answer on HouseHunt Kenya: ${faq.question}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      // Fallback for desktop
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  // ✅ NEW: Handle Helpful Vote
+  const handleVote = async () => {
+    if (liked) return; // Prevent multiple clicks locally
+
+    try {
+      setLiked(true);
+      setVoteCount(prev => prev + 1); // Optimistic update
+      await apiClient.put(`/faqs/${faq._id}/vote`);
+    } catch (error) {
+      console.error("Failed to record vote", error);
+      setLiked(false); // Revert on error
+      setVoteCount(prev => prev - 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -118,16 +164,19 @@ const FaqDetails = () => {
     );
   }
 
-  // ✅ UPDATED: Styles for Dark Mode, Larger Text, and Highlighting Links
+  // ✅ UPDATED: Robust Styling with Force-Overrides for Dark Mode
   const answerContentClass = `
     prose prose-xl max-w-none 
     dark:prose-invert 
     text-gray-800 dark:text-gray-200
+    [&_*]:text-gray-800 dark:[&_*]:text-gray-200
     prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-gray-100
-    prose-p:text-gray-800 dark:prose-p:text-gray-300
+    prose-p:leading-relaxed
     prose-strong:text-gray-900 dark:prose-strong:text-white
-    prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-    prose-img:rounded-xl prose-img:shadow-md prose-img:my-6
+    prose-a:text-blue-600 dark:prose-a:text-blue-400 
+    prose-a:font-bold 
+    prose-a:no-underline hover:prose-a:underline
+    prose-img:rounded-xl prose-img:shadow-md prose-img:my-8
     prose-li:text-gray-800 dark:prose-li:text-gray-300
   `;
 
@@ -175,7 +224,6 @@ const FaqDetails = () => {
                 </div>
 
                 <div className="p-8">
-                  {/* ✅ APPLIED NEW STYLES HERE */}
                   <div 
                     className={answerContentClass}
                     dangerouslySetInnerHTML={{ __html: faq.answer }} 
@@ -184,20 +232,27 @@ const FaqDetails = () => {
 
                 <div className="px-8 py-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
                   <button 
-                    onClick={() => setLiked(!liked)}
+                    onClick={handleVote}
+                    disabled={liked}
                     className={`flex items-center space-x-2 text-sm font-medium transition ${
-                      liked ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                      liked ? 'text-blue-600 cursor-default' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 cursor-pointer'
                     }`}
                   >
                     {liked ? <FaThumbsUp /> : <FaRegThumbsUp />}
-                    <span>Helpful</span>
+                    <span>{liked ? 'Marked Helpful' : 'Helpful'} ({voteCount})</span>
                   </button>
-                  <button className="text-gray-500 hover:text-blue-600 transition">
-                    <FaShareAlt />
+                  
+                  {/* ✅ UPDATED SHARE BUTTON */}
+                  <button 
+                    onClick={handleShare} 
+                    className="text-gray-500 hover:text-blue-600 transition flex items-center gap-2"
+                  >
+                    <FaShareAlt /> <span className="text-sm">Share</span>
                   </button>
                 </div>
               </motion.article>
 
+              {/* ✅ 3. RELEVANT PROPERTIES SECTION */}
               {smartFilters && (
                 <motion.section
                   initial={{ opacity: 0, y: 20 }}
