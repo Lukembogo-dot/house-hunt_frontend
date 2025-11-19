@@ -75,7 +75,9 @@ import ChatBubble from "./components/ChatBubble";
 import NotificationBell from "./components/NotificationBell";
 import apiClient from "./api/axios";
 import TopAgents from "./components/TopAgents"; 
-import HomeFaqSection from "./components/HomeFaqSection"; // ✅ NEW: Import Home Section
+import HomeFaqSection from "./components/HomeFaqSection"; 
+// ✅ NEW: Import SeoInjector to fix Canonical URL Issue
+import SeoInjector from "./components/SeoInjector"; 
 
 
 // 3. CREATE A LOADING FALLBACK COMPONENT
@@ -127,6 +129,24 @@ function AppRoutes() {
     other: [],
   });
 
+  // ✅ NEW STATE: For Home Page SEO Data
+  const [homeSeo, setHomeSeo] = useState(null);
+
+  // ✅ NEW EFFECT: Fetch SEO Data for Homepage specifically
+  useEffect(() => {
+    const fetchHomeSeo = async () => {
+      try {
+        // Use the exact path you saved in your Admin Dashboard ('/')
+        const { data } = await apiClient.get(`/seo/${encodeURIComponent('/')}`);
+        setHomeSeo(data);
+      } catch (error) {
+        console.error("Error fetching Home SEO:", error);
+      }
+    };
+    fetchHomeSeo();
+  }, []);
+
+  // Existing Effect for pSEO Keywords
   useEffect(() => {
     const fetchEmphasizedKeywords = async () => {
       try {
@@ -352,6 +372,9 @@ function AppRoutes() {
 
               <Route path="/" element={
                 <>
+                  {/* ✅ FIX: INJECT HOME SEO DATA (Canonical Tag) HERE */}
+                  <SeoInjector seo={homeSeo} />
+
                   {/* ✅ UPDATED HERO SECTION: Reduced height to pull content up */}
                   <section 
                     id="home" 

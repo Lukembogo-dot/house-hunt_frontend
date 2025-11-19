@@ -6,6 +6,8 @@ import apiClient from '../api/axios';
 import { Helmet } from 'react-helmet-async';
 import { FaSearch, FaFolderOpen, FaArrowRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+// ✅ 1. IMPORT ASK FORM
+import AskQuestionForm from '../components/AskQuestionForm';
 
 const FaqIndex = () => {
   const [faqs, setFaqs] = useState([]);
@@ -105,6 +107,11 @@ const FaqIndex = () => {
             )}
           </>
         )}
+
+        {/* ✅ 2. INSERT FORM HERE */}
+        <div className="mt-16">
+          <AskQuestionForm />
+        </div>
       </div>
     </div>
   );
