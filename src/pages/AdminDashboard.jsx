@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (UPDATED with Watermark Migration Tool)
+// (UPDATED with FAQ Hub Link)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -18,8 +18,9 @@ import {
   FaMoneyBillWave, 
   FaClock,
   FaLink,
-  // ✅ 1. IMPORT NEW ICON
-  FaImage
+  FaImage,
+  // ✅ 1. IMPORT NEW ICON FOR FAQ
+  FaQuestionCircle
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
@@ -133,7 +134,6 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // ✅ 2. NEW LOADING STATE FOR MIGRATION
   const [isMigrating, setIsMigrating] = useState(false);
   
   const { user } = useAuth();
@@ -269,7 +269,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ 3. NEW HANDLER FOR MIGRATION
   const handleWatermarkMigration = async () => {
     if (!window.confirm("Warning: This will update image URLs for ALL properties to include the watermark. This cannot be undone easily. Proceed?")) return;
     
@@ -334,6 +333,18 @@ const AdminDashboard = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400">Manage all meta tags & schema.</p>
                   </div>
               </Link>
+
+              {/* ✅ 2. NEW FAQ HUB LINK */}
+              <Link 
+                  to="/admin/faq-manager" 
+                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
+              >
+                  <FaQuestionCircle className="text-4xl text-orange-500" />
+                  <div>
+                      <h3 className="text-xl font-semibold dark:text-gray-100">FAQ Hub</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Create & Link Questions.</p>
+                  </div>
+              </Link>
               
               <Link 
                   to="/admin/feature-manager" 
@@ -348,7 +359,6 @@ const AdminDashboard = () => {
           </div>
         </section>
         
-        {/* ✅ 4. NEW SYSTEM MAINTENANCE SECTION */}
         <section className="mb-12 p-6 bg-yellow-50 dark:bg-gray-800/50 rounded-xl border-l-4 border-yellow-400">
             <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
               <FaSitemap /> System Maintenance
@@ -371,7 +381,6 @@ const AdminDashboard = () => {
                 </button>
             </div>
         </section>
-        {/* ----------------------------------- */}
         
         <PendingApprovals />
 

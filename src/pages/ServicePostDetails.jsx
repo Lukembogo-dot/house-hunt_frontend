@@ -1,17 +1,17 @@
 // src/pages/ServicePostDetails.jsx
-// (UPDATED)
+// (UPDATED: Fixed Schema Graph, Link Colors, and Dark Mode Text)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
-import { FaStar, FaUserAlt } from 'react-icons/fa'; // Added FaUserAlt
+import { FaStar, FaUserAlt } from 'react-icons/fa'; 
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion'; // ✅ 1. IMPORT MOTION
+import { motion } from 'framer-motion'; 
 
-// Re-usable Star Rating Component (safe version)
+// Re-usable Star Rating Component
 const StarRating = ({ rating }) => {
   const safeRating = Number(rating) || 0;
   const fullStars = Math.floor(safeRating);
@@ -25,40 +25,41 @@ const StarRating = ({ rating }) => {
   );
 };
 
-// 1. --- NEW: SEO INJECTOR COMPONENT ---
-// This component generates the required schema.org JSON-LD for your page.
+// ✅ 1. REBUILT SEO INJECTOR (FIXES GOOGLE CONSOLE ISSUES)
 const ServiceSeoInjector = ({ service }) => {
   
-  // ▼▼▼ THIS IS THE FIX ▼▼▼
-  // 1. Start with the main BlogPosting schema
-  const blogPostingSchema = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": service.metaTitle || service.title,
-    "description": service.metaDescription || service.content.substring(0, 160),
-    "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png", // Fallback image
-    "datePublished": service.createdAt,
-    "dateModified": service.updatedAt,
-    "author": {
-      "@type": "Person",
-      "name": service.author?.name || "HouseHunt Admin"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "House Hunt Kenya",
-      "logo": {
-        "@type":"ImageObject",
-        "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png" // Path to your logo
+  // We use the @graph method to provide multiple schema types cleanly
+  const schemaGraph = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "@id": `${window.location.href}#article`,
+      "headline": service.metaTitle || service.title,
+      "description": service.metaDescription || service.content.substring(0, 160),
+      "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png",
+      "datePublished": service.createdAt,
+      "dateModified": service.updatedAt,
+      "author": {
+        "@type": "Person",
+        "name": service.author?.name || "HouseHunt Admin"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "House Hunt Kenya",
+        "logo": {
+          "@type":"ImageObject",
+          "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png"
+        }
       }
-    },
-    // 2. Prepare mainEntity (it might be FAQPage or just text)
-    "mainEntity": undefined, 
-  };
+    }
+  ];
 
-  // 3. If FAQs exist, nest them correctly as the mainEntity
+  // If FAQs exist, push a separate FAQPage object into the graph
   if (service.faqs && service.faqs.length > 0) {
-    blogPostingSchema.mainEntity = {
+    schemaGraph.push({
+      "@context": "https://schema.org",
       "@type": "FAQPage",
+      "@id": `${window.location.href}#faq`,
       "mainEntity": service.faqs.map(faq => ({
         "@type": "Question",
         "name": faq.question,
@@ -67,38 +68,29 @@ const ServiceSeoInjector = ({ service }) => {
           "text": faq.answer
         }
       }))
-    };
-  } else {
-    // 4. If no FAQs, just use the article body as the mainEntity (less common, but valid)
-    // Or, you can just remove the mainEntity property. We'll remove it.
-    delete blogPostingSchema.mainEntity;
+    });
   }
-  // ▲▲▲ END OF FIX ▲▲▲
 
   return (
     <Helmet>
-      {/* Standard Meta Tags */}
       <title>{service.metaTitle || service.title}</title>
       <meta name="description" content={service.metaDescription || service.content.substring(0, 160)} />
       
-      {/* Open Graph Tags (for social media) */}
       <meta property="og:title" content={service.metaTitle || service.title} />
       <meta property="og:description" content={service.metaDescription || service.content.substring(0, 160)} />
       <meta property="og:image" content={service.imageUrl} />
       <meta property="og:type" content="article" />
       <meta property="og:url" content={window.location.href} />
       
-      {/* 5. Render the single, combined schema */}
+      {/* Render the Graph Schema */}
       <script 
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": schemaGraph }) }}
       />
     </Helmet>
   );
 };
-// ------------------------------------
 
-// ✅ 2. ADD ANIMATION VARIANTS
 const sectionVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
@@ -108,13 +100,10 @@ const sectionVariants = {
   },
 };
 
-
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
-  
   const isNewDesignEnabled = useFeatureFlag('new-service-post-design');
-
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -157,7 +146,6 @@ const ServicePostDetails = () => {
         rating,
         comment,
       });
-      // Reset form and re-fetch data to show new review
       setRating(0);
       setHoverRating(0);
       setComment('');
@@ -169,35 +157,24 @@ const ServicePostDetails = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center mt-20 text-red-500 dark:text-red-400">
-        <p className="text-lg">{error}</p>
-        <Link to="/" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">
-          Back to Home
-        </Link>
-      </div>
-    );
-  }
-
+  if (loading) return <div className="flex justify-center items-center min-h-screen dark:bg-gray-950"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+  if (error) return <div className="text-center mt-20 text-red-500 dark:text-red-400"><p className="text-lg">{error}</p><Link to="/" className="text-blue-600 hover:underline mt-4 inline-block">Back to Home</Link></div>;
   if (!service) return null;
   
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
-  // ================================================================
-  // --- ✅ THIS IS THE FIX ---
-  // Added Tailwind 'prose-img:*' classes to auto-style all images in the post.
-  // ================================================================
-  const articleClass = "prose prose-xl dark:prose-invert max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg prose-img:w-full prose-img:rounded-lg prose-img:shadow-md prose-img:my-6";
-
+  // ✅ 2. UPDATED ARTICLE CLASS FOR VISUALS
+  // - Added prose-a styling (Blue links, underline on hover)
+  // - Added prose-strong/headings styling (Ensures white text in dark mode)
+  const articleClass = `
+    prose prose-xl max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg 
+    dark:prose-invert 
+    prose-img:w-full prose-img:rounded-lg prose-img:shadow-md prose-img:my-6
+    prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
+    prose-headings:text-gray-900 dark:prose-headings:text-gray-100
+    prose-strong:text-gray-900 dark:prose-strong:text-gray-100
+    text-gray-800 dark:text-gray-200
+  `;
 
   return (
     <>
@@ -206,9 +183,8 @@ const ServicePostDetails = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="mx-auto"> 
           
-          {/* ✅ 4. ALIGN & ANIMATE HEADER */}
           <motion.header 
-            className="mb-8 max-w-3xl mx-auto" // Aligned to max-w-3xl
+            className="mb-8 max-w-3xl mx-auto"
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -226,7 +202,6 @@ const ServicePostDetails = () => {
               {service.title}
             </h1>
             
-            {/* ✅ 3. RESTORED AUTHOR BLOCK */}
             <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
               <div className="flex items-center">
                 {service.author ? (
@@ -249,7 +224,6 @@ const ServicePostDetails = () => {
             </div>
           </motion.header>
 
-          {/* ✅ 4. ALIGN & ANIMATE IMAGE */}
           {service.imageUrl && (
             <motion.img 
               src={service.imageUrl}
@@ -262,9 +236,8 @@ const ServicePostDetails = () => {
             />
           )}
 
-          {/* ✅ 5. ANIMATE ARTICLE - NOW HAS BETTER BACKGROUND & PADDING */}
           <motion.article 
-            className={articleClass} // Uses the new, larger, defined class
+            className={articleClass}
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
@@ -273,15 +246,13 @@ const ServicePostDetails = () => {
             <div dangerouslySetInnerHTML={{ __html: service.content }} />
           </motion.article>
 
-          {/* ✅ 4. ALIGN & ANIMATE REVIEWS/FAQS */}
           <motion.div 
-            className="max-w-3xl mx-auto" // Aligned to max-w-3xl
+            className="max-w-3xl mx-auto"
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            {/* --- RENDER THE FAQ SECTION --- */}
             {service.faqs && service.faqs.length > 0 && (
               <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
                 <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
@@ -301,17 +272,13 @@ const ServicePostDetails = () => {
                 </div>
               </section>
             )}
-            {/* --------------------------------- */}
 
-
-            {/* Reviews/Comments Section */}
             <section className="mt-12">
               <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
                 Neighbourhood Feedback ({service.numReviews}) 
                 <span className="ml-2 text-yellow-400">★ {avgRating}</span>
               </h2>
 
-              {/* Review Submission Form */}
               {user ? (
                 <form onSubmit={handleReviewSubmit} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
                   <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
@@ -342,7 +309,7 @@ const ServicePostDetails = () => {
                     type="submit"
                     disabled={submitting}
                     className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-                    whileHover={{ y: -3 }} // Bouncy interaction
+                    whileHover={{ y: -3 }}
                   >
                     {submitting ? "Submitting..." : "Submit Feedback"}
                   </motion.button>
@@ -353,7 +320,6 @@ const ServicePostDetails = () => {
                 </p>
               )}
 
-              {/* Existing Reviews List */}
               {service.reviews.length > 0 ? (
                 <ul className="space-y-4">
                   {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
@@ -386,7 +352,6 @@ const ServicePostDetails = () => {
                 <p className="text-gray-500 dark:text-gray-400">No feedback yet. Be the first to share your experience!</p>
               )}
             </section>
-
           </motion.div>
         </div>
       </div>

@@ -1,10 +1,10 @@
-// src/pages/SEOManager.jsx (UPDATED)
+// src/pages/SEOManager.jsx
+// (Strictly Updated: Fetches Service Posts for Dropdown & Fixes Page Selector)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-// 1. IMPORT NEW ICONS
 import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter, FaLink, FaExclamationTriangle, FaBuilding, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import apiClient from '../api/axios';
-import { formatDistanceToNow } from 'date-fns'; // For formatting dates
+import { formatDistanceToNow } from 'date-fns';
 
 // --- CKEditor Imports (Unchanged) ---
 import { CKEditor } from '@ckeditor/ckeditor5-react';
@@ -18,8 +18,6 @@ class MyUploadAdapter {
     return this.loader.file.then(file => new Promise((resolve, reject) => {
       const data = new FormData();
       data.append('image', file);
-      // NOTE: This route '/services/upload-content-image' must be correct
-      // If your other routes are /api/services, this must be just '/services/upload-content-image'
       apiClient.post('/services/upload-content-image', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
@@ -63,7 +61,6 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
     setIsSaving('new');
     setFormError('');
     try {
-      // Use root-relative path (no '/api')
       await apiClient.post('/seo/keywords', newKeyword);
       setNewKeyword({ name: '', path: '', engine: 'property' });
       fetchKeywords();
@@ -77,7 +74,6 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
   const handleToggleEmphasize = async (keyword) => {
     setIsSaving(keyword._id);
     try {
-      // Use root-relative path
       await apiClient.put(`/seo/keywords/${keyword._id}`, {
         ...keyword,
         isEmphasized: !keyword.isEmphasized,
@@ -94,7 +90,6 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
     if (window.confirm('Are you sure you want to delete this keyword? This cannot be undone.')) {
       setIsSaving(id);
       try {
-        // Use root-relative path
         await apiClient.delete(`/seo/keywords/${id}`);
         fetchKeywords();
       } catch (err) {
@@ -116,7 +111,6 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
 
   return (
     <div className="space-y-8">
-      {/* --- Create New Keyword Form --- */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <h3 className="text-xl font-semibold mb-4 dark:text-gray-100 flex items-center">
           <FaPlus className="mr-2 text-green-500" /> Add to Keyword Library
@@ -163,7 +157,6 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
         {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
       </section>
 
-      {/* --- Keyword List Table --- */}
       <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         <h3 className="text-xl font-semibold p-6 dark:text-gray-100">
           Your Keyword Library ({keywordLibrary.length})
@@ -231,7 +224,7 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
   );
 };
 
-// --- PageSettingsEditor Component (Unchanged) ---
+// --- PageSettingsEditor Component (UPDATED) ---
 const PageSettingsEditor = ({ keywordLibrary }) => {
   const [pagesList, setPagesList] = useState([]);
   const [selectedPagePath, setSelectedPagePath] = useState(null);
@@ -241,8 +234,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState([]);
-
-  // --- 2. ADD NEW STATE FOR POST CONTENT ---
+  
   const [postContent, setPostContent] = useState('');
   const [currentPostId, setCurrentPostId] = useState(null);
   const [isServicePost, setIsServicePost] = useState(false);
@@ -255,24 +247,48 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
       { pagePath: '/contact', metaTitle: 'Contact Us', breadCrumbTitle: 'Contact' },
   ];
   
+  // ✅ 1. UPDATED: Explicitly fetch Service Posts to populate the dropdown
   const fetchPagesList = useCallback(async () => {
     try {
-        // Use root-relative path (no '/api')
-        const { data } = await apiClient.get('/seo/pages');
-        const dynamicPages = Array.isArray(data) ? data : []; 
-
+        // 1. Get Configured SEO Pages (Dynamic)
+        const { data: dynamicPagesData } = await apiClient.get('/seo/pages');
+        const dynamicPages = Array.isArray(dynamicPagesData) ? dynamicPagesData : [];
+        
+        // 2. Get ALL Service Posts (to ensure they appear even if not configured yet)
+        const { data: servicePosts } = await apiClient.get('/services'); 
+        
+        // 3. Map Keywords (pSEO)
         const pSeoPages = keywordLibrary.map(kw => ({
             pagePath: kw.path,
             metaTitle: `${kw.name} (pSEO)`,
             breadCrumbTitle: kw.name,
+            type: 'Keyword'
+        }));
+
+        // 4. Map Services to Page Objects
+        const servicePages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
+            pagePath: `/services/${sp.slug}`,
+            metaTitle: sp.title,
+            breadCrumbTitle: sp.title,
+            type: 'Service Post'
         }));
 
         const pageMap = new Map();
+        
+        // Priority of display in Dropdown:
         pSeoPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
-        staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false }));
-        dynamicPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+        staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false, type: 'Static' }));
+        servicePages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true })); 
+        
+        // Overwrite with actual DB settings if they exist
+        dynamicPages.forEach(page => {
+          const existing = pageMap.get(page.pagePath) || {};
+          pageMap.set(page.pagePath, { ...existing, ...page, isDynamic: true });
+        });
 
         const uniquePages = Array.from(pageMap.values());
+        // Sort alphabetically by path for easier finding
+        uniquePages.sort((a, b) => a.pagePath.localeCompare(b.pagePath));
         
         setPagesList(uniquePages);
         if (uniquePages.length > 0 && !selectedPagePath) {
@@ -287,7 +303,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     }
   }, [selectedPagePath, keywordLibrary]);
   
-  // --- 3. UPDATED to fetch post content ---
   const fetchSeoData = useCallback(async (path) => {
     if (!path) return;
     setSaving(false);
@@ -298,9 +313,9 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setIsServicePost(false);
 
     try {
-        // Fetch SEO data (Use root-relative path)
         const encodedPath = encodeURIComponent(path);
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
+        
         setSeoData({
             pagePath: path,
             metaTitle: data.metaTitle || '',
@@ -317,26 +332,40 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             faqs: data.faqs || [],
         });
 
-        // --- NEW: Check if it's a service post and fetch its content ---
         if (path.startsWith('/services/')) {
           setIsServicePost(true);
           try {
             const slug = path.split('/services/')[1];
-            // Use root-relative path
             const { data: postData } = await apiClient.get(`/services/slug/${slug}`);
             setPostContent(postData.content || '');
-            setCurrentPostId(postData._id); // Store the ID for saving
+            setCurrentPostId(postData._id);
+            
+            // Autofill SEO data from post if empty
+            if (!data.metaTitle) {
+               setSeoData(prev => ({
+                 ...prev,
+                 metaTitle: postData.metaTitle || postData.title,
+                 metaDescription: postData.metaDescription || (postData.content ? postData.content.substring(0, 150).replace(/<[^>]+>/g, '') : ''),
+               }));
+            }
+
           } catch (postErr) {
             console.error("Failed to fetch service post content:", postErr);
             setError('Failed to load post content. SEO data is loaded.');
           }
         }
-        // --- END OF NEW LOGIC ---
 
     } catch (err) {
         console.error("Failed to fetch detailed SEO data:", err);
-        setError('Failed to fetch detailed SEO data for the selected page.');
-        setSeoData(null);
+        setError('Failed to fetch detailed SEO data. If this is a new service post, save to initialize.');
+        // Fallback for new pages not yet in SEO DB
+        setSeoData({
+            pagePath: path,
+            metaTitle: '', metaDescription: '', ogTitle: '', ogDescription: '',
+            twitterTitle: '', twitterDescription: '', focusKeyword: '',
+            canonicalUrl: '', schemaFocusKeyword: '', schemaDescription: '',
+            breadCrumbTitle: '', faqs: []
+        });
     } finally {
         setSaving(false);
     }
@@ -373,7 +402,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setKeywordSuggestions([]);
   };
 
-  // --- 4. UPDATED to save both SEO and Content ---
   const handleSave = async (e) => {
     e.preventDefault();
     if (!seoData) return;
@@ -383,11 +411,9 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setSuccess('');
     
     try {
-        // --- Task 1: Save SEO Data (Use root-relative path) ---
         const encodedPath = encodeURIComponent(seoData.pagePath);
         await apiClient.put(`/seo/${encodedPath}`, seoData);
         
-        // --- Task 2: Save Post Content (Use root-relative path) ---
         if (isServicePost && currentPostId) {
           await apiClient.put(`/services/${currentPostId}`, {
             content: postContent,
@@ -398,7 +424,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         }
         
         setSuccess(`Successfully updated all settings for ${seoData.pagePath}!`);
-        fetchPagesList(); // Refresh list
+        fetchPagesList(); 
     } catch (err) {
         console.error("Failed to save data:", err.response?.data);
         setError(err.response?.data?.message || 'Failed to save data. Check server logs.');
@@ -407,7 +433,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     }
   };
 
-  // --- 5. CKEDITOR Config ---
   const editorConfig = {
     extraPlugins: [MyCustomUploadAdapterPlugin],
     removePlugins: ['CKBox', 'CKFinder', 'EasyImage']
@@ -430,7 +455,8 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         ) : (
             pagesList.map((page) => (
               <option key={page.pagePath} value={page.pagePath}>
-                {page.metaTitle || page.pagePath} ({page.isDynamic ? 'Dynamic' : 'Static'})
+                {/* ✅ 2. UPDATED: Show Type in Dropdown to Identify Service Posts */}
+                {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
               </option>
             ))
         )}
@@ -439,25 +465,9 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     </div>
   );
 
-  if (loading) {
-    return (
-        <div className="p-10 text-center dark:text-gray-300">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            Loading SEO Configuration...
-        </div>
-    );
-  }
+  if (loading) return <div className="p-10 text-center dark:text-gray-300"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>Loading SEO Configuration...</div>;
   
-  // Updated loading check
-  if (!seoData) {
-      return (
-        <div className="p-10 text-center dark:text-gray-300">
-             <PageSelector />
-             <div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4 mt-8"></div>
-             Loading page data...
-        </div>
-      );
-  }
+  if (!seoData) return <div className="p-10 text-center dark:text-gray-300"><PageSelector /><div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4 mt-8"></div>Loading page data...</div>;
 
   return (
     <div className="space-y-8">
@@ -476,7 +486,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
 
       <form onSubmit={handleSave} className="space-y-8">
         
-        {/* --- 6. ADD CKEDITOR SECTION (Conditional) --- */}
         {isServicePost && (
           <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
@@ -495,17 +504,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             </div>
           </section>
         )}
-        {/* --- END OF CKEDITOR SECTION --- */}
 
-
-        {/* === Meta Tags Section === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaTag className="mr-2 text-purple-500" /> Page Meta Tags
           </h2>
           <div className="space-y-4">
             
-            {/* --- Focus Keyword Field --- */}
             <div className="relative">
               <label htmlFor="focusKeyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Focus Keyword
@@ -520,7 +525,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 placeholder="Enter the main keyword for this page"
                 autoComplete="off"
               />
-              {/* --- Suggestions Dropdown --- */}
               {keywordSuggestions.length > 0 && (
                 <ul className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
                   {keywordSuggestions.map((kw) => (
@@ -535,7 +539,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 </ul>
               )}
             </div>
-            {/* --- END: Focus Keyword Field --- */}
 
             <div>
               <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -575,7 +578,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
               </p>
             </div>
 
-            {/* --- Canonical URL Field --- */}
             <div>
               <label htmlFor="canonicalUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Canonical URL (Optional)
@@ -611,7 +613,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
           </div>
         </section>
 
-        {/* === Social Media Tags Section === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaFacebook className="mr-2 text-blue-600" /> <FaTwitter className="mr-2 text-blue-400" /> Social Media Tags
@@ -683,12 +684,10 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
           </div>
         </section>
 
-        {/* === Schema/Structured Data Section === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaSitemap className="mr-2 text-green-500" /> Schema (Structured Data)
           </h2>
-          {/* ✅ --- 5. ADDED NEW SCHEMA FIELDS --- */}
           <div className="space-y-4">
             <div>
               <label htmlFor="schemaFocusKeyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -720,15 +719,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
               />
             </div>
           </div>
-          {/* --- (Your FAQ section UI would go here) --- */}
         </section>
 
-        {/* === On-Page Audit Notes Section (Now Editable) === */}
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaCheckCircle className="mr-2 text-blue-500" /> SEO Audit Notes (Manual)
           </h2>
-          {/* ... (rest of your existing form is unchanged) ... */}
+          {/* (Content preserved implicitly as it was in your provided code, assuming it was empty or just the header) */}
         </section>
         
         <div className="pt-4">
@@ -746,7 +743,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
 };
 
 
-// --- 2. NEW COMPONENT: RedirectManager ---
+// --- RedirectManager Component (Unchanged) ---
 const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLinks }) => {
   const [newRedirect, setNewRedirect] = useState({ fromPath: '', toPath: '' });
   const [isSaving, setIsSaving] = useState(false);
@@ -766,10 +763,9 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
     setIsSaving(true);
     setError('');
     try {
-      // Use root-relative path (no '/api')
       await apiClient.post('/redirects', newRedirect);
       setNewRedirect({ fromPath: '', toPath: '' });
-      fetchRedirects(); // Refresh the list
+      fetchRedirects(); 
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create redirect.');
     } finally {
@@ -780,9 +776,8 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
   const handleDeleteRedirect = async (id) => {
     if (window.confirm('Are you sure you want to delete this redirect?')) {
       try {
-        // Use root-relative path
         await apiClient.delete(`/redirects/${id}`);
-        fetchRedirects(); // Refresh the list
+        fetchRedirects(); 
       } catch (err) {
         setError('Failed to delete redirect.');
       }
@@ -792,23 +787,20 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
   const handleDeleteBrokenLink = async (id) => {
     if (window.confirm('Are you sure you want to delete this log? This is just a log, not the error itself.')) {
       try {
-        // Use root-relative path
         await apiClient.delete(`/redirects/404s/${id}`);
-        fetchBrokenLinks(); // Refresh the list
+        fetchBrokenLinks(); 
       } catch (err) {
         setError('Failed to delete broken link log.');
       }
     }
   };
 
-  // Helper to copy text to clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
 
   return (
     <div className="space-y-8">
-      {/* --- Create New Redirect Form --- */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <h3 className="text-xl font-semibold mb-4 dark:text-gray-100 flex items-center">
           <FaPlus className="mr-2 text-green-500" /> Create 301 Redirect
@@ -844,7 +836,6 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* --- Active Redirects List --- */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <h3 className="text-xl font-semibold p-6 dark:text-gray-100">
             Active Redirects ({redirects.length})
@@ -879,7 +870,6 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
           </div>
         </section>
         
-        {/* --- Broken Links (404s) List --- */}
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <h3 className="text-xl font-semibold p-6 dark:text-gray-100 flex items-center">
              <FaExclamationTriangle className="mr-2 text-yellow-400" /> Logged 404 Errors ({brokenLinks.length})
@@ -922,10 +912,9 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
     </div>
   );
 };
-// --- END OF NEW COMPONENT ---
 
 
-// --- 2. NEW COMPONENT: GlobalSettingsManager ---
+// --- GlobalSettingsManager Component (Unchanged) ---
 const GlobalSettingsManager = () => {
   const [settings, setSettings] = useState({
     businessName: 'HouseHunt Kenya',
@@ -933,8 +922,8 @@ const GlobalSettingsManager = () => {
     phoneNumber: '',
     address: {
       streetAddress: '',
-      addressLocality: '', // Nairobi
-      addressRegion: '', // NBI
+      addressLocality: '', 
+      addressRegion: '', 
       postalCode: '',
       addressCountry: 'KE',
     },
@@ -948,15 +937,12 @@ const GlobalSettingsManager = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Fetch settings on load
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        // Use root-relative path (no '/api')
         const { data } = await apiClient.get('/settings');
         if (data) {
-          // Merge fetched data with defaults to ensure all fields are present
           setSettings(prev => ({
             ...prev,
             ...data,
@@ -1002,7 +988,6 @@ const GlobalSettingsManager = () => {
     setError('');
     setSuccess('');
     try {
-      // Use root-relative path
       await apiClient.put('/settings', settings);
       setSuccess('Global settings saved successfully!');
     } catch (err) {
@@ -1034,7 +1019,6 @@ const GlobalSettingsManager = () => {
         </div>
       )}
 
-      {/* --- Business Info --- */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
           <FaBuilding className="mr-2 text-blue-500" /> Business Information (for Schema)
@@ -1067,7 +1051,6 @@ const GlobalSettingsManager = () => {
         </div>
       </section>
 
-      {/* --- Social Media Links --- */}
       <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
           <FaLink className="mr-2 text-gray-500" /> Social Media Profiles (for Schema)
@@ -1104,30 +1087,22 @@ const GlobalSettingsManager = () => {
     </form>
   );
 };
-// --- END OF NEW COMPONENT ---
 
-
-// --- MAIN SEOManager Component ---
+// --- MAIN SEOManager Component (Unchanged) ---
 const SEOManager = () => {
   const [activeTab, setActiveTab] = useState('pageSettings');
-
-  // --- Lifted state for keyword library ---
   const [keywordLibrary, setKeywordLibrary] = useState([]);
   const [keywordsLoading, setKeywordsLoading] = useState(true);
   const [keywordsError, setKeywordsError] = useState('');
-
-  // --- Lifted state for redirects & 404s ---
   const [redirects, setRedirects] = useState([]);
   const [brokenLinks, setBrokenLinks] = useState([]);
   const [redirectsLoading, setRedirectsLoading] = useState(true);
   const [redirectsError, setRedirectsError] = useState('');
 
-  // --- Function to fetch keywords ---
   const fetchKeywords = useCallback(async () => {
     try {
       setKeywordsLoading(true);
       setKeywordsError('');
-      // Use root-relative path (no '/api')
       const { data } = await apiClient.get('/seo/keywords');
       setKeywordLibrary(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1139,12 +1114,10 @@ const SEOManager = () => {
     }
   }, []);
 
-  // --- Functions to fetch redirects & 404s ---
   const fetchRedirects = useCallback(async () => {
     try {
       setRedirectsLoading(true);
       setRedirectsError('');
-      // Use root-relative path
       const { data } = await apiClient.get('/redirects');
       setRedirects(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1158,7 +1131,6 @@ const SEOManager = () => {
     try {
       setRedirectsLoading(true);
       setRedirectsError('');
-      // Use root-relative path
       const { data } = await apiClient.get('/redirects/404s');
       setBrokenLinks(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -1168,7 +1140,6 @@ const SEOManager = () => {
     }
   }, []);
 
-  // --- LOAD ALL DATA ON MOUNT ---
   useEffect(() => {
     fetchKeywords();
     fetchRedirects();
@@ -1196,7 +1167,6 @@ const SEOManager = () => {
         <FaGlobe className="mr-3 text-blue-500" /> SEO Management Dashboard
       </h1>
 
-      {/* --- 8. UPDATE TAB NAVIGATION --- */}
       <div className="flex flex-wrap gap-2 mb-8 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
         <TabButton 
           tabName="pageSettings" 
@@ -1213,7 +1183,6 @@ const SEOManager = () => {
           label="Redirects & 404s" 
           icon={<FaLink />} 
         />
-        {/* --- ADD NEW TAB BUTTON --- */}
         <TabButton 
           tabName="globalSettings" 
           label="Global Settings" 
@@ -1221,7 +1190,6 @@ const SEOManager = () => {
         />
       </div>
 
-      {/* --- 9. UPDATE TAB CONTENT (Pass props) --- */}
       <div>
         {activeTab === 'pageSettings' && (
           <PageSettingsEditor 
@@ -1246,7 +1214,6 @@ const SEOManager = () => {
             fetchBrokenLinks={fetchBrokenLinks}
           />
         )}
-        {/* --- ADD NEW TAB CONTENT --- */}
         {activeTab === 'globalSettings' && (
           <GlobalSettingsManager />
         )}

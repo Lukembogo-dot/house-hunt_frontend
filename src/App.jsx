@@ -49,7 +49,12 @@ const CreateIntelPost = lazy(() => import('./pages/CreateIntelPost'));
 const AgentDashboard = lazy(() => import('./pages/AgentDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const AgentWallet = lazy(() => import('./pages/AgentWallet')); 
-const SoldPropertiesPage = lazy(() => import('./pages/SoldPropertiesPage')); // ✅ 1. IMPORT SOLD PAGE
+const SoldPropertiesPage = lazy(() => import('./pages/SoldPropertiesPage')); 
+
+// ✅ 1. NEW FAQ PAGE IMPORTS
+const AdminFaqManager = lazy(() => import('./pages/AdminFaqManager'));
+const FaqDetails = lazy(() => import('./pages/FaqDetails'));
+const FaqIndex = lazy(() => import('./pages/FaqIndex')); // ✅ NEW: Lazy Load the Hub Page
 
 // --- ADD NEW PAYMENT PAGES ---
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
@@ -70,6 +75,7 @@ import ChatBubble from "./components/ChatBubble";
 import NotificationBell from "./components/NotificationBell";
 import apiClient from "./api/axios";
 import TopAgents from "./components/TopAgents"; 
+import HomeFaqSection from "./components/HomeFaqSection"; // ✅ NEW: Import Home Section
 
 
 // 3. CREATE A LOADING FALLBACK COMPONENT
@@ -530,6 +536,9 @@ function AppRoutes() {
                           </section>
                         )}
 
+                        {/* ✅ INSERT THE FAQ SECTION HERE */}
+                        <HomeFaqSection />
+
                         <NeighbourhoodWatchHome />
 
                       </>
@@ -569,7 +578,12 @@ function AppRoutes() {
               
               {/* ✅ 2. ADD NEW ARCHIVE ROUTE FOR pSEO (e.g. /sold/kilimani) */}
               <Route path="/:status/:location" element={<SoldPropertiesPage />} />
+              
+              {/* ✅ 2. NEW: PUBLIC ROUTE FOR FAQ INDEX (THE HUB) */}
+              <Route path="/faqs" element={<FaqIndex />} />
 
+              {/* ✅ 2. PUBLIC ROUTE FOR FAQ SINGLE (THE SPOKE) */}
+              <Route path="/faq/:slug" element={<FaqDetails />} />
 
               {/* Protected Routes */}
               <Route path="" element={<ProtectedRoute />}>
@@ -590,6 +604,8 @@ function AppRoutes() {
               <Route path="" element={<AdminRoute />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 <Route path="/admin/seo-manager" element={<SEOManager />} />
+                {/* ✅ 2. ADMIN ROUTE FOR FAQ MANAGER */}
+                <Route path="/admin/faq-manager" element={<AdminFaqManager />} />
                 <Route path="/admin/feature-manager" element={<FeatureManager />} />
                 <Route path="/admin/add-service" element={<AdminAddService />} />
                 <Route path="/admin/add-service/:id" element={<AdminAddService />} />
