@@ -156,5 +156,5 @@ const PropertySidebar = ({
     </div>
   );
 };
-//
+
 export default PropertySidebar;
