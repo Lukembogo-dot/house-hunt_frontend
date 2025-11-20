@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (FIXED: Syntax Error in BulkAssignModal Button)
+// (FIXED: Fetch ALL properties & Added Community Moderation & Property Manager Component)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -23,19 +23,18 @@ import {
   FaPlusCircle, 
   FaSearch, 
   FaUserSecret, 
-  FaListAlt 
+  FaListAlt,
+  FaCommentDots 
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
 
-// ✅ IMPORT NEW LEAD MANAGER COMPONENT
+// ✅ IMPORT NEW COMPONENTS
 import LeadManager from '../components/admin/LeadManager';
-
-// ✅ IMPORT EXTRACTED ASSIGN AGENT MODAL
 import AssignAgentModal from '../components/admin/AssignAgentModal';
-
-// ✅ IMPORT NEW PAYMENT SETTINGS MANAGER
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
+import CommunityModeration from '../components/admin/CommunityModeration';
+import PropertyManager from '../components/admin/PropertyManager'; // <--- NEW
 
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
@@ -94,7 +93,6 @@ const BulkAssignModal = ({ show, onClose, agent, adminProperties, onBulkAssign }
           <div className="mt-4 flex justify-between items-center">
               <p className="text-sm text-gray-500">{selectedPropIds.length} selected</p>
               <button onClick={handleAssign} disabled={isSubmitting || selectedPropIds.length === 0} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                  {/* ✅ FIXED SYNTAX HERE: Changed && to ? */}
                   {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Selected'}
               </button>
           </div>
@@ -210,7 +208,8 @@ const AdminDashboard = () => {
       
       const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
-        apiClient.get('/properties'),
+        // ✅ FIXED: Fetch 1000 items to include everything
+        apiClient.get('/properties?limit=1000'), 
         apiClient.get('/reviews', { withCredentials: true }),
         apiClient.get('/services'), 
         apiClient.get('/users/all-agents', { withCredentials: true }), 
@@ -218,9 +217,11 @@ const AdminDashboard = () => {
       ]);
       
       setUsers(usersRes.data);
-      setProperties(propertiesRes.data.properties);
+      const propsData = propertiesRes.data.properties ? propertiesRes.data.properties : propertiesRes.data;
+      setProperties(Array.isArray(propsData) ? propsData : []);
+      
       setReviews(reviewsRes.data);
-      setServices(servicesRes.data.services);
+      setServices(servicesRes.data.services || servicesRes.data || []);
       setAllAgents(agentsRes.data); 
       setOrders(ordersRes.data); 
 
@@ -236,7 +237,7 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData]);
 
-  // ✅ DERIVED STATE: Shadow Agents (Robust Filtering) & Admin Properties
+  // ✅ DERIVED STATE
   const shadowAgents = users.filter(u => 
       u.role === 'agent' && 
       (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
@@ -244,17 +245,8 @@ const AdminDashboard = () => {
   
   const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin');
 
-  const deleteProperty = async (id) => {
-    if (window.confirm('Are you sure you want to delete this property?')) {
-      try {
-        await apiClient.delete(`/properties/${id}`, { withCredentials: true });
-        fetchData();
-      } catch (err) {
-        alert('Failed to delete property.');
-      }
-    }
-  };
-
+  // --- ACTION HANDLERS (Mostly moved to components now) ---
+  
   const deleteReview = async (id) => {
     if (window.confirm('Are you sure you want to delete this review?')) {
       try {
@@ -346,7 +338,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ NEW: Handle Bulk Assign
   const openBulkAssign = (agent) => {
       setSelectedBulkAgent(agent);
       setIsBulkModalOpen(true);
@@ -354,7 +345,6 @@ const AdminDashboard = () => {
 
   const handleBulkAssign = async (agentId, propertyIds) => {
       try {
-          // Loop through IDs and call assign endpoint (since we don't have a bulk endpoint yet)
           const promises = propertyIds.map(id => 
               apiClient.put(`/admin/properties/${id}/assign-agent`, { agentId }, { withCredentials: true })
           );
@@ -380,7 +370,6 @@ const AdminDashboard = () => {
 
   const handleWatermarkMigration = async () => {
     if (!window.confirm("Warning: This will update image URLs for ALL properties to include the watermark. This cannot be undone easily. Proceed?")) return;
-    
     setIsMigrating(true);
     try {
       const { data } = await apiClient.get('/properties/migrate-watermarks', { withCredentials: true });
@@ -408,66 +397,48 @@ const AdminDashboard = () => {
 
         <section className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Revenue Card */}
+              {/* Stats Cards */}
               <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <FaMoneyBillWave className="text-4xl text-green-500 mb-2" />
                   <h3 className="text-xl font-semibold dark:text-gray-100">Total Revenue</h3>
                   <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">Ksh {totalRevenue.toLocaleString()}</p>
               </div>
-
-              {/* Pending Orders Card */}
               <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <FaClock className="text-4xl text-yellow-500 mb-2" />
                   <h3 className="text-xl font-semibold dark:text-gray-100">Pending Orders</h3>
                   <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{pendingOrders}</p>
               </div>
-              
               <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
                   <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
               </div>
-              
               <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
                   <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
                   <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
               </div>
               
-              <Link 
-                  to="/admin/seo-manager" 
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
-              >
+              {/* Navigation Links */}
+              <Link to="/admin/seo-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
                   <FaSitemap className="text-4xl text-blue-500" />
-                  <div>
-                      <h3 className="text-xl font-semibold dark:text-gray-100">SEO Manager</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Manage all meta tags & schema.</p>
-                  </div>
+                  <div><h3 className="text-xl font-semibold dark:text-gray-100">SEO Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage meta tags.</p></div>
               </Link>
-
-              <Link 
-                  to="/admin/faq-manager" 
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
-              >
+              <Link to="/admin/faq-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
                   <FaQuestionCircle className="text-4xl text-orange-500" />
-                  <div>
-                      <h3 className="text-xl font-semibold dark:text-gray-100">FAQ Hub</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Create & Link Questions.</p>
-                  </div>
+                  <div><h3 className="text-xl font-semibold dark:text-gray-100">FAQ Hub</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage questions.</p></div>
               </Link>
-              
-              <Link 
-                  to="/admin/feature-manager" 
-                  className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4"
-              >
+              <Link to="/admin/feature-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
                   <FaFlag className="text-4xl text-purple-500" />
-                  <div>
-                      <h3 className="text-xl font-semibold dark:text-gray-100">Feature Manager</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Manage approvals & rollouts.</p>
-                  </div>
+                  <div><h3 className="text-xl font-semibold dark:text-gray-100">Feature Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage rollouts.</p></div>
               </Link>
           </div>
         </section>
 
-        {/* ✅ --- NEW SECTION: SHADOW ACCOUNTS MANAGER --- */}
+        {/* ✅ NEW SECTION: COMMUNITY MODERATION */}
+        <section className="mb-12">
+            <CommunityModeration />
+        </section>
+
+        {/* ✅ NEW SECTION: SHADOW ACCOUNTS MANAGER */}
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
@@ -490,7 +461,7 @@ const AdminDashboard = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found. Create one via the "Assign Agent" modal on a property.</td></tr>}
+                        {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found.</td></tr>}
                         {shadowAgents.map(agent => (
                             <tr key={agent._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                 <td className="p-3 font-medium dark:text-white flex items-center gap-2">
@@ -507,10 +478,7 @@ const AdminDashboard = () => {
                                     </span>
                                 </td>
                                 <td className="p-3">
-                                    <button 
-                                        onClick={() => openBulkAssign(agent)}
-                                        className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition shadow-sm"
-                                    >
+                                    <button onClick={() => openBulkAssign(agent)} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition shadow-sm">
                                         <FaListAlt /> Assign Properties
                                     </button>
                                 </td>
@@ -525,17 +493,12 @@ const AdminDashboard = () => {
             <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
               <FaSitemap /> System Maintenance
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Use these tools cautiously. Actions here affect global system data.
-            </p>
             <div className="flex gap-4">
                 <button 
                   onClick={handleWatermarkMigration} 
                   disabled={isMigrating}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${
-                    isMigrating 
-                      ? 'bg-gray-400 cursor-not-allowed text-white' 
-                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                    isMigrating ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
                   }`}
                 >
                   {isMigrating ? <FaSpinner className="animate-spin" /> : <FaImage />}
@@ -546,66 +509,21 @@ const AdminDashboard = () => {
         
         <PendingApprovals />
         
-        {/* ✅ ADDED LEAD MANAGER COMPONENT */}
         <section className="mb-12">
            <LeadManager />
         </section>
 
-        {/* === Manage Properties === */}
+        {/* ✅ === REPLACED "Manage Properties" WITH COMPONENT === */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties ({properties.length})</h2>
-            <Link to="/add-property" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-500">
-              + Add Property
-            </Link>
+             <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties</h2>
           </div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
-            <table className="w-full min-w-[800px]"><thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Title</th>
-                  <th className="p-3 text-left dark:text-gray-300">Location</th>
-                  <th className="p-3 text-left dark:text-gray-300">Price (Ksh)</th>
-                  <th className="p-3 text-left dark:text-gray-300">Agent</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {properties.map((prop) => (
-                  <tr key={prop._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-200">{prop.title}</td>
-                    <td className="p-3 dark:text-gray-200">{prop.location}</td>
-                    <td className="p-3 dark:text-gray-200">{prop.price.toLocaleString()}</td>
-                    
-                    <td className="p-3 dark:text-gray-200 text-sm">
-                      {prop.agent ? (
-                        <span className="font-semibold">{prop.agent.name}</span>
-                      ) : (
-                        <span className="font-semibold text-red-500 dark:text-red-400">
-                          Admin Property
-                        </span>
-                      )}
-                    </td>
-                    
-                    <td className="p-3 flex space-x-3">
-                      <Link to={`/admin/property/${prop._id}/edit`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
-                        <FaEdit />
-                      </Link>
-                      <button onClick={() => deleteProperty(prop._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                        <FaTrash />
-                      </button>
-                      <button 
-                        onClick={() => openAssignModal(prop)} 
-                        className="text-green-600 dark:text-green-500 hover:text-green-800 dark:hover:text-green-400" 
-                        title="Assign/Re-assign Agent"
-                      >
-                        <FaUserPlus />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          
+          <PropertyManager 
+             properties={properties} 
+             fetchData={fetchData} 
+             onAssignAgent={openAssignModal}
+          />
         </section>
 
         {/* === Manage Neighbourhood Watch === */}
@@ -668,10 +586,7 @@ const AdminDashboard = () => {
                   <tr key={u._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="p-3 dark:text-gray-20Details">
                       {u.name}
-                      {/* ✅ SHOW SHADOW BADGE */}
-                      {u.isAccountClaimed === false && (
-                        <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full">Shadow</span>
-                      )}
+                      {u.isAccountClaimed === false && <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full">Shadow</span>}
                     </td>
                     <td className="p-3 dark:text-gray-20Details">{u.email}</td>
                     <td className="p-3">
@@ -684,32 +599,12 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="p-3 flex space-x-3">
-                      {/* ✅ APPROVE CLAIM BUTTON */}
                       {u.isAccountClaimed === false && (
-                        <button 
-                            onClick={() => openClaimModal(u)} 
-                            className="text-green-600 dark:text-green-400 hover:text-green-800"
-                            title="Approve & Merge Claim"
-                        >
-                            <FaUserCheck size={18} />
-                        </button>
+                        <button onClick={() => openClaimModal(u)} className="text-green-600 dark:text-green-400 hover:text-green-800" title="Approve & Merge Claim"><FaUserCheck size={18} /></button>
                       )}
-
-                      {u.role === 'user' && (
-                        <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent">
-                          <FaUserShield />
-                        </button>
-                      )}
-                      {u.role === 'agent' && (
-                        <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">
-                          (demote)
-                        </button>
-                      )}
-                      {u._id !== user._id && (
-                        <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
-                          <FaTrash />
-                        </button>
-                      )}
+                      {u.role === 'user' && <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent"><FaUserShield /></button>}
+                      {u.role === 'agent' && <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">(demote)</button>}
+                      {u._id !== user._id && <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete"><FaTrash /></button>}
                     </td>
                   </tr>
                 ))}
@@ -725,12 +620,7 @@ const AdminDashboard = () => {
             <h2 className="text-2xl font-semibold dark:text-gray-100">
               Revenue & Subscriptions ({orders.length})
             </h2>
-            <button 
-              onClick={handleRegisterIPN} 
-              className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition"
-            >
-              <FaLink /> Register IPN
-            </button>
+            <button onClick={handleRegisterIPN} className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition"><FaLink /> Register IPN</button>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
             <table className="w-full min-w-[800px]">
@@ -747,36 +637,15 @@ const AdminDashboard = () => {
               <tbody>
                 {orders.map((order) => (
                   <tr key={order._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="p-3 dark:text-gray-200">{format(new Date(order.createdAt), 'dd MMM yyyy')}</td>
+                    <td className="p-3 dark:text-gray-200">{order.user?.name || 'User Not Found'}</td>
+                    <td className="p-3 dark:text-gray-200">{order.productName}</td>
                     <td className="p-3 dark:text-gray-200">
-                      {format(new Date(order.createdAt), 'dd MMM yyyy')}
+                      <Link to={`/properties/${order.property?.slug}`} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">{order.property?.title || 'Property Not Found'}</Link>
                     </td>
-                    <td className="p-3 dark:text-gray-200">
-                      {order.user?.name || 'User Not Found'}
-                    </td>
-                    <td className="p-3 dark:text-gray-200">
-                      {order.productName}
-                    </td>
-                    <td className="p-3 dark:text-gray-200">
-                      <Link 
-                        to={`/properties/${order.property?.slug}`} 
-                        className="text-blue-500 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {order.property?.title || 'Property Not Found'}
-                      </Link>
-                    </td>
-                    <td className="p-3 font-semibold dark:text-white">
-                      {order.amount.toLocaleString()}
-                    </td>
+                    <td className="p-3 font-semibold dark:text-white">{order.amount.toLocaleString()}</td>
                     <td className="p-3">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        order.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                        : order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
-                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                      }`}>
-                        {order.status}
-                      </span>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : order.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>{order.status}</span>
                     </td>
                   </tr>
                 ))}

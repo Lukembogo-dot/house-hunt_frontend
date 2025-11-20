@@ -1,11 +1,11 @@
 // src/App.jsx
-// (FIXED: Restored Cost of Living Calculator Section)
+// (FIXED: Restored Cost of Living Calculator Section & Integrated WantedRequestPage & Community Insights & Community Hub)
 
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Link, useLocation, Routes, Route } from "react-router-dom"; // ✅ Added Routes, Route
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
-import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa"; // Added Icons
+import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa";
 
 // --- Components ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -26,6 +26,14 @@ import AppHeader from "./components/layout/AppHeader";
 import AppFooter from "./components/layout/AppFooter";
 import AppRoutesConfig from "./components/layout/AppRoutesConfig";
 
+// ✅ NEW IMPORTS: Community Insights Pages
+import CommunityHub from './pages/CommunityHub'; // ✅ Added Community Hub Import
+import ShareInsight from './pages/ShareInsight';
+import CommunityPost from './pages/CommunityPost';
+
+// ✅ NEW IMPORT: The component built to consume the public request data
+import WantedRequestPage from './pages/WantedRequestPage';
+
 // --- Context ---
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
@@ -40,7 +48,7 @@ const PageLoader = () => (
 function MainLayout() {
   const { previewRole } = useAuth(); 
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
-  const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator'); // ✅ Feature Flag
+  const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator');
   const location = useLocation();
 
   // GA4 Tracking
@@ -135,7 +143,7 @@ function MainLayout() {
               </div>
             </section>
 
-            {/* ✅ 6. TOOLS SECTION (Quiz + Cost Calculator) */}
+            {/* 6. TOOLS SECTION (Quiz + Cost Calculator) */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
                <section className="py-16 px-6 bg-blue-50 dark:bg-gray-800/50 border-t dark:border-gray-700">
                   <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
@@ -156,7 +164,7 @@ function MainLayout() {
                       </div>
                     )}
 
-                    {/* ✅ Cost of Living Calculator (RESTORED) */}
+                    {/* Cost of Living Calculator */}
                     {isCostCalculatorEnabled && (
                       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 text-center hover:transform hover:scale-105 transition duration-300">
                          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
@@ -192,7 +200,21 @@ function MainLayout() {
 
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
-             <AppRoutesConfig homeElement={HomePageElement} />
+            {/* ✅ INTEGRATION: Wrapped AppRoutesConfig in a main Routes block */}
+            <Routes location={location} key={location.pathname}>
+                
+                {/* 1. The New Route for Demand-Side pSEO */}
+                <Route path="/wanted/:slug" element={<WantedRequestPage />} />
+
+                {/* ✅ 2. NEW ROUTES FOR COMMUNITY INSIGHTS (pSEO Loop) */}
+                <Route path="/community" element={<CommunityHub />} /> {/* ✅ Added Hub Route */}
+                <Route path="/share-insight" element={<ShareInsight />} />
+                <Route path="/community/:slug" element={<CommunityPost />} />
+
+                {/* 3. Fallback to Existing Config for all other routes */}
+                <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
+            
+            </Routes>
         </AnimatePresence>
       </Suspense>
 

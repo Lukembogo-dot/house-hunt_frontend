@@ -1,3 +1,4 @@
+// src/components/layout/AppFooter.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaWhatsapp } from 'react-icons/fa';
@@ -28,6 +29,11 @@ const AppFooter = () => {
           <ul className="space-y-2 text-sm">
             <li><Link to="/buy" className="hover:text-blue-400 transition">Buy</Link></li>
             <li><Link to="/rent" className="hover:text-blue-400 transition">Rent</Link></li>
+            
+            {/* ✅ Added Community Links */}
+            <li><Link to="/community" className="hover:text-blue-400 transition">Community Stories</Link></li>
+            <li><Link to="/share-insight" className="hover:text-blue-400 transition">Write a Review</Link></li>
+            
             <li><Link to="/about" className="hover:text-blue-400 transition">About Us</Link></li>
             <li><Link to="/contact" className="hover:text-blue-400 transition">Contact</Link></li>
           </ul>

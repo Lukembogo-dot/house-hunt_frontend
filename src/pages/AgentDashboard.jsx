@@ -1,10 +1,10 @@
 // src/pages/AgentDashboard.jsx
-// (UPDATED: Added "Refresh Listing" logic)
+// (UPDATED: Removed Delete -> Added Archive Option)
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaEdit, FaTrash, FaEye, FaChartLine, FaPlus, FaSpinner, FaCheckCircle, FaTimesCircle, FaSyncAlt } from 'react-icons/fa'; // ✅ Added FaSyncAlt
+import { FaEdit, FaArchive, FaEye, FaChartLine, FaPlus, FaSpinner, FaCheckCircle, FaTimesCircle, FaSyncAlt } from 'react-icons/fa'; // ✅ Swapped FaTrash for FaArchive
 import { motion } from 'framer-motion';
 
 // ✅ 1. IMPORT THE VIEWINGS COMPONENT
@@ -20,7 +20,8 @@ const StatusBadge = ({ status }) => {
     sold: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
     rented: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+    archived: 'bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-300' // ✅ Added Archived Style
   };
   return (
     <span className={`px-2 py-1 text-xs font-bold rounded-full capitalize ${colors[status] || colors.draft}`}>
@@ -34,7 +35,7 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(null); // ID of property being updated
-  const [refreshing, setRefreshing] = useState(null); // ✅ Track refresh action
+  const [refreshing, setRefreshing] = useState(null); 
 
   // Fetch Listings
   const fetchListings = async () => {
@@ -60,12 +61,12 @@ export default function AgentDashboard() {
     try {
       const { data } = await apiClient.patch(`/properties/${id}/status`, { status: newStatus });
       
-      // If the backend archived it (sold/rented), remove it from this list
+      // If the backend archived it (sold/rented), remove it from this list or update
       if (data.isArchived) {
-        setListings(prev => prev.filter(p => p._id !== id));
-        alert(data.message || `Property moved to ${newStatus} archive.`);
+        // Option: You can remove it or just show it as sold
+        setListings(prev => prev.map(p => p._id === id ? { ...p, status: newStatus } : p));
+        alert(data.message || `Property marked as ${newStatus}.`);
       } else {
-        // Otherwise just update the status locally
         setListings(prev => prev.map(p => p._id === id ? { ...p, status: newStatus } : p));
       }
     } catch (err) {
@@ -76,20 +77,27 @@ export default function AgentDashboard() {
     }
   };
 
-  // Handle Delete
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this listing? This cannot be undone.")) return;
+  // ✅ UPDATED: Handle Archive (Soft Delete)
+  // Agents can no longer permanently delete. This sets status to 'archived'.
+  const handleArchive = async (id) => {
+    if (!window.confirm("Are you sure you want to archive this listing? It will be hidden from the public but you can restore it later.")) return;
     setUpdating(id);
     try {
+      // Calling the DELETE endpoint now triggers the Soft Delete (Archive) logic in the controller
       await apiClient.delete(`/properties/${id}`);
-      setListings(prev => prev.filter(p => p._id !== id));
+      
+      // Update local state to show 'archived' instead of removing it completely
+      setListings(prev => prev.map(p => p._id === id ? { ...p, status: 'archived' } : p));
+      
     } catch (err) {
-      alert('Failed to delete property.');
+      console.error(err);
+      alert('Failed to archive property.');
+    } finally {
       setUpdating(null);
     }
   };
 
-  // ✅ NEW: Handle Listing Refresh Payment
+  // Handle Listing Refresh Payment
   const handleRefreshListing = async (propertyId) => {
     if (!window.confirm("Refresh this listing for 72 hours? Cost: 100 Ksh.")) return;
     
@@ -98,7 +106,7 @@ export default function AgentDashboard() {
         const { data } = await apiClient.post('/payments/create-order', {
             propertyId: propertyId,
             orderType: 'listing_refresh',
-            amount: 100, // Fixed Price
+            amount: 100, 
             description: 'Listing Refresh (72 Hours)'
         });
 
@@ -115,7 +123,7 @@ export default function AgentDashboard() {
     }
   };
 
-  // ✅ Helper: Check if property is eligible for refresh (> 14 days old)
+  // Helper: Check if property is eligible for refresh (> 14 days old)
   const isEligibleForRefresh = (property) => {
       if (property.status !== 'available') return false;
       const createdDate = new Date(property.createdAt);
@@ -159,16 +167,15 @@ export default function AgentDashboard() {
           </div>
         )}
 
-        {/* ✅ 3. LEAD SUBSCRIPTION PANEL (Prominent Placement) */}
+        {/* Lead Subscription Panel */}
         <div className="mb-10">
            <LeadSubscriptionPanel />
         </div>
 
-        {/* PENDING APPROVALS / VIEWINGS SECTION */}
+        {/* Pending Approvals / Viewings */}
         <div className="mb-10">
           <ScheduledViewings />
         </div>
-        {/* --- End of Approvals Section --- */}
 
         {/* Listings Table */}
         {listings.length === 0 ? (
@@ -210,7 +217,6 @@ export default function AgentDashboard() {
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {property.location}
                             </div>
-                            {/* ✅ SHOW REFRESH BUTTON IF ELIGIBLE */}
                             {isEligibleForRefresh(property) && (
                                 <button
                                     onClick={() => handleRefreshListing(property._id)}
@@ -234,6 +240,7 @@ export default function AgentDashboard() {
                             property.status === 'available' ? 'bg-green-100 text-green-800' :
                             property.status === 'sold' ? 'bg-red-100 text-red-800' :
                             property.status === 'rented' ? 'bg-purple-100 text-purple-800' :
+                            property.status === 'archived' ? 'bg-gray-300 text-gray-700' :
                             'bg-gray-100 text-gray-800'
                           }`}
                         >
@@ -241,6 +248,8 @@ export default function AgentDashboard() {
                           <option value="sold">Sold</option>
                           <option value="rented">Rented</option>
                           <option value="draft">Draft</option>
+                          {/* Allow manual selection of archived if needed */}
+                          <option value="archived">Archived</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -254,14 +263,17 @@ export default function AgentDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
                         <Link to={`/admin/property/${property._id}/edit`} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                          <FaEdit className="inline text-lg" />
+                          <FaEdit className="inline text-lg" title="Edit" />
                         </Link>
+                        
+                        {/* ✅ UPDATED: Archive Button instead of Delete */}
                         <button 
-                          onClick={() => handleDelete(property._id)} 
-                          className="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400"
+                          onClick={() => handleArchive(property._id)} 
+                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                           disabled={updating === property._id}
+                          title="Archive (Hide from public)"
                         >
-                          {updating === property._id ? <FaSpinner className="animate-spin" /> : <FaTrash className="inline text-lg" />}
+                          {updating === property._id ? <FaSpinner className="animate-spin" /> : <FaArchive className="inline text-lg" />}
                         </button>
                       </td>
                     </motion.tr>

@@ -1,12 +1,12 @@
 // src/pages/ServicePostDetails.jsx
-// (UPDATED: Fixed Schema Graph, Link Colors, and Dark Mode Text)
+// (UPDATED: Moved Community Insights CTA below FAQs)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
-import { FaStar, FaUserAlt } from 'react-icons/fa'; 
+import { FaStar, FaUserAlt, FaLightbulb } from 'react-icons/fa'; 
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion'; 
@@ -164,8 +164,6 @@ const ServicePostDetails = () => {
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
   // ✅ 2. UPDATED ARTICLE CLASS FOR VISUALS
-  // - Added prose-a styling (Blue links, underline on hover)
-  // - Added prose-strong/headings styling (Ensures white text in dark mode)
   const articleClass = `
     prose prose-xl max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg 
     dark:prose-invert 
@@ -273,9 +271,39 @@ const ServicePostDetails = () => {
               </section>
             )}
 
+            {/* ✅ MOVED: Community Insights / Neighbourhood Watch CTA (Now below FAQs) */}
+            {service.location && (
+              <div className="mt-12 p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-center shadow-sm">
+                <div className="flex justify-center mb-3">
+                  <FaLightbulb className="text-3xl text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2">
+                  Curious about life in {service.location}?
+                </h3>
+                <p className="text-purple-700 dark:text-purple-300 mb-6 max-w-lg mx-auto">
+                  Discover real stories from residents in {service.location}, or share your own experience to help others find their home.
+                </p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                  <Link 
+                    to={`/search/rent/${service.location.toLowerCase()}`}
+                    className="px-6 py-3 bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-300 font-bold border border-purple-200 dark:border-gray-600 rounded-lg hover:bg-purple-50 dark:hover:bg-gray-700 transition shadow-sm"
+                  >
+                    View {service.location} Insights
+                  </Link>
+                  <Link 
+                    to="/share-insight"
+                    state={{ location: service.location }} // ✅ Pass location to auto-fill form
+                    className="px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-md"
+                  >
+                    Write a Review
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <section className="mt-12">
               <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                Neighbourhood Feedback ({service.numReviews}) 
+                Service Feedback ({service.numReviews}) 
                 <span className="ml-2 text-yellow-400">★ {avgRating}</span>
               </h2>
 

@@ -1,5 +1,5 @@
 // src/pages/DynamicSearchPage.jsx
-// (UPDATED with Knowledge Hub Card)
+// (UPDATED with Knowledge Hub Card & Community Insights Loop)
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -100,6 +100,8 @@ const DynamicSearchPage = () => {
   const [seoData, setSeoData] = useState({ title: '', intro: '', marketInsight: '' });
   // ✅ 3. STATE FOR LOCATION FAQS
   const [locationFaqs, setLocationFaqs] = useState([]);
+  // ✅ 4. STATE FOR COMMUNITY INSIGHTS (NEW)
+  const [communityInsights, setCommunityInsights] = useState([]);
 
   useEffect(() => {
     const fetchStatsAndGenerateContent = async () => {
@@ -117,14 +119,20 @@ const DynamicSearchPage = () => {
             // Call the API with a search query for the location
             const { data: faqData } = await apiClient.get(`/faqs?search=${filterOverrides.location}`);
             setLocationFaqs(faqData.slice(0, 3)); // Take top 3 relevant FAQs
+            
+            // ✅ 3. Fetch Community Insights (NEW)
+            const { data: insights } = await apiClient.get(`/community/location/${filterOverrides.location}`);
+            setCommunityInsights(insights);
+            
           } catch (e) {
-            console.error("FAQ Fetch error", e);
+            console.error("FAQ/Insights Fetch error", e);
           }
         } else {
           setLocationFaqs([]);
+          setCommunityInsights([]);
         }
 
-        // 3. Generate Generic Content
+        // 4. Generate Generic Content
         const loc = filterOverrides.location || 'Nairobi';
         const content = generateDynamicLocationContent(
           loc,
@@ -249,6 +257,41 @@ const DynamicSearchPage = () => {
         )}
 
         <MarketSnapshot stats={stats} loading={loadingStats} />
+
+        {/* --- ✅ NEW: COMMUNITY INSIGHTS SECTION --- */}
+        {communityInsights.length > 0 && (
+          <div className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-purple-100 dark:border-gray-700">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+               <span className="text-purple-600 mr-2">💬</span> 
+               What Locals Say about {filterOverrides.location}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {communityInsights.map((post) => (
+                <div key={post._id} className="bg-gray-50 dark:bg-gray-900 p-4 rounded border dark:border-gray-700">
+                  <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">{post.title}</h3>
+                  {/* We render the processed HTML which contains the SEO Links */}
+                  <div 
+                    className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 prose dark:prose-invert"
+                    dangerouslySetInnerHTML={{ __html: post.processedContent }} 
+                  />
+                  <Link to={`/community/${post.slug}`} className="text-blue-600 text-xs font-bold mt-2 block hover:underline">
+                    Read Full Story &rarr;
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* --- ✅ NEW: CALL TO ACTION: WRITE YOUR OWN --- */}
+        {filterOverrides.location && (
+            <div className="mb-8 text-center">
+                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Live in {filterOverrides.location}?</p>
+                 <Link to="/share-insight" className="inline-block bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700">
+                    Write a Review for {filterOverrides.location}
+                 </Link>
+            </div>
+        )}
 
         <motion.div
             initial={{ opacity: 0 }}
