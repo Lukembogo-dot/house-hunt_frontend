@@ -1,10 +1,11 @@
 // src/App.jsx
-// (UPDATED: Changed Featured Properties limit to 11)
+// (FIXED: Restored Cost of Living Calculator Section)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation } from "react-router-dom";
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
+import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa"; // Added Icons
 
 // --- Components ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -39,6 +40,7 @@ const PageLoader = () => (
 function MainLayout() {
   const { previewRole } = useAuth(); 
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
+  const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator'); // ✅ Feature Flag
   const location = useLocation();
 
   // GA4 Tracking
@@ -105,19 +107,18 @@ function MainLayout() {
             {/* 1. Top Agents */}
             <TopAgents />
 
-            {/* 2. Featured Properties (Moved Up & Limited to 11) */}
+            {/* 2. Featured Properties (11 Items) */}
             <section className="py-12 px-6 bg-gray-100 dark:bg-gray-900">
               <div className="max-w-6xl mx-auto">
                 <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">Featured Properties</h2>
-                {/* ✅ UPDATED: Limit set to 11 */}
                 <PropertyList filterOverrides={null} showSearchBar={false} showTitle={false} limit={11} />
               </div>
             </section>
             
-            {/* 3. HouseHunt Request (Moved Up) */}
+            {/* 3. HouseHunt Request */}
             <HouseHuntRequest />
 
-            {/* 4. Trending Properties (Moved Down) */}
+            {/* 4. Trending Properties */}
             <TrendingProperties />
 
             {/* 5. Popular Searches */}
@@ -134,10 +135,44 @@ function MainLayout() {
               </div>
             </section>
 
-            {isQuizEnabled && (
-               <section className="py-12 px-6 bg-blue-50 dark:bg-gray-800 border-t dark:border-gray-700 text-center">
-                  <h2 className="text-3xl font-extrabold mb-4 dark:text-white">Not Sure Where to Live?</h2>
-                  <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 shadow-lg">Start the Quiz</Link>
+            {/* ✅ 6. TOOLS SECTION (Quiz + Cost Calculator) */}
+            {(isQuizEnabled || isCostCalculatorEnabled) && (
+               <section className="py-16 px-6 bg-blue-50 dark:bg-gray-800/50 border-t dark:border-gray-700">
+                  <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+                    
+                    {/* Neighbourhood Quiz */}
+                    {isQuizEnabled && (
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 text-center hover:transform hover:scale-105 transition duration-300">
+                         <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            <FaMapMarkedAlt />
+                         </div>
+                         <h3 className="text-2xl font-bold mb-2 dark:text-white">Where Should You Live?</h3>
+                         <p className="text-gray-600 dark:text-gray-300 mb-6">
+                           Take our AI-powered quiz to find the perfect Nairobi neighbourhood for your lifestyle and budget.
+                         </p>
+                         <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 shadow-md">
+                           Start the Quiz
+                         </Link>
+                      </div>
+                    )}
+
+                    {/* ✅ Cost of Living Calculator (RESTORED) */}
+                    {isCostCalculatorEnabled && (
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 text-center hover:transform hover:scale-105 transition duration-300">
+                         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            <FaCalculator />
+                         </div>
+                         <h3 className="text-2xl font-bold mb-2 dark:text-white">Cost of Living Calculator</h3>
+                         <p className="text-gray-600 dark:text-gray-300 mb-6">
+                           Planning a move? Estimate monthly expenses (Rent, Transport, Food) for different estates.
+                         </p>
+                         <Link to="/tools/cost-of-living" className="inline-block bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md">
+                           Calculate Costs
+                         </Link>
+                      </div>
+                    )}
+
+                  </div>
                </section>
             )}
             
@@ -150,7 +185,7 @@ function MainLayout() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950 overflow-x-hidden">
       <AppHeader />
       <GlobalSchemaInjector />
       {previewRole && <PreviewBanner />}
