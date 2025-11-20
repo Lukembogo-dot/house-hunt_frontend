@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (UPDATED with Shadow Account Approval Logic)
+// (FIXED: Syntax Error in BulkAssignModal Button)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -10,121 +10,100 @@ import {
   FaTrash, 
   FaUserShield, 
   FaSitemap, 
-  FaStreetView,
-  FaUserPlus,
-  FaTimes,
-  FaSpinner,
-  FaFlag,
+  FaUserPlus, 
+  FaTimes, 
+  FaSpinner, 
+  FaFlag, 
   FaMoneyBillWave, 
-  FaClock,
-  FaLink,
-  FaImage,
-  FaQuestionCircle,
-  // ✅ 1. IMPORT NEW ICON FOR CLAIM APPROVAL
-  FaUserCheck
+  FaClock, 
+  FaLink, 
+  FaImage, 
+  FaQuestionCircle, 
+  FaUserCheck, 
+  FaPlusCircle, 
+  FaSearch, 
+  FaUserSecret, 
+  FaListAlt 
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
+
+// ✅ IMPORT NEW LEAD MANAGER COMPONENT
+import LeadManager from '../components/admin/LeadManager';
+
+// ✅ IMPORT EXTRACTED ASSIGN AGENT MODAL
+import AssignAgentModal from '../components/admin/AssignAgentModal';
+
+// ✅ IMPORT NEW PAYMENT SETTINGS MANAGER
+import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
+
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
 
 
-// --- ASSIGN AGENT MODAL (Unchanged) ---
-const AssignAgentModal = ({ show, onClose, property, agents, onAssign }) => {
-  const [selectedAgentId, setSelectedAgentId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+// --- BULK ASSIGN PROPERTIES MODAL ---
+const BulkAssignModal = ({ show, onClose, agent, adminProperties, onBulkAssign }) => {
+    const [selectedPropIds, setSelectedPropIds] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!selectedAgentId) {
-      alert('Please select an agent.');
-      return;
-    }
-    setIsSubmitting(true);
-    await onAssign(property._id, selectedAgentId);
-    setIsSubmitting(false);
-    onClose(); 
-  };
-  
-  useEffect(() => {
-    setSelectedAgentId('');
-  }, [property]);
+    if (!show || !agent) return null;
 
-  if (!show) return null;
+    const toggleProperty = (id) => {
+        setSelectedPropIds(prev => 
+            prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
+        );
+    };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
-          disabled={isSubmitting}
-        >
-          <FaTimes size={20} />
-        </button>
-        
-        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Assign Agent to Property
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-1">
-          Property: <strong>{property?.title}</strong>
-        </p>
+    const handleAssign = async () => {
+        if (selectedPropIds.length === 0) return alert("Select at least one property.");
+        setIsSubmitting(true);
+        await onBulkAssign(agent._id, selectedPropIds);
+        setIsSubmitting(false);
+        setSelectedPropIds([]); // Reset
+        onClose();
+    };
 
-        <div className="mb-4">
-          <label htmlFor="agentSelect" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Select an Agent
-          </label>
-          <select
-            id="agentSelect"
-            value={selectedAgentId}
-            onChange={(e) => setSelectedAgentId(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          >
-            <option value="">-- Please choose an agent --</option>
-            {agents.map(agent => (
-              <option key={agent._id} value={agent._id}>
-                {agent.name} ({agent.email})
-              </option>
-            ))}
-          </select>
-        </div>
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 relative flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+          <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><FaTimes size={20} /></button>
+          
+          <div className="mb-4">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Assign Properties</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+                Assigning to: <span className="font-semibold text-blue-600">{agent.name}</span>
+            </p>
+          </div>
 
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting || !selectedAgentId}
-            className="w-32 flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Agent'}
-          </button>
-        </div>
+          <div className="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-900/50">
+             {adminProperties.length === 0 ? (
+                 <p className="text-center py-4 text-gray-500">No admin properties available to assign.</p>
+             ) : (
+                 adminProperties.map(prop => (
+                     <div key={prop._id} onClick={() => toggleProperty(prop._id)} className={`flex items-center p-3 mb-2 rounded cursor-pointer border transition ${selectedPropIds.includes(prop._id) ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100'}`}>
+                         <input type="checkbox" checked={selectedPropIds.includes(prop._id)} onChange={() => {}} className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500" />
+                         <div className="ml-3">
+                             <p className="text-sm font-medium text-gray-900 dark:text-white">{prop.title}</p>
+                             <p className="text-xs text-gray-500">{prop.location} • {prop.price.toLocaleString()} Ksh</p>
+                         </div>
+                     </div>
+                 ))
+             )}
+          </div>
+
+          <div className="mt-4 flex justify-between items-center">
+              <p className="text-sm text-gray-500">{selectedPropIds.length} selected</p>
+              <button onClick={handleAssign} disabled={isSubmitting || selectedPropIds.length === 0} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                  {/* ✅ FIXED SYNTAX HERE: Changed && to ? */}
+                  {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Selected'}
+              </button>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
+    );
 };
 
-// ✅ --- NEW: APPROVE CLAIM MODAL ---
+// --- APPROVE CLAIM MODAL ---
 const ApproveClaimModal = ({ show, onClose, user, onApprove }) => {
     const [realEmail, setRealEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,9 +195,13 @@ const AdminDashboard = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
 
-  // ✅ NEW STATE FOR CLAIM APPROVAL
+  // Claim Approval State
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [selectedShadowUser, setSelectedShadowUser] = useState(null);
+
+  // ✅ NEW STATE: Bulk Assign
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [selectedBulkAgent, setSelectedBulkAgent] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -252,6 +235,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // ✅ DERIVED STATE: Shadow Agents (Robust Filtering) & Admin Properties
+  const shadowAgents = users.filter(u => 
+      u.role === 'agent' && 
+      (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
+  );
+  
+  const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin');
 
   const deleteProperty = async (id) => {
     if (window.confirm('Are you sure you want to delete this property?')) {
@@ -322,11 +313,11 @@ const AdminDashboard = () => {
     setIsAssignModalOpen(false);
   };
 
-  const handleAssignAgent = async (propertyId, agentId) => {
+  const handleAssignAgent = async (propertyId, payload) => {
     try {
       const { data } = await apiClient.put(
         `/admin/properties/${propertyId}/assign-agent`, 
-        { agentId },
+        payload, 
         { withCredentials: true }
       );
       alert(data.message);
@@ -337,7 +328,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ NEW: Handle Claim Approval
   const openClaimModal = (user) => {
     setSelectedShadowUser(user);
     setIsClaimModalOpen(true);
@@ -350,10 +340,31 @@ const AdminDashboard = () => {
             realEmail 
         });
         alert(data.message);
-        fetchData(); // Refresh list
+        fetchData(); 
     } catch (err) {
         alert(`Failed to approve claim: ${err.response?.data?.message || 'Error'}`);
     }
+  };
+
+  // ✅ NEW: Handle Bulk Assign
+  const openBulkAssign = (agent) => {
+      setSelectedBulkAgent(agent);
+      setIsBulkModalOpen(true);
+  };
+
+  const handleBulkAssign = async (agentId, propertyIds) => {
+      try {
+          // Loop through IDs and call assign endpoint (since we don't have a bulk endpoint yet)
+          const promises = propertyIds.map(id => 
+              apiClient.put(`/admin/properties/${id}/assign-agent`, { agentId }, { withCredentials: true })
+          );
+          await Promise.all(promises);
+          alert(`Successfully assigned ${propertyIds.length} properties.`);
+          fetchData();
+      } catch (error) {
+          alert("Some assignments may have failed.");
+          console.error(error);
+      }
   };
   
   const handleRegisterIPN = async () => {
@@ -455,6 +466,60 @@ const AdminDashboard = () => {
               </Link>
           </div>
         </section>
+
+        {/* ✅ --- NEW SECTION: SHADOW ACCOUNTS MANAGER --- */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <FaUserSecret className="text-yellow-500" /> Manage Shadow Accounts
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">View unclaimed profiles and assign listings directly.</p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                            <th className="p-3">Agent Name</th>
+                            <th className="p-3">Company</th>
+                            <th className="p-3">WhatsApp</th>
+                            <th className="p-3">Listings</th>
+                            <th className="p-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found. Create one via the "Assign Agent" modal on a property.</td></tr>}
+                        {shadowAgents.map(agent => (
+                            <tr key={agent._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                <td className="p-3 font-medium dark:text-white flex items-center gap-2">
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                                        <img src={agent.profilePicture} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                    {agent.name}
+                                </td>
+                                <td className="p-3 dark:text-gray-300">{agent.companyName || '-'}</td>
+                                <td className="p-3 dark:text-gray-300 font-mono text-xs">{agent.whatsappNumber || 'N/A'}</td>
+                                <td className="p-3 dark:text-gray-300">
+                                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">
+                                        {agent.propertyPostCount || 0}
+                                    </span>
+                                </td>
+                                <td className="p-3">
+                                    <button 
+                                        onClick={() => openBulkAssign(agent)}
+                                        className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition shadow-sm"
+                                    >
+                                        <FaListAlt /> Assign Properties
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </section>
         
         <section className="mb-12 p-6 bg-yellow-50 dark:bg-gray-800/50 rounded-xl border-l-4 border-yellow-400">
             <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
@@ -480,6 +545,11 @@ const AdminDashboard = () => {
         </section>
         
         <PendingApprovals />
+        
+        {/* ✅ ADDED LEAD MANAGER COMPONENT */}
+        <section className="mb-12">
+           <LeadManager />
+        </section>
 
         {/* === Manage Properties === */}
         <section className="mb-12">
@@ -715,6 +785,11 @@ const AdminDashboard = () => {
           </div>
         </section>
 
+        {/* ✅ NEW: PAYMENT SETTINGS MANAGER */}
+        <section className="mb-12">
+           <PaymentSettingsManager />
+        </section>
+
         <section>
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Property Reviews ({reviews.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
@@ -747,22 +822,39 @@ const AdminDashboard = () => {
         </section>
       </div>
 
+      {/* ✅ UPDATED: ANIMATE PRESENCE WITH UNIQUE KEYS */}
       <AnimatePresence>
-        <AssignAgentModal
-          show={isAssignModalOpen}
-          onClose={closeAssignModal}
-          property={selectedProperty}
-          agents={allAgents}
-          onAssign={handleAssignAgent}
-        />
+        {isAssignModalOpen && (
+            <AssignAgentModal
+                key="assign-modal"
+                show={isAssignModalOpen}
+                onClose={closeAssignModal}
+                property={selectedProperty}
+                agents={allAgents}
+                onAssign={handleAssignAgent}
+            />
+        )}
         
-        {/* ✅ NEW MODAL RENDERED HERE */}
-        <ApproveClaimModal
-          show={isClaimModalOpen}
-          onClose={() => setIsClaimModalOpen(false)}
-          user={selectedShadowUser}
-          onApprove={handleApproveClaim}
-        />
+        {isClaimModalOpen && (
+            <ApproveClaimModal
+                key="approve-modal"
+                show={isClaimModalOpen}
+                onClose={() => setIsClaimModalOpen(false)}
+                user={selectedShadowUser}
+                onApprove={handleApproveClaim}
+            />
+        )}
+
+        {isBulkModalOpen && (
+            <BulkAssignModal 
+                key="bulk-modal"
+                show={isBulkModalOpen} 
+                onClose={() => setIsBulkModalOpen(false)} 
+                agent={selectedBulkAgent} 
+                adminProperties={adminProperties} 
+                onBulkAssign={handleBulkAssign} 
+            />
+        )}
       </AnimatePresence>
     </>
   );

@@ -1,10 +1,17 @@
+// src/pages/AgentDashboard.jsx
+// (UPDATED: Added "Refresh Listing" logic)
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { FaEdit, FaTrash, FaEye, FaChartLine, FaPlus, FaSpinner, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaEye, FaChartLine, FaPlus, FaSpinner, FaCheckCircle, FaTimesCircle, FaSyncAlt } from 'react-icons/fa'; // ✅ Added FaSyncAlt
 import { motion } from 'framer-motion';
+
 // ✅ 1. IMPORT THE VIEWINGS COMPONENT
 import ScheduledViewings from '../components/ScheduledViewings'; 
+
+// ✅ 2. IMPORT THE NEW SUBSCRIPTION COMPONENT
+import LeadSubscriptionPanel from '../components/agent/LeadSubscriptionPanel';
 
 // Status badge component
 const StatusBadge = ({ status }) => {
@@ -27,6 +34,7 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(null); // ID of property being updated
+  const [refreshing, setRefreshing] = useState(null); // ✅ Track refresh action
 
   // Fetch Listings
   const fetchListings = async () => {
@@ -46,7 +54,7 @@ export default function AgentDashboard() {
     fetchListings();
   }, []);
 
-  // ✅ UPDATED: Handle Status Change (Supports Archive Removal)
+  // Handle Status Change (Supports Archive Removal)
   const handleStatusChange = async (id, newStatus) => {
     setUpdating(id);
     try {
@@ -79,6 +87,40 @@ export default function AgentDashboard() {
       alert('Failed to delete property.');
       setUpdating(null);
     }
+  };
+
+  // ✅ NEW: Handle Listing Refresh Payment
+  const handleRefreshListing = async (propertyId) => {
+    if (!window.confirm("Refresh this listing for 72 hours? Cost: 100 Ksh.")) return;
+    
+    setRefreshing(propertyId);
+    try {
+        const { data } = await apiClient.post('/payments/create-order', {
+            propertyId: propertyId,
+            orderType: 'listing_refresh',
+            amount: 100, // Fixed Price
+            description: 'Listing Refresh (72 Hours)'
+        });
+
+        if (data.paymentRedirectUrl) {
+            window.location.href = data.paymentRedirectUrl;
+        } else {
+            alert('Payment initiation failed. Please try again.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert(err.response?.data?.message || 'Failed to start payment.');
+    } finally {
+        setRefreshing(null);
+    }
+  };
+
+  // ✅ Helper: Check if property is eligible for refresh (> 14 days old)
+  const isEligibleForRefresh = (property) => {
+      if (property.status !== 'available') return false;
+      const createdDate = new Date(property.createdAt);
+      const daysOld = (new Date() - createdDate) / (1000 * 60 * 60 * 24);
+      return daysOld >= 14;
   };
 
   if (loading) {
@@ -117,7 +159,12 @@ export default function AgentDashboard() {
           </div>
         )}
 
-        {/* ✅ 2. PENDING APPROVALS SECTION ADDED */}
+        {/* ✅ 3. LEAD SUBSCRIPTION PANEL (Prominent Placement) */}
+        <div className="mb-10">
+           <LeadSubscriptionPanel />
+        </div>
+
+        {/* PENDING APPROVALS / VIEWINGS SECTION */}
         <div className="mb-10">
           <ScheduledViewings />
         </div>
@@ -163,6 +210,17 @@ export default function AgentDashboard() {
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {property.location}
                             </div>
+                            {/* ✅ SHOW REFRESH BUTTON IF ELIGIBLE */}
+                            {isEligibleForRefresh(property) && (
+                                <button
+                                    onClick={() => handleRefreshListing(property._id)}
+                                    disabled={refreshing === property._id}
+                                    className="mt-2 flex items-center gap-1 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200 transition"
+                                >
+                                    {refreshing === property._id ? <FaSpinner className="animate-spin" /> : <FaSyncAlt />}
+                                    Refresh Listing (100 Ksh)
+                                </button>
+                            )}
                           </div>
                         </div>
                       </td>

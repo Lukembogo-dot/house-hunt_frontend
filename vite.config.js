@@ -40,5 +40,15 @@ export default defineConfig({
         ]
       }
     })
-  ]
+  ],
+  // ✅ ADDED PROXY CONFIGURATION TO FIX API 404 ERRORS
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000', // Forward requests to Backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

@@ -1,5 +1,5 @@
 // src/pages/EditProperty.jsx
-// (UPDATED with Smart Shadow Agent Search)
+// (UPDATED: Fixed Owner Details Submission & Shadow Linking)
 
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
@@ -303,21 +303,25 @@ const EditProperty = () => {
 
     const dataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      if (key !== 'ownerDetails') {
+      // ✅ CRITICAL FIX: Handle Owner Details Specifically
+      if (key === 'ownerDetails') {
+        // Only send if we are Admin and have a name
+        if (user && user.role === 'admin' && formData.ownerDetails.name) {
+          dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
+        }
+      } else {
         dataToSend.append(key, formData[key]);
       }
     });
 
+    // ✅ IMPORTANT: Ensure Agent ID is sent if we selected a Shadow Agent
+    if (formData.agentId) {
+        dataToSend.append('agentId', formData.agentId);
+    }
+
     if (coordinates) {
       dataToSend.append('coordinates[lat]', coordinates.lat);
       dataToSend.append('coordinates[lng]', coordinates.lng);
-    }
-
-    if (user && user.role === 'admin') {
-      dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
-      dataToSend.append('ownerDetails[whatsapp]', formData.ownerDetails.whatsapp);
-      dataToSend.append('ownerDetails[tiktok]', formData.ownerDetails.tiktok);
-      dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
     }
     
     const validExistingImages = existingImages.filter(img => img.url);

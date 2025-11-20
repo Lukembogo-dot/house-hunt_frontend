@@ -1,5 +1,5 @@
 // src/pages/AddProperty.jsx
-// --- UPDATED with Payment Logic, Smart Pricing & Smart Shadow Agent Search ---
+// (FIXED: Full File - Search, Shadow Accounts, & Detail Editing)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import apiClient from "../api/axios";
 import { useAuth } from '../context/AuthContext';
 import { 
   FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
-  FaSpinner, FaStar, FaUserCheck, FaSearch 
+  FaSpinner, FaStar, FaUserCheck, FaSearch, FaExclamationCircle, FaUser
 } from 'react-icons/fa';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 import MapComponent from '../components/MapComponent';
@@ -15,17 +15,16 @@ import SmartPricingWidget from '../components/SmartPricingWidget';
 
 const MAX_FILE_SIZE_MB = 2; 
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
-
-// --- 1. SET THE PRICE FOR FEATURED LISTINGS ---
 const FEATURE_PRICE_PER_DAY = 170; 
 
+// Reusable Input Field Component
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
-  <div className="relative">
+  <div className="relative mb-4">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
     {icon && (
-      <div className="absolute inset-y-0 left-0 pl-3 pt-6 flex items-center pointer-events-none text-gray-400">
+      <div className="absolute inset-y-0 left-0 pl-3 pt-8 flex items-center pointer-events-none text-gray-400">
         {icon}
       </div>
     )}
@@ -38,6 +37,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       onChange={onChange}
       min={min}
       required={required}
+      autoComplete="off"
       className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${icon ? 'pl-10 pr-4' : 'px-4'}`}
     />
   </div>
@@ -54,7 +54,7 @@ const initialFormState = {
   listingType: 'sale',
   isFeatured: false,
   featuredDays: 3, 
-  agentId: '', // ✅ NEW: To link to an existing shadow profile
+  agentId: '', // Stores the ID if we select an existing agent
   ownerDetails: {
     name: '',
     whatsapp: '',
@@ -65,17 +65,15 @@ const initialFormState = {
 
 const AddProperty = () => {
   const [formData, setFormData] = useState(initialFormState);
-  
   const [coordinates, setCoordinates] = useState(NAIROBI_COORDS);
   const [mapCenter, setMapCenter] = useState(NAIROBI_COORDS);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  
   const [imageFiles, setImageFiles] = useState([]); 
   const [imageAltTexts, setImageAltTexts] = useState({}); 
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   
-  // ✅ NEW STATE FOR SMART AGENT SEARCH
+  // Search State
   const [existingAgents, setExistingAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -84,7 +82,6 @@ const AddProperty = () => {
   const { user } = useAuth();
 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
-  
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
   
   useEffect(() => {
@@ -102,14 +99,15 @@ const AddProperty = () => {
     };
     getInitialLocation();
 
-    // ✅ NEW: Fetch all agents/shadow profiles if User is Admin
+    // Fetch Agents for Admin Search
     const fetchAgents = async () => {
       if (user && user.role === 'admin') {
         try {
+          // This endpoint returns BOTH real agents and shadow accounts
           const { data } = await apiClient.get('/users/all-agents', { withCredentials: true });
-          setExistingAgents(data);
+          setExistingAgents(data || []);
         } catch (err) {
-          console.error("Failed to fetch existing agents for smart search", err);
+          console.error("Failed to fetch agents:", err);
         }
       }
     };
@@ -119,13 +117,9 @@ const AddProperty = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
     let processedValue = value;
-    if (type === 'checkbox') {
-      processedValue = checked;
-    } else if (name === 'featuredDays') {
-      processedValue = Number(value);
-    }
+    if (type === 'checkbox') processedValue = checked;
+    else if (name === 'featuredDays') processedValue = Number(value);
     
     setFormData(prevData => ({
       ...prevData,
@@ -133,28 +127,36 @@ const AddProperty = () => {
     }));
   };
   
+  // ✅ Handle Owner Details Input & Search Logic (UPDATED)
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
     
-    // 1. Update the form data
     setFormData(prevData => ({
       ...prevData,
       ownerDetails: {
         ...prevData.ownerDetails,
         [name]: value,
       },
-      // If user types manually, clear the linked agentId to prevent data mismatch
-      // unless they are just tweaking the name slightly
+      // If changing the NAME, reset the ID to prevent mismatch.
       agentId: name === 'name' ? '' : prevData.agentId 
     }));
 
-    // 2. ✅ SMART SEARCH LOGIC
+    // Filter Agents Logic
     if (name === 'name' && user.role === 'admin') {
-      if (value.length > 1) {
-        const matches = existingAgents.filter(agent => 
-          agent.name.toLowerCase().includes(value.toLowerCase()) || 
-          (agent.whatsappNumber && agent.whatsappNumber.includes(value))
-        );
+      if (value && value.length > 0) {
+        const searchTerm = value.toLowerCase();
+        
+        const matches = existingAgents.filter(agent => {
+          const agentName = agent.name ? agent.name.toLowerCase() : '';
+          const company = agent.companyName ? agent.companyName.toLowerCase() : ''; // ✅ Add Company Search
+          const agentPhone = agent.whatsappNumber ? agent.whatsappNumber : '';
+          
+          // Search Match Condition: Name OR Company OR Phone
+          return agentName.includes(searchTerm) || 
+                 company.includes(searchTerm) || 
+                 agentPhone.includes(searchTerm);
+        });
+        
         setFilteredAgents(matches);
         setShowSuggestions(true);
       } else {
@@ -163,11 +165,11 @@ const AddProperty = () => {
     }
   };
 
-  // ✅ NEW: Handle Selecting an Existing Shadow Agent
+  // ✅ Select Agent from Dropdown
   const selectShadowAgent = (agent) => {
     setFormData(prev => ({
       ...prev,
-      agentId: agent._id, // Link the property to this user ID
+      agentId: agent._id, 
       ownerDetails: {
         name: agent.name,
         whatsapp: agent.whatsappNumber || '',
@@ -179,32 +181,26 @@ const AddProperty = () => {
   };
 
   const handleAltTextChange = (index, value) => {
-    setImageAltTexts(prev => ({
-      ...prev,
-      [index]: value,
-    }));
+    setImageAltTexts(prev => ({ ...prev, [index]: value }));
   };
 
   const handleFileChange = (e) => {
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedFiles = [...imageFiles, ...newlySelectedFiles];
+    
     if (combinedFiles.length > 5) {
-      setStatus({ 
-        message: `Error: You can only upload a maximum of 5 images total.`, 
-        type: 'error' 
-      });
+      setStatus({ message: `Error: You can only upload a maximum of 5 images total.`, type: 'error' });
       e.target.value = null; 
       return;
     }
+    
     const oversizedFiles = combinedFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      setStatus({ 
-        message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.`, 
-        type: 'error' 
-      });
+      setStatus({ message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.`, type: 'error' });
       e.target.value = null; 
       return;
     }
+    
     setImageFiles(combinedFiles);
     const initialAltTexts = {};
     const existingCount = imageFiles.length; 
@@ -218,18 +214,13 @@ const AddProperty = () => {
   };
   
   const handleMapClick = async (e) => {
-    const clickedCoords = {
-      lat: e.latLng.lat(),
-      lng: e.latLng.lng(),
-    };
+    const clickedCoords = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     setCoordinates(clickedCoords);
     setIsGeocoding(true);
-    
     try {
       const { data } = await apiClient.get(`/maps/reverse-geocode?lat=${clickedCoords.lat}&lng=${clickedCoords.lng}`);
       setFormData(prev => ({ ...prev, location: data.address }));
     } catch (error) {
-      console.error("Reverse geocoding failed:", error);
       setStatus({ message: 'Could not find address for that location.', type: 'error' });
     } finally {
       setIsGeocoding(false);
@@ -252,7 +243,6 @@ const AddProperty = () => {
         setStatus({ message: 'Could not find coordinates for that address.', type: 'error' });
       }
     } catch (error) {
-      console.error("Geocoding failed:", error);
       setStatus({ message: 'Failed to geocode address.', type: 'error' });
     } finally {
       setIsGeocoding(false);
@@ -282,6 +272,11 @@ const AddProperty = () => {
         dataToSend.append(key, formData[key]);
       }
     });
+
+    // Include agentId if selected/found
+    if (formData.agentId) {
+        dataToSend.append('agentId', formData.agentId);
+    }
     
     if (coordinates) {
       dataToSend.append('coordinates[lat]', coordinates.lat);
@@ -312,9 +307,10 @@ const AddProperty = () => {
       }
 
     } catch (error) {
-      console.error("Error creating property:", error.response?.data || error.message);
+      console.error("Error creating property:", error);
+      const errMsg = error.response?.data?.message || error.message || 'Unknown error';
       setStatus({ 
-        message: `Failed to add property: ${error.response?.data?.message || 'Check console for details.'}`, 
+        message: `Failed to add property: ${errMsg}`, 
         type: 'error' 
       });
     } finally {
@@ -330,11 +326,12 @@ const AddProperty = () => {
         </h1>
         
         {status.message && (
-          <div className={`p-4 mb-6 text-sm rounded-lg ${
+          <div className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 ${
             status.type === 'success' 
               ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
               : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
           }`} role="alert">
+            {status.type === 'error' && <FaExclamationCircle />}
             {status.message}
           </div>
         )}
@@ -390,7 +387,7 @@ const AddProperty = () => {
             </div>
           </div>
           
-          {/* 10. --- NEW MAP & LOCATION SECTION --- */}
+          {/* Map Section */}
           <div className="space-y-6 pt-6 border-t dark:border-gray-700">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
               Location
@@ -415,11 +412,7 @@ const AddProperty = () => {
                   disabled={isGeocoding}
                   className="w-full h-11 flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 disabled:opacity-50"
                 >
-                  {isGeocoding ? (
-                    <FaSpinner className="animate-spin" />
-                  ) : (
-                    <FaMapMarkerAlt />
-                  )}
+                  {isGeocoding ? <FaSpinner className="animate-spin" /> : <FaMapMarkerAlt />}
                   <span>Find on Map</span>
                 </button>
               </div>
@@ -525,54 +518,97 @@ const AddProperty = () => {
             </div>
           )}
 
-          {/* --- ✅ UPDATED: Owner & Social Media Details with SMART SEARCH --- */}
+          {/* --- ✅ UPDATED: Owner & Social Media Details with FIXED SEARCH UI --- */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <FaUserCheck className="text-blue-500" /> Owner & Social Media Details
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                (Admin Only) Start typing a name to search existing Shadow Profiles. Selecting one will consolidate this property under their account.
+                (Admin Only) Search by Agent Name, <strong>Company Name</strong>, or Phone Number.
               </p>
               
-              {/* SMART NAME INPUT */}
-              <div className="relative">
-                <InputField 
-                  label="Owner/Agent Name (Searchable)" 
-                  name="name" 
-                  value={formData.ownerDetails.name}
-                  onChange={handleOwnerChange}
-                  placeholder="e.g., Jane Doe"
-                  required={false}
-                  icon={<FaSearch />}
-                />
+              {/* Search Container */}
+              <div className="relative z-50 mb-4"> 
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="search-agent">
+                  Owner/Agent Name (Searchable)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                    <FaSearch />
+                  </div>
+                  <input
+                    type="text"
+                    id="search-agent"
+                    name="name"
+                    value={formData.ownerDetails.name}
+                    onChange={handleOwnerChange}
+                    onFocus={() => formData.ownerDetails.name && setShowSuggestions(true)}
+                    placeholder="e.g., Jane Doe or Agency Name"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    autoComplete="off"
+                  />
+                </div>
                 
-                {/* SUGGESTIONS DROPDOWN */}
+                {/* Suggestions Dropdown */}
                 {showSuggestions && filteredAgents.length > 0 && (
-                  <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
                     {filteredAgents.map((agent) => (
-                      <li 
+                      <div 
                         key={agent._id}
-                        onClick={() => selectShadowAgent(agent)}
-                        className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0"
+                        onMouseDown={(e) => { e.preventDefault(); selectShadowAgent(agent); }}
+                        className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0 flex items-center justify-between"
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-bold text-gray-800 dark:text-gray-200">{agent.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{agent.whatsappNumber || 'No WhatsApp'}</p>
+                        <div className="flex items-center gap-3">
+                          {/* Avatar / Initials Logic */}
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0">
+                             {agent.profilePicture && !agent.profilePicture.includes('placehold.co') ? (
+                               <img src={agent.profilePicture} alt={agent.name} className="w-full h-full object-cover" />
+                             ) : (
+                               <div className="w-full h-full flex items-center justify-center text-gray-500">
+                                 <FaUser />
+                               </div>
+                             )}
                           </div>
-                          {!agent.isAccountClaimed && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Shadow</span>
-                          )}
+
+                          <div>
+                            <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">
+                              {agent.name}
+                            </p>
+                            
+                            {/* ✅ SHOW COMPANY NAME IF EXISTS */}
+                            {agent.companyName && (
+                               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                                 {agent.companyName}
+                               </p>
+                            )}
+
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {agent.whatsappNumber || 'No WhatsApp'}
+                            </p>
+                          </div>
                         </div>
-                      </li>
+
+                        {/* Status Badge */}
+                        <div className="flex flex-col items-end gap-1">
+                           {!agent.isAccountClaimed ? (
+                             <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold">
+                               Shadow
+                             </span>
+                           ) : (
+                             <span className="text-xs bg-green-100 text-green-800 border border-green-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                               <FaUserCheck size={10} /> Verified
+                             </span>
+                           )}
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
                 
                 {formData.agentId && (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-center gap-2">
-                    <FaUserCheck /> Linked to Shadow Profile: <strong>{formData.ownerDetails.name}</strong>
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-center gap-2 animate-fade-in">
+                    <FaUserCheck /> Linked to Profile: <strong>{formData.ownerDetails.name}</strong>
                   </div>
                 )}
               </div>
