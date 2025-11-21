@@ -1,11 +1,12 @@
 // src/App.jsx
-// (FIXED: Restored Cost of Living Calculator Section & Integrated WantedRequestPage & Community Insights & Community Hub)
+// (UPDATED: Added Helmet for pSEO SEO Meta Tags)
 
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Link, useLocation, Routes, Route } from "react-router-dom"; // ✅ Added Routes, Route
+import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa";
+import { Helmet } from 'react-helmet-async'; // ✅ Added Helmet Import
 
 // --- Components ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -26,12 +27,12 @@ import AppHeader from "./components/layout/AppHeader";
 import AppFooter from "./components/layout/AppFooter";
 import AppRoutesConfig from "./components/layout/AppRoutesConfig";
 
-// ✅ NEW IMPORTS: Community Insights Pages
-import CommunityHub from './pages/CommunityHub'; // ✅ Added Community Hub Import
+// Community Insights Pages
+import CommunityHub from './pages/CommunityHub'; 
 import ShareInsight from './pages/ShareInsight';
 import CommunityPost from './pages/CommunityPost';
 
-// ✅ NEW IMPORT: The component built to consume the public request data
+// Demand-Side Page
 import WantedRequestPage from './pages/WantedRequestPage';
 
 // --- Context ---
@@ -44,6 +45,54 @@ const PageLoader = () => (
     <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
+
+// ✅ UPDATED: SEARCH PAGE WRAPPER (Now includes SEO Tags)
+const SearchPageWrapper = () => {
+  const { listingType, location } = useParams();
+  
+  // Format for display (e.g. "kilimani" -> "Kilimani")
+  const displayLocation = location ? location.charAt(0).toUpperCase() + location.slice(1) : 'Kenya';
+  const displayType = listingType === 'rent' ? 'Rent' : 'Sale';
+  
+  // ✅ DYNAMIC SEO TAGS
+  const metaTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
+  const metaDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
+  const canonicalUrl = `https://www.househuntkenya.co.ke/search/${listingType}/${location}`;
+
+  const filterOverrides = {
+    listingType: listingType, 
+    location: location       
+  };
+
+  return (
+    <>
+      {/* ✅ INJECT DYNAMIC META TAGS */}
+      <Helmet>
+        <title>{metaTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        
+        <meta property="og:title" content={metaTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="website" />
+      </Helmet>
+
+      <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+          <div className="max-w-6xl mx-auto">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 capitalize">
+                  {listingType === 'rent' ? 'Properties for Rent' : 'Properties for Sale'} in {displayLocation}
+              </h1>
+              <PropertyList 
+                  filterOverrides={filterOverrides} 
+                  showSearchBar={true} 
+                  showTitle={false} 
+              />
+          </div>
+      </div>
+    </>
+  );
+};
 
 function MainLayout() {
   const { previewRole } = useAuth(); 
@@ -193,25 +242,27 @@ function MainLayout() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-950 overflow-x-hidden">
+    <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
       <AppHeader />
       <GlobalSchemaInjector />
       {previewRole && <PreviewBanner />}
 
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
-            {/* ✅ INTEGRATION: Wrapped AppRoutesConfig in a main Routes block */}
             <Routes location={location} key={location.pathname}>
                 
                 {/* 1. The New Route for Demand-Side pSEO */}
                 <Route path="/wanted/:slug" element={<WantedRequestPage />} />
 
-                {/* ✅ 2. NEW ROUTES FOR COMMUNITY INSIGHTS (pSEO Loop) */}
-                <Route path="/community" element={<CommunityHub />} /> {/* ✅ Added Hub Route */}
+                {/* 2. Community Insights (pSEO Loop) */}
+                <Route path="/community" element={<CommunityHub />} />
                 <Route path="/share-insight" element={<ShareInsight />} />
                 <Route path="/community/:slug" element={<CommunityPost />} />
 
-                {/* 3. Fallback to Existing Config for all other routes */}
+                {/* ✅ 3. ADDED: pSEO SEARCH ROUTE (Matches Sitemap) */}
+                <Route path="/search/:listingType/:location" element={<SearchPageWrapper />} />
+
+                {/* 4. Fallback to Existing Config for all other routes */}
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
             
             </Routes>
