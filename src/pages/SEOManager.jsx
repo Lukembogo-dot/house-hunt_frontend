@@ -1,5 +1,5 @@
 // src/pages/SEOManager.jsx
-// (Strictly Updated: Fetches Service Posts for Dropdown & Fixes Page Selector)
+// (Strictly Updated: Adds FAQs to Page Selector Dropdown)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter, FaLink, FaExclamationTriangle, FaBuilding, FaInstagram, FaLinkedin } from 'react-icons/fa';
@@ -247,17 +247,20 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
       { pagePath: '/contact', metaTitle: 'Contact Us', breadCrumbTitle: 'Contact' },
   ];
   
-  // ✅ 1. UPDATED: Explicitly fetch Service Posts to populate the dropdown
+  // ✅ 1. UPDATED: Explicitly fetch Service Posts AND FAQs to populate the dropdown
   const fetchPagesList = useCallback(async () => {
     try {
         // 1. Get Configured SEO Pages (Dynamic)
         const { data: dynamicPagesData } = await apiClient.get('/seo/pages');
         const dynamicPages = Array.isArray(dynamicPagesData) ? dynamicPagesData : [];
         
-        // 2. Get ALL Service Posts (to ensure they appear even if not configured yet)
+        // 2. Get ALL Service Posts
         const { data: servicePosts } = await apiClient.get('/services'); 
+
+        // ✅ 3. NEW: Get ALL FAQs
+        const { data: faqPosts } = await apiClient.get('/faqs');
         
-        // 3. Map Keywords (pSEO)
+        // 4. Map Keywords (pSEO)
         const pSeoPages = keywordLibrary.map(kw => ({
             pagePath: kw.path,
             metaTitle: `${kw.name} (pSEO)`,
@@ -265,7 +268,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             type: 'Keyword'
         }));
 
-        // 4. Map Services to Page Objects
+        // 5. Map Services to Page Objects
         const servicePages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
             pagePath: `/services/${sp.slug}`,
             metaTitle: sp.title,
@@ -273,21 +276,33 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             type: 'Service Post'
         }));
 
+        // ✅ 6. NEW: Map FAQs to Page Objects
+        const faqPages = (Array.isArray(faqPosts) ? faqPosts : []).map(faq => ({
+            pagePath: `/faq/${faq.slug}`,
+            metaTitle: faq.question, // Use question as the title
+            breadCrumbTitle: 'FAQ',
+            type: 'FAQ'
+        }));
+
         const pageMap = new Map();
         
         // Priority of display in Dropdown:
+        // Add FAQs to the map
+        faqPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+        
         pSeoPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
         staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false, type: 'Static' }));
         servicePages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true })); 
         
-        // Overwrite with actual DB settings if they exist
+        // Overwrite with actual DB settings if they exist (this keeps your saved SEO settings)
         dynamicPages.forEach(page => {
           const existing = pageMap.get(page.pagePath) || {};
+          // Keep the 'type' if we found it from the raw fetches, otherwise it might just be 'Dynamic'
           pageMap.set(page.pagePath, { ...existing, ...page, isDynamic: true });
         });
 
         const uniquePages = Array.from(pageMap.values());
-        // Sort alphabetically by path for easier finding
+        // Sort alphabetically by path
         uniquePages.sort((a, b) => a.pagePath.localeCompare(b.pagePath));
         
         setPagesList(uniquePages);
