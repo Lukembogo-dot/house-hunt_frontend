@@ -48,11 +48,11 @@ const TopAgents = () => {
       <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-            Top Agents {/* ✅ Updated Title */}
+            Top Agents
           </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-6"> {/* ✅ Updated Grid to 6 */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6"> {/* ✅ Updated Grid to 5 */}
             {/* Placeholder cards */}
-            {[...Array(6)].map((_, i) => ( // ✅ Updated to 6 placeholders
+            {[...Array(5)].map((_, i) => ( // ✅ Updated to 5 placeholders
               <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-pulse">
                 <div className="w-24 h-24 rounded-full bg-gray-300 dark:bg-gray-700 mx-auto mb-4"></div>
                 <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mx-auto mb-2"></div>
@@ -74,10 +74,10 @@ const TopAgents = () => {
     <section className="py-20 px-6 bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto max-w-6xl">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-          Top Agents {/* ✅ Updated Title */}
+          Top Agents
         </h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-6"> {/* ✅ Updated Grid to 6 */}
-          {agents.map(agent => (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6"> {/* ✅ Updated Grid to 5 */}
+          {agents.slice(0, 5).map(agent => ( // ✅ Strictly limited to 5 agents
             <Link
               to={`/agent/${agent._id}`}
               key={agent._id}
