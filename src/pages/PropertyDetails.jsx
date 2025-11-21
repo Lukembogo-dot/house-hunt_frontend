@@ -123,62 +123,152 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
+// ✅ IMPROVED SEO INJECTOR WITH ROBUST SCHEMA (Product + Place + Offer + Agent)
 const PropertySeoInjector = ({ seo, property }) => {
-    const safeImages = getSafeImageDetails(property.images, property.title);
-    const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
-    const pageUrl = window.location.href;
-    const canonical = seo.canonicalUrl ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`) : pageUrl;
+    if (!property) return null;
 
+    const safeImages = getSafeImageDetails(property.images, property.title);
+    // Use the first 3 images for Schema (Google recommends multiple)
+    const schemaImages = safeImages.slice(0, 3).map(img => img.url); 
+    const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
+    
+    const pageUrl = window.location.href;
+    const canonical = seo.canonicalUrl 
+        ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`) 
+        : pageUrl;
+
+    // 1. Determine Schema Type based on Property Type
+    const getSchemaType = (type) => {
+        const mapping = {
+            'apartment': 'Apartment',
+            'house': 'House',
+            'airbnb': 'VacationRental',
+            'land': 'Landform', 
+        };
+        return mapping[type] || 'Product'; // Default to Product if unknown
+    };
+
+    // 2. Smart Agent/Owner Resolution
+    const getAgentSchema = () => {
+        // Priority 1: Shadow Account (Owner Details)
+        if (property.ownerDetails && property.ownerDetails.name) {
+            return {
+                "@type": "RealEstateAgent",
+                "name": property.ownerDetails.name,
+                "telephone": property.ownerDetails.whatsapp || property.ownerDetails.email || undefined
+            };
+        }
+        // Priority 2: Registered Agent
+        if (property.agent && property.agent.name) {
+            return {
+                "@type": "RealEstateAgent",
+                "name": property.agent.name,
+                "image": property.agent.profilePicture || undefined,
+                "telephone": property.agent.phoneNumber || property.agent.whatsappNumber || undefined
+            };
+        }
+        // Fallback: Platform
+        return { "@type": "Organization", "name": "HouseHunt Kenya" };
+    };
+
+    // 3. Generate the Rich Schema
     const generatePropertySchema = () => {
-        const listingSchema = {
+        const schemaType = getSchemaType(property.type);
+        
+        // Base Schema (combines Product & Place logic)
+        const schema = {
             "@context": "https://schema.org",
-            "@type": property.listingType === 'sale' ? "HouseForSale" : "RentalListing",
+            "@type": schemaType,
             "name": seo.metaTitle || property.title,
             "description": seo.metaDescription || property.description?.substring(0, 160),
             "url": pageUrl,
-            "image": firstImageUrl,
-            "datePosted": property.createdAt,
+            "image": schemaImages, 
+            "identifier": property._id,
+            
+            // Address Logic
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": property.location.split(',')[0].trim(), // e.g. "Kilimani"
+                "addressLocality": "Nairobi", // Defaulting to Nairobi context based on your app
+                "addressCountry": "KE"
+            },
+
+            // Geo Coordinates
+            ...(property.coordinates?.lat && { 
+                "geo": { 
+                    "@type": "GeoCoordinates", 
+                    "latitude": property.coordinates.lat, 
+                    "longitude": property.coordinates.lng 
+                } 
+            }),
+
+            // Specifics for Houses/Apartments
+            ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
+            
+            // Amenities (Mapped from Features array)
+            ...(property.features && property.features.length > 0 && {
+                "amenityFeature": property.features.map(feature => ({
+                    "@type": "LocationFeatureSpecification",
+                    "name": feature,
+                    "value": "true"
+                }))
+            }),
+
+            // The Offer (Price & Availability)
             "offers": {
                 "@type": "Offer",
                 "price": property.price,
                 "priceCurrency": "KES",
-                "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-                "seller": { "@type": "RealEstateAgent", "name": property.ownerDetails?.name || property.agent?.name || 'HouseHunt Kenya' }
-            },
-            ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
-            ...(property.bathrooms && { "numberOfBathroomsTotal": property.bathrooms }),
-            ...(property.size && { "floorSize": { "@type": "QuantitativeValue", "value": property.size, "unitCode": "SQF" } }), 
-            ...(property.coordinates?.lat && { "geo": { "@type": "GeoCoordinates", "latitude": property.coordinates.lat, "longitude": property.coordinates.lng } }),
-            ...(property.location && { "address": { "@type": "PostalAddress", "addressLocality": property.location.split(',')[0].trim(), "addressRegion": "Nairobi", "addressCountry": "KE" } }),
-            "mainEntity": undefined,
+                "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0], // Valid for 1 year
+                "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
+                "url": pageUrl,
+                "seller": getAgentSchema() // Uses logic from step 2
+            }
         };
-        if (seo.faqs && seo.faqs.length > 0) {
-            listingSchema.mainEntity = {
-              "@context": "https://schema.org",
-              "@type": "FAQPage",
-              "mainEntity": seo.faqs.map(faq => ({ "@type": "Question", "name": faq.question, "acceptedAnswer": { "@type": "Answer", "text": faq.answer } }))
-            };
-        } else delete listingSchema.mainEntity; 
-        return listingSchema;
+        
+        return schema;
     };
+
     const schemaData = generatePropertySchema();
+
+    // Breadcrumb Schema for better navigation structure in SERPs
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
+            { "@type": "ListItem", "position": 2, "name": property.listingType === 'rent' ? "For Rent" : "For Sale", "item": `https://www.househuntkenya.co.ke/search/${property.listingType}/nairobi` },
+            { "@type": "ListItem", "position": 3, "name": property.title, "item": pageUrl }
+        ]
+    };
+
     return (
         <Helmet>
+            {/* Standard Meta Tags */}
             <title>{seo.metaTitle}</title>
             <meta name="description" content={seo.metaDescription} />
             {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
             <link rel="canonical" href={canonical} />
+
+            {/* Open Graph / Facebook */}
             <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
             <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
             <meta property="og:url" content={pageUrl} />
-            <meta property="og:type" content="article" />
+            <meta property="og:type" content="product" /> {/* Changed to product for better intent */}
             <meta property="og:image" content={firstImageUrl} /> 
+            <meta property="og:price:amount" content={property.price} />
+            <meta property="og:price:currency" content="KES" />
+
+            {/* Twitter */}
             <meta property="twitter:card" content="summary_large_image" />
             <meta property="twitter:url" content={pageUrl} />
             <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
             <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
             <meta property="twitter:image" content={firstImageUrl} /> 
-            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }} />
+            
+            {/* JSON-LD Schemas */}
+            <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
+            <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
         </Helmet>
     );
 };
