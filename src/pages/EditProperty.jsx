@@ -1,28 +1,37 @@
 // src/pages/EditProperty.jsx
-// (UPDATED: Fixed Owner Details Submission & Shadow Linking)
+// (UPDATED: Amenities, Land Size, Price Freq, Boost Listing & Custom Features)
 
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { 
   FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
-  FaSpinner, FaUserCheck, FaSearch 
+  FaSpinner, FaUserCheck, FaSearch, FaStar, FaCheckSquare, FaSquare, FaPlus 
 } from 'react-icons/fa'; 
 import { useAuth } from '../context/AuthContext';
+import { useFeatureFlag } from '../context/FeatureFlagContext'; 
 import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent'; 
 import SmartPricingWidget from '../components/SmartPricingWidget'; 
 
 const MAX_FILE_SIZE_MB = 2;
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
+const FEATURE_PRICE_PER_DAY = 170; 
+
+// ✅ NEW: STANDARD AMENITIES LIST
+const AMENITIES_LIST = [
+  "Wifi", "Parking", "CCTV", "Borehole", "Swimming Pool", "Gym",
+  "Elevator", "Backup Generator", "Fenced", "Garden", "Staff Quarters",
+  "Security Guard", "Balcony", "Wheelchair Access", "Fiber Internet", "Pet Friendly"
+];
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
-  <div className="relative">
+  <div className="relative mb-4">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
     {icon && (
-      <div className="absolute inset-y-0 left-0 pl-3 pt-6 flex items-center pointer-events-none text-gray-400">
+      <div className="absolute inset-y-0 left-0 pl-3 pt-8 flex items-center pointer-events-none text-gray-400">
         {icon}
       </div>
     )}
@@ -58,16 +67,29 @@ const AltTextInputField = ({ label, value, onChange }) => (
 
 const EditProperty = () => {
   const { user } = useAuth(); 
+  const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     location: '',
     price: '',
     bedrooms: '',
+    
+    // ✅ NEW FIELDS
+    landSize: '', 
+    priceFrequency: 'month',
+    amenities: [], 
+
     type: 'apartment',
     status: 'available', 
     listingType: 'sale',
-    agentId: '', // ✅ NEW: To link/relink to shadow profile
+    
+    // ✅ FEATURED FIELDS
+    isFeatured: false,
+    featuredDays: 3,
+
+    agentId: '', 
     ownerDetails: {
       name: '',
       whatsapp: '',
@@ -86,13 +108,18 @@ const EditProperty = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
 
-  // ✅ NEW STATE FOR SMART AGENT SEARCH
+  // ✅ STATE FOR CUSTOM AMENITY INPUT
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
+
+  // Agent Search State
   const [existingAgents, setExistingAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const navigate = useNavigate();
   const { id: propertyId } = useParams();
+  
+  const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
 
   useEffect(() => {
     const fetchPropertyAndAgents = async () => {
@@ -120,10 +147,19 @@ const EditProperty = () => {
           location: data.location,
           price: data.price,
           bedrooms: data.bedrooms || '', 
+          
+          // ✅ POPULATE NEW FIELDS
+          landSize: data.landSize || '',
+          priceFrequency: data.priceFrequency || 'month',
+          amenities: data.amenities || [], 
+
           type: data.type,
           status: data.status || 'available', 
           listingType: data.listingType || 'sale',
-          // If property has a linked agent (even shadow), store ID here
+          
+          isFeatured: data.isFeatured || false,
+          featuredDays: 3, // Reset duration selector on load
+
           agentId: data.agent ? data.agent._id : '', 
           ownerDetails: data.ownerDetails || { name: '', whatsapp: '', tiktok: '', instagram: '' },
         });
@@ -153,28 +189,54 @@ const EditProperty = () => {
   }, [propertyId, user]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
+    let processedValue = value;
+    if (type === 'checkbox' && name === 'isFeatured') processedValue = checked;
+    else if (name === 'featuredDays') processedValue = Number(value);
+
     setFormData(prevData => ({
       ...prevData,
-      [name]: value,
+      [name]: processedValue,
     }));
+  };
+  
+  // ✅ NEW: Handle Amenities Toggle (Standard & Custom)
+  const handleAmenityToggle = (amenity) => {
+    setFormData(prev => {
+      const current = prev.amenities || [];
+      if (current.includes(amenity)) {
+        return { ...prev, amenities: current.filter(a => a !== amenity) };
+      } else {
+        return { ...prev, amenities: [...current, amenity] };
+      }
+    });
+  };
+
+  // ✅ NEW: Add Custom Amenity
+  const handleAddCustomAmenity = (e) => {
+    e.preventDefault(); 
+    const trimmed = customAmenityInput.trim();
+    if (!trimmed) return;
+    
+    if (!formData.amenities.includes(trimmed)) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: [...prev.amenities, trimmed]
+      }));
+    }
+    setCustomAmenityInput('');
   };
 
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
-    
-    // 1. Update Form
     setFormData(prevData => ({
       ...prevData,
       ownerDetails: {
         ...prevData.ownerDetails,
         [name]: value,
       },
-      // If user types name manually, we might be creating a NEW shadow profile
-      // or searching for one. We don't clear agentId immediately unless they change name completely.
     }));
 
-    // 2. ✅ SMART SEARCH LOGIC
     if (name === 'name' && user.role === 'admin') {
       if (value.length > 1) {
         const matches = existingAgents.filter(agent => 
@@ -189,11 +251,10 @@ const EditProperty = () => {
     }
   };
 
-  // ✅ NEW: Handle Selecting an Existing Shadow Agent
   const selectShadowAgent = (agent) => {
     setFormData(prev => ({
       ...prev,
-      agentId: agent._id, // Link the property to this user ID
+      agentId: agent._id, 
       ownerDetails: {
         name: agent.name,
         whatsapp: agent.whatsappNumber || '',
@@ -218,7 +279,6 @@ const EditProperty = () => {
   };
 
   const handleFileChange = (e) => {
-    // ... (unchanged file logic) ...
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedNewFiles = [...newImageFiles, ...newlySelectedFiles];
     if (combinedNewFiles.length > 5) {
@@ -303,18 +363,21 @@ const EditProperty = () => {
 
     const dataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      // ✅ CRITICAL FIX: Handle Owner Details Specifically
+      // Handle Owner Details
       if (key === 'ownerDetails') {
-        // Only send if we are Admin and have a name
         if (user && user.role === 'admin' && formData.ownerDetails.name) {
           dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
         }
-      } else {
+      } 
+      // ✅ SEND AMENITIES AS JSON
+      else if (key === 'amenities') {
+          dataToSend.append('amenities', JSON.stringify(formData.amenities));
+      }
+      else {
         dataToSend.append(key, formData[key]);
       }
     });
 
-    // ✅ IMPORTANT: Ensure Agent ID is sent if we selected a Shadow Agent
     if (formData.agentId) {
         dataToSend.append('agentId', formData.agentId);
     }
@@ -336,18 +399,21 @@ const EditProperty = () => {
       dataToSend.append('newImageAltTexts', JSON.stringify(newImageAltTextsArray));
     }
 
-
     try {
       const response = await apiClient.put(`/properties/${propertyId}`, dataToSend, {
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      setStatus({ message: `Success! Property "${response.data.title}" updated. Redirecting...`, type: 'success' });
-      
-      setTimeout(() => {
-        navigate(`/properties/${response.data.slug}`);
-      }, 2000);
+      if (formData.isFeatured && response.data.paymentRedirectUrl) {
+        setStatus({ message: 'Changes saved! Redirecting to payment for boost...', type: 'success' });
+        window.location.href = response.data.paymentRedirectUrl;
+      } else {
+        setStatus({ message: `Success! Property "${response.data.title}" updated. Redirecting...`, type: 'success' });
+        setTimeout(() => {
+          navigate(`/properties/${response.data.slug}`);
+        }, 2000);
+      }
 
     } catch (error) {
       console.error("Error updating property:", error.response?.data || error.message);
@@ -386,6 +452,62 @@ const EditProperty = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <InputField label="Property Title" name="title" value={formData.title} onChange={handleChange} />
           
+          {/* ✅ UPDATED PRICE SECTION WITH FREQUENCY */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="flex gap-2">
+                <div className="flex-1">
+                  <InputField 
+                    label="Price (Ksh)" 
+                    name="price" 
+                    type="number" 
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15M'}
+                    min={100} 
+                  />
+                </div>
+                {(formData.type === 'airbnb' || formData.listingType === 'rent') && (
+                   <div className="w-1/3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                      <select
+                         name="priceFrequency"
+                         value={formData.priceFrequency}
+                         onChange={handleChange}
+                         className="w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      >
+                         <option value="month">/ Month</option>
+                         <option value="night">/ Night</option>
+                         <option value="week">/ Week</option>
+                         <option value="year">/ Year</option>
+                      </select>
+                   </div>
+                )}
+             </div>
+
+             {formData.type === 'land' ? (
+              <InputField 
+                label="Land Size" 
+                name="landSize" 
+                type="text" 
+                value={formData.landSize}
+                onChange={handleChange}
+                placeholder="e.g., 50x100, 1 Acre, 0.5 Ha"
+                required={true} 
+              />
+            ) : (
+              <InputField 
+                label="Bedrooms" 
+                name="bedrooms" 
+                type="number" 
+                value={formData.bedrooms}
+                onChange={handleChange}
+                min={0} 
+                placeholder="e.g., 3"
+                required={false} 
+              />
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="listingType">
@@ -468,29 +590,67 @@ const EditProperty = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <InputField 
-              label="Price (Ksh)" 
-              name="price" 
-              type="number" 
-              value={formData.price}
-              onChange={handleChange}
-              placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15000000'}
-              min={100} 
-            />
-            
-            {formData.type !== 'land' && (
-              <InputField 
-                label="Bedrooms" 
-                name="bedrooms" 
-                type="number" 
-                value={formData.bedrooms}
-                onChange={handleChange}
-                min={0} 
-                placeholder="e.g., 3"
-                required={false} 
-              />
-            )}
+          {/* ✅ NEW: AMENITIES SECTION (CHECKBOX GRID + CUSTOM INPUT) */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+               Amenities & Features
+             </h2>
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {AMENITIES_LIST.map(amenity => (
+                  <div key={amenity} 
+                       onClick={() => handleAmenityToggle(amenity)}
+                       className={`flex items-center p-3 rounded-lg border cursor-pointer transition select-none
+                       ${formData.amenities.includes(amenity) 
+                         ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400' 
+                         : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600'
+                       }`}
+                  >
+                    <div className={`mr-3 text-lg ${formData.amenities.includes(amenity) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                       {formData.amenities.includes(amenity) ? <FaCheckSquare /> : <FaSquare />}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{amenity}</span>
+                  </div>
+                ))}
+             </div>
+
+             {/* Custom Amenity Input */}
+             <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Add Custom Feature (e.g., Jacuzzi, Solar Heating)
+                </label>
+                <div className="flex gap-2">
+                   <input 
+                     type="text"
+                     value={customAmenityInput}
+                     onChange={(e) => setCustomAmenityInput(e.target.value)}
+                     placeholder="Type and click Add"
+                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                     onKeyDown={(e) => e.key === 'Enter' && handleAddCustomAmenity(e)}
+                   />
+                   <button 
+                     type="button" 
+                     onClick={handleAddCustomAmenity}
+                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-1"
+                   >
+                     <FaPlus size={12} /> Add
+                   </button>
+                </div>
+                
+                {/* Display Custom Amenities that are NOT in standard list */}
+                {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
+                   <div className="mt-3 flex flex-wrap gap-2">
+                      {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
+                         <span key={idx} className="bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
+                            {custom}
+                            <FaTimes 
+                              className="cursor-pointer hover:text-red-500 transition" 
+                              onClick={() => handleAmenityToggle(custom)} 
+                            />
+                         </span>
+                      ))}
+                   </div>
+                )}
+             </div>
           </div>
 
           <SmartPricingWidget 
@@ -651,6 +811,61 @@ const EditProperty = () => {
                 icon={<FaInstagram />}
                 required={false}
               />
+            </div>
+          )}
+
+          {/* ✅ NEW: BOOST LISTING SECTION (IN EDIT PAGE) */}
+          {isFeaturedListingEnabled && (
+            <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Boost Your Listing
+              </h2>
+              <div className="relative flex items-start bg-blue-50 dark:bg-blue-900/30 border border-blue-500/30 p-4 rounded-lg">
+                <div className="flex-shrink-0">
+                  <FaStar className="h-6 w-6 text-yellow-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <label htmlFor="isFeatured" className="block text-lg font-bold text-gray-900 dark:text-white">
+                    Feature this Listing
+                  </label>
+                  <p id="isFeatured-description" className="text-gray-700 dark:text-gray-300">
+                    Your listing will be highlighted and shown on the homepage.
+                  </p>
+                  
+                  {formData.isFeatured && (
+                    <div className="mt-4">
+                      <label htmlFor="featuredDays" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Select Duration
+                      </label>
+                      <select
+                        id="featuredDays"
+                        name="featuredDays"
+                        value={formData.featuredDays}
+                        onChange={handleChange}
+                        className="mt-1 block w-full md:w-1/2 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-2"
+                      >
+                        <option value={3}>3 Days</option>
+                        <option value={7}>7 Days</option>
+                        <option value={14}>14 Days</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-2">
+                    Total Price: Ksh {calculatedPrice}
+                  </p>
+                </div>
+                <div className="flex items-center h-5">
+                  <input
+                    id="isFeatured"
+                    name="isFeatured"
+                    type="checkbox"
+                    checked={formData.isFeatured}
+                    onChange={handleChange}
+                    className="h-6 w-6 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
           )}
 

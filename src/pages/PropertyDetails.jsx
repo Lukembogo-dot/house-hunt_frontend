@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Refactored & Added Insights CTA via Components)
+// (UPDATED - Added Amenities Component)
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
@@ -21,6 +21,7 @@ import PropertyFaqSection from "../components/PropertyFaqSection";
 // ✅ IMPORT NEW COMPONENTS
 import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
+import PropertyAmenities from "../components/property/PropertyAmenities"; // ✅ IMPORTED
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -425,6 +426,11 @@ const PropertyDetails = () => {
               <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
             </motion.div>
+
+            {/* ✅ INSERTED: NEW AMENITIES COMPONENT */}
+            {property.amenities && property.amenities.length > 0 && (
+                <PropertyAmenities amenities={property.amenities} />
+            )}
             
              <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
               <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location & Nearby Amenities</h2>

@@ -1,5 +1,5 @@
 // src/pages/AddProperty.jsx
-// (FIXED: Full File - Search, Shadow Accounts, & Detail Editing)
+// (FIXED: Full File - Search, Shadow Accounts, Detail Editing + Amenities/Land/Airbnb Logic + Custom Amenities)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,8 @@ import apiClient from "../api/axios";
 import { useAuth } from '../context/AuthContext';
 import { 
   FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
-  FaSpinner, FaStar, FaUserCheck, FaSearch, FaExclamationCircle, FaUser
+  FaSpinner, FaStar, FaUserCheck, FaSearch, FaExclamationCircle, FaUser,
+  FaCheckSquare, FaSquare, FaPlus, FaTimes 
 } from 'react-icons/fa';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 import MapComponent from '../components/MapComponent';
@@ -16,6 +17,13 @@ import SmartPricingWidget from '../components/SmartPricingWidget';
 const MAX_FILE_SIZE_MB = 2; 
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
 const FEATURE_PRICE_PER_DAY = 170; 
+
+// ✅ NEW: STANDARD AMENITIES LIST
+const AMENITIES_LIST = [
+  "Wifi", "Parking", "CCTV", "Borehole", "Swimming Pool", "Gym",
+  "Elevator", "Backup Generator", "Fenced", "Garden", "Staff Quarters",
+  "Security Guard", "Balcony", "Wheelchair Access", "Fiber Internet", "Pet Friendly"
+];
 
 // Reusable Input Field Component
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
@@ -49,12 +57,18 @@ const initialFormState = {
   location: '',
   price: '',
   bedrooms: '',
+  
+  // ✅ NEW FIELDS
+  landSize: '', // For Land
+  priceFrequency: 'month', // For Airbnb/Rent
+  amenities: [], // Checkbox array
+
   type: 'apartment',
   status: 'available', 
   listingType: 'sale',
   isFeatured: false,
   featuredDays: 3, 
-  agentId: '', // Stores the ID if we select an existing agent
+  agentId: '', 
   ownerDetails: {
     name: '',
     whatsapp: '',
@@ -73,6 +87,9 @@ const AddProperty = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   
+  // ✅ STATE FOR CUSTOM AMENITY INPUT
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
+
   // Search State
   const [existingAgents, setExistingAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
@@ -99,11 +116,9 @@ const AddProperty = () => {
     };
     getInitialLocation();
 
-    // Fetch Agents for Admin Search
     const fetchAgents = async () => {
       if (user && user.role === 'admin') {
         try {
-          // This endpoint returns BOTH real agents and shadow accounts
           const { data } = await apiClient.get('/users/all-agents', { withCredentials: true });
           setExistingAgents(data || []);
         } catch (err) {
@@ -118,7 +133,7 @@ const AddProperty = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
-    if (type === 'checkbox') processedValue = checked;
+    if (type === 'checkbox' && name === 'isFeatured') processedValue = checked;
     else if (name === 'featuredDays') processedValue = Number(value);
     
     setFormData(prevData => ({
@@ -127,7 +142,34 @@ const AddProperty = () => {
     }));
   };
   
-  // ✅ Handle Owner Details Input & Search Logic (UPDATED)
+  // ✅ NEW: Handle Amenities Toggle (Standard & Custom)
+  const handleAmenityToggle = (amenity) => {
+    setFormData(prev => {
+      const current = prev.amenities || [];
+      if (current.includes(amenity)) {
+        return { ...prev, amenities: current.filter(a => a !== amenity) };
+      } else {
+        return { ...prev, amenities: [...current, amenity] };
+      }
+    });
+  };
+
+  // ✅ NEW: Add Custom Amenity
+  const handleAddCustomAmenity = (e) => {
+    e.preventDefault(); // Prevent form submission
+    const trimmed = customAmenityInput.trim();
+    if (!trimmed) return;
+    
+    // Check duplicates (case-insensitive check optional, strict here)
+    if (!formData.amenities.includes(trimmed)) {
+      setFormData(prev => ({
+        ...prev,
+        amenities: [...prev.amenities, trimmed]
+      }));
+    }
+    setCustomAmenityInput('');
+  };
+
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
     
@@ -137,26 +179,18 @@ const AddProperty = () => {
         ...prevData.ownerDetails,
         [name]: value,
       },
-      // If changing the NAME, reset the ID to prevent mismatch.
       agentId: name === 'name' ? '' : prevData.agentId 
     }));
 
-    // Filter Agents Logic
     if (name === 'name' && user.role === 'admin') {
       if (value && value.length > 0) {
         const searchTerm = value.toLowerCase();
-        
         const matches = existingAgents.filter(agent => {
           const agentName = agent.name ? agent.name.toLowerCase() : '';
-          const company = agent.companyName ? agent.companyName.toLowerCase() : ''; // ✅ Add Company Search
+          const company = agent.companyName ? agent.companyName.toLowerCase() : ''; 
           const agentPhone = agent.whatsappNumber ? agent.whatsappNumber : '';
-          
-          // Search Match Condition: Name OR Company OR Phone
-          return agentName.includes(searchTerm) || 
-                 company.includes(searchTerm) || 
-                 agentPhone.includes(searchTerm);
+          return agentName.includes(searchTerm) || company.includes(searchTerm) || agentPhone.includes(searchTerm);
         });
-        
         setFilteredAgents(matches);
         setShowSuggestions(true);
       } else {
@@ -165,7 +199,6 @@ const AddProperty = () => {
     }
   };
 
-  // ✅ Select Agent from Dropdown
   const selectShadowAgent = (agent) => {
     setFormData(prev => ({
       ...prev,
@@ -268,12 +301,16 @@ const AddProperty = () => {
           dataToSend.append('ownerDetails[tiktok]', formData.ownerDetails.tiktok);
           dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
         }
-      } else {
+      } 
+      // ✅ SEND AMENITIES AS JSON
+      else if (key === 'amenities') {
+          dataToSend.append('amenities', JSON.stringify(formData.amenities));
+      }
+      else {
         dataToSend.append(key, formData[key]);
       }
     });
 
-    // Include agentId if selected/found
     if (formData.agentId) {
         dataToSend.append('agentId', formData.agentId);
     }
@@ -346,15 +383,37 @@ const AddProperty = () => {
               onChange={handleChange}
               placeholder="e.g., Spacious 3-Bedroom Apartment" 
             />
-            <InputField 
-              label="Price (Ksh)" 
-              name="price" 
-              type="number" 
-              value={formData.price}
-              onChange={handleChange}
-              placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15000000'}
-              min={100} 
-            />
+            
+            {/* ✅ UPDATED PRICE SECTION WITH FREQUENCY */}
+            <div className="flex gap-2">
+                <div className="flex-1">
+                  <InputField 
+                    label="Price (Ksh)" 
+                    name="price" 
+                    type="number" 
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15M'}
+                    min={100} 
+                  />
+                </div>
+                {(formData.type === 'airbnb' || formData.listingType === 'rent') && (
+                   <div className="w-1/3">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                      <select
+                         name="priceFrequency"
+                         value={formData.priceFrequency}
+                         onChange={handleChange}
+                         className="w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      >
+                         <option value="month">/ Month</option>
+                         <option value="night">/ Night</option>
+                         <option value="week">/ Week</option>
+                         <option value="year">/ Year</option>
+                      </select>
+                   </div>
+                )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -450,8 +509,19 @@ const AddProperty = () => {
             />
           </div>
 
+          {/* ✅ UPDATED: CONDITIONAL BEDROOMS VS LAND SIZE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {formData.type !== 'land' && (
+            {formData.type === 'land' ? (
+              <InputField 
+                label="Land Size" 
+                name="landSize" 
+                type="text" 
+                value={formData.landSize}
+                onChange={handleChange}
+                placeholder="e.g., 50x100, 1 Acre, 0.5 Ha"
+                required={true} 
+              />
+            ) : (
               <InputField 
                 label="Bedrooms" 
                 name="bedrooms" 
@@ -476,6 +546,69 @@ const AddProperty = () => {
                 <option value="full">Full/Rented</option>
               </select>
             </div>
+          </div>
+
+          {/* ✅ NEW: AMENITIES SECTION (CHECKBOX GRID + CUSTOM INPUT) */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+               Amenities & Features
+             </h2>
+             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {AMENITIES_LIST.map(amenity => (
+                  <div key={amenity} 
+                       onClick={() => handleAmenityToggle(amenity)}
+                       className={`flex items-center p-3 rounded-lg border cursor-pointer transition select-none
+                       ${formData.amenities.includes(amenity) 
+                         ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400' 
+                         : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600'
+                       }`}
+                  >
+                    <div className={`mr-3 text-lg ${formData.amenities.includes(amenity) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                       {formData.amenities.includes(amenity) ? <FaCheckSquare /> : <FaSquare />}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{amenity}</span>
+                  </div>
+                ))}
+             </div>
+
+             {/* Custom Amenity Input */}
+             <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Add Custom Feature (e.g., Jacuzzi, Solar Heating)
+                </label>
+                <div className="flex gap-2">
+                   <input 
+                     type="text"
+                     value={customAmenityInput}
+                     onChange={(e) => setCustomAmenityInput(e.target.value)}
+                     placeholder="Type and click Add"
+                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                     onKeyDown={(e) => e.key === 'Enter' && handleAddCustomAmenity(e)}
+                   />
+                   <button 
+                     type="button" 
+                     onClick={handleAddCustomAmenity}
+                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-1"
+                   >
+                     <FaPlus size={12} /> Add
+                   </button>
+                </div>
+                
+                {/* Display Custom Amenities that are NOT in standard list */}
+                {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
+                   <div className="mt-3 flex flex-wrap gap-2">
+                      {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
+                         <span key={idx} className="bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
+                            {custom}
+                            <FaTimes 
+                              className="cursor-pointer hover:text-red-500 transition" 
+                              onClick={() => handleAmenityToggle(custom)} 
+                            />
+                         </span>
+                      ))}
+                   </div>
+                )}
+             </div>
           </div>
 
           <SmartPricingWidget 
@@ -518,7 +651,7 @@ const AddProperty = () => {
             </div>
           )}
 
-          {/* --- ✅ UPDATED: Owner & Social Media Details with FIXED SEARCH UI --- */}
+          {/* Owner & Social Media Details (Admin Only) */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -560,7 +693,6 @@ const AddProperty = () => {
                         className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0 flex items-center justify-between"
                       >
                         <div className="flex items-center gap-3">
-                          {/* Avatar / Initials Logic */}
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 flex-shrink-0">
                              {agent.profilePicture && !agent.profilePicture.includes('placehold.co') ? (
                                <img src={agent.profilePicture} alt={agent.name} className="w-full h-full object-cover" />
@@ -570,26 +702,20 @@ const AddProperty = () => {
                                </div>
                              )}
                           </div>
-
                           <div>
                             <p className="font-bold text-gray-800 dark:text-gray-200 text-sm">
                               {agent.name}
                             </p>
-                            
-                            {/* ✅ SHOW COMPANY NAME IF EXISTS */}
                             {agent.companyName && (
                                <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
                                  {agent.companyName}
                                </p>
                             )}
-
                             <p className="text-xs text-gray-500 dark:text-gray-400">
                               {agent.whatsappNumber || 'No WhatsApp'}
                             </p>
                           </div>
                         </div>
-
-                        {/* Status Badge */}
                         <div className="flex flex-col items-end gap-1">
                            {!agent.isAccountClaimed ? (
                              <span className="text-xs bg-yellow-100 text-yellow-800 border border-yellow-200 px-2 py-0.5 rounded-full font-semibold">
@@ -597,7 +723,7 @@ const AddProperty = () => {
                              </span>
                            ) : (
                              <span className="text-xs bg-green-100 text-green-800 border border-green-200 px-2 py-0.5 rounded-full font-semibold flex items-center gap-1">
-                               <FaUserCheck size={10} /> Verified
+                               <FaCheckSquare size={10} /> Verified
                              </span>
                            )}
                         </div>
@@ -613,36 +739,9 @@ const AddProperty = () => {
                 )}
               </div>
               
-              <InputField 
-                label="Owner WhatsApp"
-                name="whatsapp"
-                value={formData.ownerDetails.whatsapp}
-                onChange={handleOwnerChange}
-                placeholder="e.g., 254712345678"
-                required={false}
-                icon={<FaWhatsapp />}
-              />
-
-              <InputField 
-                label="Owner TikTok Handle"
-                name="tiktok"
-                value={formData.ownerDetails.tiktok}
-                onChange={handleOwnerChange}
-                placeholder="e.g., @janedoe"
-                required={false}
-                icon={<FaTiktok />}
-              />
-
-              <InputField 
-                label="Owner Instagram Handle"
-                name="instagram"
-                value={formData.ownerDetails.instagram}
-                onChange={handleOwnerChange}
-                placeholder="e.g., @janedoe"
-                required={false}
-                icon={<FaInstagram />}
-              />
-
+              <InputField label="Owner WhatsApp" name="whatsapp" value={formData.ownerDetails.whatsapp} onChange={handleOwnerChange} placeholder="e.g., 254712345678" required={false} icon={<FaWhatsapp />} />
+              <InputField label="Owner TikTok Handle" name="tiktok" value={formData.ownerDetails.tiktok} onChange={handleOwnerChange} placeholder="e.g., @janedoe" required={false} icon={<FaTiktok />} />
+              <InputField label="Owner Instagram Handle" name="instagram" value={formData.ownerDetails.instagram} onChange={handleOwnerChange} placeholder="e.g., @janedoe" required={false} icon={<FaInstagram />} />
             </div>
           )}
 
