@@ -3,7 +3,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import CommunityInsightsCTA from './CommunityInsightsCTA'; // Import the new component
+import { formatDistanceToNow } from 'date-fns'; // ✅ IMPORT DATE FORMATTER
+import CommunityInsightsCTA from './CommunityInsightsCTA';
 
 const PropertyReviewsSection = ({ 
   property, 
@@ -25,10 +26,8 @@ const PropertyReviewsSection = ({
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
     >
-      {/* ✅ 1. NEW: COMMUNITY INSIGHTS CTA PLACED HERE */}
       <CommunityInsightsCTA location={property.location} />
 
-      {/* 2. Existing Reviews Logic */}
       <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
         Reviews ({comments.length}) ⭐ {avgRating}
       </h2>
@@ -76,17 +75,27 @@ const PropertyReviewsSection = ({
         <ul className="space-y-4">
           {comments.map((review) => (
             <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center mb-2">
-                 <p className="font-bold mr-2 dark:text-gray-100">
-                   {review.user ? review.user.name : "Deleted User"}
-                 </p>
-                 <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar key={i} size={16} className={i < review.rating ? "text-yellow-400" : "text-gray-300"} />
-                    ))}
+              <div className="flex justify-between items-start mb-2">
+                 <div className="flex items-center">
+                   <div>
+                     <p className="font-bold mr-2 dark:text-gray-100">
+                       {review.user ? review.user.name : "Deleted User"}
+                     </p>
+                     <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar key={i} size={14} className={i < review.rating ? "text-yellow-400" : "text-gray-300"} />
+                        ))}
+                     </div>
+                   </div>
                  </div>
+                 {/* ✅ DISPLAY REVIEW DATE */}
+                 <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                   {review.createdAt && !isNaN(new Date(review.createdAt)) 
+                     ? formatDistanceToNow(new Date(review.createdAt), { addSuffix: true }) 
+                     : "Just now"}
+                 </span>
               </div>
-              <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
+              <p className="text-gray-700 dark:text-gray-300 mt-1">{review.comment}</p>
             </li>
           ))}
         </ul>
