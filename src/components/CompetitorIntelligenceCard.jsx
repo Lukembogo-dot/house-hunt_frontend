@@ -1,24 +1,37 @@
+// src/components/admin/CompetitorIntelligenceCard.jsx
 import React from 'react';
-// ✅ FIX: Changed Faminus to FaMinus
 import { FaArrowUp, FaArrowDown, FaMinus, FaLightbulb } from 'react-icons/fa';
 
 const CompetitorIntelligenceCard = ({ data }) => {
+  // 1. Guard Clause: If main data is missing, don't render
   if (!data) return null;
 
-  const { myPerformance, marketAverage, priceDiffPercentage } = data;
+  // 2. Safe Destructuring: Default to empty objects to prevent crash on access
+  const myPerformance = data.myPerformance || {};
+  const marketAverage = data.marketAverage || {};
+  const priceDiffPercentage = Number(data.priceDiffPercentage) || 0;
   
-  // Helper to format currency
-  const formatPrice = (price) => 
-    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(price);
+  // 3. Secondary Guard: If vital nested data is missing, don't render incomplete card
+  if (myPerformance.avgPrice === undefined || marketAverage.avgPrice === undefined) {
+    return null;
+  }
+
+  // Helper to format currency (Safeguarded against NaN)
+  const formatPrice = (price) => {
+    const safePrice = Number(price) || 0;
+    return new Intl.NumberFormat('en-KE', { 
+      style: 'currency', 
+      currency: 'KES', 
+      maximumFractionDigits: 0 
+    }).format(safePrice);
+  };
 
   // Determine status color and icon
   const isHigher = priceDiffPercentage > 0;
   const isLower = priceDiffPercentage < 0;
-  // eslint-disable-next-line no-unused-vars
-  const isEqual = priceDiffPercentage === 0;
 
   let colorClass = "text-gray-500";
-  let Icon = FaMinus; // ✅ FIX: Use correct icon variable
+  let Icon = FaMinus; 
   let message = "Your pricing is perfectly aligned with the market average.";
 
   if (isHigher) {
@@ -50,7 +63,7 @@ const CompetitorIntelligenceCard = ({ data }) => {
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
             {formatPrice(myPerformance.avgPrice)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">{myPerformance.totalListings} Active Listings</p>
+          <p className="text-xs text-gray-400 mt-1">{myPerformance.totalListings || 0} Active Listings</p>
         </div>
 
         {/* Comparison Visual */}
@@ -70,7 +83,7 @@ const CompetitorIntelligenceCard = ({ data }) => {
           <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">
             {formatPrice(marketAverage.avgPrice)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Based on {marketAverage.totalListings} Competitor Listings</p>
+          <p className="text-xs text-gray-400 mt-1">Based on {marketAverage.totalListings || 0} Competitor Listings</p>
         </div>
       </div>
 

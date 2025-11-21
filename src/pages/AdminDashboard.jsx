@@ -24,7 +24,8 @@ import {
   FaSearch, 
   FaUserSecret, 
   FaListAlt,
-  FaCommentDots 
+  FaCommentDots,
+  FaIdCard // ✅ Added Icon
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
@@ -34,7 +35,7 @@ import LeadManager from '../components/admin/LeadManager';
 import AssignAgentModal from '../components/admin/AssignAgentModal';
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
 import CommunityModeration from '../components/admin/CommunityModeration';
-import PropertyManager from '../components/admin/PropertyManager'; // <--- NEW
+import PropertyManager from '../components/admin/PropertyManager'; 
 
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
@@ -183,6 +184,10 @@ const AdminDashboard = () => {
   const [services, setServices] = useState([]);
   const [allAgents, setAllAgents] = useState([]); 
   const [orders, setOrders] = useState([]); 
+  
+  // ✅ NEW STATE: Claim Requests
+  const [claimRequests, setClaimRequests] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -206,14 +211,15 @@ const AdminDashboard = () => {
       setLoading(true);
       setError('');
       
-      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes] = await Promise.all([
+      // ✅ ADDED: Fetch Claim Requests
+      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
-        // ✅ FIXED: Fetch 1000 items to include everything
         apiClient.get('/properties?limit=1000'), 
         apiClient.get('/reviews', { withCredentials: true }),
         apiClient.get('/services'), 
         apiClient.get('/users/all-agents', { withCredentials: true }), 
-        apiClient.get('/payments', { withCredentials: true }), 
+        apiClient.get('/payments', { withCredentials: true }),
+        apiClient.get('/admin/claim-requests', { withCredentials: true }), // ✅ Fetch claims
       ]);
       
       setUsers(usersRes.data);
@@ -224,6 +230,7 @@ const AdminDashboard = () => {
       setServices(servicesRes.data.services || servicesRes.data || []);
       setAllAgents(agentsRes.data); 
       setOrders(ordersRes.data); 
+      setClaimRequests(claimsRes.data || []); // ✅ Set claims
 
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
@@ -245,7 +252,7 @@ const AdminDashboard = () => {
   
   const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin');
 
-  // --- ACTION HANDLERS (Mostly moved to components now) ---
+  // --- ACTION HANDLERS ---
   
   const deleteReview = async (id) => {
     if (window.confirm('Are you sure you want to delete this review?')) {
@@ -336,6 +343,14 @@ const AdminDashboard = () => {
     } catch (err) {
         alert(`Failed to approve claim: ${err.response?.data?.message || 'Error'}`);
     }
+  };
+
+  // ✅ NEW: Direct Approval for Claim Requests (No Modal Needed)
+  const handleApproveRequest = async (request) => {
+      if (!window.confirm(`Approve claim for "${request.realName}"? This will merge account ${request.shadowUser?.name} with email ${request.realEmail}.`)) return;
+      
+      // Reuse existing logic
+      await handleApproveClaim(request.shadowUser._id, request.realEmail);
   };
 
   const openBulkAssign = (agent) => {
@@ -437,6 +452,76 @@ const AdminDashboard = () => {
         <section className="mb-12">
             <CommunityModeration />
         </section>
+
+        {/* ✅ NEW SECTION: PENDING CLAIM REQUESTS */}
+        {claimRequests.length > 0 && (
+            <section className="mb-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow border border-yellow-200 dark:border-yellow-700 p-6">
+                <h2 className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-2 mb-4">
+                    <FaIdCard /> Pending Account Claims ({claimRequests.length})
+                </h2>
+                <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase text-xs">
+                            <tr>
+                                <th className="p-3">Request Date</th>
+                                <th className="p-3">Requester (Real)</th>
+                                <th className="p-3">Target Profile (Shadow)</th>
+                                <th className="p-3">Verification</th>
+                                <th className="p-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {claimRequests.map(req => (
+                                <tr key={req._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <td className="p-3 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                                        {format(new Date(req.createdAt), 'MMM d, yyyy HH:mm')}
+                                    </td>
+                                    <td className="p-3">
+                                        <div className="font-bold text-gray-900 dark:text-white">{req.realName}</div>
+                                        <div className="text-xs text-gray-500">{req.realEmail}</div>
+                                        <div className="text-xs font-mono text-blue-600">{req.realWhatsapp}</div>
+                                    </td>
+                                    <td className="p-3">
+                                        {req.shadowUser ? (
+                                            <>
+                                                <div className="font-bold text-gray-900 dark:text-white">{req.shadowUser.name}</div>
+                                                {req.shadowUser.isAccountClaimed ? (
+                                                    <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">Already Claimed</span>
+                                                ) : (
+                                                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Shadow Active</span>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <span className="text-red-500">Profile Deleted</span>
+                                        )}
+                                    </td>
+                                    <td className="p-3">
+                                        <a 
+                                            href={`https://wa.me/${req.realWhatsapp.replace(/\+/g,'')}?text=Hello ${req.realName}, verifying your claim request.`} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="text-blue-600 hover:underline text-xs"
+                                        >
+                                            Verify via WhatsApp
+                                        </a>
+                                    </td>
+                                    <td className="p-3">
+                                        {req.shadowUser && !req.shadowUser.isAccountClaimed && (
+                                            <button 
+                                                onClick={() => handleApproveRequest(req)}
+                                                className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1"
+                                            >
+                                                <FaUserCheck /> Approve Merge
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        )}
 
         {/* ✅ NEW SECTION: SHADOW ACCOUNTS MANAGER */}
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
