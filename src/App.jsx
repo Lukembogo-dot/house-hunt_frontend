@@ -1,12 +1,12 @@
 // src/App.jsx
-// (UPDATED: Added Helmet for pSEO SEO Meta Tags)
+// (UPDATED: SearchPageWrapper now fetches & honors Custom SEO from SEO Manager)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa";
-import { Helmet } from 'react-helmet-async'; // ✅ Added Helmet Import
+import { Helmet } from 'react-helmet-async'; 
 
 // --- Components ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -46,18 +46,44 @@ const PageLoader = () => (
   </div>
 );
 
-// ✅ UPDATED: SEARCH PAGE WRAPPER (Now includes SEO Tags)
+// ✅ UPDATED: SEARCH PAGE WRAPPER
+// Now fetches custom SEO settings from the DB!
 const SearchPageWrapper = () => {
   const { listingType, location } = useParams();
+  const [customSeo, setCustomSeo] = useState(null);
   
   // Format for display (e.g. "kilimani" -> "Kilimani")
   const displayLocation = location ? location.charAt(0).toUpperCase() + location.slice(1) : 'Kenya';
   const displayType = listingType === 'rent' ? 'Rent' : 'Sale';
   
-  // ✅ DYNAMIC SEO TAGS
-  const metaTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
-  const metaDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
+  // 1. Generate Defaults (Fallback)
+  const defaultTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
+  const defaultDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
   const canonicalUrl = `https://www.househuntkenya.co.ke/search/${listingType}/${location}`;
+
+  // 2. Fetch Custom SEO Override (if exists)
+  useEffect(() => {
+    const fetchCustomSeo = async () => {
+      try {
+        // Encode the path to match how it's stored in SEO Manager
+        const pagePath = `/search/${listingType}/${location}`;
+        const { data } = await apiClient.get(`/seo/${encodeURIComponent(pagePath)}`);
+        if (data && data.metaTitle) {
+          setCustomSeo(data);
+        } else {
+          setCustomSeo(null);
+        }
+      } catch (err) {
+        // If not found or error, just stick to defaults
+        setCustomSeo(null);
+      }
+    };
+    fetchCustomSeo();
+  }, [listingType, location]);
+
+  // 3. Decide which tags to use
+  const metaTitle = customSeo?.metaTitle || defaultTitle;
+  const metaDescription = customSeo?.metaDescription || defaultDescription;
 
   const filterOverrides = {
     listingType: listingType, 
@@ -66,7 +92,7 @@ const SearchPageWrapper = () => {
 
   return (
     <>
-      {/* ✅ INJECT DYNAMIC META TAGS */}
+      {/* ✅ INJECT SEO TAGS (Custom or Default) */}
       <Helmet>
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
