@@ -1,5 +1,5 @@
 // src/components/SeoInjector.jsx
-// (UPDATED)
+// (UPDATED: Added Dataset Schema for Generative Engine Optimization)
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
@@ -14,30 +14,22 @@ const SeoInjector = ({ seo }) => {
   }
 
   // ✅ 1. FIX: Hardcode the production domain. 
-  // This prevents "http" or "non-www" versions from being set as canonical.
   const siteUrl = 'https://www.househuntkenya.co.ke';
   
   // ✅ 2. FIX: Strict Canonical Logic
-  // If DB has a custom canonical, use it.
-  // If not, construct it manually using the production domain + the page path.
-  // We avoid window.location.href to prevent copying "bad" URLs.
   let canonical = '';
   
   if (seo.canonicalUrl) {
-      // If the admin entered a full URL (https://...), use it. 
-      // If they entered a relative path (/about), append it to siteUrl.
       canonical = seo.canonicalUrl.startsWith('http') 
           ? seo.canonicalUrl 
           : `${siteUrl}${seo.canonicalUrl}`;
   } else {
-      // Fallback: Build the URL using the pagePath from the DB (or current window path)
-      const currentPath = seo.pagePath || window.location.pathname;
-      // Ensure homepage '/' doesn't result in double slash
+      const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
       const cleanPath = currentPath === '/' ? '' : currentPath;
       canonical = `${siteUrl}${cleanPath}`;
   }
 
-  // --- Schema Generation (Unchanged) ---
+  // --- Schema Generation ---
   const generateSchema = () => {
     const schema = [];
 
@@ -57,14 +49,44 @@ const SeoInjector = ({ seo }) => {
         });
     }
 
-    // 2. Add description/keyword-based WebPage schema if available
+    // 2. WebPage Schema
     if (seo.schemaDescription) {
         schema.push({
             "@context": "https://schema.org",
             "@type": "WebPage", 
             "name": seo.metaTitle,
             "description": seo.schemaDescription,
-            "url": canonical, // Use the strict canonical here too
+            "url": canonical, 
+        });
+    }
+
+    // ✅ 3. DATASET SCHEMA (For AI/GEO Authority)
+    // Automatically detects location from path to create a data citation source
+    const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
+    
+    if (currentPath.includes('/search/') || currentPath === '/') {
+        let locationName = 'Kenya'; // Default for homepage
+        
+        // Extract location from /search/rent/kilimani
+        if (currentPath.includes('/search/')) {
+            const parts = currentPath.split('/');
+            if (parts.length >= 4) {
+                // parts[3] is location (e.g., 'kilimani')
+                locationName = parts[3].charAt(0).toUpperCase() + parts[3].slice(1);
+            }
+        }
+
+        schema.push({
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "name": `Real Estate Market Data for ${locationName}`,
+            "description": `Current rental prices, property availability, and market trends in ${locationName}.`,
+            "creator": {
+                "@type": "Organization",
+                "name": "HouseHunt Kenya"
+            },
+            "variableMeasured": ["Average Price", "Number of Listings", "Market Trends"],
+            "url": canonical
         });
     }
     
@@ -83,22 +105,22 @@ const SeoInjector = ({ seo }) => {
       {/* --- ADDED FOCUS KEYWORD & CANONICAL --- */}
       {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
       
-      {/* ✅ THE CRITICAL FIX: This tag now strictly points to https://www.househuntkenya.co.ke */}
+      {/* ✅ Strict Canonical Link */}
       <link rel="canonical" href={canonical} />
 
-      {/* --- Open Graph / Facebook (UPDATED) --- */}
+      {/* --- Open Graph / Facebook --- */}
       <meta property="og:type" content="website" />
-      <meta property="og:url" content={canonical} /> {/* Use strict canonical here */}
+      <meta property="og:url" content={canonical} />
       <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
       <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
 
-      {/* --- Twitter (UPDATED) --- */}
+      {/* --- Twitter --- */}
       <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={canonical} /> {/* Use strict canonical here */}
+      <meta property="twitter:url" content={canonical} />
       <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
       <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
 
-      {/* Schema Structured Data (Unchanged) */}
+      {/* Schema Structured Data */}
       {schemaData.map((schema, index) => (
           <script 
               key={index}

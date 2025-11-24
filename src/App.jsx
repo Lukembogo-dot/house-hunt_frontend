@@ -1,11 +1,11 @@
 // src/App.jsx
-// (UPDATED: SearchPageWrapper now fetches & honors Custom SEO from SEO Manager)
+// (UPDATED: Added MarketFactsTable for GEO Structure)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
-import { FaCalculator, FaMapMarkedAlt } from "react-icons/fa";
+import { FaCalculator, FaMapMarkedAlt, FaChartLine } from "react-icons/fa"; 
 import { Helmet } from 'react-helmet-async'; 
 
 // --- Components ---
@@ -21,6 +21,7 @@ import SeoInjector from "./components/SeoInjector";
 import HouseHuntRequest from "./components/HouseHuntRequest"; 
 import PreviewBanner from './components/PreviewBanner';
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
+import MarketFactsTable from "./components/MarketFactsTable"; // ✅ IMPORTED NEW TABLE
 
 // --- New Layout Components ---
 import AppHeader from "./components/layout/AppHeader";
@@ -46,42 +47,50 @@ const PageLoader = () => (
   </div>
 );
 
-// ✅ UPDATED: SEARCH PAGE WRAPPER
-// Now fetches custom SEO settings from the DB!
+// ✅ UPDATED: SEARCH PAGE WRAPPER WITH GEO SNAPSHOT & TABLE
 const SearchPageWrapper = () => {
   const { listingType, location } = useParams();
   const [customSeo, setCustomSeo] = useState(null);
+  const [stats, setStats] = useState(null); 
   
-  // Format for display (e.g. "kilimani" -> "Kilimani")
+  // Format for display
   const displayLocation = location ? location.charAt(0).toUpperCase() + location.slice(1) : 'Kenya';
   const displayType = listingType === 'rent' ? 'Rent' : 'Sale';
+  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
   
-  // 1. Generate Defaults (Fallback)
+  // 1. Fetch SEO & Stats
+  useEffect(() => {
+    const fetchPageData = async () => {
+      try {
+        const pagePath = `/search/${listingType}/${location}`;
+        
+        // Parallel Fetch: SEO + Market Stats
+        const [seoRes, statsRes] = await Promise.allSettled([
+            apiClient.get(`/seo/${encodeURIComponent(pagePath)}`),
+            apiClient.get(`/properties/stats?location=${location}&listingType=${listingType}`)
+        ]);
+
+        if (seoRes.status === 'fulfilled' && seoRes.value.data?.metaTitle) {
+          setCustomSeo(seoRes.value.data);
+        } else {
+          setCustomSeo(null);
+        }
+
+        if (statsRes.status === 'fulfilled') {
+            setStats(statsRes.value.data);
+        }
+      } catch (err) {
+        console.error("Error loading search page data", err);
+      }
+    };
+    fetchPageData();
+  }, [listingType, location]);
+
+  // 2. Generate SEO Meta
   const defaultTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
   const defaultDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
   const canonicalUrl = `https://www.househuntkenya.co.ke/search/${listingType}/${location}`;
 
-  // 2. Fetch Custom SEO Override (if exists)
-  useEffect(() => {
-    const fetchCustomSeo = async () => {
-      try {
-        // Encode the path to match how it's stored in SEO Manager
-        const pagePath = `/search/${listingType}/${location}`;
-        const { data } = await apiClient.get(`/seo/${encodeURIComponent(pagePath)}`);
-        if (data && data.metaTitle) {
-          setCustomSeo(data);
-        } else {
-          setCustomSeo(null);
-        }
-      } catch (err) {
-        // If not found or error, just stick to defaults
-        setCustomSeo(null);
-      }
-    };
-    fetchCustomSeo();
-  }, [listingType, location]);
-
-  // 3. Decide which tags to use
   const metaTitle = customSeo?.metaTitle || defaultTitle;
   const metaDescription = customSeo?.metaDescription || defaultDescription;
 
@@ -92,12 +101,10 @@ const SearchPageWrapper = () => {
 
   return (
     <>
-      {/* ✅ INJECT SEO TAGS (Custom or Default) */}
       <Helmet>
         <title>{metaTitle}</title>
         <meta name="description" content={metaDescription} />
         <link rel="canonical" href={canonicalUrl} />
-        
         <meta property="og:title" content={metaTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:url" content={canonicalUrl} />
@@ -109,6 +116,26 @@ const SearchPageWrapper = () => {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 capitalize">
                   {listingType === 'rent' ? 'Properties for Rent' : 'Properties for Sale'} in {displayLocation}
               </h1>
+
+              {/* ✅ GEO MARKET SNAPSHOT (AI-Readable Text Block) */}
+              {stats && stats.count > 0 && (
+                  <>
+                    <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-blue-600 shadow-sm">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <FaChartLine className="text-blue-600" /> Market Snapshot: {displayType} in {displayLocation}
+                        </h2>
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                            As of <strong>{currentMonth}</strong>, there are currently <strong>{stats.count}</strong> active listings for {displayType.toLowerCase()} in {displayLocation} on HouseHunt Kenya. 
+                            The average market price is approximately <strong>KES {stats.avgPrice?.toLocaleString()}</strong>. 
+                            {displayLocation} remains a popular choice for {displayType === 'Rent' ? 'tenants' : 'investors'} seeking verified properties with access to local amenities.
+                        </p>
+                    </div>
+
+                    {/* ✅ GEO DATA TABLE (Structured Data for LLMs) */}
+                    <MarketFactsTable location={location} type={listingType} stats={stats} />
+                  </>
+              )}
+
               <PropertyList 
                   filterOverrides={filterOverrides} 
                   showSearchBar={true} 

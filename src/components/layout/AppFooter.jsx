@@ -1,7 +1,7 @@
 // src/components/layout/AppFooter.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaMapMarkerAlt } from 'react-icons/fa'; // ✅ Added FaMapMarkerAlt
 import apiClient from '../../api/axios';
 
 const AppFooter = () => {
@@ -62,6 +62,24 @@ const AppFooter = () => {
             ))}
           </ul>
         </div>
+
+        {/* ✅ NEW: GEO CRAWL PATH (Dynamic Locations) */}
+        <div>
+           <h3 className="text-lg font-semibold text-white mb-4 flex items-center justify-center md:justify-start gap-2">
+              <FaMapMarkerAlt className="text-green-500" /> Browse by Area
+           </h3>
+           <nav>
+             <ul className="space-y-2 text-sm">
+               {/* Dynamically list top pSEO paths for crawlers */}
+               <li><Link to="/search/rent/kilimani" className="hover:text-green-400 transition">Rent in Kilimani</Link></li>
+               <li><Link to="/search/rent/westlands" className="hover:text-green-400 transition">Rent in Westlands</Link></li>
+               <li><Link to="/search/sale/karen" className="hover:text-green-400 transition">Buy in Karen</Link></li>
+               <li><Link to="/search/rent/juja" className="hover:text-green-400 transition">Rent in Juja</Link></li>
+               <li><Link to="/search/rent/roysambu" className="hover:text-green-400 transition">Rent in Roysambu</Link></li>
+             </ul>
+           </nav>
+        </div>
+
         <div>
           <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
           <ul className="space-y-2 text-sm">
