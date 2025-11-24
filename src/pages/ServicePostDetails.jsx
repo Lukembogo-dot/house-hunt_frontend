@@ -1,12 +1,12 @@
 // src/pages/ServicePostDetails.jsx
-// (UPDATED: Moved Community Insights CTA below FAQs)
+// (UPDATED: Merged Blog Logic with Provider Contact Features)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
-import { FaStar, FaUserAlt, FaLightbulb } from 'react-icons/fa'; 
+import { FaStar, FaUserAlt, FaLightbulb, FaPhone, FaWhatsapp, FaMapMarkerAlt, FaCheckCircle, FaShieldAlt } from 'react-icons/fa'; 
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion'; 
@@ -25,10 +25,9 @@ const StarRating = ({ rating }) => {
   );
 };
 
-// ✅ 1. REBUILT SEO INJECTOR (FIXES GOOGLE CONSOLE ISSUES)
+// ✅ 1. REBUILT SEO INJECTOR (FIXES GOOGLE CONSOLE ISSUES + ADDS LOCAL BUSINESS)
 const ServiceSeoInjector = ({ service }) => {
   
-  // We use the @graph method to provide multiple schema types cleanly
   const schemaGraph = [
     {
       "@context": "https://schema.org",
@@ -51,10 +50,29 @@ const ServiceSeoInjector = ({ service }) => {
           "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png"
         }
       }
+    },
+    // ✅ ADDED: LocalBusiness Schema for Service Providers
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": `${window.location.href}#business`,
+      "name": service.title,
+      "image": service.imageUrl,
+      "telephone": service.phoneNumber,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": service.location,
+        "addressCountry": "KE"
+      },
+      "priceRange": "$$",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": service.averageRating || 0,
+        "reviewCount": service.numReviews || 0
+      }
     }
   ];
 
-  // If FAQs exist, push a separate FAQPage object into the graph
   if (service.faqs && service.faqs.length > 0) {
     schemaGraph.push({
       "@context": "https://schema.org",
@@ -79,10 +97,9 @@ const ServiceSeoInjector = ({ service }) => {
       <meta property="og:title" content={service.metaTitle || service.title} />
       <meta property="og:description" content={service.metaDescription || service.content.substring(0, 160)} />
       <meta property="og:image" content={service.imageUrl} />
-      <meta property="og:type" content="article" />
+      <meta property="og:type" content="business.business" /> {/* Changed to business */}
       <meta property="og:url" content={window.location.href} />
       
-      {/* Render the Graph Schema */}
       <script 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": schemaGraph }) }}
@@ -103,7 +120,6 @@ const sectionVariants = {
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
-  const isNewDesignEnabled = useFeatureFlag('new-service-post-design');
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -163,9 +179,8 @@ const ServicePostDetails = () => {
   
   const avgRating = service.averageRating ? service.averageRating.toFixed(1) : 0;
 
-  // ✅ 2. UPDATED ARTICLE CLASS FOR VISUALS
   const articleClass = `
-    prose prose-xl max-w-3xl mx-auto bg-white dark:bg-gray-900 p-8 shadow-xl rounded-lg 
+    prose prose-xl max-w-none bg-white dark:bg-gray-900 p-8 shadow-sm rounded-2xl border border-gray-100 dark:border-gray-700
     dark:prose-invert 
     prose-img:w-full prose-img:rounded-lg prose-img:shadow-md prose-img:my-6
     prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline
@@ -178,209 +193,266 @@ const ServicePostDetails = () => {
     <>
       <ServiceSeoInjector service={service} />
       
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
-        <div className="mx-auto"> 
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4 sm:px-6 lg:px-8 font-inter">
+        <div className="max-w-6xl mx-auto"> 
           
+          {/* --- HEADER SECTION --- */}
           <motion.header 
-            className="mb-8 max-w-3xl mx-auto"
+            className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border border-gray-100 dark:border-gray-700"
             variants={sectionVariants}
             initial="hidden"
             animate="visible"
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-white px-3 py-1 rounded-full">
-                {service.serviceType}
-              </span>
-              <span className="text-sm font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 px-3 py-1 rounded-full">
-                {service.location}
-              </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-gray-100 mb-4">
-              {service.title}
-            </h1>
-            
-            <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
-              <div className="flex items-center">
-                {service.author ? (
-                  <img 
-                    src={service.author.profilePicture || `https://ui-avatars.com/api/?name=${service.author.name}&background=random`}
-                    alt={service.author.name}
-                    className="w-10 h-10 rounded-full object-cover mr-3"
-                  />
-                ) : (
-                  <FaUserAlt className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 p-2 mr-3" />
-                )}
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  By {service.author?.name || 'HouseHunt Staff'}
-                </span>
+            {/* Image Banner */}
+            {service.imageUrl && (
+              <div className="h-64 md:h-80 w-full relative group">
+                <img 
+                  src={service.imageUrl} 
+                  alt={service.title} 
+                  className="w-full h-full object-cover" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent flex items-end p-6 md:p-10">
+                  <div className="w-full">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm">
+                        {service.serviceType}
+                      </span>
+                      {service.isVerified && (
+                        <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm flex items-center gap-1">
+                          <FaCheckCircle /> Verified
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-3 drop-shadow-md">{service.title}</h1>
+                    <div className="flex flex-wrap items-center text-gray-200 text-sm md:text-base gap-4">
+                      <span className="flex items-center"><FaMapMarkerAlt className="mr-2 text-red-400" /> {service.location}</span>
+                      <span className="hidden md:inline">|</span>
+                      <div className="flex items-center gap-2">
+                         <span className="text-yellow-400 font-bold">★ {avgRating}</span>
+                         <span className="font-semibold">({service.numReviews} reviews)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <span className="hidden md:inline">|</span>
-              <span>
-                Posted {formatDistanceToNow(new Date(service.createdAt), { addSuffix: true })}
-              </span>
+            )}
+
+            {/* Mobile Action Bar */}
+            <div className="flex md:hidden justify-between items-center p-4 border-t dark:border-gray-700 gap-2">
+               {service.phoneNumber && (
+                 <a href={`tel:${service.phoneNumber}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                   <FaPhone /> Call
+                 </a>
+               )}
+               {service.whatsappNumber && (
+                 <a href={`https://wa.me/${service.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition">
+                   <FaWhatsapp /> WhatsApp
+                 </a>
+               )}
             </div>
           </motion.header>
 
-          {service.imageUrl && (
-            <motion.img 
-              src={service.imageUrl}
-              alt={service.title}
-              className="w-full max-w-3xl mx-auto h-64 md:h-96 object-cover rounded-lg shadow-md mb-8 border dark:border-gray-700"
-              variants={sectionVariants}
-              initial="hidden"
-              animate="visible"
-              transition={{ duration: 0.5, delay: 0.2 }}
-            />
-          )}
+          <div className="grid md:grid-cols-3 gap-8">
+            
+            {/* --- LEFT COLUMN: ARTICLE & REVIEWS --- */}
+            <div className="md:col-span-2 space-y-8">
+              
+              <motion.article 
+                className={articleClass}
+                variants={sectionVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div dangerouslySetInnerHTML={{ __html: service.content }} />
+              </motion.article>
 
-          <motion.article 
-            className={articleClass}
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <div dangerouslySetInnerHTML={{ __html: service.content }} />
-          </motion.article>
-
-          <motion.div 
-            className="max-w-3xl mx-auto"
-            variants={sectionVariants}
-            initial="hidden"
-            animate="visible"
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            {service.faqs && service.faqs.length > 0 && (
-              <section className="mt-12 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-md border dark:border-gray-700">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6">
-                  Frequently Asked Questions
-                </h2>
-                <div className="space-y-6">
-                  {service.faqs.map((faq, index) => (
-                    <div key={index} className="border-b dark:border-gray-700 pb-4 last:border-b-0">
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                        {faq.question}
-                      </h3>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ✅ MOVED: Community Insights / Neighbourhood Watch CTA (Now below FAQs) */}
-            {service.location && (
-              <div className="mt-12 p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-xl text-center shadow-sm">
-                <div className="flex justify-center mb-3">
-                  <FaLightbulb className="text-3xl text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2">
-                  Curious about life in {service.location}?
-                </h3>
-                <p className="text-purple-700 dark:text-purple-300 mb-6 max-w-lg mx-auto">
-                  Discover real stories from residents in {service.location}, or share your own experience to help others find their home.
-                </p>
-                <div className="flex flex-col sm:flex-row justify-center gap-4">
-                  <Link 
-                    to={`/search/rent/${service.location.toLowerCase()}`}
-                    className="px-6 py-3 bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-300 font-bold border border-purple-200 dark:border-gray-600 rounded-lg hover:bg-purple-50 dark:hover:bg-gray-700 transition shadow-sm"
-                  >
-                    View {service.location} Insights
-                  </Link>
-                  <Link 
-                    to="/share-insight"
-                    state={{ location: service.location }} // ✅ Pass location to auto-fill form
-                    className="px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-md"
-                  >
-                    Write a Review
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            <section className="mt-12">
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                Service Feedback ({service.numReviews}) 
-                <span className="ml-2 text-yellow-400">★ {avgRating}</span>
-              </h2>
-
-              {user ? (
-                <form onSubmit={handleReviewSubmit} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border dark:border-gray-700">
-                  <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
-                  <div className="flex items-center mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <motion.div key={i} whileTap={{ scale: 1.2, y: -2 }}>
-                        <FaStar
-                          size={24}
-                          className={`cursor-pointer transition-colors ${
-                            i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
-                          }`}
-                          onMouseEnter={() => setHoverRating(i + 1)}
-                          onMouseLeave={() => setHoverRating(0)}
-                          onClick={() => setRating(i + 1)}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <textarea
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    rows="3"
-                    placeholder="Share your experience with this service..."
-                    className="w-full px-4 py-3 border rounded-lg mb-2 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                  ></textarea>
-                  {reviewError && <p className="text-sm text-red-500 mb-2">{reviewError}</p>}
-                  <motion.button
-                    type="submit"
-                    disabled={submitting}
-                    className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50"
-                    whileHover={{ y: -3 }}
-                  >
-                    {submitting ? "Submitting..." : "Submit Feedback"}
-                  </motion.button>
-                </form>
-              ) : (
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  You must be <Link to="/login" className="text-blue-600 dark:text-blue-400 underline">logged in</Link> to leave feedback.
-                </p>
-              )}
-
-              {service.reviews.length > 0 ? (
-                <ul className="space-y-4">
-                  {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
-                    <li key={review._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center mb-2">
-                        {review.user ? (
-                           <img 
-                            src={review.user.profilePicture || `https://ui-avatars.com/api/?name=${review.name}&background=random`}
-                            alt={review.name} 
-                            className="w-10 h-10 rounded-full object-cover mr-3"
-                          />
-                        ) : (
-                          <FaUserAlt className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 p-2 mr-3" />
-                        )}
-                        <div>
-                          <p className="font-bold dark:text-gray-100">{review.user?.name || review.name}</p>
-                          <div className="flex">
-                            <StarRating rating={review.rating} />
-                          </div>
+              <motion.div 
+                variants={sectionVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                {service.faqs && service.faqs.length > 0 && (
+                  <section className="mt-8 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+                      Frequently Asked Questions
+                    </h2>
+                    <div className="space-y-6">
+                      {service.faqs.map((faq, index) => (
+                        <div key={index} className="border-b dark:border-gray-700 pb-4 last:border-b-0">
+                          <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
+                            {faq.question}
+                          </h3>
+                          <p className="text-gray-700 dark:text-gray-300">
+                            {faq.answer}
+                          </p>
                         </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Community Insights CTA */}
+                {service.location && (
+                  <div className="mt-8 p-6 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-2xl text-center shadow-sm">
+                    <div className="flex justify-center mb-3">
+                      <FaLightbulb className="text-3xl text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2">
+                      Curious about life in {service.location}?
+                    </h3>
+                    <p className="text-purple-700 dark:text-purple-300 mb-6 max-w-lg mx-auto">
+                      Discover real stories from residents in {service.location}, or share your own experience.
+                    </p>
+                    <div className="flex flex-col sm:flex-row justify-center gap-4">
+                      <Link 
+                        to={`/search/rent/${service.location.toLowerCase()}`}
+                        className="px-6 py-3 bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-300 font-bold border border-purple-200 dark:border-gray-600 rounded-lg hover:bg-purple-50 dark:hover:bg-gray-700 transition shadow-sm"
+                      >
+                        View Insights
+                      </Link>
+                      <Link 
+                        to="/share-insight"
+                        state={{ location: service.location }} 
+                        className="px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-md"
+                      >
+                        Write a Review
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                <section className="mt-12">
+                  <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
+                    Reviews ({service.numReviews}) 
+                  </h2>
+
+                  {user ? (
+                    <form onSubmit={handleReviewSubmit} className="mb-6 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                      <h3 className="text-lg font-medium dark:text-gray-100 mb-2">Leave your feedback</h3>
+                      <div className="flex items-center mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <motion.div key={i} whileTap={{ scale: 1.2, y: -2 }}>
+                            <FaStar
+                              size={24}
+                              className={`cursor-pointer transition-colors ${
+                                i < (hoverRating || rating) ? "text-yellow-400" : "text-gray-300"
+                              }`}
+                              onMouseEnter={() => setHoverRating(i + 1)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              onClick={() => setRating(i + 1)}
+                            />
+                          </motion.div>
+                        ))}
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300">{review.comment}</p>
-                      <p className="text-xs text-gray-400 mt-2">
-                        {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No feedback yet. Be the first to share your experience!</p>
-              )}
-            </section>
-          </motion.div>
+                      <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        rows="3"
+                        placeholder="Share your experience..."
+                        className="w-full px-4 py-3 border rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      ></textarea>
+                      {reviewError && <p className="text-sm text-red-500 mb-2">{reviewError}</p>}
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-bold"
+                      >
+                        {submitting ? "Submitting..." : "Submit Feedback"}
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="mb-8 p-6 bg-gray-100 dark:bg-gray-800 rounded-xl text-center">
+                      <p className="text-gray-600 dark:text-gray-300 mb-2">Have you used this service?</p>
+                      <Link to="/login" className="text-blue-600 font-bold hover:underline">Log in to share your experience</Link>
+                    </div>
+                  )}
+
+                  {service.reviews.length > 0 ? (
+                    <ul className="space-y-4">
+                      {service.reviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((review) => (
+                        <li key={review._id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                          <div className="flex items-center mb-3">
+                            {review.user ? (
+                               <img 
+                                src={review.user.profilePicture || `https://ui-avatars.com/api/?name=${review.name}&background=random`}
+                                alt={review.name} 
+                                className="w-10 h-10 rounded-full object-cover mr-3"
+                              />
+                            ) : (
+                              <FaUserAlt className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 p-2 mr-3" />
+                            )}
+                            <div>
+                              <p className="font-bold dark:text-gray-100">{review.user?.name || review.name}</p>
+                              <StarRating rating={review.rating} />
+                            </div>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{review.comment}</p>
+                          <p className="text-xs text-gray-400 mt-3">
+                            {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400">No feedback yet. Be the first to share your experience!</p>
+                  )}
+                </section>
+              </motion.div>
+            </div>
+
+            {/* --- RIGHT COLUMN: STICKY SIDEBAR --- */}
+            <div className="md:col-span-1 hidden md:block">
+               <div className="sticky top-24 space-y-6">
+                 
+                 {/* Contact Card */}
+                 <div className="bg-gradient-to-br from-blue-600 to-blue-800 text-white p-6 rounded-2xl shadow-lg">
+                   <div className="flex items-center gap-4 mb-6">
+                      <img 
+                         src={service.author?.profilePicture || "https://placehold.co/100x100?text=User"} 
+                         alt="Provider" 
+                         className="w-14 h-14 rounded-full border-2 border-white/30" 
+                       />
+                       <div>
+                         <p className="text-blue-200 text-xs font-bold uppercase">Service Provider</p>
+                         <h3 className="font-bold text-lg">{service.author?.name || "Verified Agent"}</h3>
+                       </div>
+                   </div>
+                   
+                   <div className="space-y-3">
+                     {service.phoneNumber && (
+                       <a href={`tel:${service.phoneNumber}`} className="flex items-center justify-center gap-3 w-full bg-white text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm">
+                         <FaPhone /> Call Now
+                       </a>
+                     )}
+                     {service.whatsappNumber && (
+                       <a href={`https://wa.me/${service.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-400 transition shadow-lg border border-green-400">
+                         <FaWhatsapp className="text-xl" /> WhatsApp
+                       </a>
+                     )}
+                   </div>
+                   
+                   <div className="mt-6 pt-4 border-t border-blue-500/50 flex items-center justify-center gap-2 text-xs text-blue-200">
+                      <FaCheckCircle /> Verified by HouseHunt Kenya
+                   </div>
+                 </div>
+
+                 {/* Safety Tip */}
+                 <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/50 p-5 rounded-2xl">
+                    <h4 className="text-orange-800 dark:text-orange-200 font-bold text-sm mb-2 flex items-center">
+                      <FaShieldAlt className="mr-2" /> Safety Tip
+                    </h4>
+                    <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed">
+                      Always verify credentials before making payments. Meet inside secure premises or use official paybill numbers.
+                    </p>
+                 </div>
+
+               </div>
+            </div>
+
+          </div>
         </div>
       </div>
     </>

@@ -1,3 +1,6 @@
+// src/components/layout/AppHeader.jsx
+// (UPDATED: Added "Services" Link to Navigation)
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -34,8 +37,15 @@ const AppHeader = () => {
           <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home</Link>
           <Link to="/buy" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Buy</Link>
           <Link to="/rent" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Rent</Link>
+          
+          {/* ✅ ADDED SERVICES LINK */}
+          <Link to="/services" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Services</Link>
+          
+          <Link to="/community" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Community</Link>
+          
+          {/* Adjusted nav order slightly for balance */}
           <Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition">About</Link>
-          <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</Link>
+          
           {!user && (
             <Link to="/for-agents" className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-md transform hover:-translate-y-0.5">
               List Property
@@ -75,9 +85,16 @@ const AppHeader = () => {
             <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Home</Link>
             <Link to="/buy" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Buy</Link>
             <Link to="/rent" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Rent</Link>
+            
+            {/* ✅ ADDED SERVICES LINK TO MOBILE MENU */}
+            <Link to="/services" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Services</Link>
+            <Link to="/community" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Community</Link>
+
             <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>About</Link>
             <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 transition" onClick={closeMobileMenu}>Contact</Link>
+            
             {!user && <Link to="/for-agents" className="block text-blue-600 dark:text-blue-400 font-bold" onClick={closeMobileMenu}>Partner with Us (Agents)</Link>}
+            
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-4">
               {loading ? <div className="h-9 w-full bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div> : realUser ? ( 
                 <>

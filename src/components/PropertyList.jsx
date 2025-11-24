@@ -6,8 +6,8 @@ import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
 import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
 import PropertyAlertForm from "./PropertyAlertForm";
-// ✅ 1. IMPORT NEW ICON FOR AGENT CARD
-import { FaPlusCircle } from "react-icons/fa";
+// ✅ 1. IMPORT NEW ICONS
+import { FaPlusCircle, FaComments, FaQuestionCircle } from "react-icons/fa";
 
 // This object is created only once, so its reference never changes.
 const STABLE_DEFAULT_FILTER = {};
@@ -144,12 +144,49 @@ export default function PropertyList({
       ) : properties.length > 0 ? (
         <>
           <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-            {/* ✅ 2. UPDATED MAPPING LOGIC TO INJECT AGENT CARD */}
+            
             {properties.map((property, index) => {
+              
+              // ✅ INJECTION 1: "Ask a Local" Card at Index 1 (2nd Position)
+              if (index === 1) {
+                return (
+                  <div key={`community-promo-${index}`} style={{ display: 'contents' }}>
+                    {/* The Community Card */}
+                    <div className="bg-purple-700 dark:bg-purple-900 rounded-xl shadow-lg overflow-hidden flex flex-col justify-center items-center text-center p-6 text-white transform hover:scale-105 transition duration-300 border-2 border-purple-500">
+                      <div className="bg-white/20 p-4 rounded-full mb-4">
+                        <FaComments className="text-4xl text-purple-200" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Living in <span className="capitalize">{locationName}</span>?</h3>
+                      <p className="text-purple-100 text-sm mb-6">
+                        Don't guess. Ask residents about security, water, and internet reliability.
+                      </p>
+                      <div className="flex flex-col gap-2 w-full px-4">
+                        <Link 
+                          to="/share-insight" 
+                          state={{ location: filters.location, type: 'question' }}
+                          className="bg-white text-purple-800 font-bold py-2 px-4 rounded-full shadow-md hover:bg-purple-50 transition text-sm flex items-center justify-center gap-2"
+                        >
+                          <FaQuestionCircle /> Ask a Local
+                        </Link>
+                         <Link 
+                          to={`/search/rent/${filters.location}`} // Links to dynamic page where insights are shown
+                          className="text-purple-200 hover:text-white text-xs underline mt-1"
+                        >
+                          Read existing reviews
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* The Actual Property Card */}
+                    <PropertyCard key={property._id} property={property} />
+                  </div>
+                );
+              }
+
+              // ✅ INJECTION 2: Agent Promo Card at Index 3 (4th Position)
               if (index === 3) {
                 return (
-                  // React.Fragment key is required here
-                  <div key={`promo-${index}`} style={{ display: 'contents' }}>
+                  <div key={`agent-promo-${index}`} style={{ display: 'contents' }}>
                     {/* The Agent Promo Card */}
                     <div className="bg-blue-600 dark:bg-blue-700 rounded-xl shadow-lg overflow-hidden flex flex-col justify-center items-center text-center p-6 text-white transform hover:scale-105 transition duration-300 border-2 border-blue-400">
                       <div className="bg-white/20 p-4 rounded-full mb-4 animate-pulse">
@@ -211,37 +248,48 @@ export default function PropertyList({
         <div className="text-center mt-10">
           
           {/* 1. User Alert Form */}
-          {isAlertFormEnabled ? (
-            <>
-              <PropertyAlertForm currentFilters={filters} />
-
-              {/* 2. AGENT OPPORTUNITY CALL-TO-ACTION */}
-              <div className="mt-12 max-w-2xl mx-auto">
-                <div className="p-8 bg-blue-50 dark:bg-gray-800 rounded-xl border-2 border-blue-100 dark:border-gray-700 shadow-sm">
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                    No properties in <span className="capitalize text-blue-600 dark:text-blue-400">{locationName}</span> yet?
-                  </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                    Are you an Agent with a property in <span className="capitalize font-semibold">{locationName}</span>? 
-                    <br className="hidden sm:block" />
-                    List it here for free and get these leads immediately!
-                  </p>
-                  <Link 
-                    to="/for-agents"
-                    className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg"
-                  >
-                    List Your Property Now
-                  </Link>
-                </div>
-              </div>
-              {/* ----------------------------------------- */}
-            </>
-          ) : (
-            <div className="text-gray-500 dark:text-gray-400">
-              <p className="text-lg">No properties found.</p>
-              <p className="text-sm">Try changing filters or search terms.</p>
-            </div>
+          {isAlertFormEnabled && (
+            <PropertyAlertForm currentFilters={filters} />
           )}
+
+          <div className="mt-12 max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+             
+             {/* 2. ASK A LOCAL (When no results found) */}
+             <div className="p-8 bg-purple-50 dark:bg-gray-800 rounded-xl border-2 border-purple-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center">
+                <FaComments className="text-4xl text-purple-500 mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                  No listings in <span className="capitalize">{locationName}</span>?
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Start a thread. Ask locals if there are vacancies offline or what the neighborhood is like.
+                </p>
+                <Link 
+                  to="/share-insight"
+                  state={{ location: filters.location, type: 'question' }}
+                  className="inline-block bg-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-purple-700 transition shadow-lg"
+                >
+                  Start a Discussion
+                </Link>
+             </div>
+
+             {/* 3. AGENT OPPORTUNITY */}
+             <div className="p-8 bg-blue-50 dark:bg-gray-800 rounded-xl border-2 border-blue-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center">
+                <FaPlusCircle className="text-4xl text-blue-500 mb-4" />
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                  Do you own property here?
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Tenants are searching for <span className="capitalize font-semibold">{locationName}</span> right now. List for free to capture this demand.
+                </p>
+                <Link 
+                  to="/for-agents"
+                  className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition shadow-lg"
+                >
+                  List Your Property
+                </Link>
+              </div>
+
+          </div>
         </div>
       )}
     </>

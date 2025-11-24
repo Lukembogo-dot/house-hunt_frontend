@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (FIXED: Fetch ALL properties & Added Community Moderation & Property Manager Component)
+// (FIXED: Fetch ALL properties & Added Community Moderation & Property Manager Component & Service Manager)
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -36,6 +36,7 @@ import AssignAgentModal from '../components/admin/AssignAgentModal';
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
 import CommunityModeration from '../components/admin/CommunityModeration';
 import PropertyManager from '../components/admin/PropertyManager'; 
+import ServiceManager from '../components/admin/ServiceManager'; // ✅ Imported ServiceManager
 
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
@@ -211,12 +212,12 @@ const AdminDashboard = () => {
       setLoading(true);
       setError('');
       
-      // ✅ ADDED: Fetch Claim Requests
+      // ✅ ADDED: Fetch Claim Requests & UPDATED: Fetch Service Providers
       const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
         apiClient.get('/properties?limit=1000'), 
         apiClient.get('/reviews', { withCredentials: true }),
-        apiClient.get('/services'), 
+        apiClient.get('/service-providers?limit=100'), // ✅ FETCH FROM NEW ENDPOINT
         apiClient.get('/users/all-agents', { withCredentials: true }), 
         apiClient.get('/payments', { withCredentials: true }),
         apiClient.get('/admin/claim-requests', { withCredentials: true }), // ✅ Fetch claims
@@ -227,7 +228,8 @@ const AdminDashboard = () => {
       setProperties(Array.isArray(propsData) ? propsData : []);
       
       setReviews(reviewsRes.data);
-      setServices(servicesRes.data.services || servicesRes.data || []);
+      // ✅ UPDATED: Handle new response structure
+      setServices(servicesRes.data.providers || servicesRes.data || []);
       setAllAgents(agentsRes.data); 
       setOrders(ordersRes.data); 
       setClaimRequests(claimsRes.data || []); // ✅ Set claims
@@ -611,7 +613,12 @@ const AdminDashboard = () => {
           />
         </section>
 
-        {/* === Manage Neighbourhood Watch === */}
+        {/* ✅ NEW SECTION: SERVICE MANAGER (SEPARATE AS REQUESTED) */}
+        <section className="mb-12">
+           <ServiceManager services={services} onRefresh={fetchData} />
+        </section>
+
+        {/* === Manage Neighbourhood Watch (EXISTING) === */}
         <section id="manage-services" className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Neighbourhood Watch ({services.length})</h2>

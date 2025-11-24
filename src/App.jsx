@@ -1,5 +1,5 @@
 // src/App.jsx
-// (UPDATED: Added MarketFactsTable for GEO Structure)
+// (UPDATED: Added EditServiceProvider Route)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
@@ -21,7 +21,7 @@ import SeoInjector from "./components/SeoInjector";
 import HouseHuntRequest from "./components/HouseHuntRequest"; 
 import PreviewBanner from './components/PreviewBanner';
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
-import MarketFactsTable from "./components/MarketFactsTable"; // ✅ IMPORTED NEW TABLE
+import MarketFactsTable from "./components/MarketFactsTable"; 
 
 // --- New Layout Components ---
 import AppHeader from "./components/layout/AppHeader";
@@ -35,6 +35,16 @@ import CommunityPost from './pages/CommunityPost';
 
 // Demand-Side Page
 import WantedRequestPage from './pages/WantedRequestPage';
+
+
+// Services Page
+import Services from './pages/Services'; 
+// ✅ IMPORTED: Service Provider Details Page
+import ServiceProviderDetails from './pages/ServiceProviderDetails';
+
+// ✅ IMPORTED: Service Provider Admin Pages
+import AddServiceProvider from './pages/admin/AddServiceProvider';
+import EditServiceProvider from './pages/admin/EditServiceProvider'; // ✅ IMPORTED
 
 // --- Context ---
 import { useAuth } from "./context/AuthContext";
@@ -312,10 +322,20 @@ function MainLayout() {
                 <Route path="/share-insight" element={<ShareInsight />} />
                 <Route path="/community/:slug" element={<CommunityPost />} />
 
-                {/* ✅ 3. ADDED: pSEO SEARCH ROUTE (Matches Sitemap) */}
+                {/* 3. Services Directory Routes */}
+                <Route path="/services" element={<Services />} />
+                {/* ✅ ROUTE FOR SINGLE SERVICE PROVIDER */}
+                <Route path="/services/:slug" element={<ServiceProviderDetails />} />
+
+                {/* ✅ 4. ADMIN: Add & Edit Service Provider Routes */}
+                <Route path="/admin/add-service-provider" element={<AddServiceProvider />} />
+                {/* ✅ ADDED: Edit Route */}
+                <Route path="/admin/edit-service-provider/:id" element={<EditServiceProvider />} />
+
+                {/* 5. pSEO SEARCH ROUTE (Matches Sitemap) */}
                 <Route path="/search/:listingType/:location" element={<SearchPageWrapper />} />
 
-                {/* 4. Fallback to Existing Config for all other routes */}
+                {/* 6. Fallback to Existing Config for all other routes */}
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
             
             </Routes>
