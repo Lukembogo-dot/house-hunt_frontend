@@ -354,8 +354,40 @@ function MainLayout() {
 }
 
 function App() {
+  
+  // ✅ 1. PREVENT TEXT SELECTION & RIGHT CLICK GLOBALLY
+  useEffect(() => {
+    // Disable context menu (right-click)
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
+    
+    document.addEventListener("contextmenu", handleContextMenu);
+    
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, []);
+
   return (
     <Router>
+      {/* ✅ 2. GLOBAL CSS TO DISABLE SELECTION */}
+      <style>{`
+        body {
+          user-select: none; /* Standard */
+          -webkit-user-select: none; /* Safari */
+          -moz-user-select: none; /* Firefox */
+          -ms-user-select: none; /* IE10+ */
+        }
+        /* Allow selection on inputs/textareas so forms still work */
+        input, textarea {
+          user-select: text;
+          -webkit-user-select: text;
+          -moz-user-select: text;
+          -ms-user-select: text;
+        }
+      `}</style>
+      
       <ScrollToTop />
       <MainLayout />
     </Router>
