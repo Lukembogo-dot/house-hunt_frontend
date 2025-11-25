@@ -15,7 +15,11 @@ import {
   FaArrowLeft,
   FaSpinner,
   FaCheckCircle,
-  FaSearchPlus // ✅ Added Icon
+  FaSearchPlus, 
+  // ✅ New Icons for Packages
+  FaBoxOpen,
+  FaPlus,
+  FaTrash
 } from 'react-icons/fa';
 
 const SERVICE_TYPES = [
@@ -44,6 +48,9 @@ const EditServiceProvider = () => {
   // Custom Service State
   const [isCustomType, setIsCustomType] = useState(false);
   const [customTypeValue, setCustomTypeValue] = useState('');
+
+  // ✅ Packages State
+  const [packages, setPackages] = useState([]);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -92,6 +99,13 @@ const EditServiceProvider = () => {
             image: null
         });
 
+        // ✅ POPULATE PACKAGES
+        if (providerData.packages && Array.isArray(providerData.packages)) {
+           setPackages(providerData.packages);
+        } else {
+           setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
+        }
+
         // Handle Custom Type
         if (!SERVICE_TYPES.includes(providerData.serviceType)) {
             setIsCustomType(true);
@@ -124,6 +138,14 @@ const EditServiceProvider = () => {
                     metaDescription: found.metaDescription || '',
                     image: null
                 });
+                
+                // ✅ POPULATE PACKAGES (Fallback)
+                if (found.packages && Array.isArray(found.packages)) {
+                  setPackages(found.packages);
+                } else {
+                  setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
+                }
+
                 if (!SERVICE_TYPES.includes(found.serviceType)) {
                     setIsCustomType(true);
                     setCustomTypeValue(found.serviceType);
@@ -158,6 +180,22 @@ const EditServiceProvider = () => {
     }
   };
 
+  // ✅ Package Handlers
+  const handleAddPackage = () => {
+    setPackages([...packages, { name: '', type: 'Standard', description: '', price: '' }]);
+  };
+
+  const handleRemovePackage = (index) => {
+    const updated = packages.filter((_, i) => i !== index);
+    setPackages(updated);
+  };
+
+  const handlePackageChange = (index, field, value) => {
+    const updated = [...packages];
+    updated[index][field] = value;
+    setPackages(updated);
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -187,6 +225,10 @@ const EditServiceProvider = () => {
       data.append('description', formData.description);
       data.append('content', formData.content);
       
+      // ✅ SEND PACKAGES (Filter out empty ones)
+      const validPackages = packages.filter(p => p.name && p.price);
+      data.append('packages', JSON.stringify(validPackages));
+
       // ✅ SEND SEO DATA
       data.append('metaTitle', formData.metaTitle);
       data.append('metaDescription', formData.metaDescription);
@@ -385,6 +427,67 @@ const EditServiceProvider = () => {
             </div>
           </div>
 
+          {/* ✅ NEW: Service Packages Section */}
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8 flex items-center gap-2">
+            <FaBoxOpen className="text-orange-500" /> Service Packages
+          </h2>
+          
+          <div className="mb-6 space-y-4">
+             {packages.map((pkg, index) => (
+                <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 relative">
+                   <button 
+                     type="button" 
+                     onClick={() => handleRemovePackage(index)}
+                     className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-2"
+                     title="Remove Package"
+                   >
+                     <FaTrash size={14} />
+                   </button>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Package Name</label>
+                         <input 
+                           type="text" 
+                           placeholder="e.g. Studio Move" 
+                           value={pkg.name}
+                           onChange={(e) => handlePackageChange(index, 'name', e.target.value)}
+                           className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                         />
+                      </div>
+                      <div>
+                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Price (e.g. KES 5,000)</label>
+                         <input 
+                           type="text" 
+                           placeholder="Price" 
+                           value={pkg.price}
+                           onChange={(e) => handlePackageChange(index, 'price', e.target.value)}
+                           className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                         />
+                      </div>
+                   </div>
+                   <div>
+                       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                       <textarea 
+                         rows="2"
+                         placeholder="What's included?"
+                         value={pkg.description}
+                         onChange={(e) => handlePackageChange(index, 'description', e.target.value)}
+                         className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                       />
+                   </div>
+                </div>
+             ))}
+             
+             <button 
+               type="button" 
+               onClick={handleAddPackage}
+               className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
+             >
+               <FaPlus /> Add Another Package
+             </button>
+          </div>
+
           {/* Content */}
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8">
             Profile Content
@@ -412,7 +515,7 @@ const EditServiceProvider = () => {
             />
           </div>
 
-          {/* ✅ NEW: SEO & VISIBILITY SECTION */}
+          {/* ✅ SEO & VISIBILITY SECTION */}
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8 flex items-center gap-2">
             <FaSearchPlus className="text-purple-600" /> SEO & Visibility
           </h2>

@@ -3,18 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { useAuth } from '../context/AuthContext'; // Import Auth Context
+import { useAuth } from '../context/AuthContext'; 
 import { 
   FaMapMarkerAlt, FaPhone, FaWhatsapp, FaStar, 
-  FaUserCheck, FaArrowLeft, FaUserCircle
+  FaUserCheck, FaArrowLeft, FaUserCircle, 
+  FaBoxOpen
 } from 'react-icons/fa';
-// ✅ 1. REMOVE Helmet, IMPORT SEO Tools
+
+// ✅ 1. RE-IMPORT HELMET (For Schema Injection)
+import { Helmet } from 'react-helmet-async';
 import useSeoData from '../hooks/useSeoData';
 import SeoInjector from '../components/SeoInjector';
 
 const ServiceProviderDetails = () => {
   const { slug } = useParams();
-  const { user } = useAuth(); // Get current user
+  const { user } = useAuth(); 
   const navigate = useNavigate();
 
   const [provider, setProvider] = useState(null);
@@ -26,8 +29,6 @@ const ServiceProviderDetails = () => {
   const [comment, setComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-  // ✅ 2. FETCH DYNAMIC SEO DATA
-  // This connects the page to your Admin SEO Manager
   const pagePath = `/services/${slug}`;
   const { seo } = useSeoData(pagePath);
 
@@ -65,12 +66,63 @@ const ServiceProviderDetails = () => {
       alert('Review submitted successfully!');
       setComment('');
       setRating(5);
-      fetchProvider(); // Refresh to show new review
+      fetchProvider(); 
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to submit review.');
     } finally {
       setReviewSubmitting(false);
     }
+  };
+
+  // ✅ 2. GENERATE SCHEMA (JSON-LD)
+  // This makes packages readable by AI and Google
+  const generateSchema = () => {
+    if (!provider) return null;
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService", // or LocalBusiness
+      "name": provider.title,
+      "image": provider.imageUrl,
+      "description": provider.description,
+      "telephone": provider.phoneNumber,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": provider.location,
+        "addressCountry": "KE"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": provider.averageRating || 5,
+        "reviewCount": provider.numReviews || 1
+      }
+    };
+
+    // Inject Packages if they exist
+    if (provider.packages && provider.packages.length > 0) {
+      schema.hasOfferCatalog = {
+        "@type": "OfferCatalog",
+        "name": "Service Packages",
+        "itemListElement": provider.packages.map((pkg) => ({
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": pkg.name,
+            "description": pkg.description
+          },
+          "price": pkg.price.replace(/[^0-9]/g, ''), // Try to extract numeric price
+          "priceCurrency": "KES",
+          "priceSpecification": {
+             "@type": "UnitPriceSpecification",
+             "price": pkg.price.replace(/[^0-9]/g, ''),
+             "priceCurrency": "KES",
+             "name": pkg.price // Fallback text price
+          }
+        }))
+      };
+    }
+
+    return JSON.stringify(schema);
   };
 
   if (loading) return (
@@ -89,21 +141,24 @@ const ServiceProviderDetails = () => {
     </div>
   );
 
-  // ✅ 3. MERGE SEO DATA
-  // Prioritize Admin SEO settings, fallback to provider details
   const finalSeo = {
     ...seo,
     metaTitle: seo.metaTitle && seo.metaTitle !== 'HouseHunt Kenya' ? seo.metaTitle : `${provider.title} | HouseHunt Services`,
     metaDescription: seo.metaDescription && seo.metaDescription !== 'Find your next home in Kenya.' ? seo.metaDescription : provider.description,
     pagePath: pagePath,
-    // Pass specific business schema details if needed by SeoInjector
     schemaDescription: provider.description
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-inter pb-20">
-      {/* ✅ 4. INJECT SEO */}
       <SeoInjector seo={finalSeo} />
+      
+      {/* ✅ 3. INJECT SCHEMA SCRIPT */}
+      <Helmet>
+        <script type="application/ld+json">
+          {generateSchema()}
+        </script>
+      </Helmet>
 
       {/* --- Hero Header --- */}
       <div className="relative h-64 md:h-80 bg-gray-800 overflow-hidden">
@@ -127,7 +182,7 @@ const ServiceProviderDetails = () => {
       <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-30">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* --- Left Sidebar (Contact Card) --- */}
+          {/* --- Left Sidebar --- */}
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 text-center border border-gray-100 dark:border-gray-700">
                <div className="w-32 h-32 mx-auto bg-white rounded-full p-1 shadow-md -mt-20 mb-4 overflow-hidden">
@@ -171,7 +226,7 @@ const ServiceProviderDetails = () => {
             </div>
           </div>
 
-          {/* --- Right Content (Details) --- */}
+          {/* --- Right Content --- */}
           <div className="md:col-span-2 space-y-8 mt-4 md:mt-0">
              
              {/* About Section */}
@@ -180,7 +235,6 @@ const ServiceProviderDetails = () => {
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
                   {provider.description}
                 </p>
-                {/* ✅ Content here is now Auto-Linked from Backend */}
                 {provider.content && (
                   <div 
                     className="mt-6 prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300"
@@ -203,13 +257,44 @@ const ServiceProviderDetails = () => {
                </div>
              )}
 
-             {/* ✅ REVIEWS SECTION */}
+             {/* ✅ NEW: SERVICE PACKAGES SECTION */}
+             {provider.packages && provider.packages.length > 0 && (
+               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                     <FaBoxOpen className="text-orange-500" /> Available Packages
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {provider.packages.map((pkg, index) => (
+                        <div key={index} className="p-5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:shadow-md transition-shadow">
+                           <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-lg text-gray-900 dark:text-white">{pkg.name}</h4>
+                              {pkg.type && (
+                                <span className="text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-md uppercase tracking-wide">
+                                   {pkg.type}
+                                </span>
+                              )}
+                           </div>
+                           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed min-h-[40px]">
+                              {pkg.description}
+                           </p>
+                           <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Price</span>
+                              <span className="font-bold text-lg text-green-600 dark:text-green-400">
+                                 {pkg.price}
+                              </span>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+             )}
+
+             {/* REVIEWS SECTION */}
              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                    Reviews & Ratings ({provider.numReviews})
                 </h3>
 
-                {/* Review List */}
                 <div className="space-y-6 mb-10">
                    {provider.reviews && provider.reviews.length > 0 ? (
                       provider.reviews.map((rev, index) => (
@@ -236,7 +321,6 @@ const ServiceProviderDetails = () => {
                    )}
                 </div>
 
-                {/* Write Review Form */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Leave a Review</h4>
                    <form onSubmit={handleReviewSubmit}>
