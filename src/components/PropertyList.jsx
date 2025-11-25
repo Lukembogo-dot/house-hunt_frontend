@@ -6,8 +6,10 @@ import PropertyCard from "./PropertyCard";
 import SearchBar from "./SearchBar";
 import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
 import PropertyAlertForm from "./PropertyAlertForm";
-// ✅ 1. IMPORT NEW ICONS
-import { FaPlusCircle, FaComments, FaQuestionCircle } from "react-icons/fa";
+import { FaPlusCircle, FaComments, FaQuestionCircle, FaTruck } from "react-icons/fa";
+
+// ✅ 1. IMPORT SERVICE CARD
+import ServiceCard from "./services/ServiceCard";
 
 // This object is created only once, so its reference never changes.
 const STABLE_DEFAULT_FILTER = {};
@@ -18,13 +20,14 @@ export default function PropertyList({
   showSearchBar = true, 
   showTitle = true,
   limit = 10,
-  // Callback to pass total count back to parent
   onDataLoaded = null 
 }) {
   
   const isAlertFormEnabled = useFeatureFlag('property-alert-magnet');
 
   const [properties, setProperties] = useState([]);
+  // ✅ 2. STATE FOR SERVICES
+  const [relatedServices, setRelatedServices] = useState([]);
   
   const [filters, setFilters] = useState({
     location: "",
@@ -42,29 +45,47 @@ export default function PropertyList({
   const fetchProperties = useCallback(async (currentFilters = {}, pageNumber = 1) => {
     try {
       setLoading(true);
+      
+      // 1. Construct Property Params (Include all filters)
       const params = new URLSearchParams({
         ...currentFilters, 
         page: pageNumber,
         limit: limit
       });
-      Object.keys(params).forEach(key => {
+      
+      // Clean up empty params
+      const keys = Array.from(params.keys());
+      keys.forEach(key => {
         if (!params.get(key) || params.get(key) === 'null') {
           params.delete(key);
         }
       });
       
-      const response = await apiClient.get(`/properties?${params.toString()}`);
-      setProperties(response.data.properties || []);
-      setPage(response.data.page || 1);
-      setTotalPages(response.data.pages || 1);
+      // 2. Construct Service Params (Strictly Location ONLY)
+      // "Bypass all other property list search filters"
+      const locationQuery = params.get('location') || '';
+      
+      const [propertyRes, serviceRes] = await Promise.all([
+        apiClient.get(`/properties?${params.toString()}`),
+        // Fetch services ONLY by location, ignoring price/type filters
+        apiClient.get(`/service-providers?location=${locationQuery}&limit=4`)
+      ]);
+
+      setProperties(propertyRes.data.properties || []);
+      setPage(propertyRes.data.page || 1);
+      setTotalPages(propertyRes.data.pages || 1);
+      
+      // Store Services
+      setRelatedServices(serviceRes.data.providers || serviceRes.data || []);
 
       if (onDataLoaded) {
-        onDataLoaded(response.data.total || (response.data.properties ? response.data.properties.length : 0));
+        onDataLoaded(propertyRes.data.total || (propertyRes.data.properties ? propertyRes.data.properties.length : 0));
       }
 
     } catch (err) {
-      console.error("❌ Error fetching properties:", err);
+      console.error("❌ Error fetching data:", err);
       setProperties([]); 
+      setRelatedServices([]);
       
       if (onDataLoaded) {
         onDataLoaded(0);
@@ -83,7 +104,6 @@ export default function PropertyList({
   useEffect(() => {
     if (filterOverrides) {
       const newFilters = { ...defaultFilter, ...filterOverrides };
-      
       setFilters(newFilters); 
       setPage(1); 
       fetchProperties(newFilters, 1);
@@ -147,11 +167,10 @@ export default function PropertyList({
             
             {properties.map((property, index) => {
               
-              // ✅ INJECTION 1: "Ask a Local" Card at Index 1 (2nd Position)
+              // --- INJECTION 1: "Ask a Local" (Index 1) ---
               if (index === 1) {
                 return (
                   <div key={`community-promo-${index}`} style={{ display: 'contents' }}>
-                    {/* The Community Card */}
                     <div className="bg-purple-700 dark:bg-purple-900 rounded-xl shadow-lg overflow-hidden flex flex-col justify-center items-center text-center p-6 text-white transform hover:scale-105 transition duration-300 border-2 border-purple-500">
                       <div className="bg-white/20 p-4 rounded-full mb-4">
                         <FaComments className="text-4xl text-purple-200" />
@@ -169,25 +188,22 @@ export default function PropertyList({
                           <FaQuestionCircle /> Ask a Local
                         </Link>
                          <Link 
-                          to={`/search/rent/${filters.location}`} // Links to dynamic page where insights are shown
+                          to={`/search/rent/${filters.location}`} 
                           className="text-purple-200 hover:text-white text-xs underline mt-1"
                         >
                           Read existing reviews
                         </Link>
                       </div>
                     </div>
-
-                    {/* The Actual Property Card */}
                     <PropertyCard key={property._id} property={property} />
                   </div>
                 );
               }
 
-              // ✅ INJECTION 2: Agent Promo Card at Index 3 (4th Position)
+              // --- INJECTION 2: Agent Promo (Index 3) ---
               if (index === 3) {
                 return (
                   <div key={`agent-promo-${index}`} style={{ display: 'contents' }}>
-                    {/* The Agent Promo Card */}
                     <div className="bg-blue-600 dark:bg-blue-700 rounded-xl shadow-lg overflow-hidden flex flex-col justify-center items-center text-center p-6 text-white transform hover:scale-105 transition duration-300 border-2 border-blue-400">
                       <div className="bg-white/20 p-4 rounded-full mb-4 animate-pulse">
                         <FaPlusCircle className="text-4xl text-yellow-300" />
@@ -203,16 +219,18 @@ export default function PropertyList({
                         List Here for Free
                       </Link>
                     </div>
-
-                    {/* The Actual Property Card */}
                     <PropertyCard key={property._id} property={property} />
                   </div>
                 );
               }
+
+              // ✅ REMOVED: 5th Card Injection Service Provider Logic
+              
               return <PropertyCard key={property._id} property={property} />;
             })}
           </div>
 
+          {/* Pagination */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -242,6 +260,23 @@ export default function PropertyList({
               Next →
             </button>
           </div>
+
+          {/* ✅ NEW: SERVICES SECTION (Visible when properties ARE found) */}
+          {relatedServices.length > 0 && (
+            <div className="mt-16 mb-8 pt-10 border-t dark:border-gray-700">
+               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                 <FaTruck className="text-orange-500" /> 
+                 Trusted Services in <span className="capitalize">{locationName}</span>
+               </h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {relatedServices.map((service) => (
+                     <div key={service._id} className="w-full h-96"> 
+                       <ServiceCard service={service} />
+                     </div>
+                  ))}
+               </div>
+            </div>
+          )}
         </>
       ) : (
         // --- ZERO RESULTS STATE ---
@@ -254,7 +289,7 @@ export default function PropertyList({
 
           <div className="mt-12 max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
              
-             {/* 2. ASK A LOCAL (When no results found) */}
+             {/* 2. ASK A LOCAL */}
              <div className="p-8 bg-purple-50 dark:bg-gray-800 rounded-xl border-2 border-purple-100 dark:border-gray-700 shadow-sm flex flex-col items-center justify-center">
                 <FaComments className="text-4xl text-purple-500 mb-4" />
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
@@ -288,8 +323,25 @@ export default function PropertyList({
                   List Your Property
                 </Link>
               </div>
-
           </div>
+
+          {/* ✅ SCENARIO B: ZERO RESULTS FALLBACK SERVICES */}
+          {relatedServices.length > 0 && (
+            <div className="mt-16 text-left max-w-6xl mx-auto px-4">
+               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                 <FaTruck className="text-orange-500" /> 
+                 While you search... Trusted Services in <span className="capitalize">{locationName}</span>
+               </h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {relatedServices.map((service) => (
+                     <div key={service._id} className="w-full h-96"> 
+                       <ServiceCard service={service} />
+                     </div>
+                  ))}
+               </div>
+            </div>
+          )}
+
         </div>
       )}
     </>

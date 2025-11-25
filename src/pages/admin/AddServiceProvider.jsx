@@ -22,7 +22,8 @@ import {
   // ✅ New Icons for Packages
   FaBoxOpen,
   FaPlus,
-  FaTrash
+  FaTrash,
+  FaTrashAlt // ✅ Added for removing area groups
 } from 'react-icons/fa';
 
 const SERVICE_TYPES = [
@@ -55,6 +56,11 @@ const AddServiceProvider = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [linkedUser, setLinkedUser] = useState(null);
 
+  // ✅ Service Areas State (Grouped)
+  const [areaGroups, setAreaGroups] = useState([
+    { county: '', subLocations: '' }
+  ]);
+
   // ✅ Packages State
   const [packages, setPackages] = useState([
     { name: '', type: 'Standard', description: '', price: '' }
@@ -64,7 +70,7 @@ const AddServiceProvider = () => {
     companyName: '',
     serviceType: '',
     location: '',
-    serviceAreas: '', 
+    // serviceAreas removed from simple state, handled by areaGroups
     phoneNumber: '',
     whatsappNumber: '',
     email: '', 
@@ -137,6 +143,22 @@ const AddServiceProvider = () => {
     }));
   };
 
+  // ✅ Service Area Handlers
+  const handleAddCounty = () => {
+    setAreaGroups([...areaGroups, { county: '', subLocations: '' }]);
+  };
+
+  const handleRemoveCounty = (index) => {
+    const updated = areaGroups.filter((_, i) => i !== index);
+    setAreaGroups(updated);
+  };
+
+  const handleAreaChange = (index, field, value) => {
+    const updated = [...areaGroups];
+    updated[index][field] = value;
+    setAreaGroups(updated);
+  };
+
   // ✅ Package Handlers
   const handleAddPackage = () => {
     setPackages([...packages, { name: '', type: 'Standard', description: '', price: '' }]);
@@ -173,7 +195,20 @@ const AddServiceProvider = () => {
       data.append('companyName', formData.companyName);
       data.append('serviceType', finalServiceType); 
       data.append('location', formData.location);
-      data.append('serviceAreas', formData.serviceAreas);
+      
+      // ✅ PREPARE SERVICE AREAS (Structured)
+      const formattedAreas = areaGroups
+        .filter(g => g.county.trim() !== '') // Remove empty counties
+        .map(g => ({
+          county: g.county.trim(),
+          // Split string to array
+          subLocations: g.subLocations.split(',').map(s => s.trim()).filter(s => s !== '')
+        }));
+      
+      if (formattedAreas.length > 0) {
+        data.append('serviceAreas', JSON.stringify(formattedAreas));
+      }
+
       data.append('phoneNumber', formData.phoneNumber);
       data.append('whatsappNumber', formData.whatsappNumber);
       data.append('email', formData.email);
@@ -337,7 +372,7 @@ const AddServiceProvider = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">HQ Location</label>
               <div className="relative">
@@ -353,16 +388,51 @@ const AddServiceProvider = () => {
                 />
               </div>
             </div>
-             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Areas (Comma Separated)</label>
-              <input 
-                type="text" 
-                name="serviceAreas" 
-                value={formData.serviceAreas}
-                onChange={handleChange}
-                placeholder="e.g., Kileleshwa, Lavington, Westlands"
-                className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-              />
+            
+            {/* ✅ NEW SERVICE AREAS UI */}
+            <div className="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Service Areas (Grouped by County)</label>
+                
+                {areaGroups.map((group, index) => (
+                  <div key={index} className="flex flex-col md:flex-row gap-3 mb-3 items-start">
+                    <div className="w-full md:w-1/3">
+                      <input 
+                        type="text" 
+                        placeholder="County (e.g. Nairobi)" 
+                        value={group.county}
+                        onChange={(e) => handleAreaChange(index, 'county', e.target.value)}
+                        className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="w-full md:w-2/3 relative">
+                      <input 
+                        type="text" 
+                        placeholder="Locations (comma separated: Kilimani, Westlands...)" 
+                        value={group.subLocations}
+                        onChange={(e) => handleAreaChange(index, 'subLocations', e.target.value)}
+                        className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                      />
+                      {areaGroups.length > 1 && (
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveCounty(index)}
+                          className="absolute right-[-30px] top-3.5 text-red-500 hover:text-red-700"
+                          title="Remove County Group"
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                <button 
+                  type="button" 
+                  onClick={handleAddCounty}
+                  className="text-sm text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 mt-2 hover:underline"
+                >
+                  <FaPlus /> Add Another County
+                </button>
             </div>
           </div>
 

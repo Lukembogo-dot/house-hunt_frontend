@@ -1,5 +1,4 @@
 // src/App.jsx
-// (UPDATED: Added EditServiceProvider Route)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
@@ -44,7 +43,7 @@ import ServiceProviderDetails from './pages/ServiceProviderDetails';
 
 // ✅ IMPORTED: Service Provider Admin Pages
 import AddServiceProvider from './pages/admin/AddServiceProvider';
-import EditServiceProvider from './pages/admin/EditServiceProvider'; // ✅ IMPORTED
+import EditServiceProvider from './pages/admin/EditServiceProvider'; 
 
 // --- Context ---
 import { useAuth } from "./context/AuthContext";
@@ -195,10 +194,15 @@ function MainLayout() {
     <>
       <SeoInjector seo={homeSeo} />
 
-      {/* HERO */}
-      <section id="home" className="relative bg-cover bg-center h-[65vh] min-h-[500px] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
+      {/* ✅ UPDATED HERO SECTION 
+          1. Reduced height to h-[50vh] (was 65vh) to pull bottom content up.
+          2. Reduced min-height to 400px.
+      */}
+      <section id="home" className="relative bg-cover bg-center h-[50vh] min-h-[400px] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-        <div className="relative z-10 px-6 max-w-3xl pb-10">
+        
+        {/* ✅ Added pb-16 to lift text higher inside the hero */}
+        <div className="relative z-10 px-6 max-w-3xl pb-16"> 
           <motion.h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             Find Your Dream Home in Kenya
           </motion.h1>
@@ -209,6 +213,7 @@ function MainLayout() {
       </section>
 
       <main id="properties" className="flex-grow">
+        {/* ✅ Search Bar - Negative margin pulls it onto the hero image */}
         <section className="relative z-20 -mt-16 px-6">
           <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
             <SearchBar filters={homeFilters} onChange={(name, val) => setHomeFilters(prev => ({ ...prev, [name]: val }))} onFilter={handleHomeFilterSubmit} />
@@ -224,7 +229,7 @@ function MainLayout() {
            </section>
         ) : (
           <>
-            {/* 1. Top Agents */}
+            {/* 1. Top Agents - Now immediately visible due to reduced Hero height */}
             <TopAgents />
 
             {/* 2. Featured Properties (11 Items) */}

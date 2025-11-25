@@ -83,7 +83,7 @@ const ServicesHero = ({ activeCategory, onCategoryChange, searchQuery, onSearchC
             type="text" 
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search for 'movers in Kilimani'..."
+            placeholder="Search for 'movers', 'Kilimani', or 'Swift'..."
             className="w-full pl-12 pr-4 py-4 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
           />
         </motion.div>
@@ -129,9 +129,9 @@ const Services = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Parallel Fetch
+        // Fetch up to 1000 to ensure robust client-side search for now
         const [servicesRes, seoRes] = await Promise.all([
-          apiClient.get('/service-providers?limit=100'), 
+          apiClient.get('/service-providers?limit=1000'), 
           apiClient.get('/seo/services') 
         ]);
 
@@ -151,23 +151,30 @@ const Services = () => {
     fetchData();
   }, []);
 
-  // 2. Handle Filtering
+  // 2. ✅ UPDATED: Handle Robust Filtering (Search by Name, Location, Type, Area)
   useEffect(() => {
     let result = services;
 
-    // Filter by Category
+    // Filter by Category Pill
     if (activeCategory !== 'all') {
       result = result.filter(service => 
         service.serviceType?.toLowerCase().includes(activeCategory.toLowerCase())
       );
     }
 
-    // Filter by Search
+    // Filter by Search Bar
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
       result = result.filter(service => 
-        service.title.toLowerCase().includes(query) ||
-        service.location.toLowerCase().includes(query) ||
+        // 1. Check Title (Company Name)
+        (service.title && service.title.toLowerCase().includes(query)) ||
+        // 2. Check Location (HQ)
+        (service.location && service.location.toLowerCase().includes(query)) ||
+        // 3. Check Service Type (e.g., "Movers")
+        (service.serviceType && service.serviceType.toLowerCase().includes(query)) ||
+        // 4. Check Service Areas (Array of locations)
+        (service.serviceAreas && service.serviceAreas.some(area => area.toLowerCase().includes(query))) ||
+        // 5. Check Description
         (service.description && service.description.toLowerCase().includes(query))
       );
     }
@@ -270,7 +277,6 @@ const Services = () => {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {/* ✅ Using External ServiceCard Component Now */}
                       <ServiceCard service={service} />
                     </motion.div>
                   ))}
@@ -281,7 +287,7 @@ const Services = () => {
         )}
       </main>
 
-      {/* SEO Content Block - Animated Card */}
+      {/* SEO Content Block */}
       <section className="py-16 px-6 bg-gray-50 dark:bg-gray-900">
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
@@ -290,7 +296,6 @@ const Services = () => {
           viewport={{ once: true, margin: "-100px" }}
           className="max-w-5xl mx-auto bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-10 md:p-16 border border-gray-100 dark:border-gray-700 text-center relative overflow-hidden"
         >
-          {/* Decorative Element */}
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500" />
 
           <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">

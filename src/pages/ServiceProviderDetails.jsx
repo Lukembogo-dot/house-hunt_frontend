@@ -7,7 +7,9 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaMapMarkerAlt, FaPhone, FaWhatsapp, FaStar, 
   FaUserCheck, FaArrowLeft, FaUserCircle, 
-  FaBoxOpen
+  FaBoxOpen, 
+  // ✅ ADDED: Icons for Slideshow Navigation
+  FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa';
 
 // ✅ 1. RE-IMPORT HELMET (For Schema Injection)
@@ -29,6 +31,10 @@ const ServiceProviderDetails = () => {
   const [comment, setComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
+  // ✅ SLIDESHOW STATE (For Packages)
+  const [packagePage, setPackagePage] = useState(0);
+  const PACKAGES_PER_PAGE = 4;
+
   const pagePath = `/services/${slug}`;
   const { seo } = useSeoData(pagePath);
 
@@ -48,6 +54,19 @@ const ServiceProviderDetails = () => {
   useEffect(() => {
     fetchProvider();
   }, [slug]);
+
+  // ✅ SLIDESHOW HANDLERS
+  const nextPackagePage = () => {
+    if (!provider?.packages) return;
+    const totalPages = Math.ceil(provider.packages.length / PACKAGES_PER_PAGE);
+    setPackagePage((prev) => (prev + 1) % totalPages);
+  };
+
+  const prevPackagePage = () => {
+    if (!provider?.packages) return;
+    const totalPages = Math.ceil(provider.packages.length / PACKAGES_PER_PAGE);
+    setPackagePage((prev) => (prev - 1 + totalPages) % totalPages);
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -75,13 +94,12 @@ const ServiceProviderDetails = () => {
   };
 
   // ✅ 2. GENERATE SCHEMA (JSON-LD)
-  // This makes packages readable by AI and Google
   const generateSchema = () => {
     if (!provider) return null;
 
     const schema = {
       "@context": "https://schema.org",
-      "@type": "ProfessionalService", // or LocalBusiness
+      "@type": "ProfessionalService", 
       "name": provider.title,
       "image": provider.imageUrl,
       "description": provider.description,
@@ -98,7 +116,6 @@ const ServiceProviderDetails = () => {
       }
     };
 
-    // Inject Packages if they exist
     if (provider.packages && provider.packages.length > 0) {
       schema.hasOfferCatalog = {
         "@type": "OfferCatalog",
@@ -106,17 +123,17 @@ const ServiceProviderDetails = () => {
         "itemListElement": provider.packages.map((pkg) => ({
           "@type": "Offer",
           "itemOffered": {
-            "@type": "Service",
+            "@type": "Service", // or Product
             "name": pkg.name,
             "description": pkg.description
           },
-          "price": pkg.price.replace(/[^0-9]/g, ''), // Try to extract numeric price
+          "price": pkg.price.replace(/[^0-9]/g, ''), 
           "priceCurrency": "KES",
           "priceSpecification": {
              "@type": "UnitPriceSpecification",
              "price": pkg.price.replace(/[^0-9]/g, ''),
              "priceCurrency": "KES",
-             "name": pkg.price // Fallback text price
+             "name": pkg.price 
           }
         }))
       };
@@ -149,6 +166,13 @@ const ServiceProviderDetails = () => {
     schemaDescription: provider.description
   };
 
+  // Helper for Slideshow Slicing
+  const visiblePackages = provider.packages 
+    ? provider.packages.slice(packagePage * PACKAGES_PER_PAGE, (packagePage + 1) * PACKAGES_PER_PAGE)
+    : [];
+  
+  const showControls = provider.packages && provider.packages.length > PACKAGES_PER_PAGE;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-inter pb-20">
       <SeoInjector seo={finalSeo} />
@@ -179,7 +203,7 @@ const ServiceProviderDetails = () => {
         </Link>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-30">
+      <div className="max-w-6xl mx-auto px-6 -mt-16 relative z-30">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           {/* --- Left Sidebar --- */}
@@ -257,27 +281,55 @@ const ServiceProviderDetails = () => {
                </div>
              )}
 
-             {/* ✅ NEW: SERVICE PACKAGES SECTION */}
+             {/* ✅ NEW: PACKAGES / PRODUCTS SLIDESHOW SECTION */}
              {provider.packages && provider.packages.length > 0 && (
-               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                     <FaBoxOpen className="text-orange-500" /> Available Packages
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     {provider.packages.map((pkg, index) => (
-                        <div key={index} className="p-5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:shadow-md transition-shadow">
+               <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 relative">
+                  
+                  {/* Header & Navigation */}
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                       <FaBoxOpen className="text-orange-500" /> Packages / Products
+                    </h3>
+                    
+                    {showControls && (
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={prevPackagePage}
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition"
+                        >
+                          <FaChevronLeft />
+                        </button>
+                        <button 
+                          onClick={nextPackagePage}
+                          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-200 transition"
+                        >
+                          <FaChevronRight />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Slideshow Grid (4 Items Max) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                     {visiblePackages.map((pkg, index) => (
+                        <div key={index} className="flex flex-col p-5 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700/30 hover:shadow-md transition-shadow h-full">
+                           
                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-bold text-lg text-gray-900 dark:text-white">{pkg.name}</h4>
+                              <h4 className="font-bold text-lg text-gray-900 dark:text-white line-clamp-1" title={pkg.name}>
+                                {pkg.name}
+                              </h4>
                               {pkg.type && (
-                                <span className="text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-md uppercase tracking-wide">
+                                <span className="shrink-0 ml-2 text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-md uppercase tracking-wide">
                                    {pkg.type}
                                 </span>
                               )}
                            </div>
-                           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed min-h-[40px]">
+                           
+                           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed line-clamp-3 flex-grow">
                               {pkg.description}
                            </p>
-                           <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                           
+                           <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600 mt-auto">
                               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Price</span>
                               <span className="font-bold text-lg text-green-600 dark:text-green-400">
                                  {pkg.price}
@@ -286,6 +338,12 @@ const ServiceProviderDetails = () => {
                         </div>
                      ))}
                   </div>
+                  
+                  {showControls && (
+                    <div className="mt-4 text-center text-xs text-gray-400">
+                      Showing {packagePage * PACKAGES_PER_PAGE + 1}-{Math.min((packagePage + 1) * PACKAGES_PER_PAGE, provider.packages.length)} of {provider.packages.length} products
+                    </div>
+                  )}
                </div>
              )}
 
@@ -295,6 +353,7 @@ const ServiceProviderDetails = () => {
                    Reviews & Ratings ({provider.numReviews})
                 </h3>
 
+                {/* Review List */}
                 <div className="space-y-6 mb-10">
                    {provider.reviews && provider.reviews.length > 0 ? (
                       provider.reviews.map((rev, index) => (
@@ -321,6 +380,7 @@ const ServiceProviderDetails = () => {
                    )}
                 </div>
 
+                {/* Write Review Form */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl">
                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Leave a Review</h4>
                    <form onSubmit={handleReviewSubmit}>
