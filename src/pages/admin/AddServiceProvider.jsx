@@ -17,7 +17,8 @@ import {
   FaSearch,
   FaUserCheck,
   FaUser,
-  FaCheckSquare
+  FaCheckSquare,
+  FaSearchPlus // ✅ Added Icon for SEO
 } from 'react-icons/fa';
 
 const SERVICE_TYPES = [
@@ -31,7 +32,7 @@ const SERVICE_TYPES = [
   'Pest Control', 
   'Painting', 
   'Gardening',
-  'Other' // ✅ Added Other Option
+  'Other' 
 ];
 
 const AddServiceProvider = () => {
@@ -39,11 +40,11 @@ const AddServiceProvider = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   
-  // ✅ Custom Service State
+  // Custom Service State
   const [isCustomType, setIsCustomType] = useState(false);
   const [customTypeValue, setCustomTypeValue] = useState('');
 
-  // ✅ Shadow Account Search State
+  // Shadow Account Search State
   const [existingAgents, setExistingAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -61,10 +62,12 @@ const AddServiceProvider = () => {
     website: '',
     description: '', 
     content: '', 
+    // ✅ NEW SEO FIELDS
+    metaTitle: '',
+    metaDescription: '',
     image: null
   });
 
-  // ✅ Fetch Agents for Shadow Linking on Mount
   useEffect(() => {
     const fetchAgents = async () => {
       try {
@@ -80,7 +83,6 @@ const AddServiceProvider = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    // Handle Custom Service Toggle
     if (name === 'serviceType') {
       if (value === 'Other') {
         setIsCustomType(true);
@@ -94,7 +96,6 @@ const AddServiceProvider = () => {
     }
   };
 
-  // ✅ Handle Search Input
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -113,16 +114,14 @@ const AddServiceProvider = () => {
     }
   };
 
-  // ✅ Handle Selecting a Shadow Profile (Autofill Logic)
   const selectShadowProfile = (agent) => {
     setLinkedUser(agent);
     setSearchQuery(agent.name);
     setShowSuggestions(false);
 
-    // Autofill form with Shadow Account details
     setFormData(prev => ({
       ...prev,
-      companyName: agent.companyName || agent.name, // Prefer company name if set
+      companyName: agent.companyName || agent.name, 
       phoneNumber: agent.phoneNumber || '',
       whatsappNumber: agent.whatsappNumber || '',
       email: agent.email || '',
@@ -144,11 +143,10 @@ const AddServiceProvider = () => {
     try {
       const data = new FormData();
       
-      // ✅ Use Custom Type if 'Other' is selected
       const finalServiceType = isCustomType ? customTypeValue : formData.serviceType;
       
       data.append('companyName', formData.companyName);
-      data.append('serviceType', finalServiceType); // Send resolved type
+      data.append('serviceType', finalServiceType); 
       data.append('location', formData.location);
       data.append('serviceAreas', formData.serviceAreas);
       data.append('phoneNumber', formData.phoneNumber);
@@ -157,6 +155,10 @@ const AddServiceProvider = () => {
       data.append('website', formData.website);
       data.append('description', formData.description);
       data.append('content', formData.content);
+      
+      // ✅ SEND SEO DATA
+      data.append('metaTitle', formData.metaTitle || formData.companyName); // Fallback to name
+      data.append('metaDescription', formData.metaDescription || formData.description); // Fallback to desc
       
       if (formData.image) {
         data.append('image', formData.image);
@@ -167,7 +169,7 @@ const AddServiceProvider = () => {
         withCredentials: true
       });
 
-      alert('Service Provider & Shadow Account Processed Successfully!');
+      alert('Service Provider & SEO Data Created Successfully!');
       navigate('/admin');
 
     } catch (error) {
@@ -188,7 +190,7 @@ const AddServiceProvider = () => {
               <FaBuilding className="text-blue-600" /> Onboard Service Provider
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mt-2">
-              Add a company. If the contact details match an existing user, they will be linked automatically.
+              Add a company. Shadow account and SEO data will be generated automatically.
             </p>
           </div>
           <button 
@@ -201,13 +203,13 @@ const AddServiceProvider = () => {
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
           
-          {/* ✅ NEW: LINK EXISTING PROFILE SECTION */}
+          {/* Link Existing Profile */}
           <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
              <h2 className="text-lg font-bold text-blue-800 dark:text-blue-300 mb-2 flex items-center gap-2">
                <FaUserCheck /> Link to Existing Profile (Optional)
              </h2>
              <p className="text-sm text-blue-600 dark:text-blue-400 mb-4">
-               Search for an existing Agent or Shadow Account to autofill details and link this service to them.
+               Search for an existing Agent or Shadow Account to autofill details.
              </p>
              
              <div className="relative">
@@ -219,8 +221,6 @@ const AddServiceProvider = () => {
                   placeholder="Search by Name, Phone or Email..."
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
-                
-                {/* Suggestions Dropdown */}
                 {showSuggestions && filteredAgents.length > 0 && (
                   <div className="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
                     {filteredAgents.map((agent) => (
@@ -257,7 +257,7 @@ const AddServiceProvider = () => {
              )}
           </div>
 
-          {/* Section 1: Business Identity */}
+          {/* Business Identity */}
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">
             Business Identity
           </h2>
@@ -290,8 +290,6 @@ const AddServiceProvider = () => {
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
-              
-              {/* ✅ NEW: Custom Service Input */}
               {isCustomType && (
                 <div className="mt-3 animate-fade-in">
                    <label className="block text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">Enter Custom Category Name</label>
@@ -324,7 +322,6 @@ const AddServiceProvider = () => {
                 />
               </div>
             </div>
-            
              <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Areas (Comma Separated)</label>
               <input 
@@ -338,9 +335,9 @@ const AddServiceProvider = () => {
             </div>
           </div>
 
-          {/* Section 2: Contact & Shadow Account */}
+          {/* Contact Details */}
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8">
-            Contact Details (Creates/Links Shadow Account)
+            Contact Details
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -359,7 +356,6 @@ const AddServiceProvider = () => {
                 />
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">WhatsApp Number</label>
               <div className="relative">
@@ -387,11 +383,10 @@ const AddServiceProvider = () => {
                   name="email" 
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="provider@gmail.com (Used for claiming)"
+                  placeholder="provider@gmail.com"
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">If matching an existing shadow user, use their email here.</p>
             </div>
              <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Website</label>
@@ -409,7 +404,7 @@ const AddServiceProvider = () => {
             </div>
           </div>
 
-          {/* Section 3: Content & Visuals */}
+          {/* Content */}
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8">
             Profile Content
           </h2>
@@ -440,6 +435,37 @@ const AddServiceProvider = () => {
             />
           </div>
 
+          {/* ✅ NEW: SEO & VISIBILITY SECTION */}
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8 flex items-center gap-2">
+            <FaSearchPlus className="text-purple-600" /> SEO & Visibility
+          </h2>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Title (SEO Title)</label>
+            <input 
+              type="text" 
+              name="metaTitle" 
+              value={formData.metaTitle}
+              onChange={handleChange}
+              placeholder="e.g. Best Movers in Kilimani | Swift Movers Ltd"
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">If empty, we'll use the Company Name.</p>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Description (SEO Summary)</label>
+            <textarea 
+              name="metaDescription" 
+              rows="2"
+              value={formData.metaDescription}
+              onChange={handleChange}
+              placeholder="e.g. Affordable and reliable moving services in Nairobi. Call us for a free quote."
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">If empty, we'll use the Short Description.</p>
+          </div>
+
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image / Logo</label>
             <div className="flex items-center gap-4">
@@ -463,7 +489,6 @@ const AddServiceProvider = () => {
             </div>
           </div>
 
-          {/* Submit Button */}
           <div className="flex justify-end">
             <button 
               type="submit" 

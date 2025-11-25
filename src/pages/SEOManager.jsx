@@ -1,5 +1,5 @@
 // src/pages/SEOManager.jsx
-// (Strictly Updated: Adds FAQs to Page Selector Dropdown)
+// (Strictly Updated: Adds Service Providers to SEO Manager logic)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter, FaLink, FaExclamationTriangle, FaBuilding, FaInstagram, FaLinkedin } from 'react-icons/fa';
@@ -236,8 +236,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
   const [keywordSuggestions, setKeywordSuggestions] = useState([]);
   
   const [postContent, setPostContent] = useState('');
-  const [currentPostId, setCurrentPostId] = useState(null);
+  
+  // ✅ UPDATED: Identifiers for Mongo Objects
+  const [currentMongoId, setCurrentMongoId] = useState(null);
+  
+  // ✅ UPDATED: Flags to toggle Editor vs Standard Form
   const [isServicePost, setIsServicePost] = useState(false);
+  const [isProvider, setIsProvider] = useState(false);
   
   const staticPages = [
       { pagePath: '/', metaTitle: 'Homepage', breadCrumbTitle: 'Home' },
@@ -247,20 +252,24 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
       { pagePath: '/contact', metaTitle: 'Contact Us', breadCrumbTitle: 'Contact' },
   ];
   
-  // ✅ 1. UPDATED: Explicitly fetch Service Posts AND FAQs to populate the dropdown
+  // ✅ 1. UPDATED: Fetch Providers, Posts & FAQs
   const fetchPagesList = useCallback(async () => {
     try {
-        // 1. Get Configured SEO Pages (Dynamic)
+        // 1. Get Configured SEO Pages
         const { data: dynamicPagesData } = await apiClient.get('/seo/pages');
         const dynamicPages = Array.isArray(dynamicPagesData) ? dynamicPagesData : [];
         
-        // 2. Get ALL Service Posts
+        // 2. Get Service Posts
         const { data: servicePosts } = await apiClient.get('/services'); 
 
-        // ✅ 3. NEW: Get ALL FAQs
+        // 3. Get FAQs
         const { data: faqPosts } = await apiClient.get('/faqs');
         
-        // 4. Map Keywords (pSEO)
+        // ✅ 4. NEW: Get Service Providers
+        const { data: serviceProvidersWrapper } = await apiClient.get('/service-providers?limit=1000');
+        const serviceProviders = serviceProvidersWrapper.providers || serviceProvidersWrapper || [];
+
+        // 5. Map pSEO
         const pSeoPages = keywordLibrary.map(kw => ({
             pagePath: kw.path,
             metaTitle: `${kw.name} (pSEO)`,
@@ -268,41 +277,52 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             type: 'Keyword'
         }));
 
-        // 5. Map Services to Page Objects
-        const servicePages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
+        // 6. Map Service Posts
+        const servicePostPages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
             pagePath: `/services/${sp.slug}`,
             metaTitle: sp.title,
             breadCrumbTitle: sp.title,
-            type: 'Service Post'
+            type: 'Service Post',
+            isPost: true, // Identify as Post
+            mongoId: sp._id
         }));
 
-        // ✅ 6. NEW: Map FAQs to Page Objects
+        // ✅ 7. NEW: Map Service Providers
+        const providerPages = serviceProviders.map(sp => ({
+            pagePath: `/services/${sp.slug}`,
+            metaTitle: sp.title,
+            breadCrumbTitle: sp.title,
+            type: 'Service Provider',
+            isProvider: true, // Identify as Provider
+            mongoId: sp._id
+        }));
+
+        // 8. Map FAQs
         const faqPages = (Array.isArray(faqPosts) ? faqPosts : []).map(faq => ({
             pagePath: `/faq/${faq.slug}`,
-            metaTitle: faq.question, // Use question as the title
+            metaTitle: faq.question, 
             breadCrumbTitle: 'FAQ',
             type: 'FAQ'
         }));
 
         const pageMap = new Map();
         
-        // Priority of display in Dropdown:
-        // Add FAQs to the map
+        // Populate Map (Order implies display priority if paths conflict)
         faqPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
-        
         pSeoPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
         staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false, type: 'Static' }));
-        servicePages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true })); 
+        servicePostPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true })); 
         
-        // Overwrite with actual DB settings if they exist (this keeps your saved SEO settings)
+        // ✅ Add Providers to Map
+        providerPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+
+        // Overwrite with existing DB SEO settings
         dynamicPages.forEach(page => {
           const existing = pageMap.get(page.pagePath) || {};
-          // Keep the 'type' if we found it from the raw fetches, otherwise it might just be 'Dynamic'
           pageMap.set(page.pagePath, { ...existing, ...page, isDynamic: true });
         });
 
         const uniquePages = Array.from(pageMap.values());
-        // Sort alphabetically by path
         uniquePages.sort((a, b) => a.pagePath.localeCompare(b.pagePath));
         
         setPagesList(uniquePages);
@@ -318,14 +338,21 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     }
   }, [selectedPagePath, keywordLibrary]);
   
+  // ✅ 2. UPDATED: Fetch Data Logic (Handles Providers)
   const fetchSeoData = useCallback(async (path) => {
     if (!path) return;
     setSaving(false);
     setError('');
     setSeoData(null);
     setPostContent('');
-    setCurrentPostId(null);
+    setCurrentMongoId(null);
     setIsServicePost(false);
+    setIsProvider(false);
+
+    // Identify current page object
+    const pageObj = pagesList.find(p => p.pagePath === path);
+    const isThisProvider = pageObj?.isProvider;
+    const isThisPost = pageObj?.isPost;
 
     try {
         const encodedPath = encodeURIComponent(path);
@@ -347,15 +374,36 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             faqs: data.faqs || [],
         });
 
-        if (path.startsWith('/services/')) {
+        // ✅ LOGIC A: If Service Provider
+        if (isThisProvider) {
+          setIsProvider(true);
+          try {
+             // Fetch Provider details using the ID from list
+             const { data: provider } = await apiClient.get(`/service-providers/${pageObj.mongoId}`);
+             setPostContent(provider.content || ''); // Bio / Content
+             setCurrentMongoId(provider._id);
+             
+             // Autofill SEO if missing
+             if (!data.metaTitle) {
+               setSeoData(prev => ({
+                 ...prev,
+                 metaTitle: provider.metaTitle || provider.title,
+                 metaDescription: provider.metaDescription || provider.description,
+               }));
+             }
+          } catch (err) {
+             console.error("Failed to fetch provider content:", err);
+          }
+        }
+        // ✅ LOGIC B: If Service Post (Existing Logic)
+        else if (path.startsWith('/services/') || isThisPost) {
           setIsServicePost(true);
           try {
             const slug = path.split('/services/')[1];
             const { data: postData } = await apiClient.get(`/services/slug/${slug}`);
             setPostContent(postData.content || '');
-            setCurrentPostId(postData._id);
+            setCurrentMongoId(postData._id);
             
-            // Autofill SEO data from post if empty
             if (!data.metaTitle) {
                setSeoData(prev => ({
                  ...prev,
@@ -363,17 +411,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                  metaDescription: postData.metaDescription || (postData.content ? postData.content.substring(0, 150).replace(/<[^>]+>/g, '') : ''),
                }));
             }
-
           } catch (postErr) {
-            console.error("Failed to fetch service post content:", postErr);
-            setError('Failed to load post content. SEO data is loaded.');
+            // Might be a directory page or static page
           }
         }
 
     } catch (err) {
-        console.error("Failed to fetch detailed SEO data:", err);
-        setError('Failed to fetch detailed SEO data. If this is a new service post, save to initialize.');
-        // Fallback for new pages not yet in SEO DB
+        // Fallback
         setSeoData({
             pagePath: path,
             metaTitle: '', metaDescription: '', ogTitle: '', ogDescription: '',
@@ -384,17 +428,17 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     } finally {
         setSaving(false);
     }
-  }, []);
+  }, [pagesList]);
 
   useEffect(() => {
     fetchPagesList();
   }, [fetchPagesList]);
   
   useEffect(() => {
-    if (selectedPagePath) {
+    if (selectedPagePath && pagesList.length > 0) {
         fetchSeoData(selectedPagePath);
     }
-  }, [selectedPagePath, fetchSeoData]);
+  }, [selectedPagePath, pagesList]);
 
 
   const handleInputChange = (e) => {
@@ -417,6 +461,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setKeywordSuggestions([]);
   };
 
+  // ✅ 3. UPDATED: Save Logic (Route to correct endpoint)
   const handleSave = async (e) => {
     e.preventDefault();
     if (!seoData) return;
@@ -429,8 +474,20 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         const encodedPath = encodeURIComponent(seoData.pagePath);
         await apiClient.put(`/seo/${encodedPath}`, seoData);
         
-        if (isServicePost && currentPostId) {
-          await apiClient.put(`/services/${currentPostId}`, {
+        // ✅ CASE 1: Service Provider Update
+        if (isProvider && currentMongoId) {
+            const formData = new FormData();
+            formData.append('content', postContent);
+            formData.append('metaTitle', seoData.metaTitle);
+            formData.append('metaDescription', seoData.metaDescription);
+            
+            await apiClient.put(`/service-providers/${currentMongoId}`, formData, {
+                 headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
+        // ✅ CASE 2: Service Post Update
+        else if (isServicePost && currentMongoId) {
+          await apiClient.put(`/services/${currentMongoId}`, {
             content: postContent,
             title: seoData.metaTitle, 
             metaTitle: seoData.metaTitle,
@@ -470,7 +527,6 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         ) : (
             pagesList.map((page) => (
               <option key={page.pagePath} value={page.pagePath}>
-                {/* ✅ 2. UPDATED: Show Type in Dropdown to Identify Service Posts */}
                 {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
               </option>
             ))
@@ -501,7 +557,8 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
 
       <form onSubmit={handleSave} className="space-y-8">
         
-        {isServicePost && (
+        {/* ✅ Updated Condition: Show CKEditor if it is a Service Post OR Service Provider */}
+        {(isServicePost || isProvider) && (
           <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
               Page Content (H1, H2, etc.)

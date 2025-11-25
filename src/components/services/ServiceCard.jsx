@@ -99,9 +99,9 @@ const ServiceCard = ({ service }) => {
           </div>
         </div>
 
-        {/* === BACK SIDE (Flipped & Dimmed) === */}
+        {/* === BACK SIDE (Flipped & Dimmed/Frosted) === */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-2xl shadow-xl overflow-hidden backface-hidden rotate-y-180 flex flex-col bg-gray-900"
+          className="absolute inset-0 w-full h-full rounded-2xl shadow-xl overflow-hidden backface-hidden rotate-y-180 flex flex-col bg-white dark:bg-gray-900"
         >
           {/* 1. Dynamic Background (Extracted from Logo via Blur) */}
           <div className="absolute inset-0 z-0">
@@ -110,37 +110,38 @@ const ServiceCard = ({ service }) => {
                alt="Color Extractor" 
                className="w-full h-full object-cover opacity-60 blur-2xl scale-150"
              />
-             <div className="absolute inset-0 bg-black/80" /> {/* Dimmer Overlay */}
+             {/* ✅ FROSTED OVERLAY: White/80 in Light Mode, Dark Gradient in Dark Mode */}
+             <div className="absolute inset-0 bg-white/80 backdrop-blur-md dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" /> 
           </div>
 
-          <div className="relative z-10 flex flex-col h-full p-6 text-white">
+          <div className="relative z-10 flex flex-col h-full p-6 text-gray-900 dark:text-white">
             
             <button 
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition"
+              className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition"
             >
-              <IconClose className="w-5 h-5 text-white/80" />
+              <IconClose className="w-5 h-5 text-gray-600 dark:text-white/80" />
             </button>
 
             {/* Identity Section (Logo + Name + Type) */}
             <div className="flex flex-col items-center mb-4 shrink-0">
-               <div className="w-16 h-16 rounded-full bg-white/10 p-1 mb-2 shadow-lg overflow-hidden border border-white/20">
+               <div className="w-16 h-16 rounded-full bg-white p-1 mb-2 shadow-lg overflow-hidden border border-gray-100 dark:border-white/20">
                  <img src={displayImage} alt={service.title} className="w-full h-full rounded-full object-cover" />
                </div>
                <h3 className="text-lg font-bold text-center leading-tight line-clamp-2">
                  {service.title}
                </h3>
-               <span className="text-[10px] font-bold text-blue-200 uppercase tracking-wider mt-1 bg-blue-500/20 px-2 py-0.5 rounded-full">
+               <h4 className="text-[10px] font-bold uppercase tracking-wider mt-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200">
                  {service.serviceType}
-               </span>
+               </h4>
             </div>
 
             {/* Content Area (No Scroll, Fits perfectly) */}
             <div className="flex-1 flex flex-col justify-center gap-3">
                
-               {/* Review Snippet (Shorter line clamp) */}
-               <div className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/10">
-                 <p className="text-xs italic text-gray-300 line-clamp-2 text-center">
+               {/* Review Snippet */}
+               <div className="p-3 rounded-xl border bg-white/50 border-gray-200 dark:bg-white/5 dark:border-white/10 backdrop-blur-sm">
+                 <p className="text-xs italic text-gray-600 dark:text-gray-300 line-clamp-2 text-center">
                    "{service.reviews && service.reviews.length > 0 
                       ? service.reviews[service.reviews.length - 1].comment 
                       : "Top-rated service provider. Verified by HouseHunt."}"
@@ -153,9 +154,9 @@ const ServiceCard = ({ service }) => {
                     <a 
                       href={`tel:${service.phoneNumber}`} 
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center gap-2 p-2 bg-white/10 hover:bg-blue-600 hover:text-white rounded-lg transition text-xs font-bold border border-white/10"
+                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold shadow-sm bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-white/10 dark:hover:bg-blue-600 dark:hover:text-white"
                     >
-                       <IconPhone className="w-3 h-3" /> Call
+                       <IconPhone className="w-3 h-3 text-gray-600 dark:text-white" /> Call
                     </a>
                   ) : <div />}
                   
@@ -165,9 +166,9 @@ const ServiceCard = ({ service }) => {
                       target="_blank" 
                       rel="noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center gap-2 p-2 bg-white/10 hover:bg-green-600 hover:text-white rounded-lg transition text-xs font-bold border border-white/10"
+                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold shadow-sm bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-white/10 dark:hover:bg-green-600 dark:hover:text-white"
                     >
-                       <IconWhatsapp className="w-3 h-3" /> WhatsApp
+                       <IconWhatsapp className="w-3 h-3 text-green-600 dark:text-white" /> WhatsApp
                     </a>
                   ) : <div />}
                </div>
@@ -177,7 +178,7 @@ const ServiceCard = ({ service }) => {
             <Link 
                to={`/services/${service.slug}`}
                onClick={(e) => e.stopPropagation()}
-               className="mt-auto w-full py-3 bg-white text-blue-900 font-bold rounded-xl shadow-lg hover:bg-blue-50 transition transform hover:scale-[1.02] text-center text-sm"
+               className="mt-auto w-full py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] text-center text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-blue-900 dark:hover:bg-blue-50"
             >
               Read Full Profile
             </Link>

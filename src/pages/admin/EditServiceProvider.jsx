@@ -14,7 +14,8 @@ import {
   FaSave, 
   FaArrowLeft,
   FaSpinner,
-  FaCheckCircle
+  FaCheckCircle,
+  FaSearchPlus // ✅ Added Icon
 } from 'react-icons/fa';
 
 const SERVICE_TYPES = [
@@ -55,41 +56,22 @@ const EditServiceProvider = () => {
     website: '',
     description: '', 
     content: '', 
-    image: null // For new upload
+    // ✅ NEW SEO FIELDS
+    metaTitle: '',
+    metaDescription: '',
+    image: null 
   });
 
   useEffect(() => {
     const fetchProvider = async () => {
       try {
-        // We use the public ID endpoint or create a specific admin one. 
-        // Assuming standard REST: GET /service-providers/:id (from your controller)
-        const { data } = await apiClient.get(`/service-providers/slug/${id}`); // Using slug route or ID depending on your backend. Let's assume ID for admin edit usually.
-        // Wait, your controller 'getServiceById' uses ID. Let's use that if available, otherwise search by ID.
-        // Actually, usually edit routes use ID. Let's try fetching by ID.
-        
-        // NOTE: If your backend only has getBySlug public, we might need to adjust. 
-        // But usually admins use ID. Let's try to fetch by ID using the route: GET /api/service-providers/:id (if it exists) or generic get.
-        
-        // Let's try the ID route first.
         let providerData;
         try {
+             // Try fetching by ID first
              const res = await apiClient.get(`/service-providers/${id}`); 
-             // Wait, your routes might not have a direct GET /:id. 
-             // Your 'serviceProviderRoutes.js' has: router.route('/:slug').get(getServiceProviderBySlug);
-             // and router.route('/:id').delete(...).
-             // It seems MISSING a GET /:id. 
-             
-             // WORKAROUND: We will fetch ALL and find by ID (not efficient but works if no endpoint), 
-             // OR strictly better: Use the existing getServiceById controller if you exported it?
-             
-             // Looking at your previous code, you didn't explicitly route `getServiceById` in `serviceProviderRoutes.js`.
-             // However, we can assume for now we fetch by ID or we must fix the backend route too.
-             
-             // Let's assume for now we use the ID. If 404, we'll fix backend in next step.
              providerData = res.data;
         } catch(e) {
-             // Fallback or error handling
-             throw new Error("Could not fetch provider by ID. Backend route might be missing.");
+             throw new Error("Could not fetch provider.");
         }
 
         // If successful:
@@ -104,6 +86,9 @@ const EditServiceProvider = () => {
             website: providerData.website || '',
             description: providerData.description || '',
             content: providerData.content || '',
+            // ✅ POPULATE SEO DATA
+            metaTitle: providerData.metaTitle || '',
+            metaDescription: providerData.metaDescription || '',
             image: null
         });
 
@@ -118,7 +103,7 @@ const EditServiceProvider = () => {
         setIsLoading(false);
 
       } catch (err) {
-        // If direct ID fetch fails, try fetching via the list (inefficient fallback)
+        // Fallback fetch via list
         try {
             const { data } = await apiClient.get('/service-providers?limit=1000');
             const found = (data.providers || data).find(p => p._id === id);
@@ -134,6 +119,9 @@ const EditServiceProvider = () => {
                     website: found.website || '',
                     description: found.description || '',
                     content: found.content || '',
+                    // ✅ POPULATE SEO DATA
+                    metaTitle: found.metaTitle || '',
+                    metaDescription: found.metaDescription || '',
                     image: null
                 });
                 if (!SERVICE_TYPES.includes(found.serviceType)) {
@@ -188,9 +176,6 @@ const EditServiceProvider = () => {
       const data = new FormData();
       const finalServiceType = isCustomType ? customTypeValue : formData.serviceType;
       
-      // Mapping fields to what backend expects for Update
-      // Note: Backend 'updateService' usually expects 'title', 'serviceType', etc.
-      // We map 'companyName' -> 'title'
       data.append('title', formData.companyName);
       data.append('serviceType', finalServiceType);
       data.append('location', formData.location);
@@ -202,18 +187,21 @@ const EditServiceProvider = () => {
       data.append('description', formData.description);
       data.append('content', formData.content);
       
+      // ✅ SEND SEO DATA
+      data.append('metaTitle', formData.metaTitle);
+      data.append('metaDescription', formData.metaDescription);
+      
       if (formData.image) {
         data.append('image', formData.image);
       }
 
-      // PUT request to update
       await apiClient.put(`/service-providers/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
 
       setSuccess('Service Provider Updated Successfully!');
-      setTimeout(() => navigate('/admin'), 1500); // Redirect back after brief pause
+      setTimeout(() => navigate('/admin'), 1500); 
 
     } catch (error) {
       console.error('Error updating provider:', error);
@@ -422,6 +410,37 @@ const EditServiceProvider = () => {
               onChange={handleChange}
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 font-mono text-sm"
             />
+          </div>
+
+          {/* ✅ NEW: SEO & VISIBILITY SECTION */}
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8 flex items-center gap-2">
+            <FaSearchPlus className="text-purple-600" /> SEO & Visibility
+          </h2>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Title (SEO Title)</label>
+            <input 
+              type="text" 
+              name="metaTitle" 
+              value={formData.metaTitle}
+              onChange={handleChange}
+              placeholder="e.g. Best Movers in Kilimani | Swift Movers Ltd"
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Overrides the default page title.</p>
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Description (SEO Summary)</label>
+            <textarea 
+              name="metaDescription" 
+              rows="2"
+              value={formData.metaDescription}
+              onChange={handleChange}
+              placeholder="e.g. Affordable and reliable moving services in Nairobi. Call us for a free quote."
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500"
+            />
+            <p className="text-xs text-gray-500 mt-1">Overrides the default description.</p>
           </div>
 
           <div className="mb-8">
