@@ -11,12 +11,9 @@ import {
   FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa';
 
-// ✅ 1. RE-IMPORT HELMET (For Schema Injection)
 import { Helmet } from 'react-helmet-async';
 import useSeoData from '../hooks/useSeoData';
 import SeoInjector from '../components/SeoInjector';
-
-// ✅ 1. IMPORT BREADCRUMBS (The missing pSEO link)
 import Breadcrumbs from '../components/Breadcrumbs'; 
 
 const ServiceProviderDetails = () => {
@@ -34,7 +31,7 @@ const ServiceProviderDetails = () => {
   const [comment, setComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-  // ✅ SLIDESHOW STATE (For Packages)
+  // Slideshow State
   const [packagePage, setPackagePage] = useState(0);
   const PACKAGES_PER_PAGE = 4;
 
@@ -58,7 +55,7 @@ const ServiceProviderDetails = () => {
     fetchProvider();
   }, [slug]);
 
-  // ✅ NEW: Handle Gated Actions (Call, WhatsApp, Website)
+  // ✅ Handle Gated Actions (Call, WhatsApp, Website)
   const handleRestrictedAction = (url, target = '_blank') => {
     if (!user) {
       // Redirect to login, pass current path to return after
@@ -75,7 +72,6 @@ const ServiceProviderDetails = () => {
     }
   };
 
-  // ✅ SLIDESHOW HANDLERS
   const nextPackagePage = () => {
     if (!provider?.packages) return;
     const totalPages = Math.ceil(provider.packages.length / PACKAGES_PER_PAGE);
@@ -113,11 +109,9 @@ const ServiceProviderDetails = () => {
     }
   };
 
-  // ✅ 2. GENERATE SCHEMA (JSON-LD)
   const generateSchema = () => {
     if (!provider) return null;
 
-    // ✅ Handle Image source safely
     const imgUrl = provider.image?.url || provider.imageUrl;
 
     const schema = {
@@ -147,7 +141,7 @@ const ServiceProviderDetails = () => {
         "itemListElement": provider.packages.map((pkg) => ({
           "@type": "Offer",
           "itemOffered": {
-            "@type": "Service", // or Product
+            "@type": "Service", 
             "name": pkg.name,
             "description": pkg.description
           },
@@ -196,15 +190,18 @@ const ServiceProviderDetails = () => {
   
   const showControls = provider.packages && provider.packages.length > PACKAGES_PER_PAGE;
 
-  // ✅ Helper for Image Source (New Object vs Old String)
   const displayImage = provider.image?.url || provider.imageUrl || "https://placehold.co/1200x600/1e293b/ffffff?text=Service+Provider";
   const displayAlt = provider.image?.altText || provider.title;
+
+  // Construct Prefilled Message
+  const whatsappMessage = encodeURIComponent(
+    `Hello ${provider.title}, I found your services on HouseHunt Kenya (https://househuntkenya.co.ke/services/${slug}). I am interested in your services.`
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-inter pb-20">
       <SeoInjector seo={finalSeo} />
       
-      {/* ✅ 3. INJECT SCHEMA SCRIPT */}
       <Helmet>
         <script type="application/ld+json">
           {generateSchema()}
@@ -230,7 +227,7 @@ const ServiceProviderDetails = () => {
         </Link>
       </div>
 
-      {/* ✅ 2. INJECT BREADCRUMBS HERE */}
+      {/* Breadcrumbs */}
       <div className="max-w-6xl mx-auto px-6 mt-6 relative z-30">
          <Breadcrumbs />
       </div>
@@ -272,17 +269,17 @@ const ServiceProviderDetails = () => {
                    </button>
                  )}
                  
-                 {/* ✅ WhatsApp Button (Gated) */}
+                 {/* ✅ WhatsApp Button (Gated & Prefilled) */}
                  {provider.whatsappNumber && (
                    <button 
-                     onClick={() => handleRestrictedAction(`https://wa.me/${provider.whatsappNumber.replace('+', '')}`)}
+                     onClick={() => handleRestrictedAction(`https://wa.me/${provider.whatsappNumber.replace('+', '')}?text=${whatsappMessage}`)}
                      className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition shadow-lg shadow-green-500/30"
                    >
                      <FaWhatsapp size={20} /> WhatsApp
                    </button>
                  )}
 
-                 {/* ✅ Website Button (New & Gated) */}
+                 {/* ✅ Website Button (Gated) */}
                  {provider.website && (
                    <button 
                      onClick={() => handleRestrictedAction(provider.website)}
@@ -318,7 +315,7 @@ const ServiceProviderDetails = () => {
                 )}
              </div>
 
-             {/* Service Areas */}
+             {/* ✅ UPDATED: Service Areas with pSEO Links */}
              {provider.serviceAreas && provider.serviceAreas.length > 0 && (
                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Areas We Serve</h3>
@@ -334,9 +331,14 @@ const ServiceProviderDetails = () => {
                         {/* Locations Pills */}
                         <div className="flex flex-wrap gap-2">
                             {area.subLocations && area.subLocations.map((loc, locIdx) => (
-                            <span key={locIdx} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full text-sm">
+                            // ✅ CHANGED: span -> Link to Search Page
+                            <Link 
+                                key={locIdx}
+                                to={`/search/rent/${loc.toLowerCase()}`}
+                                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full text-sm hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-blue-600 transition cursor-pointer"
+                            >
                                 {loc}
-                            </span>
+                            </Link>
                             ))}
                         </div>
                         </div>
