@@ -1,16 +1,17 @@
 // src/pages/ServiceProviderDetails.jsx
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'; // ✅ Added useLocation
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext'; 
 import { 
   FaMapMarkerAlt, FaPhone, FaWhatsapp, FaStar, 
   FaUserCheck, FaArrowLeft, FaUserCircle, 
-  FaBoxOpen, 
+  FaBoxOpen, FaGlobe, // ✅ Added FaGlobe
   FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa';
 
+// ✅ 1. RE-IMPORT HELMET (For Schema Injection)
 import { Helmet } from 'react-helmet-async';
 import useSeoData from '../hooks/useSeoData';
 import SeoInjector from '../components/SeoInjector';
@@ -22,15 +23,18 @@ const ServiceProviderDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth(); 
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ Capture location for redirect
 
   const [provider, setProvider] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
+  // Review State
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
+  // ✅ SLIDESHOW STATE (For Packages)
   const [packagePage, setPackagePage] = useState(0);
   const PACKAGES_PER_PAGE = 4;
 
@@ -54,6 +58,24 @@ const ServiceProviderDetails = () => {
     fetchProvider();
   }, [slug]);
 
+  // ✅ NEW: Handle Gated Actions (Call, WhatsApp, Website)
+  const handleRestrictedAction = (url, target = '_blank') => {
+    if (!user) {
+      // Redirect to login, pass current path to return after
+      navigate('/login', { state: { from: location.pathname } });
+      return;
+    }
+    
+    // If it's a phone call, use window.location
+    if (target === 'self') {
+      window.location.href = url;
+    } else {
+      // Otherwise open in new tab (WhatsApp/Website)
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // ✅ SLIDESHOW HANDLERS
   const nextPackagePage = () => {
     if (!provider?.packages) return;
     const totalPages = Math.ceil(provider.packages.length / PACKAGES_PER_PAGE);
@@ -70,7 +92,7 @@ const ServiceProviderDetails = () => {
     e.preventDefault();
     if (!user) {
         alert("Please log in to leave a review.");
-        navigate('/login');
+        navigate('/login', { state: { from: location.pathname } });
         return;
     }
     
@@ -91,16 +113,21 @@ const ServiceProviderDetails = () => {
     }
   };
 
+  // ✅ 2. GENERATE SCHEMA (JSON-LD)
   const generateSchema = () => {
     if (!provider) return null;
+
+    // ✅ Handle Image source safely
+    const imgUrl = provider.image?.url || provider.imageUrl;
 
     const schema = {
       "@context": "https://schema.org",
       "@type": "ProfessionalService", 
       "name": provider.title,
-      "image": provider.imageUrl,
+      "image": imgUrl,
       "description": provider.description,
       "telephone": provider.phoneNumber,
+      "sameAs": provider.website ? [provider.website] : [], // ✅ Add Website to Schema
       "address": {
         "@type": "PostalAddress",
         "addressLocality": provider.location,
@@ -120,7 +147,7 @@ const ServiceProviderDetails = () => {
         "itemListElement": provider.packages.map((pkg) => ({
           "@type": "Offer",
           "itemOffered": {
-            "@type": "Service", 
+            "@type": "Service", // or Product
             "name": pkg.name,
             "description": pkg.description
           },
@@ -169,10 +196,15 @@ const ServiceProviderDetails = () => {
   
   const showControls = provider.packages && provider.packages.length > PACKAGES_PER_PAGE;
 
+  // ✅ Helper for Image Source (New Object vs Old String)
+  const displayImage = provider.image?.url || provider.imageUrl || "https://placehold.co/1200x600/1e293b/ffffff?text=Service+Provider";
+  const displayAlt = provider.image?.altText || provider.title;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-inter pb-20">
       <SeoInjector seo={finalSeo} />
       
+      {/* ✅ 3. INJECT SCHEMA SCRIPT */}
       <Helmet>
         <script type="application/ld+json">
           {generateSchema()}
@@ -183,8 +215,8 @@ const ServiceProviderDetails = () => {
       <div className="relative h-64 md:h-80 bg-gray-800 overflow-hidden">
         <div className="absolute inset-0 bg-black/50 z-10" />
         <img 
-          src={provider.imageUrl || "https://placehold.co/1200x600/1e293b/ffffff?text=Service+Provider"} 
-          alt={provider.title} 
+          src={displayImage} 
+          alt={displayAlt} 
           className="w-full h-full object-cover blur-sm scale-110"
         />
         <div className="absolute inset-0 z-20 flex flex-col justify-center items-center text-center px-4">
@@ -206,13 +238,13 @@ const ServiceProviderDetails = () => {
       <div className="max-w-6xl mx-auto px-6 mt-6 relative z-30">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
-          {/* --- Left Sidebar --- */}
+          {/* --- Left Sidebar (Contact Card) --- */}
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 text-center border border-gray-100 dark:border-gray-700">
                <div className="w-32 h-32 mx-auto bg-white rounded-full p-1 shadow-md -mt-20 mb-4 overflow-hidden">
                  <img 
-                   src={provider.imageUrl} 
-                   alt={provider.image?.altText || provider.title} 
+                   src={displayImage} 
+                   alt={displayAlt} 
                    className="w-full h-full object-cover rounded-full"
                  />
                </div>
@@ -230,15 +262,34 @@ const ServiceProviderDetails = () => {
                </div>
 
                <div className="space-y-3">
+                 {/* ✅ Call Button (Gated) */}
                  {provider.phoneNumber && (
-                   <a href={`tel:${provider.phoneNumber}`} className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/30">
+                   <button 
+                     onClick={() => handleRestrictedAction(`tel:${provider.phoneNumber}`, 'self')}
+                     className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/30"
+                   >
                      <FaPhone /> Call Now
-                   </a>
+                   </button>
                  )}
+                 
+                 {/* ✅ WhatsApp Button (Gated) */}
                  {provider.whatsappNumber && (
-                   <a href={`https://wa.me/${provider.whatsappNumber.replace('+', '')}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition shadow-lg shadow-green-500/30">
+                   <button 
+                     onClick={() => handleRestrictedAction(`https://wa.me/${provider.whatsappNumber.replace('+', '')}`)}
+                     className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold transition shadow-lg shadow-green-500/30"
+                   >
                      <FaWhatsapp size={20} /> WhatsApp
-                   </a>
+                   </button>
+                 )}
+
+                 {/* ✅ Website Button (New & Gated) */}
+                 {provider.website && (
+                   <button 
+                     onClick={() => handleRestrictedAction(provider.website)}
+                     className="flex items-center justify-center gap-2 w-full py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-white rounded-xl font-bold transition shadow-sm border border-gray-300 dark:border-gray-600"
+                   >
+                     <FaGlobe size={18} /> Visit Website
+                   </button>
                  )}
                </div>
 
@@ -375,7 +426,7 @@ const ServiceProviderDetails = () => {
                                <div className="flex items-center gap-2">
                                   <FaUserCircle className="text-gray-400 text-2xl" />
                                   <span className="font-bold text-gray-800 dark:text-white">{rev.name}</span>
-                               </div>
+                                </div>
                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                   {new Date(rev.createdAt).toLocaleDateString()}
                                </span>
