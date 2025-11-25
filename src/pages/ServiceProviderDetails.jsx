@@ -8,14 +8,15 @@ import {
   FaMapMarkerAlt, FaPhone, FaWhatsapp, FaStar, 
   FaUserCheck, FaArrowLeft, FaUserCircle, 
   FaBoxOpen, 
-  // ✅ ADDED: Icons for Slideshow Navigation
   FaChevronLeft, FaChevronRight 
 } from 'react-icons/fa';
 
-// ✅ 1. RE-IMPORT HELMET (For Schema Injection)
 import { Helmet } from 'react-helmet-async';
 import useSeoData from '../hooks/useSeoData';
 import SeoInjector from '../components/SeoInjector';
+
+// ✅ 1. IMPORT BREADCRUMBS (The missing pSEO link)
+import Breadcrumbs from '../components/Breadcrumbs'; 
 
 const ServiceProviderDetails = () => {
   const { slug } = useParams();
@@ -26,12 +27,10 @@ const ServiceProviderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
-  // Review State
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
-  // ✅ SLIDESHOW STATE (For Packages)
   const [packagePage, setPackagePage] = useState(0);
   const PACKAGES_PER_PAGE = 4;
 
@@ -55,7 +54,6 @@ const ServiceProviderDetails = () => {
     fetchProvider();
   }, [slug]);
 
-  // ✅ SLIDESHOW HANDLERS
   const nextPackagePage = () => {
     if (!provider?.packages) return;
     const totalPages = Math.ceil(provider.packages.length / PACKAGES_PER_PAGE);
@@ -93,7 +91,6 @@ const ServiceProviderDetails = () => {
     }
   };
 
-  // ✅ 2. GENERATE SCHEMA (JSON-LD)
   const generateSchema = () => {
     if (!provider) return null;
 
@@ -123,7 +120,7 @@ const ServiceProviderDetails = () => {
         "itemListElement": provider.packages.map((pkg) => ({
           "@type": "Offer",
           "itemOffered": {
-            "@type": "Service", // or Product
+            "@type": "Service", 
             "name": pkg.name,
             "description": pkg.description
           },
@@ -166,7 +163,6 @@ const ServiceProviderDetails = () => {
     schemaDescription: provider.description
   };
 
-  // Helper for Slideshow Slicing
   const visiblePackages = provider.packages 
     ? provider.packages.slice(packagePage * PACKAGES_PER_PAGE, (packagePage + 1) * PACKAGES_PER_PAGE)
     : [];
@@ -177,7 +173,6 @@ const ServiceProviderDetails = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 font-inter pb-20">
       <SeoInjector seo={finalSeo} />
       
-      {/* ✅ 3. INJECT SCHEMA SCRIPT */}
       <Helmet>
         <script type="application/ld+json">
           {generateSchema()}
@@ -203,7 +198,12 @@ const ServiceProviderDetails = () => {
         </Link>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 -mt-16 relative z-30">
+      {/* ✅ 2. INJECT BREADCRUMBS HERE */}
+      <div className="max-w-6xl mx-auto px-6 mt-6 relative z-30">
+         <Breadcrumbs />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 mt-6 relative z-30">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           
           {/* --- Left Sidebar --- */}
@@ -212,7 +212,7 @@ const ServiceProviderDetails = () => {
                <div className="w-32 h-32 mx-auto bg-white rounded-full p-1 shadow-md -mt-20 mb-4 overflow-hidden">
                  <img 
                    src={provider.imageUrl} 
-                   alt="Logo" 
+                   alt={provider.image?.altText || provider.title} 
                    className="w-full h-full object-cover rounded-full"
                  />
                </div>
@@ -271,17 +271,30 @@ const ServiceProviderDetails = () => {
              {provider.serviceAreas && provider.serviceAreas.length > 0 && (
                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Areas We Serve</h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-4">
                     {provider.serviceAreas.map((area, idx) => (
-                      <span key={idx} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full text-sm">
-                        {area}
-                      </span>
+                        <div key={idx} className="border-b dark:border-gray-700 pb-3 last:border-0 last:pb-0">
+                        {/* County Name */}
+                        {area.county && (
+                            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                                {area.county}
+                            </h4>
+                        )}
+                        {/* Locations Pills */}
+                        <div className="flex flex-wrap gap-2">
+                            {area.subLocations && area.subLocations.map((loc, locIdx) => (
+                            <span key={locIdx} className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-full text-sm">
+                                {loc}
+                            </span>
+                            ))}
+                        </div>
+                        </div>
                     ))}
                   </div>
                </div>
              )}
 
-             {/* ✅ NEW: PACKAGES / PRODUCTS SLIDESHOW SECTION */}
+             {/* PACKAGES / PRODUCTS SLIDESHOW SECTION */}
              {provider.packages && provider.packages.length > 0 && (
                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-gray-100 dark:border-gray-700 relative">
                   

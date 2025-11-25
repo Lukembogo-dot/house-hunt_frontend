@@ -80,6 +80,7 @@ const AddServiceProvider = () => {
     // ✅ NEW SEO FIELDS
     metaTitle: '',
     metaDescription: '',
+    imageAltText: '', // ✅ ADDED: State for Image Alt Text
     image: null
   });
 
@@ -229,6 +230,8 @@ const AddServiceProvider = () => {
       if (formData.image) {
         data.append('image', formData.image);
       }
+      // ✅ SEND IMAGE ALT TEXT
+      data.append('imageAltText', formData.imageAltText);
 
       await apiClient.post('/service-providers', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -648,6 +651,19 @@ const AddServiceProvider = () => {
                 <p>Click to upload logo.</p>
                 <p>JPG, PNG or WEBP. Max 2MB.</p>
               </div>
+            </div>
+            
+            {/* ✅ ADDED: Image Alt Text Input */}
+            <div className="mt-3">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Image Alt Text (SEO Description)</label>
+                <input 
+                  type="text" 
+                  name="imageAltText" 
+                  value={formData.imageAltText}
+                  onChange={handleChange}
+                  placeholder="e.g. Swift Movers company logo with blue truck"
+                  className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
             </div>
           </div>
 
