@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom'; 
+import { useAuth } from '../../context/AuthContext'; 
 
 // --- Inline SVG Icons ---
 const IconStar = ({ className }) => (
@@ -39,8 +40,20 @@ const IconWhatsapp = ({ className }) => (
 
 const ServiceCard = ({ service }) => {
   const [isFlipped, setIsFlipped] = useState(false);
+  const { user } = useAuth(); 
+  const navigate = useNavigate();
 
   const handleFlip = () => setIsFlipped(!isFlipped);
+
+  const handleContactClick = (e, type) => {
+    e.stopPropagation(); 
+    if (!user) {
+        e.preventDefault(); 
+        alert("Please log in or sign up to access provider contact details.");
+        navigate('/login', { state: { from: window.location.pathname } });
+        return;
+    }
+  };
 
   const variants = {
     front: { rotateY: 0 },
@@ -52,133 +65,176 @@ const ServiceCard = ({ service }) => {
   const reviews = service.numReviews || 0;
 
   return (
-    <div className="relative w-full h-96 cursor-pointer perspective-1000 group" onMouseLeave={() => setIsFlipped(false)}>
+    <div 
+      className="relative w-full h-96 cursor-pointer group" 
+      style={{ perspective: '1000px' }} 
+      onMouseLeave={() => setIsFlipped(false)}
+    >
       <motion.div
-        className="w-full h-full relative preserve-3d transition-all duration-500"
+        className="w-full h-full relative transition-all" 
+        style={{ transformStyle: 'preserve-3d' }} 
         variants={variants}
         initial="front"
         animate={isFlipped ? "back" : "front"}
-        transition={{ type: "spring", stiffness: 50, damping: 15 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20, mass: 0.8 }}
       >
-        {/* === FRONT SIDE === */}
+        {/* === FRONT SIDE (Advanced Glassmorphism) === */}
         <div 
-          className="absolute inset-0 w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden backface-hidden"
+          style={{ backfaceVisibility: 'hidden' }}
+          className="absolute inset-0 w-full h-full 
+            /* Light Mode: Transparent Glass */
+            bg-white/40 backdrop-blur-xl border border-white/60 shadow-xl
+            
+            /* Dark Mode: Deep Blue/Gray Glass with Reflections */
+            dark:bg-gradient-to-br dark:from-slate-900/80 dark:to-blue-900/80
+            dark:backdrop-blur-2xl dark:border-white/10 dark:shadow-2xl dark:shadow-blue-900/20
+            
+            rounded-2xl overflow-hidden"
           onClick={handleFlip}
         >
-          <div className="h-48 w-full overflow-hidden bg-gray-200 dark:bg-gray-700 relative">
+          {/* Image Section - Slightly darker/lighter based on theme for contrast */}
+          <div className="h-48 w-full overflow-hidden bg-white/20 dark:bg-black/20 relative border-b border-white/30 dark:border-white/5">
             <img 
               src={displayImage} 
               alt={service.title} 
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
             />
-            <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md uppercase tracking-wider">
+            {/* Tag: Gradient Glass */}
+            <div className="absolute top-3 right-3 
+              bg-blue-600/80 text-white backdrop-blur-md
+              px-3 py-1 rounded-full text-xs font-bold shadow-lg border border-white/20 uppercase tracking-wider">
               {service.serviceType || 'Service'}
             </div>
           </div>
 
           <div className="p-5 flex flex-col h-[calc(100%-12rem)] justify-between">
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 line-clamp-1">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 line-clamp-1 drop-shadow-sm">
                 {service.title}
               </h3>
-              <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm mb-2">
-                <IconMapPin className="w-4 h-4 mr-1 text-red-500" /> 
+              <div className="flex items-center text-gray-700 dark:text-gray-300 text-sm mb-2 font-medium">
+                <IconMapPin className="w-4 h-4 mr-1 text-red-500 drop-shadow-sm" /> 
                 {service.location || 'Nairobi'}
               </div>
               <div className="flex items-center space-x-1">
                 {[...Array(5)].map((_, i) => (
-                  <IconStar key={i} className={`w-4 h-4 ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
+                  <IconStar key={i} className={`w-4 h-4 drop-shadow-sm ${i < Math.round(rating) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'}`} />
                 ))}
-                <span className="text-xs text-gray-400 ml-1">({reviews} reviews)</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 ml-1">({reviews} reviews)</span>
               </div>
             </div>
             
-            <div className="w-full mt-4 py-2 bg-gray-50 dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+            <div className="w-full mt-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all
+              bg-blue-50/60 text-blue-700 border border-blue-200/50
+              dark:bg-white/5 dark:text-blue-300 dark:border-white/10 
+              group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent">
                View Contacts & Details <IconInfo className="w-4 h-4" />
             </div>
           </div>
         </div>
 
-        {/* === BACK SIDE (Flipped & Dimmed/Frosted) === */}
+        {/* === BACK SIDE (Matched Glassmorphism) === */}
         <div 
-          className="absolute inset-0 w-full h-full rounded-2xl shadow-xl overflow-hidden backface-hidden rotate-y-180 flex flex-col bg-white dark:bg-gray-900"
+          style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+          className="absolute inset-0 w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col
+            /* Light: Clear Glass */
+            bg-white/60 backdrop-blur-xl border border-white/60
+            /* Dark: Deep Blue/Gray Glass */
+            dark:bg-slate-950/80 dark:backdrop-blur-3xl dark:border-white/10"
         >
-          {/* 1. Dynamic Background (Extracted from Logo via Blur) */}
-          <div className="absolute inset-0 z-0">
+          {/* Dynamic Background Image with Adaptive Overlay */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
              <img 
                src={displayImage} 
-               alt="Color Extractor" 
-               className="w-full h-full object-cover opacity-60 blur-2xl scale-150"
+               alt="Background" 
+               className="w-full h-full object-cover opacity-40 blur-2xl scale-150"
              />
-             {/* ✅ FROSTED OVERLAY: White/80 in Light Mode, Dark Gradient in Dark Mode */}
-             <div className="absolute inset-0 bg-white/80 backdrop-blur-md dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" /> 
+             {/* Adaptive Overlay for Text Readability */}
+             <div className="absolute inset-0 
+               bg-white/70 /* Light Mode Overlay */
+               dark:bg-gradient-to-b dark:from-slate-900/90 dark:to-blue-950/95 /* Dark Mode Overlay */
+             " /> 
           </div>
 
+          {/* Content Container */}
           <div className="relative z-10 flex flex-col h-full p-6 text-gray-900 dark:text-white">
             
             <button 
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
-              className="absolute top-4 right-4 p-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition"
+              className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md
+                bg-white/30 hover:bg-white/60 text-gray-600
+                dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/80"
             >
-              <IconClose className="w-5 h-5 text-gray-600 dark:text-white/80" />
+              <IconClose className="w-5 h-5" />
             </button>
 
-            {/* Identity Section (Logo + Name + Type) */}
+            {/* Identity Section */}
             <div className="flex flex-col items-center mb-4 shrink-0">
-               <div className="w-16 h-16 rounded-full bg-white p-1 mb-2 shadow-lg overflow-hidden border border-gray-100 dark:border-white/20">
+               <div className="w-16 h-16 rounded-full p-1 mb-2 shadow-lg overflow-hidden border backdrop-blur-md
+                 bg-white/40 border-white/50
+                 dark:bg-white/10 dark:border-white/20">
                  <img src={displayImage} alt={service.title} className="w-full h-full rounded-full object-cover" />
                </div>
-               <h3 className="text-lg font-bold text-center leading-tight line-clamp-2">
+               <h3 className="text-lg font-bold text-center leading-tight line-clamp-2 drop-shadow-sm">
                  {service.title}
                </h3>
-               <h4 className="text-[10px] font-bold uppercase tracking-wider mt-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-200">
+               <h4 className="text-[10px] font-bold uppercase tracking-wider mt-1 px-2 py-0.5 rounded-full backdrop-blur-sm
+                 text-blue-700 bg-blue-100/50 border border-blue-200/50
+                 dark:text-blue-200 dark:bg-blue-500/20 dark:border-blue-500/30">
                  {service.serviceType}
                </h4>
             </div>
 
-            {/* Content Area (No Scroll, Fits perfectly) */}
+            {/* Content Area */}
             <div className="flex-1 flex flex-col justify-center gap-3">
-               
-               {/* Review Snippet */}
-               <div className="p-3 rounded-xl border bg-white/50 border-gray-200 dark:bg-white/5 dark:border-white/10 backdrop-blur-sm">
-                 <p className="text-xs italic text-gray-600 dark:text-gray-300 line-clamp-2 text-center">
+               <div className="p-3 rounded-xl border shadow-sm backdrop-blur-md
+                 bg-white/40 border-white/50 text-gray-700
+                 dark:bg-white/5 dark:border-white/10 dark:text-gray-300">
+                 <p className="text-xs italic line-clamp-2 text-center">
                    "{service.reviews && service.reviews.length > 0 
                       ? service.reviews[service.reviews.length - 1].comment 
                       : "Top-rated service provider. Verified by HouseHunt."}"
                  </p>
                </div>
 
-               {/* Contact Buttons */}
                <div className="grid grid-cols-2 gap-2">
+                  {/* Call Button */}
                   {service.phoneNumber ? (
                     <a 
                       href={`tel:${service.phoneNumber}`} 
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold shadow-sm bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-white/10 dark:hover:bg-blue-600 dark:hover:text-white"
+                      onClick={(e) => handleContactClick(e, 'call')}
+                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold border cursor-pointer backdrop-blur-md shadow-sm
+                        bg-blue-50/80 text-blue-700 border-blue-200/50 hover:bg-blue-100
+                        dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-blue-600"
                     >
-                       <IconPhone className="w-3 h-3 text-gray-600 dark:text-white" /> Call
+                       <IconPhone className="w-3 h-3" /> Call
                     </a>
                   ) : <div />}
                   
+                  {/* WhatsApp Button */}
                   {service.whatsappNumber ? (
                     <a 
                       href={`https://wa.me/${service.whatsappNumber.replace('+', '')}`} 
                       target="_blank" 
                       rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold shadow-sm bg-white border border-gray-200 hover:bg-gray-50 dark:bg-white/10 dark:border-white/10 dark:hover:bg-green-600 dark:hover:text-white"
+                      onClick={(e) => handleContactClick(e, 'whatsapp')}
+                      className="flex items-center justify-center gap-2 p-2 rounded-lg transition text-xs font-bold border cursor-pointer backdrop-blur-md shadow-sm
+                        bg-green-50/80 text-green-700 border-green-200/50 hover:bg-green-100
+                        dark:bg-white/10 dark:text-white dark:border-white/10 dark:hover:bg-green-600"
                     >
-                       <IconWhatsapp className="w-3 h-3 text-green-600 dark:text-white" /> WhatsApp
+                       <IconWhatsapp className="w-3 h-3" /> WhatsApp
                     </a>
                   ) : <div />}
                </div>
             </div>
 
-            {/* CTA Button - Pinned to bottom */}
+            {/* CTA Button */}
             <Link 
                to={`/services/${service.slug}`}
                onClick={(e) => e.stopPropagation()}
-               className="mt-auto w-full py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] text-center text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-blue-900 dark:hover:bg-blue-50"
+               className="mt-auto w-full py-3 font-bold rounded-xl shadow-lg transition transform hover:scale-[1.02] text-center text-sm backdrop-blur-md
+                 bg-blue-600 text-white hover:bg-blue-700
+                 dark:bg-white/10 dark:text-white dark:border-white/20 dark:hover:bg-white/20"
             >
               Read Full Profile
             </Link>

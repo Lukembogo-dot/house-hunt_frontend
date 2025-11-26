@@ -1,262 +1,234 @@
-// pages/OurPlatform.jsx
-// FINAL FIX (Corrected </p> tag)
+// src/pages/OurPlatform.jsx
+// (UPDATED: Focus on Service Directory, Requests, Community & Ease of Use)
 
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaUsers, FaBuilding, FaSearch, FaCheckCircle, FaThumbsUp, FaKey } from 'react-icons/fa';
+import { 
+  FaSearch, 
+  FaHandshake, 
+  FaBullhorn, 
+  FaPenNib, 
+  FaStar, 
+  FaCheckCircle, 
+  FaUsers, 
+  FaHome,
+  FaMagic,
+  FaComments
+} from 'react-icons/fa';
 import useSeoData from '../hooks/useSeoData';
 import SeoInjector from '../components/SeoInjector';
 
-// --- Re-usable Animations ---
-
-// Animation for "bouncy" cards
-const bouncyCard = {
-  hidden: { opacity: 0, y: 50, scale: 0.9 },
-  visible: (i) => ({ // 'i' is the custom delay index
+// --- Animations ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
     opacity: 1,
-    y: 0,
-    scale: 1,
     transition: {
-      delay: i * 0.1,
-      type: "spring",
-      stiffness: 100,
+      staggerChildren: 0.2,
+      delayChildren: 0.1
     }
-  })
+  }
 };
 
-// Animation for "slide-in" text
-const slideIn = {
-  hidden: { opacity: 0, x: -50 },
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
   visible: { 
     opacity: 1, 
-    x: 0,
+    y: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
 };
 
-// --- Page Component ---
+const FeatureSection = ({ icon: Icon, title, description, linkText, linkTo, reverse = false, color = "blue" }) => (
+  <motion.div 
+    className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12 py-20`}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, amount: 0.3 }}
+    variants={containerVariants}
+  >
+    {/* Illustration / Icon Side */}
+    <motion.div 
+      className={`flex-1 flex justify-center items-center p-10 rounded-3xl bg-${color}-50 dark:bg-${color}-900/20 w-full h-80 shadow-inner`}
+      variants={itemVariants}
+    >
+      <Icon className={`text-[100px] md:text-[120px] text-${color}-500 drop-shadow-2xl`} />
+    </motion.div>
+
+    {/* Text Side */}
+    <motion.div className="flex-1 space-y-6 text-center lg:text-left" variants={itemVariants}>
+      <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+        {title}
+      </h3>
+      <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+        {description}
+      </p>
+      {linkText && (
+        <div className="pt-4">
+           <Link 
+             to={linkTo}
+             className={`inline-flex items-center gap-2 font-bold text-${color}-600 dark:text-${color}-400 hover:underline text-lg transition-all hover:translate-x-2`}
+           >
+             {linkText} &rarr;
+           </Link>
+        </div>
+      )}
+    </motion.div>
+  </motion.div>
+);
 
 const OurPlatform = () => {
-  // 1. Setup SEO
+  // SEO Data
   const seo = useSeoData(
-    '/our-platform', // Unique path for the SEO dashboard
-    'Our Platform: The Revolution of Kenyan Real Estate',
-    'Learn why HouseHunt Kenya is a revolution: a free, powerful, and transparent hub for property managers, real estate firms, and home seekers.'
+    '/our-platform',
+    'How HouseHunt Works - Simplified Real Estate',
+    'Discover the features that make HouseHunt Kenya the easiest way to find homes and services. Read reviews, post requests, and join the community.'
   );
 
   return (
     <>
-      {/* 2. Inject SEO */}
       <SeoInjector seo={seo} />
-      <div className="bg-white dark:bg-gray-900 overflow-x-hidden">
-
-        {/* --- Hero Section --- */}
-        <div className="relative bg-blue-600 dark:bg-blue-800 text-white py-24 md:py-32 px-6 text-center">
-          <div className="absolute inset-0 bg-black opacity-30"></div>
-          <motion.div 
-            className="relative z-10 max-w-4xl mx-auto"
-            initial="hidden"
-            animate="visible"
-            variants={bouncyCard}
-            custom={0}
-          >
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
-              The Kenyan Property Puzzle
-            </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8">
-              We're not just another listings website. We are a free, powerful, and transparent hub designed to fix the broken real estate market for everyone.
-            </p>
-            <Link
-              to="/for-agents"
-              className="px-10 py-4 bg-white text-blue-700 font-bold text-lg rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-200 active:scale-95"
+      
+      <div className="min-h-screen bg-white dark:bg-gray-950 font-inter overflow-hidden">
+        
+        {/* --- HERO SECTION --- */}
+        <section className="relative pt-36 pb-24 px-6 text-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-sm font-bold mb-6"
             >
-              List Your Properties for Free
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* --- The Problem Section --- */}
-        <section className="py-20 px-6 bg-gray-100 dark:bg-gray-950">
-          <div className="max-w-6xl mx-auto">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
-              variants={slideIn}
+              <FaHome /> The All-In-One Housing Ecosystem
+            </motion.div>
+            
+            <motion.h1 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-5xl md:text-7xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight"
             >
-              The "Old Way" Is Broken
-            </motion.h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Card 1: The Seeker's Struggle */}
-              <motion.div
-                className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
-                custom={1} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}
-              >
-                <FaSearch className="text-4xl text-red-500 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">The Seeker's Struggle</h3>
-                <ul className="text-gray-600 dark:text-gray-300 list-disc pl-5 space-y-2">
-                  <li>"Ghost" listings that are already sold/rented.</li>
-                  <li>Inaccurate photos and information.</li>
-                  <li>Wasting time contacting unresponsive agents.</li>
-                  <li>A deep lack of a central, trusted source.</li>
-                </ul>
-              </motion.div>
-              {/* Card 2: The Professional's Dilemma */}
-              <motion.div
-                className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
-                custom={2} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}
-              >
-                <FaBuilding className="text-4xl text-red-500 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">The Professional's Dilemma</h3>
-                <ul className="text-gray-600 dark:text-gray-300 list-disc pl-5 space-y-2">
-                  <li>Paying high subscription fees (a "visibility tax").</li>
-                  <li>Competing with low-quality, unverified listings.</li>
-                  <li>Fragmented marketing efforts with low ROI.</li>
-                  <li>Struggling to gain meaningful online visibility.</li>
-                </ul>
-              </motion.div>
-            </div>
+              House Hunting, <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Simplified.</span>
+            </motion.h1>
+            
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-2xl mx-auto"
+            >
+              We’ve brought everything you need to move into one place. 
+              From finding the perfect listing to hiring a trusted mover—it's all here, transparent, and free.
+            </motion.p>
           </div>
         </section>
 
-        {/* --- The Solution Section --- */}
-        <section className="py-20 px-6 bg-blue-50 dark:bg-blue-900/50">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-12"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
-              variants={slideIn}
-            >
-              Our Solution: A Virtuous Cycle
-            </motion.h2>
-            <div className="flex flex-col md:flex-row justify-center gap-8">
-              {/* Step 1 */}
-              <motion.div
-                className="flex-1 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
-                custom={0} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={bouncyCard}
-              >
-                <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mb-3">01. Agents List for Free</div>
-                <p className="text-gray-600 dark:text-gray-300">We empower all professional firms to list their *entire* portfolio for free. This creates the most comprehensive database.</p>
-              </motion.div>
-              {/* Step 2 */}
-              <motion.div
-                className="flex-1 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
-                custom={1} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={bouncyCard}
-              >
-                <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mb-3">02. Seekers Get Quality</div>
-                <p className="text-gray-600 dark:text-gray-300">Seekers flock to HouseHunt for the largest, most accurate, and up-to-date source of verified properties.</p>
-              </motion.div>
-              {/* Step 3 */}
-              <motion.div
-                className="flex-1 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700"
-                custom={2} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }} variants={bouncyCard}
-              >
-                <div className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 mb-3">03. Agents Get Free Leads</div>
-                <p className="text-gray-600 dark:text-gray-300">This high-intent traffic of seekers delivers what agents *actually* want: qualified leads, not high invoices.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+        <div className="max-w-7xl mx-auto px-6">
+          
+          {/* --- FEATURE 1: SERVICE DIRECTORY (Reviews) --- */}
+          <FeatureSection 
+            icon={FaHandshake}
+            color="blue"
+            title="The Trusted Service Directory"
+            description="Finding a house is only half the battle. You need reliable movers, fast internet, and trustworthy cleaners. Our new Service Directory connects you with verified local providers. Read real community reviews, see ratings, and watch providers reply to feedback. It’s a transparent marketplace for quality service."
+            linkText="Browse Service Providers"
+            linkTo="/services"
+          />
 
-        {/* --- Features for Professionals Section --- */}
-        <section className="py-20 px-6">
-          <div className="max-w-6xl mx-auto">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
-              variants={slideIn}
-            >
-              For <span className="text-blue-600">Real Estate Firms & Property Managers</span>
-            </motion.h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <motion.div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={0} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaCheckCircle className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">The Power of Free</h3>
-                <p className="text-gray-600 dark:text-gray-300">Zero listing fees. Zero subscription fees. Zero commissions. Upload unlimited listings and de-risk your marketing.</p>
-              </motion.div>
-              <motion.div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={1} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaBuilding className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Property Management Hub</h3>
-                <p className="text-gray-600 dark:text-gray-300">We highlight your firm, not just your listings. Attract new landlords and showcase your management services.</p>
-              </motion.div>
-              <motion.div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={2} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaUsers className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">True Online Visibility</h3>
-                <p className="text-gray-600 dark:text-gray-300">Your listings benefit from our platform's "collective SEO power," getting seen by a massive audience on Google.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+          {/* --- FEATURE 2: HOUSEHUNT REQUEST --- */}
+          <FeatureSection 
+            icon={FaBullhorn}
+            color="purple"
+            reverse={true}
+            title="Can't Find It? Request It."
+            description="Tired of scrolling through pages of listings that don't match your needs? Use the 'HouseHunt Request' feature. Simply post what you are looking for—budget, location, bedrooms—and let verified agents come to you with offers. It's the reverse search engine that saves you hours of searching."
+            linkText="Post a Request Now"
+            linkTo="/wanted/post" 
+          />
 
-        {/* --- Features for Home Seekers Section --- */}
-        <section className="py-20 px-6 bg-gray-100 dark:bg-gray-950">
-          <div className="max-w-6xl mx-auto">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
-              variants={slideIn}
-            >
-              For <span className="text-blue-600">Home Seekers</span>
-            </motion.h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <motion.div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={0} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaKey className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Comprehensive Database</h3>
-                <p className="text-gray-600 dark:text-gray-300">Find the largest collection of professionally marketed properties in Kenya, all in one place.</p>
-              </motion.div>
-              <motion.div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={1} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaThumbsUp className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">A Platform Built on Trust</h3>
-                <p className="text-gray-600 dark:text-gray-300">We filter out the noise by focusing on verified professionals, reducing fraud and "ghost" listings.</p>
-              </motion.div>
-              <motion.div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg" custom={2} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }} variants={bouncyCard}>
-                <FaSearch className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Discover a Partner</h3>
-                <p className="text-gray-600 dark:text-gray-300">Don't just find a property; find a great property manager. We help you choose your service provider.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+          {/* --- FEATURE 3: COMMUNITY INSIGHTS --- */}
+          <FeatureSection 
+            icon={FaPenNib}
+            color="green"
+            title="Your Voice, Your Community"
+            description="Nobody knows a neighborhood better than the people who live there. We invite you to write your own Community Insights. Share stories about water consistency, security, or the best local spots. Your honest reviews help others make better decisions and hold landlords accountable."
+            linkText="Write a Story"
+            linkTo="/share-insight"
+          />
 
-        {/* --- Final CTA Section --- */}
-        <section className="py-24 px-6 bg-blue-600 dark:bg-blue-800 text-white text-center">
-          <motion.div
+          {/* --- GRID: EASE OF USE --- */}
+          <motion.section 
+            className="py-20 border-t border-gray-100 dark:border-gray-800"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.5 }}
-            variants={bouncyCard}
+            viewport={{ once: true }}
+            variants={containerVariants}
           >
-            <h2 className="text-4xl font-extrabold mb-6">Join the New Neighbourhood</h2>
-            {/* ▼▼▼ THIS IS THE FIX ▼▼▼ */}
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-8">
-              The old way is over. Join the community of top-tier firms and confident seekers building the future of real estate in Kenya.
-            </p> 
-            {/* ▲▲▲ THIS WAS </V>, NOW IT'S </p> ▲▲▲ */}
-            <div className="flex flex-col md:flex-row gap-4 justify-center">
-              <Link
-                to="/register"
-                className="px-10 py-4 bg-white text-blue-700 font-bold text-lg rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-200 active:scale-95"
-              >
-                Start Listing for Free
-              </Link>
-              <Link
-                to="/"
-                className="px-10 py-4 bg-blue-700 text-white font-bold text-lg rounded-lg shadow-lg hover:bg-blue-900 border border-blue-400 transition-all duration-200 active:scale-95"
-              >
-                Start Searching for Homes
-              </Link>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">Designed for Ease of Use</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                We stripped away the clutter to focus on tools that actually help you move faster.
+              </p>
             </div>
-          </motion.div>
-        </section>
 
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { icon: FaSearch, title: "Smart Search", desc: "Filter by specific needs like 'Borehole', 'Fiber Ready', or 'Pet Friendly' to find exactly what you need instantly." },
+                { icon: FaCheckCircle, title: "Verified Listings", desc: "We actively vet agents and flag 'Shadow Accounts' until they are claimed, reducing fraud and ghost listings." },
+                { icon: FaComments, title: "Direct Chat", desc: "No middlemen. Chat directly with agents and service providers through our platform to get answers fast." }
+              ].map((item, idx) => (
+                <motion.div 
+                  key={idx} 
+                  variants={itemVariants}
+                  className="bg-gray-50 dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-xl transition duration-300 hover:-translate-y-1"
+                >
+                  <div className="w-16 h-16 mx-auto bg-white dark:bg-gray-700 rounded-2xl flex items-center justify-center shadow-sm mb-6 text-blue-600 dark:text-blue-400">
+                    <item.icon className="text-3xl" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{item.title}</h4>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* --- FINAL CTA --- */}
+          <motion.section 
+            className="py-24 text-center"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="bg-gradient-to-r from-blue-600 to-purple-700 rounded-3xl p-12 md:p-20 text-white shadow-2xl relative overflow-hidden">
+              {/* Decorative circles */}
+              <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl"></div>
+
+              <h2 className="text-3xl md:text-5xl font-extrabold mb-6 relative z-10">Make HouseHunt Your Go-To</h2>
+              <p className="text-lg md:text-xl text-blue-100 mb-10 max-w-2xl mx-auto relative z-10">
+                Join thousands of Kenyans who are finding homes, hiring help, and building a better real estate community together. Share the platform and let's fix real estate.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+                <Link 
+                  to="/" 
+                  className="px-8 py-4 bg-white text-blue-700 font-bold rounded-xl hover:bg-gray-100 transition shadow-lg flex items-center justify-center gap-2"
+                >
+                  <FaSearch /> Start Searching
+                </Link>
+                <Link 
+                  to="/register" 
+                  className="px-8 py-4 bg-blue-700/50 border-2 border-white/30 text-white font-bold rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                >
+                  <FaUsers /> Join Community
+                </Link>
+              </div>
+            </div>
+          </motion.section>
+
+        </div>
       </div>
     </>
   );

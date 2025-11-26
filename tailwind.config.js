@@ -13,5 +13,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('tailwindcss-3d'), // ✅ Added 3D plugin
+  ],
 }

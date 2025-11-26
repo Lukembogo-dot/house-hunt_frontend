@@ -1,5 +1,5 @@
 // src/pages/AgentPublicProfile.jsx
-// UPDATED: Removed Shadow Account Banner
+// (UPDATED: Display Live Property Count)
 
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'; 
@@ -10,20 +10,19 @@ import {
   FaStar,
   FaUserSlash, 
   FaPhone,     
-  FaTiktok, FaInstagram, FaFacebookF, FaLinkedinIn,
   FaCheckCircle, 
   FaShieldAlt,   
   FaFire,        
-  FaBuilding     
+  FaBuilding,
+  FaHome // ✅ Added Icon
 } from 'react-icons/fa'; 
 import AgentReviews from '../components/AgentReviews';
 import { useAuth } from '../context/AuthContext'; 
-import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; 
 import { Helmet } from 'react-helmet-async'; 
 import useSeoData from '../hooks/useSeoData'; 
 
 
-// Star Rating Display Component
+// Star Rating Display Component (Unchanged)
 const StarRating = ({ rating, count }) => {
   const safeRating = Number(rating) || 0;
   const clampedRating = Math.max(0, Math.min(5, safeRating));
@@ -47,7 +46,7 @@ const StarRating = ({ rating, count }) => {
   );
 };
 
-// SEO Injector Component
+// SEO Injector Component (Unchanged)
 const AgentSeoInjector = ({ seo, agent }) => {
     const socialUrls = [];
     if (agent.facebookUrl) socialUrls.push(agent.facebookUrl);
@@ -117,7 +116,8 @@ const AgentPublicProfile = () => {
         setAgent(agentRes.data);
 
         const propertiesRes = await apiClient.get(`/properties/by-agent/${agentId}`);
-        setProperties(propertiesRes.data);
+        // Ensure properties is always an array
+        setProperties(Array.isArray(propertiesRes.data) ? propertiesRes.data : []);
 
       } catch (error) {
         console.error("Error fetching agent data:", error);
@@ -176,7 +176,7 @@ const AgentPublicProfile = () => {
                       alt={agent.name} 
                       className="w-32 h-32 rounded-full object-cover border-4 border-blue-500"
                   />
-                  {/* ✅ VERIFIED BADGE */}
+                  {/* Verified Badge */}
                   {agent.isVerified && (
                     <div className="absolute bottom-1 right-1 bg-white dark:bg-gray-800 rounded-full p-1">
                       <FaCheckCircle className="text-blue-500 text-2xl" title="Verified Agent" />
@@ -199,12 +199,19 @@ const AgentPublicProfile = () => {
                       )}
                     </div>
                     
-                    {/* ✅ ACTIVITY SCORE & RATINGS */}
+                    {/* ✅ STATS ROW: Added Listings Count */}
                     <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 my-3">
+                        
                         <StarRating rating={agent.averageRating} count={agent.numReviews} />
                         
+                        {/* Listings Count */}
+                        <span className="flex items-center text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-sm border border-blue-100 dark:border-blue-800">
+                            <FaHome className="mr-1" /> 
+                            {properties.length} Active Listing{properties.length !== 1 && 's'}
+                        </span>
+
                         {agent.activityScore > 0 && (
-                          <span className="flex items-center text-orange-500 font-bold bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded text-sm">
+                          <span className="flex items-center text-orange-500 font-bold bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded text-sm border border-orange-100 dark:border-orange-800">
                             <FaFire className="mr-1" /> 
                             Activity Score: {agent.activityScore}
                           </span>
@@ -247,7 +254,7 @@ const AgentPublicProfile = () => {
             </div>
         </section>
 
-        {/* New Section for About Me & Reviews */}
+        {/* Content Section (About & Listings) */}
         <section className="py-16 px-6">
             <div className="container mx-auto max-w-5xl">
                 <div className="flex flex-col lg:flex-row gap-12">
@@ -269,7 +276,7 @@ const AgentPublicProfile = () => {
                         {/* Listings Section */}
                         <div>
                             <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center lg:text-left mb-10">
-                                Listings from {agent.name}
+                                Listings from {agent.name} ({properties.length})
                             </h2>
                             {properties.length > 0 ? (
                                 <div className="grid sm:grid-cols-2 xl:grid-cols-2 gap-8">
@@ -285,7 +292,7 @@ const AgentPublicProfile = () => {
                         </div>
                     </div>
 
-                    {/* Right Column (Reviews) - 1/3 width on large screens */}
+                    {/* Right Column (Reviews) */}
                     <div className="lg:w-1/3">
                         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md border dark:border-gray-700">
                             <AgentReviews agentId={agentId} agentName={agent.name} />

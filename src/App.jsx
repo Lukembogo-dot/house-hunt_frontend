@@ -1,10 +1,11 @@
 // src/App.jsx
+// (UPDATED: Fixed "Post Request" Route Priority)
 
 import React, { useState, useEffect, Suspense } from "react";
-import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom"; 
+import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, useNavigate } from "react-router-dom"; 
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
-import { FaCalculator, FaMapMarkedAlt, FaChartLine } from "react-icons/fa"; 
+import { FaCalculator, FaMapMarkedAlt, FaChartLine, FaEnvelope } from "react-icons/fa"; 
 import { Helmet } from 'react-helmet-async'; 
 
 // --- Components ---
@@ -35,17 +36,22 @@ import CommunityPost from './pages/CommunityPost';
 // Demand-Side Page
 import WantedRequestPage from './pages/WantedRequestPage';
 
-
 // Services Page
 import Services from './pages/Services'; 
-// ✅ IMPORTED: Service Provider Details Page
+
+// ✅ IMPORTED: Service Components
 import ServiceProviderDetails from './pages/ServiceProviderDetails';
+import ServicePostDetails from './pages/ServicePostDetails'; 
 
 // ✅ IMPORTED: Service Provider Admin Pages
 import AddServiceProvider from './pages/admin/AddServiceProvider';
 import EditServiceProvider from './pages/admin/EditServiceProvider'; 
 
-// --- Context ---
+// ✅ IMPORTED: Static Pages
+import Contact from './pages/Contact';
+import OurPlatform from './pages/OurPlatform'; 
+
+// --- Context & API ---
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
 import apiClient from "./api/axios";
@@ -55,6 +61,56 @@ const PageLoader = () => (
     <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 );
+
+// ✅ NEW: FLOATING CONTACT BUTTON COMPONENT
+const ContactButton = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <motion.button
+      onClick={() => navigate('/contact')}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      // ✅ Fixed Width/Height (w-14 h-14) to match standard FAB size
+      // ✅ Aligned (right-6) to stack vertically with ChatBubble
+      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center justify-center group"
+      title="Contact Us"
+    >
+      <FaEnvelope className="text-xl" />
+      {/* Tooltip on Hover */}
+      <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+        Contact Support
+      </span>
+    </motion.button>
+  );
+};
+
+// ✅ NEW: SMART ROUTE HANDLER (Fixes 404s)
+// This component checks if the slug belongs to a Provider. If not, it renders the Blog Post.
+const ServiceRouteHandler = () => {
+  const { slug } = useParams();
+  const [isProvider, setIsProvider] = useState(null); // null = loading, true = provider, false = post
+
+  useEffect(() => {
+    const checkType = async () => {
+      try {
+        // Try fetching as a Service Provider first
+        await apiClient.get(`/service-providers/${slug}`);
+        setIsProvider(true);
+      } catch (err) {
+        // If 404, assume it is a Blog Post (Neighbourhood Watch)
+        setIsProvider(false);
+      }
+    };
+    checkType();
+  }, [slug]);
+
+  if (isProvider === null) return <PageLoader />;
+
+  return isProvider ? <ServiceProviderDetails /> : <ServicePostDetails />;
+};
 
 // ✅ UPDATED: SEARCH PAGE WRAPPER WITH GEO SNAPSHOT & TABLE
 const SearchPageWrapper = () => {
@@ -194,15 +250,10 @@ function MainLayout() {
     <>
       <SeoInjector seo={homeSeo} />
 
-      {/* ✅ UPDATED HERO SECTION 
-          1. Reduced height to h-[50vh] (was 65vh) to pull bottom content up.
-          2. Reduced min-height to 400px.
-      */}
+      {/* HERO */}
       <section id="home" className="relative bg-cover bg-center h-[50vh] min-h-[400px] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-        
-        {/* ✅ Added pb-16 to lift text higher inside the hero */}
-        <div className="relative z-10 px-6 max-w-3xl pb-16"> 
+        <div className="relative z-10 px-6 max-w-3xl pb-16">
           <motion.h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             Find Your Dream Home in Kenya
           </motion.h1>
@@ -213,7 +264,6 @@ function MainLayout() {
       </section>
 
       <main id="properties" className="flex-grow">
-        {/* ✅ Search Bar - Negative margin pulls it onto the hero image */}
         <section className="relative z-20 -mt-16 px-6">
           <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
             <SearchBar filters={homeFilters} onChange={(name, val) => setHomeFilters(prev => ({ ...prev, [name]: val }))} onFilter={handleHomeFilterSubmit} />
@@ -229,7 +279,7 @@ function MainLayout() {
            </section>
         ) : (
           <>
-            {/* 1. Top Agents - Now immediately visible due to reduced Hero height */}
+            {/* 1. Top Agents */}
             <TopAgents />
 
             {/* 2. Featured Properties (11 Items) */}
@@ -319,7 +369,17 @@ function MainLayout() {
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
                 
-                {/* 1. The New Route for Demand-Side pSEO */}
+                {/* ✅ 1. FIX: Specific Route for "Post a Request" (MUST BE BEFORE DYNAMIC ROUTES) */}
+                <Route path="/wanted/post" element={
+                  <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+                    <div className="max-w-4xl mx-auto">
+                       <h1 className="text-3xl font-bold text-center mb-8 dark:text-white">Post a Property Request</h1>
+                       <HouseHuntRequest />
+                    </div>
+                  </div>
+                } />
+
+                {/* 1. The New Route for Demand-Side pSEO (This catches /wanted/:slug) */}
                 <Route path="/wanted/:slug" element={<WantedRequestPage />} />
 
                 {/* 2. Community Insights (pSEO Loop) */}
@@ -329,13 +389,23 @@ function MainLayout() {
 
                 {/* 3. Services Directory Routes */}
                 <Route path="/services" element={<Services />} />
-                {/* ✅ ROUTE FOR SINGLE SERVICE PROVIDER */}
-                <Route path="/services/:slug" element={<ServiceProviderDetails />} />
+                
+                {/* ✅ FIXED: Smart Route for Service/Blog Details */}
+                <Route path="/services/:slug" element={<ServiceRouteHandler />} />
+                
+                {/* Legacy Route for Old Links */}
+                <Route path="/services/slug/:slug" element={<ServiceRouteHandler />} />
+                
+                {/* Specific Route for Blogs (if used explicitly) */}
+                <Route path="/services/local/:slug" element={<ServicePostDetails />} />
 
                 {/* ✅ 4. ADMIN: Add & Edit Service Provider Routes */}
                 <Route path="/admin/add-service-provider" element={<AddServiceProvider />} />
-                {/* ✅ ADDED: Edit Route */}
                 <Route path="/admin/edit-service-provider/:id" element={<EditServiceProvider />} />
+
+                {/* ✅ RESTORED: Contact & Platform Routes */}
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/our-platform" element={<OurPlatform />} /> 
 
                 {/* 5. pSEO SEARCH ROUTE (Matches Sitemap) */}
                 <Route path="/search/:listingType/:location" element={<SearchPageWrapper />} />
@@ -347,23 +417,22 @@ function MainLayout() {
         </AnimatePresence>
       </Suspense>
 
-      <AppFooter />
+      {/* ✅ FLOATING ACTION BUTTONS */}
+      <ContactButton />
       <ChatBubble />
+
+      <AppFooter />
     </div>
   );
 }
 
 function App() {
-  
-  // ✅ 1. PREVENT TEXT SELECTION & RIGHT CLICK GLOBALLY
+  // Prevent text selection globally
   useEffect(() => {
-    // Disable context menu (right-click)
     const handleContextMenu = (e) => {
       e.preventDefault();
     };
-    
     document.addEventListener("contextmenu", handleContextMenu);
-    
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
     };
@@ -371,23 +440,17 @@ function App() {
 
   return (
     <Router>
-      {/* ✅ 2. GLOBAL CSS TO DISABLE SELECTION */}
       <style>{`
         body {
-          user-select: none; /* Standard */
-          -webkit-user-select: none; /* Safari */
-          -moz-user-select: none; /* Firefox */
-          -ms-user-select: none; /* IE10+ */
+          user-select: none; 
+          -webkit-user-select: none; 
+          -moz-user-select: none; 
         }
-        /* Allow selection on inputs/textareas so forms still work */
         input, textarea {
           user-select: text;
           -webkit-user-select: text;
-          -moz-user-select: text;
-          -ms-user-select: text;
         }
       `}</style>
-      
       <ScrollToTop />
       <MainLayout />
     </Router>

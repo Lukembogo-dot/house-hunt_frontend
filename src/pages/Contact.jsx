@@ -1,20 +1,19 @@
-// Contact.jsx (UPDATED)
+// src/pages/Contact.jsx
+// (UPDATED: Links for Email and WhatsApp with pre-filled message)
 
-import React, { useState } from "react"; // ✅ Import useState
+import React, { useState } from "react"; 
 import { motion } from "framer-motion";
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
-import apiClient from "../api/axios"; // ✅ 1. Import apiClient
+import apiClient from "../api/axios"; 
 
 const Contact = () => {
-  // ✅ 1. Use the new SEO hook
   const seo = useSeoData(
-    '/contact', // The unique path identifier
-    'Contact HouseHunt Kenya - Sales, Support & Inquiries', // Default Title
-    'Get in touch with the HouseHunt Kenya team for sales inquiries, technical support, or partnership opportunities. We respond promptly.' // Default Description
+    '/contact', 
+    'Contact HouseHunt Kenya - Sales, Support & Inquiries', 
+    'Get in touch with the HouseHunt Kenya team for sales inquiries, technical support, or partnership opportunities. We respond promptly.'
   );
 
-  // ✅ 2. Add state for the form
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,7 +36,6 @@ const Contact = () => {
     setLoading(true);
 
     try {
-      // ✅ 3. Submit to the new backend route
       await apiClient.post('/contact', formData);
       setSuccess('Message sent successfully! We will get back to you soon.');
       setFormData({ name: '', email: '', message: '' });
@@ -50,12 +48,10 @@ const Contact = () => {
   
   return (
     <>
-      {/* ✅ 2. Inject SEO Tags */}
       <SeoInjector seo={seo} />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 py-16">
         
-        {/* ✅ Animate the form card */}
         <motion.div 
           className="max-w-4xl w-full bg-white dark:bg-gray-800 shadow-lg dark:border dark:border-gray-700 rounded-2xl p-10"
           initial={{ opacity: 0, y: 20 }}
@@ -70,7 +66,6 @@ const Contact = () => {
             Have questions, feedback, or partnership inquiries? Fill out the form below and our team will get back to you promptly.
           </p>
 
-          {/* ✅ 4. Update form tag and add controlled inputs */}
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Name */}
             <div>
@@ -117,7 +112,7 @@ const Contact = () => {
               ></textarea>
             </div>
             
-            {/* ✅ 5. Add Success/Error Messages */}
+            {/* Success/Error Messages */}
             {success && <p className="text-green-600 dark:text-green-400 text-center">{success}</p>}
             {error && <p className="text-red-600 dark:text-red-400 text-center">{error}</p>}
 
@@ -131,17 +126,28 @@ const Contact = () => {
             </button>
           </form>
 
-          {/* Contact Info */}
+          {/* Contact Info (Clickable Links) */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 text-center md:text-left">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Email</h3>
-              {/* ✅ 6. Corrected Email */}
-              <p className="text-gray-600 dark:text-gray-300">support@househuntkenya.co.ke</p>
+              <a 
+                href="mailto:support@househuntkenya.co.ke" 
+                className="text-blue-600 dark:text-blue-400 hover:underline transition"
+              >
+                support@househuntkenya.co.ke
+              </a>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Phone / WhatsApp</h3>
-              {/* ✅ 7. Corrected Phone */}
-              <p className="text-gray-600 dark:text-gray-300">+254 776 929 021</p>
+              {/* ✅ Pre-filled message link */}
+              <a 
+                href="https://wa.me/254776929021?text=I%20wanted%20to%20enquire%20about" 
+                target="_blank" 
+                rel="noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline transition"
+              >
+                +254 776 929 021
+              </a>
             </div>
           </div>
         </motion.div>
