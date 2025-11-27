@@ -1,7 +1,11 @@
+// src/pages/MyProfile.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { FaCog, FaEdit, FaHome, FaPlus, FaBullhorn, FaShareAlt, FaTwitter, FaWhatsapp, FaSpinner } from 'react-icons/fa'; 
+import { 
+  FaCog, FaEdit, FaHome, FaPlus, FaBullhorn, FaShareAlt, 
+  FaTwitter, FaWhatsapp, FaSpinner, FaTachometerAlt 
+} from 'react-icons/fa'; // Added FaTachometerAlt
 import apiClient from '../utils/apiClient'; 
 
 // Existing Components
@@ -186,6 +190,34 @@ const MyProfile = () => {
            <BadgesGallery badges={gameData?.badges || []} />
         </div>
       </div>
+
+      {/* --- SPECIAL: DASHBOARD ACCESS (ADMIN & AGENTS ONLY) --- */}
+      {(user.role === 'admin' || user.role === 'agent') && (
+        <div className="bg-gradient-to-r from-blue-900 to-blue-700 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md p-6 mb-8 text-white relative overflow-hidden">
+            {/* Decorative Overlay */}
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-5 rounded-full blur-xl"></div>
+
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 relative z-10">
+                <div>
+                    <h3 className="text-xl font-bold flex items-center gap-2">
+                        <FaTachometerAlt className="text-yellow-400" />
+                        {user.role === 'admin' ? 'Administrative Dashboard' : 'Agent Command Center'}
+                    </h3>
+                    <p className="text-blue-100 text-sm mt-1 max-w-lg">
+                        {user.role === 'admin' 
+                            ? 'Access platform metrics, manage users, verify listings, and oversee system settings.' 
+                            : 'Manage your property listings, view leads, track performance metrics, and update your profile.'}
+                    </p>
+                </div>
+                <Link 
+                    to={user.role === 'admin' ? '/admin/dashboard' : '/agent/dashboard'} 
+                    className="bg-white text-blue-900 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition shadow-lg transform hover:scale-105 active:scale-95 whitespace-nowrap"
+                >
+                    Access Dashboard
+                </Link>
+            </div>
+        </div>
+      )}
 
       {/* --- 4. My Housing Passport --- */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
