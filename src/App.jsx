@@ -52,9 +52,11 @@ import EditServiceProvider from './pages/admin/EditServiceProvider';
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform'; 
 
-// ✅ IMPORT THE NEW DYNAMIC SEARCH ENGINE
+// ✅ IMPORT THE SEARCH ENGINES
 import DynamicSearchPage from './pages/DynamicSearchPage';
-
+import DynamicServiceSearch from './pages/DynamicServiceSearch'; // ✅ NEW: Service pSEO Engine
+import DynamicAgentSearch from './pages/DynamicAgentSearch';
+import DynamicNeighbourhoodSearch from './pages/DynamicNeighbourhoodSearch'; 
 // --- Context & API ---
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
@@ -87,26 +89,75 @@ const ContactButton = () => {
   );
 };
 
+// ✅ UPDATED: Intelligent Router for Services
+// Checks: Provider? -> Post? -> Dynamic Search (pSEO)
 const ServiceRouteHandler = () => {
   const { slug } = useParams();
-  const [isProvider, setIsProvider] = useState(null); 
+  const [viewType, setViewType] = useState('loading'); // 'provider' | 'post' | 'search' | 'loading'
 
   useEffect(() => {
-    const checkType = async () => {
+    const resolveRoute = async () => {
       try {
+        // 1. Check if it's a Service Provider
         await apiClient.get(`/service-providers/${slug}`);
-        setIsProvider(true);
+        setViewType('provider');
       } catch (err) {
-        setIsProvider(false);
+        try {
+          // 2. Check if it's a Service Post (Article)
+          await apiClient.get(`/services/slug/${slug}`);
+          setViewType('post');
+        } catch (err2) {
+          // 3. Fallback: It's a pSEO Search Page
+          setViewType('search');
+        }
       }
     };
-    checkType();
+    resolveRoute();
   }, [slug]);
 
-  if (isProvider === null) return <PageLoader />;
-  return isProvider ? <ServiceProviderDetails /> : <ServicePostDetails />;
+  if (viewType === 'loading') return <PageLoader />;
+  if (viewType === 'provider') return <ServiceProviderDetails />;
+  if (viewType === 'post') return <ServicePostDetails />;
+  
+  // ✅ Renders the Service pSEO Page instead of 404
+  return <DynamicServiceSearch />;
 };
 
+// ✅ NEW: Intelligent Router for Agents
+// Checks: Single Agent Profile? -> pSEO Search
+const AgentRouteHandler = () => {
+  const { slug } = useParams();
+  const [viewType, setViewType] = useState('loading'); 
+
+  useEffect(() => {
+    const resolveRoute = async () => {
+      try {
+        // 1. Check if it's a specific Agent (e.g. /agents/john-doe)
+        // Adjust endpoint based on your actual single-agent fetch
+        await apiClient.get(`/users/agents/${slug}`); 
+        setViewType('profile');
+      } catch (err) {
+        // 2. Fallback: It's a pSEO Search Page (e.g. /agents/agents-in-kilimani)
+        setViewType('search');
+      }
+    };
+    resolveRoute();
+  }, [slug]);
+
+  if (viewType === 'loading') return <PageLoader />;
+  
+  // You likely have an AgentProfile component (or TopAgents acts as list)
+  // If you don't have a specific AgentProfile page yet, map 'profile' to a generic detail view
+  // For now, assuming 'search' is the priority for pSEO:
+  if (viewType === 'profile') {
+      // REPLACE THIS with your actual <AgentDetails /> component if you have one
+      // or reuse a generic profile view
+      return <div className="p-20 text-center">Agent Profile View (Coming Soon)</div>; 
+  }
+  
+  // ✅ Render the pSEO Engine
+  return <DynamicAgentSearch />;
+};
 function MainLayout() {
   const { previewRole } = useAuth(); 
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
@@ -159,7 +210,7 @@ function MainLayout() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.2 }}
           >
-            A community-driven platform where you can share insights, find trusted service providers, and browse verified listings. <span className="text-blue-600 dark:text-blue-400 font-bold">Agents, Real EState Firm, and Property Management firms only post for free!</span>
+            A community-driven platform where you can share insights, find trusted service providers, and browse verified listings. <span className="text-blue-600 dark:text-blue-400 font-bold">Agents, Real Estate Firm, and Property Management firms only post for free!</span>
           </motion.p>
         </div>
       </section>
@@ -288,10 +339,10 @@ function MainLayout() {
                 <Route path="/living-feed" element={<LivingCommunityFeed />} />
                 <Route path="/living-feed/:id" element={<LivingPostDetail />} />
                 
-                {/* ✅ FIX: Replaced SearchPageWrapper with DynamicSearchPage */}
+                {/* ✅ Dynamic Search Page */}
                 <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
                 <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />
-                
+                <Route path="/neighbourhood/:slug" element={<DynamicNeighbourhoodSearch />} />
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
             
             </Routes>
