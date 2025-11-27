@@ -25,7 +25,9 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
         navigate(cleanLocation ? `/search/sale/${cleanLocation}` : '/search/sale/kenya');
         break;
       case 'services':
-        navigate(`/services?location=${cleanLocation}`);
+        // ✅ UPDATED: Use 'search' param to allow searching by Provider Name/Type (Movers, Plumbers)
+        // This aligns with the Service Provider Details logic which relies on specific identifiers/keywords
+        navigate(cleanLocation ? `/services?search=${cleanLocation}` : '/services');
         break;
       case 'community':
         navigate(`/living-feed?neighborhood=${cleanLocation}`);

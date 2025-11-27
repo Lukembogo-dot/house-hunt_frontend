@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
-import { FaCog, FaEdit, FaHome, FaPlus, FaBullhorn, FaShareAlt, FaTwitter, FaWhatsapp } from 'react-icons/fa'; 
-import apiClient from '../utils/apiClient'; // ✅ Import API Client
+import { FaCog, FaEdit, FaHome, FaPlus, FaBullhorn, FaShareAlt, FaTwitter, FaWhatsapp, FaSpinner } from 'react-icons/fa'; 
+import apiClient from '../utils/apiClient'; 
 
 // Existing Components
 import MyListings from '../components/MyListings';
@@ -24,11 +24,12 @@ const MyProfile = () => {
   const [isResidencyModalOpen, setIsResidencyModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
   
-  // ✅ 1. NEW STATE: Store Gamification Data for Sharing
+  // Data States
   const [gameData, setGameData] = useState(null);
   const [loadingGameData, setLoadingGameData] = useState(true);
+  const [validatingAccess, setValidatingAccess] = useState(false); // ✅ Loading state for button
 
-  // ✅ 2. FETCH GAMIFICATION STATS
+  // 1. FETCH GAMIFICATION STATS
   useEffect(() => {
     const fetchGameData = async () => {
       try {
@@ -43,7 +44,52 @@ const MyProfile = () => {
     fetchGameData();
   }, [refreshTrigger]);
 
-  // ✅ 3. SHARE FUNCTIONALITY
+  // ✅ 2. NEW: STRICT VALIDATION FOR ADDING RESIDENCY
+  const handleOpenResidencyModal = async () => {
+    setValidatingAccess(true);
+    try {
+      // Fetch user's residency history to check constraints
+      const { data: residencies } = await apiClient.get('/residencies/my-history');
+      
+      // CONSTRAINT 1: Max 2 Active Passports
+      // We assume a residency is "Active" if it has no moveOutDate (or is marked current)
+      const activeResidencies = residencies.filter(r => !r.moveOutDate || r.isCurrentTenant);
+      
+      if (activeResidencies.length >= 2) {
+        alert("🚫 Limit Reached: You can only have 2 active housing passports at a time. Please mark an old residence as 'Moved Out' to add a new one.");
+        setValidatingAccess(false);
+        return;
+      }
+
+      // CONSTRAINT 2: Monthly Cooldown (Anti-Spam)
+      // Sort by creation date descending to find the last one added
+      if (residencies.length > 0) {
+        const sortedByDate = [...residencies].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const lastCreated = new Date(sortedByDate[0].createdAt);
+        const now = new Date();
+        const daysSinceLast = (now - lastCreated) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceLast < 30) {
+          const daysRemaining = Math.ceil(30 - daysSinceLast);
+          alert(`⏳ Cooldown Active: You can only verify a new residence once every 30 days. Please try again in ${daysRemaining} days.`);
+          setValidatingAccess(false);
+          return;
+        }
+      }
+
+      // If all checks pass, open modal
+      setIsResidencyModalOpen(true);
+
+    } catch (error) {
+      console.error("Validation error", error);
+      // Fallback: If endpoint fails (e.g. new user with no history), allow them to try
+      setIsResidencyModalOpen(true); 
+    } finally {
+      setValidatingAccess(false);
+    }
+  };
+
+  // 3. SHARE FUNCTIONALITY
   const handleShare = async (platform) => {
     if (!gameData) return;
 
@@ -52,14 +98,8 @@ const MyProfile = () => {
 
     if (platform === 'native' && navigator.share) {
       try {
-        await navigator.share({
-          title: 'My HouseHunt Progress',
-          text: shareText,
-          url: shareUrl,
-        });
-      } catch (err) {
-        console.log('Share canceled');
-      }
+        await navigator.share({ title: 'My HouseHunt Progress', text: shareText, url: shareUrl });
+      } catch (err) { console.log('Share canceled'); }
     } else if (platform === 'twitter') {
       window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
     } else if (platform === 'whatsapp') {
@@ -67,13 +107,10 @@ const MyProfile = () => {
     }
   };
 
-  if (!user) {
-    return <div className="p-10 text-center dark:text-gray-300">Loading profile...</div>;
-  }
+  if (!user) return <div className="p-10 text-center dark:text-gray-300">Loading profile...</div>;
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
-    // setTimeout(() => window.location.reload(), 1000); // Optional: reload if needed
   };
 
   return (
@@ -100,7 +137,6 @@ const MyProfile = () => {
         
         {/* Actions & Sharing */}
         <div className="flex flex-wrap gap-2">
-          {/* ✅ SHARE DROPDOWN / BUTTONS */}
           <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm mr-2">
              <button onClick={() => handleShare('whatsapp')} className="p-2 text-green-500 hover:bg-gray-50 dark:hover:bg-gray-700 border-r border-gray-200 dark:border-gray-700" title="Share on WhatsApp">
                <FaWhatsapp />
@@ -113,11 +149,13 @@ const MyProfile = () => {
              </button>
           </div>
 
+          {/* ✅ VALIDATED ADD BUTTON */}
           <button
-            onClick={() => setIsResidencyModalOpen(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md"
+            onClick={handleOpenResidencyModal}
+            disabled={validatingAccess}
+            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md disabled:opacity-70 disabled:cursor-wait"
           >
-            <FaPlus className="text-xs" />
+            {validatingAccess ? <FaSpinner className="animate-spin" /> : <FaPlus className="text-xs" />}
             <span className="hidden md:inline font-bold">Add Residence</span>
           </button>
 
@@ -130,7 +168,7 @@ const MyProfile = () => {
         </div>
       </div>
 
-      {/* --- 2. The RPG Hero Dashboard (Pass Data) --- */}
+      {/* --- 2. The RPG Hero Dashboard --- */}
       <div className="mb-8">
         {loadingGameData ? (
            <div className="h-48 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl"></div>
@@ -139,7 +177,7 @@ const MyProfile = () => {
         )}
       </div>
 
-      {/* --- 3. Grid: Active Quests & Badges (Pass Data) --- */}
+      {/* --- 3. Grid: Active Quests & Badges --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10 items-stretch">
         <div className="h-full">
            <QuestLog quests={gameData?.quests || []} loading={loadingGameData} />
@@ -155,11 +193,14 @@ const MyProfile = () => {
           <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <FaHome className="text-blue-500" /> My Housing Passport
           </h3>
+          
+          {/* ✅ VALIDATED ADD TEXT LINK */}
           <button 
-            onClick={() => setIsResidencyModalOpen(true)}
-            className="text-sm text-blue-600 hover:underline font-medium"
+            onClick={handleOpenResidencyModal}
+            disabled={validatingAccess}
+            className="text-sm text-blue-600 hover:underline font-medium flex items-center gap-1"
           >
-            + Add New
+            {validatingAccess ? <FaSpinner className="animate-spin" /> : '+ Add New'}
           </button>
         </div>
         <ResidenceList refreshTrigger={refreshTrigger} />
