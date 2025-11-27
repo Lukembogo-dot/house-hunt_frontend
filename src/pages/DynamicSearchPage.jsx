@@ -1,5 +1,5 @@
 // src/pages/DynamicSearchPage.jsx
-// (UPDATED with Knowledge Hub Card & Community Insights Loop)
+// (UPDATED: Added "No Results Dashboard" & Full PSEO Control)
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -7,12 +7,15 @@ import { Helmet } from 'react-helmet-async';
 import apiClient from '../api/axios';
 import PropertyList from '../components/PropertyList';
 import { motion } from 'framer-motion';
-// 1. IMPORT ICONS
-import { FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome, FaQuestionCircle, FaChevronRight } from 'react-icons/fa';
-// 2. IMPORT THE GENERATOR
+import { 
+  FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome, 
+  FaQuestionCircle, FaChevronRight, FaExclamationTriangle, 
+  FaBell, FaClipboardList 
+} from 'react-icons/fa';
 import { generateDynamicLocationContent, generateFAQSchema } from '../utils/seoContentGenerator';
 import SmartOwnerBanner from '../components/SmartOwnerBanner';
 import Breadcrumbs from '../components/Breadcrumbs';
+import PropertyAlertForm from '../components/PropertyAlertForm'; // ✅ Imported for Lead Capture
 
 // Helper function
 const capitalize = (s) => {
@@ -20,6 +23,83 @@ const capitalize = (s) => {
   return s.split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+// --- 1. NEW: NO RESULTS DASHBOARD (The "Zero Inventory Protocol") ---
+// This replaces the empty list with a high-conversion capture form
+const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-12">
+      {/* Header */}
+      <div className="bg-blue-50 dark:bg-gray-700/50 p-8 text-center border-b border-blue-100 dark:border-gray-600">
+        <FaExclamationTriangle className="text-5xl text-orange-500 mx-auto mb-4" />
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          No {listingType} listings in {location} yet.
+        </h2>
+        <p className="text-gray-600 dark:text-gray-300 max-w-lg mx-auto">
+          Inventory moves fast! Don't waste time refreshing. Tell us what you want, and we'll notify you instantly when a match hits the market.
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-gray-100 dark:border-gray-700">
+        
+        {/* Column 1: Demand Side (Alerts) */}
+        <div className="p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
+              <FaBell className="text-xl" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">Create a Property Alert</h3>
+              <p className="text-xs text-gray-500">Be the first to know.</p>
+            </div>
+          </div>
+          {/* Reuse your existing Alert Form in compact mode */}
+          <PropertyAlertForm 
+            currentFilters={{ location, type: listingType }} 
+            compact={true} 
+          />
+        </div>
+
+        {/* Column 2: Supply Side (Agent CTA) */}
+        <div className="p-8 bg-gray-50 dark:bg-gray-800/50 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-3 bg-green-100 text-green-600 rounded-full">
+              <FaClipboardList className="text-xl" />
+            </div>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white">Are you an Agent?</h3>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 mb-6 text-sm">
+            You have a massive opportunity. We have tenants actively looking in <strong>{location}</strong> right now but zero listings to show them.
+          </p>
+          <Link 
+            to="/for-agents" 
+            className="block w-full py-3 px-4 bg-white dark:bg-gray-700 border-2 border-green-500 text-green-600 dark:text-green-400 font-bold text-center rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 transition"
+          >
+            List Property in {location} (Free)
+          </Link>
+        </div>
+      </div>
+
+      {/* Footer: Auto Linker to Nearby (Keeps SEO Juice Flowing) */}
+      <div className="bg-gray-100 dark:bg-gray-900 p-6 border-t dark:border-gray-700">
+        <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-3 text-center">
+          Or try these nearby locations
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {nearbyLocations.map(loc => (
+            <Link 
+              key={loc} 
+              to={`/search/${listingType}/${loc.toLowerCase()}`}
+              className="px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-600 text-sm hover:border-blue-500 hover:text-blue-500 transition"
+            >
+              {loc}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // --- MARKET SNAPSHOT COMPONENT (Unchanged) ---
@@ -34,10 +114,7 @@ const MarketSnapshot = ({ stats, loading }) => {
   if (loading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
-        <StatCardSkeleton />
+        <StatCardSkeleton /><StatCardSkeleton /><StatCardSkeleton /><StatCardSkeleton />
       </div>
     );
   }
@@ -52,34 +129,20 @@ const MarketSnapshot = ({ stats, loading }) => {
       transition={{ duration: 0.5 }}
     >
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
-          <FaHome className="mr-2" /> Total Listings
-        </h3>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center"><FaHome className="mr-2" /> Total Listings</h3>
         <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats.count}</p>
       </div>
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
-          <FaMoneyBillWave className="mr-2" /> Average Price
-        </h3>
-        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-          Ksh {stats.avgPrice ? stats.avgPrice.toLocaleString() : 'N/A'}
-        </p>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center"><FaMoneyBillWave className="mr-2" /> Average Price</h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">Ksh {stats.avgPrice ? stats.avgPrice.toLocaleString() : 'N/A'}</p>
       </div>
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
-          <FaSearchDollar className="mr-2" /> Price Low
-        </h3>
-        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-          Ksh {stats.minPrice ? stats.minPrice.toLocaleString() : 'N/A'}
-        </p>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center"><FaSearchDollar className="mr-2" /> Price Low</h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">Ksh {stats.minPrice ? stats.minPrice.toLocaleString() : 'N/A'}</p>
       </div>
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center">
-          <FaChartBar className="mr-2" /> Price High
-        </h3>
-        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-          Ksh {stats.maxPrice ? stats.maxPrice.toLocaleString() : 'N/A'}
-        </p>
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 flex items-center"><FaChartBar className="mr-2" /> Price High</h3>
+        <p className="text-3xl font-bold text-gray-900 dark:text-white">Ksh {stats.maxPrice ? stats.maxPrice.toLocaleString() : 'N/A'}</p>
       </div>
     </motion.div>
   );
@@ -98,10 +161,11 @@ const DynamicSearchPage = () => {
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [seoData, setSeoData] = useState({ title: '', intro: '', marketInsight: '' });
-  // ✅ 3. STATE FOR LOCATION FAQS
   const [locationFaqs, setLocationFaqs] = useState([]);
-  // ✅ 4. STATE FOR COMMUNITY INSIGHTS (NEW)
   const [communityInsights, setCommunityInsights] = useState([]);
+
+  // Fallback locations for PSEO linking
+  const nearbyDefaults = ['Westlands', 'Kilimani', 'Kileleshwa', 'Lavington', 'Karen', 'Ruaka', 'South B', 'Thika Road'];
 
   useEffect(() => {
     const fetchStatsAndGenerateContent = async () => {
@@ -113,26 +177,24 @@ const DynamicSearchPage = () => {
         const { data } = await apiClient.get(`/properties/stats?${params.toString()}`);
         setStats(data);
 
-        // 2. Fetch Location Specific FAQs (The Knowledge Hub)
+        // 2. Fetch Knowledge & Insights
         if (filterOverrides.location) {
           try {
-            // Call the API with a search query for the location
-            const { data: faqData } = await apiClient.get(`/faqs?search=${filterOverrides.location}`);
-            setLocationFaqs(faqData.slice(0, 3)); // Take top 3 relevant FAQs
+            const [faqRes, insightRes] = await Promise.allSettled([
+                apiClient.get(`/faqs?search=${filterOverrides.location}`),
+                apiClient.get(`/community/location/${filterOverrides.location}`)
+            ]);
+
+            if (faqRes.status === 'fulfilled') setLocationFaqs(faqRes.value.data.slice(0, 3));
+            if (insightRes.status === 'fulfilled') setCommunityInsights(insightRes.value.data);
             
-            // ✅ 3. Fetch Community Insights (NEW)
-            const { data: insights } = await apiClient.get(`/community/location/${filterOverrides.location}`);
-            setCommunityInsights(insights);
-            
-          } catch (e) {
-            console.error("FAQ/Insights Fetch error", e);
-          }
+          } catch (e) { console.error("Auxiliary data fetch error", e); }
         } else {
           setLocationFaqs([]);
           setCommunityInsights([]);
         }
 
-        // 4. Generate Generic Content
+        // 3. Generate PSEO Text
         const loc = filterOverrides.location || 'Nairobi';
         const content = generateDynamicLocationContent(
           loc,
@@ -145,11 +207,6 @@ const DynamicSearchPage = () => {
       } catch (error) {
         console.error("Failed to fetch property stats:", error);
         setStats(null);
-        setSeoData({
-            title: `Find ${listingType} Properties`, 
-            intro: 'Browse our latest verified listings.', 
-            marketInsight: ''
-        });
       } finally {
         setLoadingStats(false);
       }
@@ -159,9 +216,11 @@ const DynamicSearchPage = () => {
     
   }, [listingType, propertyType, location, bedrooms]);
 
+  // ✅ CONTROL LOGIC
+  const hasResults = stats && stats.count > 0;
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
-      
       <Helmet>
         <title>{seoData.title} | HouseHunt Kenya</title>
         <meta name="description" content={seoData.intro} />
@@ -169,7 +228,6 @@ const DynamicSearchPage = () => {
         <link rel="canonical" href={window.location.href} />
         <meta property="og:title" content={seoData.title} />
         <meta property="og:description" content={seoData.intro} />
-        
         {stats && (
             <script type="application/ld+json">
               {generateFAQSchema(filterOverrides.location, listingType, stats.avgPrice)}
@@ -183,10 +241,8 @@ const DynamicSearchPage = () => {
           <Breadcrumbs />
         </div>
 
-        {/* --- SEO RICH HEADER GRID --- */}
+        {/* --- SEO HEADER --- */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          
-          {/* Left: Generic Text (SEO Intro) */}
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
               {loadingStats ? (
                   <div className="h-8 w-2/3 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mb-4"></div>
@@ -195,72 +251,73 @@ const DynamicSearchPage = () => {
                     {seoData.title}
                   </h1>
               )}
-              
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
                 {seoData.intro}
               </p>
-
-              {seoData.marketInsight && !loadingStats && (
+              {seoData.marketInsight && !loadingStats && hasResults && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r">
-                  <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">
-                    Market Insight: {filterOverrides.location || 'Nairobi'}
-                  </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-200">
-                    {seoData.marketInsight}
-                  </p>
+                  <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">Market Insight: {filterOverrides.location || 'Nairobi'}</h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">{seoData.marketInsight}</p>
                 </div>
               )}
           </div>
 
-          {/* Right: Knowledge Hub Card (The New Addition) */}
+          {/* Knowledge Hub Card */}
           {locationFaqs.length > 0 && (
             <div className="lg:col-span-1 bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 p-6 rounded-lg shadow-sm border border-blue-100 dark:border-gray-700">
               <div className="flex items-center mb-4">
                  <FaQuestionCircle className="text-orange-500 mr-2" />
-                 <h3 className="font-bold text-gray-900 dark:text-white text-lg">
-                   {filterOverrides.location} Knowledge Hub
-                 </h3>
+                 <h3 className="font-bold text-gray-900 dark:text-white text-lg">{filterOverrides.location} Knowledge Hub</h3>
               </div>
               <div className="space-y-3">
                 {locationFaqs.map(faq => (
-                  <Link 
-                    key={faq._id} 
-                    to={`/faq/${faq.slug}`}
-                    className="block p-3 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition group"
-                  >
+                  <Link key={faq._id} to={`/faq/${faq.slug}`} className="block p-3 bg-white dark:bg-gray-800 rounded shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-400 transition group">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 line-clamp-2">
-                        {faq.question}
-                      </span>
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 line-clamp-2">{faq.question}</span>
                       <FaChevronRight className="text-xs text-gray-400 group-hover:text-blue-500" />
                     </div>
                   </Link>
                 ))}
               </div>
-              <Link 
-                to="/faqs" 
-                className="block mt-4 text-center text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
-              >
-                View all Knowledge Base
-              </Link>
+              <Link to="/faqs" className="block mt-4 text-center text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline">View all Knowledge Base</Link>
             </div>
           )}
-
         </div>
 
-        {filterOverrides.location && stats && (
-          <SmartOwnerBanner 
-            location={filterOverrides.location} 
-            avgPrice={stats.avgPrice}
-            listingType={listingType}
-          />
+        {/* --- ✅ CONDITIONAL CONTENT DISPLAY --- */}
+        
+        {loadingStats ? (
+           <div className="h-96 w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl"></div>
+        ) : hasResults ? (
+           // SCENARIO A: WE HAVE RESULTS
+           <>
+             {filterOverrides.location && (
+                <SmartOwnerBanner location={filterOverrides.location} avgPrice={stats.avgPrice} listingType={listingType} />
+             )}
+             <MarketSnapshot stats={stats} loading={loadingStats} />
+             
+             {/* Property List */}
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+                <PropertyList 
+                  key={`${listingType}-${propertyType}-${location}-${bedrooms}`}
+                  filterOverrides={filterOverrides}
+                  showSearchBar={false}
+                  showTitle={false}
+                />
+             </motion.div>
+           </>
+        ) : (
+           // SCENARIO B: NO RESULTS (ZERO INVENTORY PROTOCOL)
+           <NoResultsDashboard 
+              location={filterOverrides.location || 'this location'} 
+              listingType={listingType}
+              nearbyLocations={nearbyDefaults}
+           />
         )}
 
-        <MarketSnapshot stats={stats} loading={loadingStats} />
-
-        {/* --- ✅ NEW: COMMUNITY INSIGHTS SECTION --- */}
+        {/* --- COMMUNITY INSIGHTS (Always visible to boost PSEO even if no listings) --- */}
         {communityInsights.length > 0 && (
-          <div className="mb-10 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-purple-100 dark:border-gray-700">
+          <div className="mt-12 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-purple-100 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
                <span className="text-purple-600 mr-2">💬</span> 
                What Locals Say about {filterOverrides.location}
@@ -269,23 +326,17 @@ const DynamicSearchPage = () => {
               {communityInsights.map((post) => (
                 <div key={post._id} className="bg-gray-50 dark:bg-gray-900 p-4 rounded border dark:border-gray-700">
                   <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">{post.title}</h3>
-                  {/* We render the processed HTML which contains the SEO Links */}
-                  <div 
-                    className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 prose dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: post.processedContent }} 
-                  />
-                  <Link to={`/community/${post.slug}`} className="text-blue-600 text-xs font-bold mt-2 block hover:underline">
-                    Read Full Story &rarr;
-                  </Link>
+                  <div className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 prose dark:prose-invert" dangerouslySetInnerHTML={{ __html: post.processedContent }} />
+                  <Link to={`/community/${post.slug}`} className="text-blue-600 text-xs font-bold mt-2 block hover:underline">Read Full Story &rarr;</Link>
                 </div>
               ))}
             </div>
           </div>
         )}
         
-        {/* --- ✅ NEW: CALL TO ACTION: WRITE YOUR OWN --- */}
+        {/* --- CTA: WRITE REVIEW --- */}
         {filterOverrides.location && (
-            <div className="mb-8 text-center">
+            <div className="mt-8 text-center">
                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Live in {filterOverrides.location}?</p>
                  <Link to="/share-insight" className="inline-block bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700">
                     Write a Review for {filterOverrides.location}
@@ -293,35 +344,8 @@ const DynamicSearchPage = () => {
             </div>
         )}
 
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-        >
-            <PropertyList 
-              key={`${listingType}-${propertyType}-${location}-${bedrooms}`}
-              filterOverrides={filterOverrides}
-              showSearchBar={true}
-              showTitle={false}
-            />
-        </motion.div>
-
+        {/* --- FOOTER: INTERNAL LINKING (Enhanced PSEO) --- */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
-            <h3 className="font-bold text-lg mb-4 dark:text-white">Explore Nearby Locations</h3>
-            <div className="flex flex-wrap gap-2">
-              {['Westlands', 'Kilimani', 'Kileleshwa', 'Lavington', 'Karen', 'Ruaka', 'South B'].map(loc => (
-                <Link 
-                  key={loc} 
-                  to={`/search/${listingType}/${loc.toLowerCase()}`}
-                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline bg-blue-50 dark:bg-gray-700 px-3 py-1 rounded-full transition-colors hover:bg-blue-100"
-                >
-                  {listingType === 'rent' ? 'Rent' : 'Buy'} in {loc}
-                </Link>
-              ))}
-            </div>
-          </div>
-
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
             <h3 className="font-bold text-lg mb-4 dark:text-white">Popular in {filterOverrides.location || 'Nairobi'}</h3>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
