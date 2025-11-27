@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard.jsx
-// (FIXED: Fetch ALL properties & Added Community Moderation & Property Manager Component & Service Manager)
+// (FIXED: Separated 'Service Posts' from 'Service Providers')
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,18 +25,17 @@ import {
   FaUserSecret, 
   FaListAlt,
   FaCommentDots,
-  FaIdCard // ✅ Added Icon
+  FaIdCard 
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
 
-// ✅ IMPORT NEW COMPONENTS
 import LeadManager from '../components/admin/LeadManager';
 import AssignAgentModal from '../components/admin/AssignAgentModal';
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
 import CommunityModeration from '../components/admin/CommunityModeration';
 import PropertyManager from '../components/admin/PropertyManager'; 
-import ServiceManager from '../components/admin/ServiceManager'; // ✅ Imported ServiceManager
+import ServiceManager from '../components/admin/ServiceManager'; 
 
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
@@ -182,11 +181,14 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [properties, setProperties] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [services, setServices] = useState([]);
+  
+  // ✅ SEPARATED STATE for clearer logic
+  const [serviceProviders, setServiceProviders] = useState([]); 
+  const [servicePosts, setServicePosts] = useState([]); // Blog posts
+
   const [allAgents, setAllAgents] = useState([]); 
   const [orders, setOrders] = useState([]); 
   
-  // ✅ NEW STATE: Claim Requests
   const [claimRequests, setClaimRequests] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -203,7 +205,7 @@ const AdminDashboard = () => {
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [selectedShadowUser, setSelectedShadowUser] = useState(null);
 
-  // ✅ NEW STATE: Bulk Assign
+  // Bulk Assign
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [selectedBulkAgent, setSelectedBulkAgent] = useState(null);
 
@@ -212,15 +214,16 @@ const AdminDashboard = () => {
       setLoading(true);
       setError('');
       
-      // ✅ ADDED: Fetch Claim Requests & UPDATED: Fetch Service Providers
-      const [usersRes, propertiesRes, reviewsRes, servicesRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
+      // ✅ FETCH BOTH: Providers AND Posts
+      const [usersRes, propertiesRes, reviewsRes, providersRes, postsRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
         apiClient.get('/properties?limit=1000'), 
         apiClient.get('/reviews', { withCredentials: true }),
-        apiClient.get('/service-providers?limit=100'), // ✅ FETCH FROM NEW ENDPOINT
+        apiClient.get('/service-providers?limit=100'), // 1. Providers (People)
+        apiClient.get('/services'),                    // 2. Posts (Blogs/Articles)
         apiClient.get('/users/all-agents', { withCredentials: true }), 
         apiClient.get('/payments', { withCredentials: true }),
-        apiClient.get('/admin/claim-requests', { withCredentials: true }), // ✅ Fetch claims
+        apiClient.get('/admin/claim-requests', { withCredentials: true }), 
       ]);
       
       setUsers(usersRes.data);
@@ -228,11 +231,14 @@ const AdminDashboard = () => {
       setProperties(Array.isArray(propsData) ? propsData : []);
       
       setReviews(reviewsRes.data);
-      // ✅ UPDATED: Handle new response structure
-      setServices(servicesRes.data.providers || servicesRes.data || []);
+      
+      // ✅ Assign correctly
+      setServiceProviders(providersRes.data.providers || providersRes.data || []);
+      setServicePosts(postsRes.data.services || postsRes.data || []); // Blog posts
+
       setAllAgents(agentsRes.data); 
       setOrders(ordersRes.data); 
-      setClaimRequests(claimsRes.data || []); // ✅ Set claims
+      setClaimRequests(claimsRes.data || []); 
 
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
@@ -246,7 +252,7 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData]);
 
-  // ✅ DERIVED STATE
+  // DERIVED STATE
   const shadowAgents = users.filter(u => 
       u.role === 'agent' && 
       (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
@@ -282,13 +288,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const deleteService = async (id) => {
-    if (window.confirm('Are you sure you want to delete this service post?')) {
+  const deleteServicePost = async (id) => {
+    if (window.confirm('Are you sure you want to delete this blog post?')) {
       try {
+        // Assuming standard endpoint for deleting service posts
         await apiClient.delete(`/services/${id}`, { withCredentials: true });
         fetchData(); 
       } catch (err) {
-        alert('Failed to delete service post.');
+        alert('Failed to delete post.');
       }
     }
   };
@@ -347,11 +354,8 @@ const AdminDashboard = () => {
     }
   };
 
-  // ✅ NEW: Direct Approval for Claim Requests (No Modal Needed)
   const handleApproveRequest = async (request) => {
       if (!window.confirm(`Approve claim for "${request.realName}"? This will merge account ${request.shadowUser?.name} with email ${request.realEmail}.`)) return;
-      
-      // Reuse existing logic
       await handleApproveClaim(request.shadowUser._id, request.realEmail);
   };
 
@@ -450,12 +454,10 @@ const AdminDashboard = () => {
           </div>
         </section>
 
-        {/* ✅ NEW SECTION: COMMUNITY MODERATION */}
         <section className="mb-12">
             <CommunityModeration />
         </section>
 
-        {/* ✅ NEW SECTION: PENDING CLAIM REQUESTS */}
         {claimRequests.length > 0 && (
             <section className="mb-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow border border-yellow-200 dark:border-yellow-700 p-6">
                 <h2 className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-2 mb-4">
@@ -525,7 +527,7 @@ const AdminDashboard = () => {
             </section>
         )}
 
-        {/* ✅ NEW SECTION: SHADOW ACCOUNTS MANAGER */}
+        {/* Shadow Accounts Manager */}
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
             <div className="flex justify-between items-center mb-6">
                 <div>
@@ -600,7 +602,6 @@ const AdminDashboard = () => {
            <LeadManager />
         </section>
 
-        {/* ✅ === REPLACED "Manage Properties" WITH COMPONENT === */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
              <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties</h2>
@@ -613,15 +614,15 @@ const AdminDashboard = () => {
           />
         </section>
 
-        {/* ✅ NEW SECTION: SERVICE MANAGER (SEPARATE AS REQUESTED) */}
+        {/* ✅ NEW SECTION: SERVICE PROVIDER MANAGER (Using serviceProviders state) */}
         <section className="mb-12">
-           <ServiceManager services={services} onRefresh={fetchData} />
+           <ServiceManager services={serviceProviders} onRefresh={fetchData} />
         </section>
 
-        {/* === Manage Neighbourhood Watch (EXISTING) === */}
+        {/* ✅ FIXED SECTION: Manage Neighbourhood Watch / Blog Posts (Using servicePosts state) */}
         <section id="manage-services" className="mb-12">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Neighbourhood Watch ({services.length})</h2>
+            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Neighbourhood Watch ({servicePosts.length})</h2>
             <Link to="/admin/add-service" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 dark:hover:bg-green-500">
               + Add Service Post
             </Link>
@@ -637,20 +638,21 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {services.map((service) => (
-                  <tr key={service._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="p-3 dark:text-gray-200">{service.title}</td>
-                    <td className="p-3 dark:text-gray-200">{service.serviceType}</td>
-                    <td className="p-3 dark:text-gray-200">{service.location}</td>
-                    <td className="p-3 dark:text-gray-200">{service.numReviews}</td>
+                {servicePosts.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No blog posts found.</td></tr>}
+                {servicePosts.map((post) => (
+                  <tr key={post._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="p-3 dark:text-gray-200">{post.title}</td>
+                    <td className="p-3 dark:text-gray-200">{post.serviceType}</td>
+                    <td className="p-3 dark:text-gray-200">{post.location}</td>
+                    <td className="p-3 dark:text-gray-200">{post.numReviews}</td>
                     <td className="p-3 flex space-x-3">
-                      <Link to={`/admin/add-service/${service._id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
+                      <Link to={`/admin/add-service/${post._id}`} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300" title="Edit">
                         <FaEdit />
                       </Link>
-                      <button onClick={() => deleteService(service._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
+                      <button onClick={() => deleteServicePost(post._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete">
                         <FaTrash />
                       </button>
-                      <Link to={`/services/slug/${service.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 dark:text-gray-400 hover:text-blue-500" title="View Post">
+                      <Link to={`/services/slug/${post.slug}`} target="_blank" rel="noopener noreferrer" className="text-gray-500 dark:text-gray-400 hover:text-blue-500" title="View Post">
                         (View)
                       </Link>
                     </td>
@@ -746,7 +748,6 @@ const AdminDashboard = () => {
           </div>
         </section>
 
-        {/* ✅ NEW: PAYMENT SETTINGS MANAGER */}
         <section className="mb-12">
            <PaymentSettingsManager />
         </section>
@@ -783,7 +784,6 @@ const AdminDashboard = () => {
         </section>
       </div>
 
-      {/* ✅ UPDATED: ANIMATE PRESENCE WITH UNIQUE KEYS */}
       <AnimatePresence>
         {isAssignModalOpen && (
             <AssignAgentModal

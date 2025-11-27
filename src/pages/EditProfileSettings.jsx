@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, FaWhatsapp, FaCamera, FaLock, FaInfoCircle, FaPhone, 
   FaShieldAlt, FaSpinner, FaCheckCircle, FaCopy, FaExclamationTriangle, 
-  FaBriefcase // ✅ 1. IMPORT NEW ICON
+  FaBriefcase, FaTools, FaInstagram, FaTwitter, FaFacebook, FaTiktok, FaEnvelope // ✅ Added Icons
 } from 'react-icons/fa';
+import { FaXTwitter } from "react-icons/fa6"; // Standard X icon
 import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
 
 // (VerifyEmailPrompt component is unchanged)
@@ -58,9 +59,9 @@ const VerifyEmailPrompt = ({ user }) => {
 };
 
 
-// (TwoFactorAuthSetup component is unchanged)
+// ✅ FIXED: TwoFactorAuthSetup
 const TwoFactorAuthSetup = () => {
-  const { user, login } = useAuth(); 
+  const { user, login } = useAuth(); // Access global user state
   const [qrCode, setQrCode] = useState('');
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -69,10 +70,12 @@ const TwoFactorAuthSetup = () => {
   const [backupCodes, setBackupCodes] = useState([]);
   const [step, setStep] = useState(1); 
 
+  // Fix: Check if user is enabled locally or via prop
+  const isEnabled = user?.isTwoFactorEnabled;
+
   const handleSetup2FA = async () => {
     setLoading(true);
     setError('');
-    setSuccess('');
     try {
       const { data } = await apiClient.post('/auth/2fa/setup');
       setQrCode(data.qrCodeUrl);
@@ -88,12 +91,15 @@ const TwoFactorAuthSetup = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
     try {
       const { data } = await apiClient.post('/auth/2fa/verify', { token });
       setBackupCodes(data.backupCodes); 
       setStep(3); 
       setSuccess('2FA Verified! Now save your backup codes.');
+      
+      // ✅ Update global auth state immediately
+      const updatedUser = { ...user, isTwoFactorEnabled: true };
+      login(updatedUser); 
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid 6-digit code. Please try again.');
     } finally {
@@ -102,7 +108,6 @@ const TwoFactorAuthSetup = () => {
   };
 
   const handleFinishSetup = () => {
-    login({ ...user, isTwoFactorEnabled: true });
     setStep(1); 
     setBackupCodes([]);
   };
@@ -112,7 +117,8 @@ const TwoFactorAuthSetup = () => {
     alert('Backup codes copied to clipboard!');
   };
   
-  if (user.isTwoFactorEnabled) {
+  // ✅ FIX: Render the active state if user.isTwoFactorEnabled is true
+  if (isEnabled) {
     return (
       <div className="p-4 rounded-lg bg-green-100 border border-green-300 dark:bg-green-900/50 dark:border-green-700">
         <div className="flex items-center">
@@ -122,7 +128,7 @@ const TwoFactorAuthSetup = () => {
               Two-Factor Authentication is Active
             </h3>
             <p className="mt-1 text-sm text-green-700 dark:text-green-300">
-              Your account is protected with 2FA.
+              Your account is protected.
             </p>
           </div>
         </div>
@@ -140,12 +146,12 @@ const TwoFactorAuthSetup = () => {
       {step === 1 && (
         <>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Add an extra layer of security to your account using an authenticator app (like Google Authenticator).
+            Add an extra layer of security to your account using an authenticator app.
           </p>
           <button
             onClick={handleSetup2FA}
             disabled={loading}
-            className="w-full sm:w-auto flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="w-full sm:w-auto flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50"
           >
             {loading ? <FaSpinner className="animate-spin" /> : 'Enable 2FA'}
           </button>
@@ -154,9 +160,6 @@ const TwoFactorAuthSetup = () => {
       {step === 2 && (
         <div className="text-center space-y-6 border-t pt-6 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Step 1: Scan QR Code</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Open your authenticator app and scan this code.
-          </p>
           <div className="bg-white p-4 inline-block rounded-lg shadow-md">
              <img src={qrCode} alt="2FA QR Code" className="mx-auto w-48 h-48" />
           </div>
@@ -170,7 +173,7 @@ const TwoFactorAuthSetup = () => {
                 type="text"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full px-4 py-2 text-center text-lg tracking-widest border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="w-full px-4 py-2 text-center text-lg tracking-widest border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="000000"
                 maxLength={6}
                 required
@@ -178,7 +181,7 @@ const TwoFactorAuthSetup = () => {
               <button
                 type="submit"
                 disabled={loading || token.length < 6}
-                className="w-full flex justify-center py-2.5 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                className="w-full flex justify-center py-2.5 px-6 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
               >
                 {loading ? <FaSpinner className="animate-spin" /> : 'Verify Code'}
               </button>
@@ -193,8 +196,7 @@ const TwoFactorAuthSetup = () => {
              <div>
                <h3 className="font-bold text-yellow-800 dark:text-yellow-200">Save These Backup Codes!</h3>
                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                 If you lose your phone, these are the <strong>only way</strong> to recover your account. 
-                 Each code can be used once. Store them in a safe place (like a password manager).
+                 Store them in a safe place.
                </p>
              </div>
           </div>
@@ -204,16 +206,10 @@ const TwoFactorAuthSetup = () => {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={copyCodes}
-              className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-            >
+            <button onClick={copyCodes} className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
               <FaCopy className="mr-2" /> Copy Codes
             </button>
-            <button
-              onClick={handleFinishSetup}
-              className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm"
-            >
+            <button onClick={handleFinishSetup} className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm">
               I Have Saved Them
             </button>
           </div>
@@ -229,39 +225,63 @@ const EditProfileSettings = () => {
   const navigate = useNavigate();
   const is2FAEnabled = useFeatureFlag('two-factor-authentication');
 
+  // --- Form States ---
   const [name, setName] = useState('');
+  const [email, setEmail] = useState(''); // ✅ Added Email
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [about, setAbout] = useState('');
   const [voiceCallNumber, setVoiceCallNumber] = useState('');
+  
+  // ✅ Social Media States
+  const [socialLinks, setSocialLinks] = useState({
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    tiktok: ''
+  });
+
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewImage, setPreviewImage] = useState(user.profilePicture);
+  
+  // --- UI States ---
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
+  
+  // --- Password States ---
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState({ message: '', type: '' });
-  const [isAgent, setIsAgent] = useState(user.role === 'agent');
   
+  // --- Request States ---
   const [pendingRequest, setPendingRequest] = useState(null);
   const [checkingRequest, setCheckingRequest] = useState(true);
-  
-  // ✅ 2. NEW STATE FOR AGENT APPLICATION
   const [applyingAgent, setApplyingAgent] = useState(false);
+  const [applyingProvider, setApplyingProvider] = useState(false); // ✅ Service Provider State
 
   useEffect(() => {
     if (user) {
       setName(user.name);
+      setEmail(user.email); // ✅
       setWhatsappNumber(user.whatsappNumber || '');
       setAbout(user.about || '');
       setVoiceCallNumber(user.pendingVoiceCallNumber || user.voiceCallNumber || '');
       setPreviewImage(user.profilePicture);
-      setIsAgent(user.role === 'agent');
+      
+      // ✅ Populate Socials
+      if (user.socialLinks) {
+        setSocialLinks({
+          facebook: user.socialLinks.facebook || '',
+          instagram: user.socialLinks.instagram || '',
+          twitter: user.socialLinks.twitter || '',
+          tiktok: user.socialLinks.tiktok || ''
+        });
+      }
     }
   }, [user]);
 
-  // ✅ 3. UPGRADED CHECK FOR PENDING REQUESTS (RUNS FOR EVERYONE)
+  // Fetch Pending Request Logic
   const fetchPendingRequest = useCallback(async () => {
     setCheckingRequest(true);
     try {
@@ -281,22 +301,38 @@ const EditProfileSettings = () => {
     fetchPendingRequest();
   }, [fetchPendingRequest]);
 
-  // ✅ 4. NEW HANDLER FOR AGENT APPLICATION
+  // Handle Social Input Change
+  const handleSocialChange = (e) => {
+    setSocialLinks({ ...socialLinks, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Apply for Agent
   const handleApplyAgent = async () => {
-    if (!window.confirm("Are you sure you want to apply for an Agent account? Admins will review your request.")) return;
-    
+    if (!window.confirm("Apply for an Agent account? Admins will review your request.")) return;
     setApplyingAgent(true);
     try {
       await apiClient.post('/users/apply-agent', {}, { withCredentials: true });
-      setStatus({ message: 'Application submitted successfully!', type: 'success' });
-      fetchPendingRequest(); // Refresh to show pending status
+      setStatus({ message: 'Agent application submitted!', type: 'success' });
+      fetchPendingRequest(); 
     } catch (err) {
-      setStatus({
-        message: err.response?.data?.message || 'Failed to submit application.',
-        type: 'error',
-      });
+      setStatus({ message: err.response?.data?.message || 'Failed.', type: 'error' });
     } finally {
       setApplyingAgent(false);
+    }
+  };
+
+  // ✅ Apply for Service Provider
+  const handleApplyServiceProvider = async () => {
+    if (!window.confirm("Apply for a Service Provider account? Admins will review your request.")) return;
+    setApplyingProvider(true);
+    try {
+      await apiClient.post('/users/apply-service-provider', {}, { withCredentials: true });
+      setStatus({ message: 'Service Provider application submitted!', type: 'success' });
+      fetchPendingRequest(); 
+    } catch (err) {
+      setStatus({ message: err.response?.data?.message || 'Failed.', type: 'error' });
+    } finally {
+      setApplyingProvider(false);
     }
   };
 
@@ -308,6 +344,7 @@ const EditProfileSettings = () => {
     }
   };
 
+  // ✅ Update Profile Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -315,9 +352,11 @@ const EditProfileSettings = () => {
 
     const formData = new FormData();
     formData.append('name', name);
+    formData.append('email', email); // ✅ Send Email
     formData.append('whatsappNumber', whatsappNumber);
     formData.append('about', about);
     formData.append('voiceCallNumber', voiceCallNumber);
+    formData.append('socialLinks', JSON.stringify(socialLinks)); // ✅ Send Socials
     
     if (profilePicture) {
       formData.append('profilePicture', profilePicture);
@@ -325,23 +364,19 @@ const EditProfileSettings = () => {
 
     try {
       const response = await apiClient.put('/users/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true,
-        validateStatus: (status) => status >= 200 && status < 300,
       });
 
       const { data, status: httpStatus } = response;
       login(data.user); 
 
       if (httpStatus === 202) {
-        setStatus({ message: data.message, type: 'info' });
-        fetchPendingRequest(); // Refresh to show pending lock
+        setStatus({ message: 'Changes submitted for admin approval.', type: 'info' });
+        fetchPendingRequest();
       } else {
-        setStatus({ message: data.message, type: 'success' });
+        setStatus({ message: 'Profile updated successfully!', type: 'success' });
       }
-      
       setProfilePicture(null);
 
     } catch (err) {
@@ -357,11 +392,10 @@ const EditProfileSettings = () => {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmNewPassword) {
-      setPasswordStatus({ message: 'New passwords do not match.', type: 'error' });
+      setPasswordStatus({ message: 'Passwords do not match.', type: 'error' });
       return;
     }
     setPasswordLoading(true);
-    setPasswordStatus({ message: '', type: '' });
     try {
       const { data } = await apiClient.put(
         '/users/change-password',
@@ -373,28 +407,18 @@ const EditProfileSettings = () => {
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (err) {
-      setPasswordStatus({
-        message: err.response?.data?.message || 'Failed to change password.',
-        type: 'error',
-      });
+      setPasswordStatus({ message: err.response?.data?.message || 'Failed.', type: 'error' });
     } finally {
       setPasswordLoading(false);
     }
   };
 
-  // ✅ 5. UPDATED LOCK LOGIC (Only lock if it's a profile update request)
-  // If it's an 'agent_application', we don't lock the profile fields.
+  // ✅ Lock fields if there is a pending profile update
   const fieldsLocked = !!pendingRequest && (!pendingRequest.type || pendingRequest.type === 'profile_update');
+  // ✅ Specific check for pending email
+  const emailLocked = fieldsLocked || (user.pendingEmail && user.pendingEmail !== user.email);
 
-  if (checkingRequest) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-700 dark:text-gray-300">
-          Checking profile status...
-        </p>
-      </div>
-    );
-  }
+  if (checkingRequest) return <div className="min-h-screen flex items-center justify-center"><FaSpinner className="animate-spin text-4xl text-blue-500" /></div>;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
@@ -406,15 +430,10 @@ const EditProfileSettings = () => {
         {!user.isVerified && <VerifyEmailPrompt user={user} />}
 
         {status.message && (
-          <div
-            className={`p-4 mb-4 text-sm rounded-lg ${
-              status.type === 'success'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                : status.type === 'error'
-                ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
-            }`}
-          >
+          <div className={`p-4 mb-4 text-sm rounded-lg ${
+              status.type === 'success' ? 'bg-green-100 text-green-700' : 
+              status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' 
+            }`}>
             {status.message}
           </div>
         )}
@@ -423,12 +442,9 @@ const EditProfileSettings = () => {
           <div className="p-4 mb-6 rounded-lg bg-yellow-50 border border-yellow-300 dark:bg-gray-800 dark:border-yellow-700 flex items-start space-x-3">
             <FaLock className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
             <div>
-              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
-                Changes Awaiting Approval
-              </h3>
+              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">Changes Awaiting Approval</h3>
               <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                Your request to update your name and/or WhatsApp number is
-                pending admin review. These fields are locked.
+                Critical details (Name, Email, WhatsApp) are locked pending admin review.
               </p>
             </div>
           </div>
@@ -438,252 +454,155 @@ const EditProfileSettings = () => {
           {/* Profile Picture */}
           <div className="flex flex-col items-center space-y-4">
             <div className="relative">
-              <img
-                src={previewImage || '/default-avatar.png'}
-                alt="Profile"
-                className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-700"
-              />
-              <label
-                htmlFor="profilePicture"
-                className="absolute -bottom-2 -right-2 p-2 bg-blue-600 rounded-full text-white cursor-pointer hover:bg-blue-700 transition"
-              >
+              <img src={previewImage || '/default-avatar.png'} alt="Profile" className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-700" />
+              <label htmlFor="profilePicture" className="absolute -bottom-2 -right-2 p-2 bg-blue-600 rounded-full text-white cursor-pointer hover:bg-blue-700 transition">
                 <FaCamera />
-                <input
-                  type="file"
-                  id="profilePicture"
-                  name="profilePicture"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
+                <input type="file" id="profilePicture" name="profilePicture" className="hidden" onChange={handleFileChange} accept="image/*" />
               </label>
             </div>
           </div>
           
           {/* Name */}
           <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Full Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <FaUser className="h-5 w-5 text-gray-400" />
-              </span>
-              <input
-                type="text"
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-600"
-                required
-                disabled={loading || fieldsLocked}
-              />
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaUser className="h-5 w-5 text-gray-400" /></span>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60" required disabled={loading || fieldsLocked} />
             </div>
+          </div>
+
+          {/* ✅ Email with Approval Lock */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaEnvelope className="h-5 w-5 text-gray-400" /></span>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60" required disabled={loading || emailLocked} />
+            </div>
+            {emailLocked && user.pendingEmail && (
+               <p className="text-xs text-yellow-600 mt-1">Pending approval for change to: {user.pendingEmail}</p>
+            )}
           </div>
 
           {/* WhatsApp */}
           <div>
-            <label
-              htmlFor="whatsappNumber"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              WhatsApp Number (e.g., +254712345678)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">WhatsApp Number</label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <FaWhatsapp className="h-5 w-5 text-gray-400" />
-              </span>
-              <input
-                type="tel"
-                id="whatsappNumber"
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-70 disabled:bg-gray-200 dark:disabled:bg-gray-600"
-                disabled={loading || fieldsLocked}
-              />
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaWhatsapp className="h-5 w-5 text-gray-400" /></span>
+              <input type="tel" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60" disabled={loading || fieldsLocked} />
             </div>
           </div>
 
-          {/* Agent Fields */}
-          {isAgent && (
+          {/* Agent/Provider Fields */}
+          {(user.role === 'agent' || user.role === 'service_provider') && (
             <>
               <div>
-                <label
-                  htmlFor="about"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  About Me (Public Bio)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About Me / Business Bio</label>
                 <div className="relative">
-                  <span className="absolute top-3 left-0 flex items-center pl-3">
-                    <FaInfoCircle className="h-5 w-5 text-gray-400" />
-                  </span>
-                  <textarea
-                    id="about"
-                    rows="4"
-                    value={about}
-                    onChange={(e) => setAbout(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Tell clients a bit about yourself..."
-                    disabled={loading}
-                  />
+                  <span className="absolute top-3 left-0 flex items-center pl-3"><FaInfoCircle className="h-5 w-5 text-gray-400" /></span>
+                  <textarea rows="4" value={about} onChange={(e) => setAbout(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" disabled={loading} />
                 </div>
               </div>
-              
               <div>
-                <label
-                  htmlFor="voiceCallNumber"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Public Voice Call Number (Optional)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Public Voice Call Number</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <FaPhone className="h-5 w-5 text-gray-400" />
-                  </span>
-                  <input
-                    type="tel"
-                    id="voiceCallNumber"
-                    value={voiceCallNumber}
-                    onChange={(e) => setVoiceCallNumber(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="+254712345678"
-                    disabled={loading}
-                  />
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaPhone className="h-5 w-5 text-gray-400" /></span>
+                  <input type="tel" value={voiceCallNumber} onChange={(e) => setVoiceCallNumber(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" disabled={loading} />
                 </div>
-                {user.isVoiceCallNumberPending && (
-                  <div className="mt-2 p-3 rounded-lg bg-yellow-50 border border-yellow-300 dark:bg-gray-800 dark:border-yellow-700">
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      Your new number (<b>{user.pendingVoiceCallNumber}</b>) is awaiting admin approval. 
-                      Your current public number is <b>{user.voiceCallNumber || 'not set'}</b>.
-                    </p>
-                  </div>
-                )}
               </div>
             </>
           )}
 
+          {/* ✅ Social Media Links Section */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Social Media Links</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaFacebook className="text-blue-600" /></span>
+                <input type="text" name="facebook" placeholder="Facebook URL" value={socialLinks.facebook} onChange={handleSocialChange} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaInstagram className="text-pink-600" /></span>
+                <input type="text" name="instagram" placeholder="Instagram URL" value={socialLinks.instagram} onChange={handleSocialChange} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaXTwitter className="text-gray-900 dark:text-white" /></span>
+                <input type="text" name="twitter" placeholder="X (Twitter) URL" value={socialLinks.twitter} onChange={handleSocialChange} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              </div>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FaTiktok className="text-black dark:text-white" /></span>
+                <input type="text" name="tiktok" placeholder="TikTok URL" value={socialLinks.tiktok} onChange={handleSocialChange} className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+              </div>
+            </div>
+          </div>
+
           <div>
-            <button
-              type="submit"
-              disabled={loading || (fieldsLocked && !profilePicture && about === user.about && voiceCallNumber === (user.pendingVoiceCallNumber || user.voiceCallNumber || ''))}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading || fieldsLocked} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
               {loading ? 'Updating...' : 'Update Profile'}
             </button>
           </div>
         </form>
         
-        {/* ✅ 6. NEW "BECOME AN AGENT" SECTION */}
-        {!isAgent && (
-          <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <FaBriefcase className="mr-3 text-blue-500" />
-              Become an Agent
-            </h2>
+        {/* ✅ UPGRADE SECTION (Separated) */}
+        {user.role === 'user' && (
+          <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700 grid gap-6 md:grid-cols-2">
             
-            {pendingRequest && pendingRequest.type === 'agent_application' ? (
-               <div className="p-4 rounded-lg bg-blue-50 border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800 flex items-center">
-                  <FaSpinner className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
-                  <div>
-                    <h3 className="font-semibold text-blue-800 dark:text-blue-200">Application Pending</h3>
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                      Your request to become an agent is under review. We will notify you once approved.
-                    </p>
-                  </div>
-               </div>
-            ) : (
-              <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 text-center">
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Are you a real estate agent or property manager? Upgrade your account to list properties, track leads, and build your brand.
-                </p>
-                <button
-                  onClick={handleApplyAgent}
-                  disabled={applyingAgent}
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 transition-colors"
-                >
-                  {applyingAgent ? <FaSpinner className="animate-spin mr-2" /> : null}
-                  {applyingAgent ? 'Submitting...' : 'Apply for Agent Account'}
+            {/* Agent Application */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 text-center flex flex-col items-center">
+              <FaBriefcase className="text-4xl text-purple-600 mb-3" />
+              <h3 className="font-bold text-lg dark:text-white">Real Estate Agent</h3>
+              <p className="text-sm text-gray-500 mb-4">List properties & track leads.</p>
+              
+              {pendingRequest?.type === 'agent_application' ? (
+                 <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
+              ) : (
+                <button onClick={handleApplyAgent} disabled={applyingAgent || applyingProvider} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50">
+                   {applyingAgent ? 'Applying...' : 'Apply as Agent'}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* ✅ Service Provider Application */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 text-center flex flex-col items-center">
+              <FaTools className="text-4xl text-green-600 mb-3" />
+              <h3 className="font-bold text-lg dark:text-white">Service Provider</h3>
+              <p className="text-sm text-gray-500 mb-4">Offer moving, internet, etc.</p>
+              
+              {pendingRequest?.type === 'service_provider_application' ? (
+                 <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
+              ) : (
+                <button onClick={handleApplyServiceProvider} disabled={applyingAgent || applyingProvider} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">
+                   {applyingProvider ? 'Applying...' : 'Apply as Provider'}
+                </button>
+              )}
+            </div>
           </div>
         )}
-        {/* --- END OF AGENT APPLICATION SECTION --- */}
 
         {/* Change Password */}
         <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Change Password
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-6">
              <div>
-              <label
-                htmlFor="oldPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Old Password
-              </label>
-              <input
-                type="password"
-                id="oldPassword"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Old Password</label>
+              <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
             <div>
-              <label
-                htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                New Password
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
             <div>
-              <label
-                htmlFor="confirmNewPassword"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Confirm New Password
-              </label>
-              <input
-                type="password"
-                id="confirmNewPassword"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+              <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
 
             {passwordStatus.message && (
-              <div
-                className={`p-3 text-sm rounded-lg ${
-                  passwordStatus.type === 'success'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                    : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                }`}
-              >
+              <div className={`p-3 text-sm rounded-lg ${passwordStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                 {passwordStatus.message}
               </div>
             )}
 
             <div>
-              <button
-                type="submit"
-                disabled={passwordLoading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50"
-              >
+              <button type="submit" disabled={passwordLoading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50">
                 {passwordLoading ? 'Changing...' : 'Change Password'}
               </button>
             </div>
