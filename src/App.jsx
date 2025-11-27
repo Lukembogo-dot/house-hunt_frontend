@@ -1,5 +1,5 @@
 // src/App.jsx
-// (UPDATED: Removed Trending Properties Section from Home)
+// (UPDATED: Cleaned Hero Section, New Text, Reduced Spacing for Continuous Flow)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, useNavigate } from "react-router-dom"; 
@@ -12,7 +12,7 @@ import { Helmet } from 'react-helmet-async';
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
 import PropertyList from "./components/PropertyList";
 import TrendingProperties from "./components/TrendingProperties";
-import SearchBar from "./components/SearchBar";
+import GlobalSearchBar from "./components/GlobalSearchBar"; 
 import ChatBubble from "./components/ChatBubble";
 import ScrollToTop from "./components/ScrollToTop";
 import TopAgents from "./components/TopAgents"; 
@@ -232,83 +232,94 @@ function MainLayout() {
     <>
       <SeoInjector seo={homeSeo} />
 
-      <section id="home" className="relative bg-cover bg-center h-[50vh] min-h-[400px] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-        <div className="relative z-10 px-6 max-w-3xl pb-16">
-          <motion.h1 className="text-5xl md:text-6xl font-extrabold mb-4 leading-tight drop-shadow-lg" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            Find Your Dream Home in Kenya
+      {/* ✅ 1. NEW HERO SECTION: No Image, Clean Text, Animation */}
+      <section id="home" className="pt-32 pb-6 px-6 text-center bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-4xl mx-auto">
+          <motion.h1 
+            className="text-4xl md:text-6xl font-extrabold mb-4 text-gray-900 dark:text-white leading-tight" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }}
+          >
+            Welcome to House Hunt Kenya
           </motion.h1>
-          <motion.p className="text-lg md:text-xl mb-8 text-gray-200 max-w-2xl mx-auto" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            Explore verified listings — from affordable rentals to luxury homes.
+          <motion.p 
+            className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ delay: 0.2 }}
+          >
+            A community-driven platform where you can share insights, find trusted service providers, and browse verified listings. <span className="text-blue-600 dark:text-blue-400 font-bold">Agents and property owners post for free!</span>
           </motion.p>
         </div>
       </section>
 
-      <main id="properties" className="flex-grow">
-        <section className="relative z-20 -mt-16 px-6">
-          <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl px-6 py-4 border border-gray-200 dark:border-gray-700">
-            <SearchBar filters={homeFilters} onChange={(name, val) => setHomeFilters(prev => ({ ...prev, [name]: val }))} onFilter={handleHomeFilterSubmit} />
-          </div>
+      <main id="properties" className="flex-grow bg-gray-50 dark:bg-gray-900">
+        {/* ✅ 2. GLOBAL SEARCH BAR: Reduced spacing, flows naturally */}
+        <section className="px-6 pb-8">
+           <GlobalSearchBar />
         </section>
 
         {submittedHomeFilters ? (
-           <section className="py-12 px-6 bg-gray-100 dark:bg-gray-900">
+           <section className="py-8 px-6">
              <div className="max-w-6xl mx-auto">
-               <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">Search Results</h2>
+               <h2 className="text-3xl font-bold text-center mb-8 dark:text-white">Search Results</h2>
                <PropertyList filterOverrides={submittedHomeFilters} showSearchBar={false} showTitle={false} />
              </div>
            </section>
         ) : (
           <>
-            {/* 1. Top Agents */}
-            <TopAgents />
+            {/* 3. Top Agents (Reduced padding) */}
+            <div className="py-6">
+               <TopAgents />
+            </div>
 
-            {/* 2. Featured Properties (11 Items) */}
-            <section className="py-12 px-6 bg-gray-100 dark:bg-gray-900">
+            {/* 4. Featured Properties (Reduced padding, Continuous background) */}
+            <section className="py-6 px-6">
               <div className="max-w-6xl mx-auto">
-                <h2 className="text-3xl font-bold text-center mb-12 dark:text-white">Featured Properties</h2>
+                <h2 className="text-3xl font-bold text-center mb-8 dark:text-white">Featured Properties</h2>
                 <PropertyList filterOverrides={null} showSearchBar={false} showTitle={false} limit={11} />
               </div>
             </section>
             
-            {/* 3. HouseHunt Request */}
-            <HouseHuntRequest />
-
-            {/* 4. Trending Properties - REMOVED as requested */}
+            {/* 5. HouseHunt Request */}
+            <div className="py-6">
+               <HouseHuntRequest />
+            </div>
 
             {/* 6. TOOLS SECTION (Quiz + Cost Calculator) */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
-               <section className="py-16 px-6 bg-blue-50 dark:bg-gray-800/50 border-t dark:border-gray-700">
-                  <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+               <section className="py-8 px-6">
+                  <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
                     
                     {/* Neighbourhood Quiz */}
                     {isQuizEnabled && (
-                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 text-center hover:transform hover:scale-105 transition duration-300">
-                         <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition duration-300">
+                         <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                             <FaMapMarkedAlt />
                          </div>
-                         <h3 className="text-2xl font-bold mb-2 dark:text-white">Where Should You Live?</h3>
-                         <p className="text-gray-600 dark:text-gray-300 mb-6">
-                           Take our AI-powered quiz to find the perfect Nairobi neighbourhood for your lifestyle and budget.
+                         <h3 className="text-xl font-bold mb-2 dark:text-white">Where Should You Live?</h3>
+                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                           Take our AI-powered quiz to find the perfect Nairobi neighbourhood.
                          </p>
-                         <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 shadow-md">
-                           Start the Quiz
+                         <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition">
+                           Start Quiz
                          </Link>
                       </div>
                     )}
 
                     {/* Cost of Living Calculator */}
                     {isCostCalculatorEnabled && (
-                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 text-center hover:transform hover:scale-105 transition duration-300">
-                         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                      <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition duration-300">
+                         <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
                             <FaCalculator />
                          </div>
-                         <h3 className="text-2xl font-bold mb-2 dark:text-white">Cost of Living Calculator</h3>
-                         <p className="text-gray-600 dark:text-gray-300 mb-6">
-                           Planning a move? Estimate monthly expenses (Rent, Transport, Food) for different estates.
+                         <h3 className="text-xl font-bold mb-2 dark:text-white">Cost of Living</h3>
+                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                           Estimate monthly expenses (Rent, Transport, Food) for different estates.
                          </p>
-                         <Link to="/tools/cost-of-living" className="inline-block bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 shadow-md">
-                           Calculate Costs
+                         <Link to="/tools/cost-of-living" className="inline-block bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition">
+                           Calculate
                          </Link>
                       </div>
                     )}
@@ -317,10 +328,14 @@ function MainLayout() {
                </section>
             )}
             
-            <HomeFaqSection />
+            <div className="py-6">
+               <HomeFaqSection />
+            </div>
 
-            {/* ✅ NEW: FEATURED RESIDENT REVIEWS */}
-            <FeaturedReviews />
+            {/* Featured Reviews */}
+            <div className="py-6">
+               <FeaturedReviews />
+            </div>
 
             <NeighbourhoodWatchHome />
           </>
