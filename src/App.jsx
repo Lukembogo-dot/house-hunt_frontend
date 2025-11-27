@@ -1,6 +1,4 @@
 // src/App.jsx
-// (UPDATED: Cleaned Hero Section, New Text, Reduced Spacing for Continuous Flow)
-
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, useNavigate } from "react-router-dom"; 
 import ReactGA from 'react-ga4';
@@ -54,6 +52,9 @@ import EditServiceProvider from './pages/admin/EditServiceProvider';
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform'; 
 
+// ✅ IMPORT THE NEW DYNAMIC SEARCH ENGINE
+import DynamicSearchPage from './pages/DynamicSearchPage';
+
 // --- Context & API ---
 import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
@@ -104,97 +105,6 @@ const ServiceRouteHandler = () => {
 
   if (isProvider === null) return <PageLoader />;
   return isProvider ? <ServiceProviderDetails /> : <ServicePostDetails />;
-};
-
-const SearchPageWrapper = () => {
-  const { listingType, location } = useParams();
-  const [customSeo, setCustomSeo] = useState(null);
-  const [stats, setStats] = useState(null); 
-  
-  const displayLocation = location ? location.charAt(0).toUpperCase() + location.slice(1) : 'Kenya';
-  const displayType = listingType === 'rent' ? 'Rent' : 'Sale';
-  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
-  
-  useEffect(() => {
-    const fetchPageData = async () => {
-      try {
-        const pagePath = `/search/${listingType}/${location}`;
-        const [seoRes, statsRes] = await Promise.allSettled([
-            apiClient.get(`/seo/${encodeURIComponent(pagePath)}`),
-            apiClient.get(`/properties/stats?location=${location}&listingType=${listingType}`)
-        ]);
-
-        if (seoRes.status === 'fulfilled' && seoRes.value.data?.metaTitle) {
-          setCustomSeo(seoRes.value.data);
-        } else {
-          setCustomSeo(null);
-        }
-
-        if (statsRes.status === 'fulfilled') {
-            setStats(statsRes.value.data);
-        }
-      } catch (err) {
-        console.error("Error loading search page data", err);
-      }
-    };
-    fetchPageData();
-  }, [listingType, location]);
-
-  const defaultTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
-  const defaultDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
-  const canonicalUrl = `https://www.househuntkenya.co.ke/search/${listingType}/${location}`;
-
-  const metaTitle = customSeo?.metaTitle || defaultTitle;
-  const metaDescription = customSeo?.metaDescription || defaultDescription;
-
-  const filterOverrides = {
-    listingType: listingType, 
-    location: location       
-  };
-
-  return (
-    <>
-      <Helmet>
-        <title>{metaTitle}</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta property="og:title" content={metaTitle} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:type" content="website" />
-      </Helmet>
-
-      <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-          <div className="max-w-6xl mx-auto">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 capitalize">
-                  {listingType === 'rent' ? 'Properties for Rent' : 'Properties for Sale'} in {displayLocation}
-              </h1>
-
-              {stats && stats.count > 0 && (
-                  <>
-                    <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-blue-600 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <FaChartLine className="text-blue-600" /> Market Snapshot: {displayType} in {displayLocation}
-                        </h2>
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                            As of <strong>{currentMonth}</strong>, there are currently <strong>{stats.count}</strong> active listings for {displayType.toLowerCase()} in {displayLocation} on HouseHunt Kenya. 
-                            The average market price is approximately <strong>KES {stats.avgPrice?.toLocaleString()}</strong>. 
-                            {displayLocation} remains a popular choice for {displayType === 'Rent' ? 'tenants' : 'investors'} seeking verified properties with access to local amenities.
-                        </p>
-                    </div>
-                    <MarketFactsTable location={location} type={listingType} stats={stats} />
-                  </>
-              )}
-
-              <PropertyList 
-                  filterOverrides={filterOverrides} 
-                  showSearchBar={true} 
-                  showTitle={false} 
-              />
-          </div>
-      </div>
-    </>
-  );
 };
 
 function MainLayout() {
@@ -249,7 +159,7 @@ function MainLayout() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: 0.2 }}
           >
-            A community-driven platform where you can share insights, find trusted service providers, and browse verified listings. <span className="text-blue-600 dark:text-blue-400 font-bold">Agents and property owners post for free!</span>
+            A community-driven platform where you can share insights, find trusted service providers, and browse verified listings. <span className="text-blue-600 dark:text-blue-400 font-bold">Agents, Real EState Firm, and Property Management firms only post for free!</span>
           </motion.p>
         </div>
       </section>
@@ -377,7 +287,11 @@ function MainLayout() {
                 <Route path="/our-platform" element={<OurPlatform />} /> 
                 <Route path="/living-feed" element={<LivingCommunityFeed />} />
                 <Route path="/living-feed/:id" element={<LivingPostDetail />} />
-                <Route path="/search/:listingType/:location" element={<SearchPageWrapper />} />
+                
+                {/* ✅ FIX: Replaced SearchPageWrapper with DynamicSearchPage */}
+                <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
+                <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />
+                
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
             
             </Routes>

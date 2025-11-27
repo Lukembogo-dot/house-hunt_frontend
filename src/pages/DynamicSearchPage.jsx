@@ -1,5 +1,5 @@
 // src/pages/DynamicSearchPage.jsx
-// (UPDATED: Added "No Results Dashboard" & Full PSEO Control)
+// (UPDATED: Refined "Start a Buzz" logic based on Login Status)
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -10,12 +10,13 @@ import { motion } from 'framer-motion';
 import { 
   FaMoneyBillWave, FaChartBar, FaSearchDollar, FaHome, 
   FaQuestionCircle, FaChevronRight, FaExclamationTriangle, 
-  FaBell, FaClipboardList 
+  FaBell, FaClipboardList, FaBullhorn, FaStar, FaUsers 
 } from 'react-icons/fa';
 import { generateDynamicLocationContent, generateFAQSchema } from '../utils/seoContentGenerator';
 import SmartOwnerBanner from '../components/SmartOwnerBanner';
 import Breadcrumbs from '../components/Breadcrumbs';
-import PropertyAlertForm from '../components/PropertyAlertForm'; // ✅ Imported for Lead Capture
+import PropertyAlertForm from '../components/PropertyAlertForm';
+import { useAuth } from '../context/AuthContext'; // ✅ Added Auth Hook
 
 // Helper function
 const capitalize = (s) => {
@@ -25,8 +26,7 @@ const capitalize = (s) => {
     .join(' ');
 };
 
-// --- 1. NEW: NO RESULTS DASHBOARD (The "Zero Inventory Protocol") ---
-// This replaces the empty list with a high-conversion capture form
+// --- NO RESULTS DASHBOARD ---
 const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-12">
@@ -42,7 +42,6 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
       </div>
 
       <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-gray-100 dark:border-gray-700">
-        
         {/* Column 1: Demand Side (Alerts) */}
         <div className="p-8">
           <div className="flex items-center gap-3 mb-6">
@@ -54,7 +53,6 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
               <p className="text-xs text-gray-500">Be the first to know.</p>
             </div>
           </div>
-          {/* Reuse your existing Alert Form in compact mode */}
           <PropertyAlertForm 
             currentFilters={{ location, type: listingType }} 
             compact={true} 
@@ -81,7 +79,7 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
         </div>
       </div>
 
-      {/* Footer: Auto Linker to Nearby (Keeps SEO Juice Flowing) */}
+      {/* Footer: Nearby Links */}
       <div className="bg-gray-100 dark:bg-gray-900 p-6 border-t dark:border-gray-700">
         <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-3 text-center">
           Or try these nearby locations
@@ -102,7 +100,7 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
   );
 };
 
-// --- MARKET SNAPSHOT COMPONENT (Unchanged) ---
+// --- MARKET SNAPSHOT ---
 const MarketSnapshot = ({ stats, loading }) => {
   const StatCardSkeleton = () => (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 animate-pulse">
@@ -150,6 +148,7 @@ const MarketSnapshot = ({ stats, loading }) => {
 
 const DynamicSearchPage = () => {
   const { listingType, propertyType, location, bedrooms } = useParams();
+  const { user } = useAuth(); // ✅ Access Auth State
   
   const filterOverrides = {
     listingType: listingType,
@@ -164,7 +163,6 @@ const DynamicSearchPage = () => {
   const [locationFaqs, setLocationFaqs] = useState([]);
   const [communityInsights, setCommunityInsights] = useState([]);
 
-  // Fallback locations for PSEO linking
   const nearbyDefaults = ['Westlands', 'Kilimani', 'Kileleshwa', 'Lavington', 'Karen', 'Ruaka', 'South B', 'Thika Road'];
 
   useEffect(() => {
@@ -173,11 +171,9 @@ const DynamicSearchPage = () => {
       try {
         const params = new URLSearchParams(filterOverrides);
         
-        // 1. Fetch Real Stats
         const { data } = await apiClient.get(`/properties/stats?${params.toString()}`);
         setStats(data);
 
-        // 2. Fetch Knowledge & Insights
         if (filterOverrides.location) {
           try {
             const [faqRes, insightRes] = await Promise.allSettled([
@@ -194,7 +190,6 @@ const DynamicSearchPage = () => {
           setCommunityInsights([]);
         }
 
-        // 3. Generate PSEO Text
         const loc = filterOverrides.location || 'Nairobi';
         const content = generateDynamicLocationContent(
           loc,
@@ -216,7 +211,6 @@ const DynamicSearchPage = () => {
     
   }, [listingType, propertyType, location, bedrooms]);
 
-  // ✅ CONTROL LOGIC
   const hasResults = stats && stats.count > 0;
 
   return (
@@ -226,8 +220,6 @@ const DynamicSearchPage = () => {
         <meta name="description" content={seoData.intro} />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href={window.location.href} />
-        <meta property="og:title" content={seoData.title} />
-        <meta property="og:description" content={seoData.intro} />
         {stats && (
             <script type="application/ld+json">
               {generateFAQSchema(filterOverrides.location, listingType, stats.avgPrice)}
@@ -284,19 +276,16 @@ const DynamicSearchPage = () => {
           )}
         </div>
 
-        {/* --- ✅ CONDITIONAL CONTENT DISPLAY --- */}
-        
+        {/* --- RESULTS / NO RESULTS TOGGLE --- */}
         {loadingStats ? (
            <div className="h-96 w-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl"></div>
         ) : hasResults ? (
-           // SCENARIO A: WE HAVE RESULTS
            <>
              {filterOverrides.location && (
                 <SmartOwnerBanner location={filterOverrides.location} avgPrice={stats.avgPrice} listingType={listingType} />
              )}
              <MarketSnapshot stats={stats} loading={loadingStats} />
              
-             {/* Property List */}
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
                 <PropertyList 
                   key={`${listingType}-${propertyType}-${location}-${bedrooms}`}
@@ -307,7 +296,6 @@ const DynamicSearchPage = () => {
              </motion.div>
            </>
         ) : (
-           // SCENARIO B: NO RESULTS (ZERO INVENTORY PROTOCOL)
            <NoResultsDashboard 
               location={filterOverrides.location || 'this location'} 
               listingType={listingType}
@@ -315,7 +303,45 @@ const DynamicSearchPage = () => {
            />
         )}
 
-        {/* --- COMMUNITY INSIGHTS (Always visible to boost PSEO even if no listings) --- */}
+        {/* --- ✅ NEW: "START A BUZZ" CTA (Responsive Logic) --- */}
+        <div className="my-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white text-center relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+               <FaBullhorn className="text-3xl text-yellow-300" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">
+              Start a Buzz in {filterOverrides.location || 'Your Area'}
+            </h2>
+            <p className="text-lg opacity-90 mb-8 max-w-2xl mx-auto">
+              Do you love (or hate) where you live? Rate your building anonymously. 
+              Help the community and earn <strong>Housing Passport Points</strong>.
+            </p>
+            
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
+              {/* ✅ DYNAMIC LOGIC: Profile if logged in, Feed if not */}
+              <Link 
+                to={user ? "/profile" : "/living-feed"} 
+                className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-purple-900 font-extrabold px-8 py-3 rounded-full shadow-md hover:bg-yellow-300 transition transform hover:scale-105"
+              >
+                {user ? <><FaStar /> Rate My Building</> : <><FaUsers /> Join Community Feed</>}
+              </Link>
+              
+              <Link 
+                to="/share-insight" 
+                state={{ location: filterOverrides.location, type: 'question' }}
+                className="inline-flex items-center justify-center gap-2 bg-white/20 border border-white/40 text-white font-bold px-8 py-3 rounded-full hover:bg-white/30 transition"
+              >
+                <FaQuestionCircle /> Ask a Local
+              </Link>
+            </div>
+          </div>
+          
+          {/* Decorative circles */}
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full translate-x-1/3 translate-y-1/3"></div>
+        </div>
+
+        {/* --- COMMUNITY INSIGHTS --- */}
         {communityInsights.length > 0 && (
           <div className="mt-12 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-purple-100 dark:border-gray-700">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -334,17 +360,7 @@ const DynamicSearchPage = () => {
           </div>
         )}
         
-        {/* --- CTA: WRITE REVIEW --- */}
-        {filterOverrides.location && (
-            <div className="mt-8 text-center">
-                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Live in {filterOverrides.location}?</p>
-                 <Link to="/share-insight" className="inline-block bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-700">
-                    Write a Review for {filterOverrides.location}
-                 </Link>
-            </div>
-        )}
-
-        {/* --- FOOTER: INTERNAL LINKING (Enhanced PSEO) --- */}
+        {/* --- FOOTER LINKS --- */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-100 dark:border-gray-700">
             <h3 className="font-bold text-lg mb-4 dark:text-white">Popular in {filterOverrides.location || 'Nairobi'}</h3>
@@ -355,10 +371,6 @@ const DynamicSearchPage = () => {
                <span className="text-gray-300">|</span>
                <Link to={`/search/${listingType}/house/${location || 'nairobi'}`} className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-500 hover:underline">
                  Houses for {listingType === 'rent' ? 'Rent' : 'Sale'}
-               </Link>
-               <span className="text-gray-300">|</span>
-               <Link to={`/search/${listingType}/office/${location || 'nairobi'}`} className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-500 hover:underline">
-                 Offices for {listingType === 'rent' ? 'Rent' : 'Sale'}
                </Link>
             </div>
           </div>
