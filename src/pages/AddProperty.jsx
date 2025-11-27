@@ -1,5 +1,5 @@
 // src/pages/AddProperty.jsx
-// (FIXED: Full File - Search, Shadow Accounts, Detail Editing + Amenities/Land/Airbnb Logic + Custom Amenities)
+// (UPDATED: Added Nairobi Survival Features & Parity with EditProperty)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
   FaSpinner, FaStar, FaUserCheck, FaSearch, FaExclamationCircle, FaUser,
-  FaCheckSquare, FaSquare, FaPlus, FaTimes 
+  FaCheckSquare, FaSquare, FaPlus, FaTimes,
+  FaBus, FaWifi, FaShoppingBasket // ✅ NEW ICONS
 } from 'react-icons/fa';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 import MapComponent from '../components/MapComponent';
@@ -18,21 +19,23 @@ const MAX_FILE_SIZE_MB = 2;
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
 const FEATURE_PRICE_PER_DAY = 170; 
 
-// ✅ NEW: STANDARD AMENITIES LIST
+// Standard Amenities
 const AMENITIES_LIST = [
   "Wifi", "Parking", "CCTV", "Borehole", "Swimming Pool", "Gym",
   "Elevator", "Backup Generator", "Fenced", "Garden", "Staff Quarters",
   "Security Guard", "Balcony", "Wheelchair Access", "Fiber Internet", "Pet Friendly"
 ];
 
-// Reusable Input Field Component
+// ✅ NEW: ISP LIST
+const ISP_LIST = ["Safaricom Home Fibre", "Zuku", "JTL Faiba", "Starlink", "Liquid Home", "Telkom"];
+
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
   <div className="relative mb-4">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
     </label>
     {icon && (
-      <div className="absolute inset-y-0 left-0 pl-3 pt-8 flex items-center pointer-events-none text-gray-400">
+      <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-center pointer-events-none text-gray-400">
         {icon}
       </div>
     )}
@@ -58,10 +61,16 @@ const initialFormState = {
   price: '',
   bedrooms: '',
   
-  // ✅ NEW FIELDS
-  landSize: '', // For Land
-  priceFrequency: 'month', // For Airbnb/Rent
-  amenities: [], // Checkbox array
+  landSize: '', 
+  priceFrequency: 'month', 
+  amenities: [], 
+
+  // ✅ NEW: NAIROBI SURVIVAL FIELDS
+  matatuRoute: '',
+  matatuFare: '',
+  mamaMbogaDistance: '',
+  internetReady: false,
+  internetProviders: [],
 
   type: 'apartment',
   status: 'available', 
@@ -87,7 +96,6 @@ const AddProperty = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   
-  // ✅ STATE FOR CUSTOM AMENITY INPUT
   const [customAmenityInput, setCustomAmenityInput] = useState('');
 
   // Search State
@@ -134,6 +142,7 @@ const AddProperty = () => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
     if (type === 'checkbox' && name === 'isFeatured') processedValue = checked;
+    else if (type === 'checkbox' && name === 'internetReady') processedValue = checked; // ✅ Handle Internet Toggle
     else if (name === 'featuredDays') processedValue = Number(value);
     
     setFormData(prevData => ({
@@ -142,7 +151,6 @@ const AddProperty = () => {
     }));
   };
   
-  // ✅ NEW: Handle Amenities Toggle (Standard & Custom)
   const handleAmenityToggle = (amenity) => {
     setFormData(prev => {
       const current = prev.amenities || [];
@@ -154,13 +162,23 @@ const AddProperty = () => {
     });
   };
 
-  // ✅ NEW: Add Custom Amenity
+  // ✅ NEW: Handle ISP Toggle
+  const handleISPToggle = (isp) => {
+    setFormData(prev => {
+      const current = prev.internetProviders || [];
+      if (current.includes(isp)) {
+        return { ...prev, internetProviders: current.filter(p => p !== isp) };
+      } else {
+        return { ...prev, internetProviders: [...current, isp] };
+      }
+    });
+  };
+
   const handleAddCustomAmenity = (e) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault(); 
     const trimmed = customAmenityInput.trim();
     if (!trimmed) return;
     
-    // Check duplicates (case-insensitive check optional, strict here)
     if (!formData.amenities.includes(trimmed)) {
       setFormData(prev => ({
         ...prev,
@@ -302,9 +320,11 @@ const AddProperty = () => {
           dataToSend.append('ownerDetails[instagram]', formData.ownerDetails.instagram);
         }
       } 
-      // ✅ SEND AMENITIES AS JSON
       else if (key === 'amenities') {
           dataToSend.append('amenities', JSON.stringify(formData.amenities));
+      }
+      else if (key === 'internetProviders') { // ✅ NEW: Send ISPs as JSON
+          dataToSend.append('internetProviders', JSON.stringify(formData.internetProviders));
       }
       else {
         dataToSend.append(key, formData[key]);
@@ -384,7 +404,6 @@ const AddProperty = () => {
               placeholder="e.g., Spacious 3-Bedroom Apartment" 
             />
             
-            {/* ✅ UPDATED PRICE SECTION WITH FREQUENCY */}
             <div className="flex gap-2">
                 <div className="flex-1">
                   <InputField 
@@ -509,7 +528,6 @@ const AddProperty = () => {
             />
           </div>
 
-          {/* ✅ UPDATED: CONDITIONAL BEDROOMS VS LAND SIZE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {formData.type === 'land' ? (
               <InputField 
@@ -548,7 +566,7 @@ const AddProperty = () => {
             </div>
           </div>
 
-          {/* ✅ NEW: AMENITIES SECTION (CHECKBOX GRID + CUSTOM INPUT) */}
+          {/* Amenities Section */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                Amenities & Features
@@ -571,7 +589,6 @@ const AddProperty = () => {
                 ))}
              </div>
 
-             {/* Custom Amenity Input */}
              <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Add Custom Feature (e.g., Jacuzzi, Solar Heating)
@@ -594,7 +611,6 @@ const AddProperty = () => {
                    </button>
                 </div>
                 
-                {/* Display Custom Amenities that are NOT in standard list */}
                 {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
                    <div className="mt-3 flex flex-wrap gap-2">
                       {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
@@ -608,6 +624,84 @@ const AddProperty = () => {
                       ))}
                    </div>
                 )}
+             </div>
+          </div>
+
+          {/* ✅ NEW: NAIROBI LIVING ESSENTIALS SECTION */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
+             </h2>
+             <p className="text-sm text-gray-600 dark:text-gray-400">Help tenants calculate their real monthly costs.</p>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField 
+                   label="Nearest Matatu Route/Stage" 
+                   name="matatuRoute" 
+                   value={formData.matatuRoute} 
+                   onChange={handleChange} 
+                   placeholder="e.g., Route 105 or Super Metro Stage" 
+                   required={false}
+                   icon={<FaBus />}
+                />
+                <InputField 
+                   label="Approx. Fare to CBD (Ksh)" 
+                   name="matatuFare" 
+                   type="number"
+                   value={formData.matatuFare} 
+                   onChange={handleChange} 
+                   placeholder="e.g., 80" 
+                   required={false}
+                />
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField 
+                   label="Distance to Market (Mama Mboga)" 
+                   name="mamaMbogaDistance" 
+                   value={formData.mamaMbogaDistance} 
+                   onChange={handleChange} 
+                   placeholder="e.g., 5 min walk" 
+                   required={false}
+                   icon={<FaShoppingBasket />}
+                />
+                
+                {/* Internet Section */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-3">
+                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                          <FaWifi /> Internet Ready?
+                       </label>
+                       <input 
+                          type="checkbox" 
+                          name="internetReady" 
+                          checked={formData.internetReady} 
+                          onChange={handleChange}
+                          className="h-5 w-5 text-blue-600 rounded"
+                       />
+                    </div>
+                    
+                    {formData.internetReady && (
+                       <div className="mt-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Select available providers:</p>
+                          <div className="flex flex-wrap gap-2">
+                             {ISP_LIST.map(isp => (
+                                <span 
+                                   key={isp}
+                                   onClick={() => handleISPToggle(isp)}
+                                   className={`text-xs px-3 py-1 rounded-full border cursor-pointer select-none transition ${
+                                      formData.internetProviders.includes(isp)
+                                      ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-100'
+                                      : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-300'
+                                   }`}
+                                >
+                                   {formData.internetProviders.includes(isp) ? '✓ ' : '+ '} {isp}
+                                </span>
+                             ))}
+                          </div>
+                       </div>
+                    )}
+                </div>
              </div>
           </div>
 

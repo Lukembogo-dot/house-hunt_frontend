@@ -1,51 +1,87 @@
-// Rent.jsx (UPDATED)
-
-import React from "react";
+// src/pages/Rent.jsx
+import React, { useState } from "react";
 import PropertyList from "../components/PropertyList";
+import TrendingProperties from "../components/TrendingProperties"; // ✅ Import Trending
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-// ✅ NEW IMPORTS
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
-
 
 // Define a re-usable animation for cards
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: (i) => ({ // 'i' is the custom index
+  visible: (i) => ({ 
     opacity: 1, 
     y: 0,
     transition: { 
       duration: 0.5, 
-      delay: i * 0.1, // Stagger animation
+      delay: i * 0.1, 
       ease: "easeOut" 
     }
   })
 };
 
 const Rent = () => {
-  // ✅ 1. Use the new SEO hook
   const seo = useSeoData(
-    '/rent', // The unique path identifier
-    'Affordable Rental Homes & Apartments in Kenya | HouseHunt', // Default Title
-    'Browse thousands of verified listings for rental properties across Nairobi, Mombasa, and other major Kenyan towns. Find your next apartment or house for rent today.' // Default Description
+    '/rent', 
+    'Affordable Rental Homes & Apartments in Kenya | HouseHunt', 
+    'Browse thousands of verified listings for rental properties across Nairobi, Mombasa, and other major Kenyan towns. Find your next apartment or house for rent today.' 
   );
+
+  // ✅ State to track IDs shown in Trending to avoid duplicates
+  const [trendingIds, setTrendingIds] = useState([]);
   
   return (
     <>
-      {/* ✅ 2. Inject SEO Tags */}
       <SeoInjector seo={seo} />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col font-inter">
-        {/* ... (Hero section is unchanged, already animated) ... */}
-        <section /* ... */ >
-          {/* ... */}
+        
+        {/* HERO / TITLE SECTION */}
+        <section className="pt-20 pb-10 px-6 text-center">
+           <motion.h2 
+              className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              Properties for Rent in Kenya
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              Find your next home from our verified list of apartments, bungalows, and shared spaces.
+            </motion.p>
         </section>
 
-        {/* RENTAL LISTINGS */}
-        <section className="py-16 px-6 bg-gray-100 dark:bg-gray-900">
+        {/* ✅ 1. TRENDING RENTALS (Top 12) */}
+        <div className="mb-10">
+           <TrendingProperties 
+             listingType="rent" 
+             onLoad={(ids) => setTrendingIds(ids)} 
+           />
+        </div>
+
+        {/* DIVIDER */}
+        <div className="max-w-6xl mx-auto px-6 flex items-center gap-4 mb-8">
+          <div className="h-px bg-gray-300 dark:bg-gray-700 flex-1"></div>
+          <span className="text-gray-500 dark:text-gray-400 font-bold uppercase text-sm tracking-widest">
+            Explore All Rentals
+          </span>
+          <div className="h-px bg-gray-300 dark:bg-gray-700 flex-1"></div>
+        </div>
+
+        {/* ✅ 2. EXPLORE MORE LISTINGS (Excludes Trending) */}
+        <section className="pb-16 px-6 bg-gray-100 dark:bg-gray-900 pt-10">
           <div className="max-w-6xl mx-auto">
-            <PropertyList defaultFilter={{ listingType: 'rent' }} />
+            <PropertyList 
+              defaultFilter={{ listingType: 'rent' }} 
+              excludedIds={trendingIds} // Prevents duplicates
+              showTitle={false}
+            />
           </div>
         </section>
 
@@ -61,10 +97,9 @@ const Rent = () => {
               retreat, we connect you to trusted landlords and secure listings.
             </p>
             <div className="grid md:grid-cols-3 gap-8">
-              {/* ✅ 2. Add scroll-in animations to the 3 cards */}
               <motion.div 
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={1} // Stagger index 1
+                custom={1} 
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -80,7 +115,7 @@ const Rent = () => {
               </motion.div>
               <motion.div 
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={2} // Stagger index 2
+                custom={2} 
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -96,7 +131,7 @@ const Rent = () => {
               </motion.div>
               <motion.div 
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={3} // Stagger index 3
+                custom={3} 
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -124,7 +159,6 @@ const Rent = () => {
           </p>
           <Link
             to="/contact"
-            // ✅ 3. Add click animation
             className="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold shadow hover:bg-gray-100 transition-all duration-150 active:scale-95"
           >
             Contact Us Today

@@ -307,13 +307,23 @@ const EditServiceProvider = () => {
       // ✅ SEND IMAGE ALT TEXT
       data.append('imageAltText', formData.imageAltText);
 
-      await apiClient.put(`/service-providers/${id}`, data, {
+      // ✅ MODIFIED: Capture response and redirect to slug
+      const response = await apiClient.put(`/service-providers/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       });
 
       setSuccess('Service Provider Updated Successfully!');
-      setTimeout(() => navigate('/admin'), 1500); 
+      
+      // Redirect to the dynamic service page using the slug from the response
+      setTimeout(() => {
+        if (response.data && response.data.slug) {
+          navigate(`/services/${response.data.slug}`);
+        } else {
+          // Fallback if slug isn't returned for some reason
+          navigate('/admin');
+        }
+      }, 1500); 
 
     } catch (error) {
       console.error('Error updating provider:', error);

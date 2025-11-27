@@ -1,12 +1,13 @@
 // src/pages/EditProperty.jsx
-// (UPDATED: Amenities, Land Size, Price Freq, Boost Listing & Custom Features)
+// (UPDATED: Added Nairobi Survival Features - Matatu, Mama Mboga, Internet)
 
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { 
   FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
-  FaSpinner, FaUserCheck, FaSearch, FaStar, FaCheckSquare, FaSquare, FaPlus 
+  FaSpinner, FaUserCheck, FaSearch, FaStar, FaCheckSquare, FaSquare, FaPlus,
+  FaBus, FaWifi, FaShoppingBasket // ✅ NEW ICONS
 } from 'react-icons/fa'; 
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext'; 
@@ -18,12 +19,15 @@ const MAX_FILE_SIZE_MB = 2;
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
 const FEATURE_PRICE_PER_DAY = 170; 
 
-// ✅ NEW: STANDARD AMENITIES LIST
+// Standard Amenities
 const AMENITIES_LIST = [
   "Wifi", "Parking", "CCTV", "Borehole", "Swimming Pool", "Gym",
   "Elevator", "Backup Generator", "Fenced", "Garden", "Staff Quarters",
   "Security Guard", "Balcony", "Wheelchair Access", "Fiber Internet", "Pet Friendly"
 ];
+
+// ✅ NEW: ISP LIST FOR KENYA
+const ISP_LIST = ["Safaricom Home Fibre", "Zuku", "JTL Faiba", "Starlink", "Liquid Home", "Telkom"];
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
   <div className="relative mb-4">
@@ -31,7 +35,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       {label}
     </label>
     {icon && (
-      <div className="absolute inset-y-0 left-0 pl-3 pt-8 flex items-center pointer-events-none text-gray-400">
+      <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-center pointer-events-none text-gray-400">
         {icon}
       </div>
     )}
@@ -76,16 +80,21 @@ const EditProperty = () => {
     price: '',
     bedrooms: '',
     
-    // ✅ NEW FIELDS
     landSize: '', 
     priceFrequency: 'month',
     amenities: [], 
+
+    // ✅ NEW: NAIROBI SURVIVAL FIELDS
+    matatuRoute: '',
+    matatuFare: '',
+    mamaMbogaDistance: '',
+    internetReady: false,
+    internetProviders: [],
 
     type: 'apartment',
     status: 'available', 
     listingType: 'sale',
     
-    // ✅ FEATURED FIELDS
     isFeatured: false,
     featuredDays: 3,
 
@@ -108,7 +117,6 @@ const EditProperty = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
 
-  // ✅ STATE FOR CUSTOM AMENITY INPUT
   const [customAmenityInput, setCustomAmenityInput] = useState('');
 
   // Agent Search State
@@ -129,13 +137,11 @@ const EditProperty = () => {
         // 1. Fetch Property Data
         const { data } = await apiClient.get(`/properties/${propertyId}`);
         
-        // 2. Fetch Agents for Smart Search (if Admin)
-        let agentsList = [];
+        // 2. Fetch Agents (Admin only)
         if (user && user.role === 'admin') {
             try {
                 const agentsRes = await apiClient.get('/users/all-agents', { withCredentials: true });
-                agentsList = agentsRes.data;
-                setExistingAgents(agentsList);
+                setExistingAgents(agentsRes.data);
             } catch (err) {
                 console.error("Failed to fetch agents list", err);
             }
@@ -148,17 +154,23 @@ const EditProperty = () => {
           price: data.price,
           bedrooms: data.bedrooms || '', 
           
-          // ✅ POPULATE NEW FIELDS
           landSize: data.landSize || '',
           priceFrequency: data.priceFrequency || 'month',
           amenities: data.amenities || [], 
+
+          // ✅ LOAD NEW FIELDS
+          matatuRoute: data.matatuRoute || '',
+          matatuFare: data.matatuFare || '',
+          mamaMbogaDistance: data.mamaMbogaDistance || '',
+          internetReady: data.internetReady || false,
+          internetProviders: data.internetProviders || [],
 
           type: data.type,
           status: data.status || 'available', 
           listingType: data.listingType || 'sale',
           
           isFeatured: data.isFeatured || false,
-          featuredDays: 3, // Reset duration selector on load
+          featuredDays: 3,
 
           agentId: data.agent ? data.agent._id : '', 
           ownerDetails: data.ownerDetails || { name: '', whatsapp: '', tiktok: '', instagram: '' },
@@ -192,6 +204,7 @@ const EditProperty = () => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
     if (type === 'checkbox' && name === 'isFeatured') processedValue = checked;
+    else if (type === 'checkbox' && name === 'internetReady') processedValue = checked; // ✅ Handle Internet Toggle
     else if (name === 'featuredDays') processedValue = Number(value);
 
     setFormData(prevData => ({
@@ -200,7 +213,6 @@ const EditProperty = () => {
     }));
   };
   
-  // ✅ NEW: Handle Amenities Toggle (Standard & Custom)
   const handleAmenityToggle = (amenity) => {
     setFormData(prev => {
       const current = prev.amenities || [];
@@ -212,7 +224,18 @@ const EditProperty = () => {
     });
   };
 
-  // ✅ NEW: Add Custom Amenity
+  // ✅ NEW: Handle ISP Toggle
+  const handleISPToggle = (isp) => {
+    setFormData(prev => {
+      const current = prev.internetProviders || [];
+      if (current.includes(isp)) {
+        return { ...prev, internetProviders: current.filter(p => p !== isp) };
+      } else {
+        return { ...prev, internetProviders: [...current, isp] };
+      }
+    });
+  };
+
   const handleAddCustomAmenity = (e) => {
     e.preventDefault(); 
     const trimmed = customAmenityInput.trim();
@@ -282,19 +305,13 @@ const EditProperty = () => {
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedNewFiles = [...newImageFiles, ...newlySelectedFiles];
     if (combinedNewFiles.length > 5) {
-      setStatus({ 
-        message: `Error: Max 5 new images allowed.`, 
-        type: 'error' 
-      });
+      setStatus({ message: `Error: Max 5 new images allowed.`, type: 'error' });
       e.target.value = null; 
       return;
     }
     const oversizedFiles = combinedNewFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      setStatus({ 
-        message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, 
-        type: 'error' 
-      });
+      setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
       e.target.value = null;
       return;
     }
@@ -315,10 +332,7 @@ const EditProperty = () => {
   };
   
   const handleMapClick = async (e) => {
-    const clickedCoords = {
-      lat: e.latLng.lat(),
-      lng: e.latLng.lng(),
-    };
+    const clickedCoords = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     setCoordinates(clickedCoords); 
     setIsGeocoding(true); 
     
@@ -363,24 +377,19 @@ const EditProperty = () => {
 
     const dataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      // Handle Owner Details
-      if (key === 'ownerDetails') {
-        if (user && user.role === 'admin' && formData.ownerDetails.name) {
+      // JSON Fields
+      if (key === 'ownerDetails' && user && user.role === 'admin' && formData.ownerDetails.name) {
           dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
-        }
-      } 
-      // ✅ SEND AMENITIES AS JSON
-      else if (key === 'amenities') {
+      } else if (key === 'amenities') {
           dataToSend.append('amenities', JSON.stringify(formData.amenities));
-      }
-      else {
+      } else if (key === 'internetProviders') { // ✅ NEW: Serialize Providers
+          dataToSend.append('internetProviders', JSON.stringify(formData.internetProviders));
+      } else {
         dataToSend.append(key, formData[key]);
       }
     });
 
-    if (formData.agentId) {
-        dataToSend.append('agentId', formData.agentId);
-    }
+    if (formData.agentId) dataToSend.append('agentId', formData.agentId);
 
     if (coordinates) {
       dataToSend.append('coordinates[lat]', coordinates.lat);
@@ -416,7 +425,7 @@ const EditProperty = () => {
       }
 
     } catch (error) {
-      console.error("Error updating property:", error.response?.data || error.message);
+      console.error("Error updating property:", error);
       setStatus({ 
         message: `Failed to update property: ${error.response?.data?.message || 'Check console.'}`, 
         type: 'error' 
@@ -452,7 +461,6 @@ const EditProperty = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <InputField label="Property Title" name="title" value={formData.title} onChange={handleChange} />
           
-          {/* ✅ UPDATED PRICE SECTION WITH FREQUENCY */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="flex gap-2">
                 <div className="flex-1">
@@ -590,7 +598,7 @@ const EditProperty = () => {
             />
           </div>
 
-          {/* ✅ NEW: AMENITIES SECTION (CHECKBOX GRID + CUSTOM INPUT) */}
+          {/* Amenities Section */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                Amenities & Features
@@ -613,7 +621,6 @@ const EditProperty = () => {
                 ))}
              </div>
 
-             {/* Custom Amenity Input */}
              <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Add Custom Feature (e.g., Jacuzzi, Solar Heating)
@@ -636,7 +643,6 @@ const EditProperty = () => {
                    </button>
                 </div>
                 
-                {/* Display Custom Amenities that are NOT in standard list */}
                 {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
                    <div className="mt-3 flex flex-wrap gap-2">
                       {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
@@ -650,6 +656,84 @@ const EditProperty = () => {
                       ))}
                    </div>
                 )}
+             </div>
+          </div>
+
+          {/* ✅ NEW: NAIROBI LIVING ESSENTIALS SECTION */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700">
+             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
+             </h2>
+             <p className="text-sm text-gray-600 dark:text-gray-400">Help tenants calculate their real monthly costs.</p>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField 
+                   label="Nearest Matatu Route/Stage" 
+                   name="matatuRoute" 
+                   value={formData.matatuRoute} 
+                   onChange={handleChange} 
+                   placeholder="e.g., Route 105 or Super Metro Stage" 
+                   required={false}
+                   icon={<FaBus />}
+                />
+                <InputField 
+                   label="Approx. Fare to CBD (Ksh)" 
+                   name="matatuFare" 
+                   type="number"
+                   value={formData.matatuFare} 
+                   onChange={handleChange} 
+                   placeholder="e.g., 80" 
+                   required={false}
+                />
+             </div>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField 
+                   label="Distance to Market (Mama Mboga)" 
+                   name="mamaMbogaDistance" 
+                   value={formData.mamaMbogaDistance} 
+                   onChange={handleChange} 
+                   placeholder="e.g., 5 min walk" 
+                   required={false}
+                   icon={<FaShoppingBasket />}
+                />
+                
+                {/* Internet Section */}
+                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center justify-between mb-3">
+                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                          <FaWifi /> Internet Ready?
+                       </label>
+                       <input 
+                          type="checkbox" 
+                          name="internetReady" 
+                          checked={formData.internetReady} 
+                          onChange={handleChange}
+                          className="h-5 w-5 text-blue-600 rounded"
+                       />
+                    </div>
+                    
+                    {formData.internetReady && (
+                       <div className="mt-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Select available providers:</p>
+                          <div className="flex flex-wrap gap-2">
+                             {ISP_LIST.map(isp => (
+                                <span 
+                                   key={isp}
+                                   onClick={() => handleISPToggle(isp)}
+                                   className={`text-xs px-3 py-1 rounded-full border cursor-pointer select-none transition ${
+                                      formData.internetProviders.includes(isp)
+                                      ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-100'
+                                      : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-300'
+                                   }`}
+                                >
+                                   {formData.internetProviders.includes(isp) ? '✓ ' : '+ '} {isp}
+                                </span>
+                             ))}
+                          </div>
+                       </div>
+                    )}
+                </div>
              </div>
           </div>
 
@@ -673,7 +757,6 @@ const EditProperty = () => {
             </select>
           </div>
           
-          {/* Existing Images Logic Unchanged */}
           {existingImages.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Edit Existing Images</h3>
@@ -706,7 +789,6 @@ const EditProperty = () => {
             </div>
           )}
           
-          {/* New Images Logic Unchanged */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="new-images">
               Add New Images
@@ -722,7 +804,6 @@ const EditProperty = () => {
             {newImageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files</p>}
           </div>
           
-          {/* New Alt Texts Logic Unchanged */}
           {newImageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">New Image Alt Text</h3>
@@ -737,7 +818,6 @@ const EditProperty = () => {
             </div>
           )}
           
-          {/* --- ✅ UPDATED: Owner & Social Media Details with SMART SEARCH --- */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -814,7 +894,6 @@ const EditProperty = () => {
             </div>
           )}
 
-          {/* ✅ NEW: BOOST LISTING SECTION (IN EDIT PAGE) */}
           {isFeaturedListingEnabled && (
             <div className="space-y-4 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">

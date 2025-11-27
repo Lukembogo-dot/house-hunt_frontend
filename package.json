@@ -15,6 +15,7 @@
     "@paypal/react-paypal-js": "^8.9.2",
     "@react-google-maps/api": "^2.20.7",
     "axios": "^1.13.2",
+    "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.554.0",

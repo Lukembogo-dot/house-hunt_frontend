@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Added Amenities Component)
+// (UPDATED - Added Living Essentials Widget)
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
@@ -21,7 +21,8 @@ import PropertyFaqSection from "../components/PropertyFaqSection";
 // ✅ IMPORT NEW COMPONENTS
 import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
-import PropertyAmenities from "../components/property/PropertyAmenities"; // ✅ IMPORTED
+import PropertyAmenities from "../components/property/PropertyAmenities";
+import LivingEssentialsWidget from "../components/LivingEssentialsWidget"; // ✅ IMPORTED NEW WIDGET
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -427,7 +428,12 @@ const PropertyDetails = () => {
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
             </motion.div>
 
-            {/* ✅ INSERTED: NEW AMENITIES COMPONENT */}
+            {/* ✅ INSERTED: NEW LIVING ESSENTIALS WIDGET */}
+            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+               <LivingEssentialsWidget property={property} />
+            </motion.div>
+
+            {/* Existing Amenities Component */}
             {property.amenities && property.amenities.length > 0 && (
                 <PropertyAmenities amenities={property.amenities} />
             )}
@@ -485,7 +491,6 @@ const PropertyDetails = () => {
 
             <PropertyFaqSection location={property.location.split(',')[0]} />
 
-            {/* ✅ REPLACED REVIEWS WITH NEW COMPONENT (WHICH CONTAINS INSIGHTS CTA) */}
             <PropertyReviewsSection
               property={property}
               user={user}
@@ -501,7 +506,6 @@ const PropertyDetails = () => {
 
           </div>
 
-          {/* ✅ REPLACED SIDEBAR WITH NEW COMPONENT */}
           <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
              <PropertySidebar 
                property={property} 

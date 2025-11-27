@@ -1,5 +1,5 @@
 // src/App.jsx
-// (UPDATED: Fixed "Post Request" Route Priority)
+// (UPDATED: Removed Trending Properties Section from Home)
 
 import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, useNavigate } from "react-router-dom"; 
@@ -22,6 +22,7 @@ import HouseHuntRequest from "./components/HouseHuntRequest";
 import PreviewBanner from './components/PreviewBanner';
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 import MarketFactsTable from "./components/MarketFactsTable"; 
+import FeaturedReviews from "./components/FeaturedReviews"; 
 
 // --- New Layout Components ---
 import AppHeader from "./components/layout/AppHeader";
@@ -38,16 +39,18 @@ import WantedRequestPage from './pages/WantedRequestPage';
 
 // Services Page
 import Services from './pages/Services'; 
+import LivingCommunityFeed from './pages/LivingCommunityFeed';
+import LivingPostDetail from './pages/LivingPostDetail';
 
-// ✅ IMPORTED: Service Components
+// Service Components
 import ServiceProviderDetails from './pages/ServiceProviderDetails';
 import ServicePostDetails from './pages/ServicePostDetails'; 
 
-// ✅ IMPORTED: Service Provider Admin Pages
+// Service Provider Admin Pages
 import AddServiceProvider from './pages/admin/AddServiceProvider';
 import EditServiceProvider from './pages/admin/EditServiceProvider'; 
 
-// ✅ IMPORTED: Static Pages
+// Static Pages
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform'; 
 
@@ -62,7 +65,6 @@ const PageLoader = () => (
   </div>
 );
 
-// ✅ NEW: FLOATING CONTACT BUTTON COMPONENT
 const ContactButton = () => {
   const navigate = useNavigate();
   
@@ -73,13 +75,10 @@ const ContactButton = () => {
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      // ✅ Fixed Width/Height (w-14 h-14) to match standard FAB size
-      // ✅ Aligned (right-6) to stack vertically with ChatBubble
       className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 transition-all duration-300 flex items-center justify-center group"
       title="Contact Us"
     >
       <FaEnvelope className="text-xl" />
-      {/* Tooltip on Hover */}
       <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
         Contact Support
       </span>
@@ -87,20 +86,16 @@ const ContactButton = () => {
   );
 };
 
-// ✅ NEW: SMART ROUTE HANDLER (Fixes 404s)
-// This component checks if the slug belongs to a Provider. If not, it renders the Blog Post.
 const ServiceRouteHandler = () => {
   const { slug } = useParams();
-  const [isProvider, setIsProvider] = useState(null); // null = loading, true = provider, false = post
+  const [isProvider, setIsProvider] = useState(null); 
 
   useEffect(() => {
     const checkType = async () => {
       try {
-        // Try fetching as a Service Provider first
         await apiClient.get(`/service-providers/${slug}`);
         setIsProvider(true);
       } catch (err) {
-        // If 404, assume it is a Blog Post (Neighbourhood Watch)
         setIsProvider(false);
       }
     };
@@ -108,28 +103,22 @@ const ServiceRouteHandler = () => {
   }, [slug]);
 
   if (isProvider === null) return <PageLoader />;
-
   return isProvider ? <ServiceProviderDetails /> : <ServicePostDetails />;
 };
 
-// ✅ UPDATED: SEARCH PAGE WRAPPER WITH GEO SNAPSHOT & TABLE
 const SearchPageWrapper = () => {
   const { listingType, location } = useParams();
   const [customSeo, setCustomSeo] = useState(null);
   const [stats, setStats] = useState(null); 
   
-  // Format for display
   const displayLocation = location ? location.charAt(0).toUpperCase() + location.slice(1) : 'Kenya';
   const displayType = listingType === 'rent' ? 'Rent' : 'Sale';
   const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
   
-  // 1. Fetch SEO & Stats
   useEffect(() => {
     const fetchPageData = async () => {
       try {
         const pagePath = `/search/${listingType}/${location}`;
-        
-        // Parallel Fetch: SEO + Market Stats
         const [seoRes, statsRes] = await Promise.allSettled([
             apiClient.get(`/seo/${encodeURIComponent(pagePath)}`),
             apiClient.get(`/properties/stats?location=${location}&listingType=${listingType}`)
@@ -151,7 +140,6 @@ const SearchPageWrapper = () => {
     fetchPageData();
   }, [listingType, location]);
 
-  // 2. Generate SEO Meta
   const defaultTitle = `Properties for ${displayType} in ${displayLocation} | HouseHunt Kenya`;
   const defaultDescription = `Find the best houses, apartments, and land for ${displayType.toLowerCase()} in ${displayLocation}. Verified listings, real agents, and market insights.`;
   const canonicalUrl = `https://www.househuntkenya.co.ke/search/${listingType}/${location}`;
@@ -182,7 +170,6 @@ const SearchPageWrapper = () => {
                   {listingType === 'rent' ? 'Properties for Rent' : 'Properties for Sale'} in {displayLocation}
               </h1>
 
-              {/* ✅ GEO MARKET SNAPSHOT (AI-Readable Text Block) */}
               {stats && stats.count > 0 && (
                   <>
                     <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg border-l-4 border-blue-600 shadow-sm">
@@ -195,8 +182,6 @@ const SearchPageWrapper = () => {
                             {displayLocation} remains a popular choice for {displayType === 'Rent' ? 'tenants' : 'investors'} seeking verified properties with access to local amenities.
                         </p>
                     </div>
-
-                    {/* ✅ GEO DATA TABLE (Structured Data for LLMs) */}
                     <MarketFactsTable location={location} type={listingType} stats={stats} />
                   </>
               )}
@@ -218,12 +203,10 @@ function MainLayout() {
   const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator');
   const location = useLocation();
 
-  // GA4 Tracking
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: location.pathname + location.search, title: document.title });
   }, [location]);
 
-  // Search State
   const [homeFilters, setHomeFilters] = useState({ location: "", type: "", minPrice: "", maxPrice: "" });
   const [submittedHomeFilters, setSubmittedHomeFilters] = useState(null);
   const [emphasizedKeywords, setEmphasizedKeywords] = useState({ property: [] });
@@ -245,12 +228,10 @@ function MainLayout() {
 
   const handleHomeFilterSubmit = () => setSubmittedHomeFilters({ ...homeFilters });
 
-  // --- THE HOME PAGE CONTENT ---
   const HomePageElement = (
     <>
       <SeoInjector seo={homeSeo} />
 
-      {/* HERO */}
       <section id="home" className="relative bg-cover bg-center h-[50vh] min-h-[400px] flex flex-col items-center justify-center text-center text-white" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto-format&fit=crop&w=1600&q=80')" }}>
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
         <div className="relative z-10 px-6 max-w-3xl pb-16">
@@ -293,22 +274,7 @@ function MainLayout() {
             {/* 3. HouseHunt Request */}
             <HouseHuntRequest />
 
-            {/* 4. Trending Properties */}
-            <TrendingProperties />
-
-            {/* 5. Popular Searches */}
-            <section className="py-12 px-6">
-              <div className="container mx-auto max-w-6xl">
-                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 text-center mb-12">Popular Searches</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {emphasizedKeywords.property.map((search) => (
-                    <Link key={search.path} to={search.path} className="block font-semibold text-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 hover:shadow-lg transition-all dark:text-gray-200">
-                      {search.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
+            {/* 4. Trending Properties - REMOVED as requested */}
 
             {/* 6. TOOLS SECTION (Quiz + Cost Calculator) */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
@@ -352,6 +318,10 @@ function MainLayout() {
             )}
             
             <HomeFaqSection />
+
+            {/* ✅ NEW: FEATURED RESIDENT REVIEWS */}
+            <FeaturedReviews />
+
             <NeighbourhoodWatchHome />
           </>
         )}
@@ -369,7 +339,6 @@ function MainLayout() {
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
                 
-                {/* ✅ 1. FIX: Specific Route for "Post a Request" (MUST BE BEFORE DYNAMIC ROUTES) */}
                 <Route path="/wanted/post" element={
                   <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
                     <div className="max-w-4xl mx-auto">
@@ -379,45 +348,27 @@ function MainLayout() {
                   </div>
                 } />
 
-                {/* 1. The New Route for Demand-Side pSEO (This catches /wanted/:slug) */}
                 <Route path="/wanted/:slug" element={<WantedRequestPage />} />
-
-                {/* 2. Community Insights (pSEO Loop) */}
                 <Route path="/community" element={<CommunityHub />} />
                 <Route path="/share-insight" element={<ShareInsight />} />
                 <Route path="/community/:slug" element={<CommunityPost />} />
-
-                {/* 3. Services Directory Routes */}
                 <Route path="/services" element={<Services />} />
-                
-                {/* ✅ FIXED: Smart Route for Service/Blog Details */}
                 <Route path="/services/:slug" element={<ServiceRouteHandler />} />
-                
-                {/* Legacy Route for Old Links */}
                 <Route path="/services/slug/:slug" element={<ServiceRouteHandler />} />
-                
-                {/* Specific Route for Blogs (if used explicitly) */}
                 <Route path="/services/local/:slug" element={<ServicePostDetails />} />
-
-                {/* ✅ 4. ADMIN: Add & Edit Service Provider Routes */}
                 <Route path="/admin/add-service-provider" element={<AddServiceProvider />} />
                 <Route path="/admin/edit-service-provider/:id" element={<EditServiceProvider />} />
-
-                {/* ✅ RESTORED: Contact & Platform Routes */}
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/our-platform" element={<OurPlatform />} /> 
-
-                {/* 5. pSEO SEARCH ROUTE (Matches Sitemap) */}
+                <Route path="/living-feed" element={<LivingCommunityFeed />} />
+                <Route path="/living-feed/:id" element={<LivingPostDetail />} />
                 <Route path="/search/:listingType/:location" element={<SearchPageWrapper />} />
-
-                {/* 6. Fallback to Existing Config for all other routes */}
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
             
             </Routes>
         </AnimatePresence>
       </Suspense>
 
-      {/* ✅ FLOATING ACTION BUTTONS */}
       <ContactButton />
       <ChatBubble />
 
@@ -427,7 +378,6 @@ function MainLayout() {
 }
 
 function App() {
-  // Prevent text selection globally
   useEffect(() => {
     const handleContextMenu = (e) => {
       e.preventDefault();
