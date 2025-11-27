@@ -3,7 +3,6 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom"; 
 import apiClient from "../api/axios"; 
 import PropertyCard from "./PropertyCard";
-// ❌ Removed SearchBar Import
 import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
 import PropertyAlertForm from "./PropertyAlertForm";
 import { FaPlusCircle, FaComments, FaQuestionCircle, FaTruck } from "react-icons/fa";
@@ -14,7 +13,7 @@ const EMPTY_OBJECT = {};
 export default function PropertyList({ 
   defaultFilter = EMPTY_OBJECT, 
   filterOverrides = null, 
-  showTitle = true, // ❌ Removed showSearchBar prop
+  showTitle = true,
   limit = 10,
   onDataLoaded = null,
   excludedIds = [] 
@@ -25,21 +24,23 @@ export default function PropertyList({
   const [properties, setProperties] = useState([]);
   const [relatedServices, setRelatedServices] = useState([]);
   
-  // ✅ FIX: MEMOIZE FILTERS to prevent Infinite Loop
+  // 1. STABILIZE FILTERS (Stops Infinite Loop)
+  const stableDefaultFilter = useMemo(() => defaultFilter, [JSON.stringify(defaultFilter)]);
+  const stableFilterOverrides = useMemo(() => filterOverrides, [JSON.stringify(filterOverrides)]);
+
   const activeFilters = useMemo(() => {
     return {
       location: "",
       type: "",
       minPrice: "",
       maxPrice: "",
-      ...defaultFilter,
-      ...(filterOverrides || {}), 
+      ...stableDefaultFilter,
+      ...(stableFilterOverrides || {}), 
     };
-  }, [defaultFilter, filterOverrides]); 
+  }, [stableDefaultFilter, stableFilterOverrides]); 
 
   const [filters, setFilters] = useState(activeFilters);
 
-  // Sync internal state only when memoized props change
   useEffect(() => {
     setFilters(activeFilters);
   }, [activeFilters]);
@@ -48,11 +49,9 @@ export default function PropertyList({
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   
-  // ✅ STABLE FETCH FUNCTION
-  const fetchProperties = useCallback(async (currentFilters, pageNumber) => {
+  // ✅ 2. FETCH WITH ABORT SIGNAL (Stops "In-Flight" Requests)
+  const fetchProperties = useCallback(async (currentFilters, pageNumber, signal) => {
     try {
-      // We do NOT set loading true here to avoid flashing if re-fetching same data
-      // or if we want a smoother transition. But typically for page changes we do.
       if (pageNumber !== page) setLoading(true); 
       
       const params = new URLSearchParams({
@@ -71,8 +70,8 @@ export default function PropertyList({
       const locationQuery = params.get('location') || '';
       
       const [propertyRes, serviceRes] = await Promise.all([
-        apiClient.get(`/properties?${params.toString()}`),
-        apiClient.get(`/service-providers?location=${locationQuery}&limit=4`)
+        apiClient.get(`/properties?${params.toString()}`, { signal }), // Pass signal
+        apiClient.get(`/service-providers?location=${locationQuery}&limit=4`, { signal }) // Pass signal
       ]);
 
       let fetchedProps = propertyRes.data.properties || [];
@@ -90,17 +89,31 @@ export default function PropertyList({
       }
 
     } catch (err) {
+      // ✅ Check if error was because we cancelled it
+      if (err.code === "ERR_CANCELED") {
+        console.log("🚫 Request cancelled (New filter applied)");
+        return; // Do nothing, don't update state
+      }
       console.error("❌ Error fetching data:", err);
-      // Don't clear properties on error to avoid layout shift, maybe show toast instead
-      // setProperties([]); 
     } finally {
-      setLoading(false);
+      // Only turn off loading if we weren't cancelled
+      // (If cancelled, the next request will handle loading state)
     }
-  }, [limit, excludedIds]); 
+    setLoading(false);
+  }, [limit, JSON.stringify(excludedIds)]); 
 
-  // ✅ EXECUTE FETCH: Only when stable filters or page change
+  // ✅ 3. USE EFFECT WITH CLEANUP
   useEffect(() => {
-    fetchProperties(filters, page);
+    // Create a controller for this specific run
+    const controller = new AbortController();
+    
+    fetchProperties(filters, page, controller.signal);
+
+    // CLEANUP: If 'filters' or 'page' changes before this request finishes,
+    // this function runs and KILLS the previous request.
+    return () => {
+      controller.abort();
+    };
   }, [fetchProperties, filters, page]); 
   
   const handlePageChange = (newPage) => {
@@ -125,8 +138,6 @@ export default function PropertyList({
         </div>
       )}
 
-      {/* ❌ REMOVED: SearchBar Container */}
-
       {loading && properties.length === 0 ? (
         <div className="flex justify-center items-center min-h-[40vh]">
           <div className="w-10 h-10 border-4 border-blue-500 dark:border-blue-400 border-t-transparent rounded-full animate-spin"></div>
@@ -136,7 +147,6 @@ export default function PropertyList({
           <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
             {properties.map((property, index) => {
               
-              // INJECTION 1: "Ask a Local" (Index 1)
               if (index === 1) {
                 return (
                   <div key={`community-promo-${index}`} style={{ display: 'contents' }}>
@@ -163,7 +173,6 @@ export default function PropertyList({
                 );
               }
 
-              // INJECTION 2: Agent Promo (Index 3)
               if (index === 3) {
                 return (
                   <div key={`agent-promo-${index}`} style={{ display: 'contents' }}>
@@ -186,11 +195,11 @@ export default function PropertyList({
                   </div>
                 );
               }
+              
               return <PropertyCard key={property._id} property={property} />;
             })}
           </div>
 
-          {/* Pagination */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -219,7 +228,6 @@ export default function PropertyList({
             </button>
           </div>
 
-          {/* SERVICES SECTION */}
           {relatedServices.length > 0 && (
             <div className="mt-16 mb-8 pt-10 border-t dark:border-gray-700">
                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -237,7 +245,6 @@ export default function PropertyList({
           )}
         </>
       ) : (
-        // ZERO RESULTS STATE
         <div className="text-center mt-10">
           {isAlertFormEnabled && <PropertyAlertForm currentFilters={filters} />}
           
