@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Added Living Essentials Widget)
+// (UPDATED - Logic changed: If only video exists, hide image section and show Video Player first)
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
@@ -7,7 +7,8 @@ import apiClient from "../api/axios";
 import { 
   FaStar, FaTimes, FaRegHeart, FaHeart,
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
-  FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark
+  FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark,
+  FaGem, FaPlay 
 } from "react-icons/fa"; 
 import MapComponent from "../components/MapComponent";
 import { useAuth } from "../context/AuthContext"; 
@@ -18,11 +19,11 @@ import useSeoData from "../hooks/useSeoData";
 import Breadcrumbs from "../components/Breadcrumbs";
 import PropertyFaqSection from "../components/PropertyFaqSection";
 
-// ✅ IMPORT NEW COMPONENTS
+// IMPORT NEW COMPONENTS
 import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
 import PropertyAmenities from "../components/property/PropertyAmenities";
-import LivingEssentialsWidget from "../components/LivingEssentialsWidget"; // ✅ IMPORTED NEW WIDGET
+import LivingEssentialsWidget from "../components/LivingEssentialsWidget"; 
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -69,7 +70,60 @@ const getSafeImageDetails = (imagesArray, propertyTitle) => {
     });
 };
 
-// --- INTERNAL COMPONENTS (Modal & SEO) ---
+// --- INTERNAL COMPONENTS (Modal, SEO & Video) ---
+
+const VideoPlayerSection = ({ videoUrl }) => {
+  if (!videoUrl) return null;
+
+  const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+  const isVimeo = videoUrl.includes('vimeo.com');
+  
+  return (
+    <div className="mb-10 group">
+      <div className="flex items-center gap-2 mb-3">
+         <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <FaPlay className="text-red-600 text-lg" /> Virtual Tour
+         </h2>
+         <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+            <FaGem size={10} /> Premium
+         </span>
+      </div>
+
+      <div className="p-1 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-xl transform transition-transform duration-300 hover:scale-[1.01]">
+         <div className="bg-black rounded-xl overflow-hidden relative shadow-inner">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+               {isYouTube ? (
+                  <iframe 
+                     src={videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')} 
+                     className="absolute top-0 left-0 w-full h-full"
+                     frameBorder="0" 
+                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                     allowFullScreen
+                     title="Property Video Tour"
+                  ></iframe>
+               ) : isVimeo ? (
+                  <iframe 
+                     src={videoUrl.replace('vimeo.com/', 'player.vimeo.com/video/')} 
+                     className="absolute top-0 left-0 w-full h-full"
+                     frameBorder="0" 
+                     allowFullScreen
+                     title="Property Video Tour"
+                  ></iframe>
+               ) : (
+                  <video 
+                     src={videoUrl} 
+                     controls 
+                     controlsList="nodownload"
+                     className="absolute top-0 left-0 w-full h-full object-contain bg-black"
+                  />
+               )}
+            </div>
+         </div>
+      </div>
+    </div>
+  );
+};
+
 const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   const [scheduledDate, setScheduledDate] = useState('');
   const [message, setMessage] = useState('');
@@ -125,12 +179,10 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
-// ✅ IMPROVED SEO INJECTOR WITH ROBUST SCHEMA (Product + Place + Offer + Agent)
 const PropertySeoInjector = ({ seo, property }) => {
     if (!property) return null;
 
     const safeImages = getSafeImageDetails(property.images, property.title);
-    // Use the first 3 images for Schema (Google recommends multiple)
     const schemaImages = safeImages.slice(0, 3).map(img => img.url); 
     const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
     
@@ -139,7 +191,6 @@ const PropertySeoInjector = ({ seo, property }) => {
         ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`) 
         : pageUrl;
 
-    // 1. Determine Schema Type based on Property Type
     const getSchemaType = (type) => {
         const mapping = {
             'apartment': 'Apartment',
@@ -147,12 +198,10 @@ const PropertySeoInjector = ({ seo, property }) => {
             'airbnb': 'VacationRental',
             'land': 'Landform', 
         };
-        return mapping[type] || 'Product'; // Default to Product if unknown
+        return mapping[type] || 'Product';
     };
 
-    // 2. Smart Agent/Owner Resolution
     const getAgentSchema = () => {
-        // Priority 1: Shadow Account (Owner Details)
         if (property.ownerDetails && property.ownerDetails.name) {
             return {
                 "@type": "RealEstateAgent",
@@ -160,7 +209,6 @@ const PropertySeoInjector = ({ seo, property }) => {
                 "telephone": property.ownerDetails.whatsapp || property.ownerDetails.email || undefined
             };
         }
-        // Priority 2: Registered Agent
         if (property.agent && property.agent.name) {
             return {
                 "@type": "RealEstateAgent",
@@ -169,15 +217,11 @@ const PropertySeoInjector = ({ seo, property }) => {
                 "telephone": property.agent.phoneNumber || property.agent.whatsappNumber || undefined
             };
         }
-        // Fallback: Platform
         return { "@type": "Organization", "name": "HouseHunt Kenya" };
     };
 
-    // 3. Generate the Rich Schema
     const generatePropertySchema = () => {
         const schemaType = getSchemaType(property.type);
-        
-        // Base Schema (combines Product & Place logic)
         const schema = {
             "@context": "https://schema.org",
             "@type": schemaType,
@@ -186,16 +230,12 @@ const PropertySeoInjector = ({ seo, property }) => {
             "url": pageUrl,
             "image": schemaImages, 
             "identifier": property._id,
-            
-            // Address Logic
             "address": {
                 "@type": "PostalAddress",
-                "streetAddress": property.location.split(',')[0].trim(), // e.g. "Kilimani"
-                "addressLocality": "Nairobi", // Defaulting to Nairobi context based on your app
+                "streetAddress": property.location.split(',')[0].trim(),
+                "addressLocality": "Nairobi",
                 "addressCountry": "KE"
             },
-
-            // Geo Coordinates
             ...(property.coordinates?.lat && { 
                 "geo": { 
                     "@type": "GeoCoordinates", 
@@ -203,11 +243,7 @@ const PropertySeoInjector = ({ seo, property }) => {
                     "longitude": property.coordinates.lng 
                 } 
             }),
-
-            // Specifics for Houses/Apartments
             ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
-            
-            // Amenities (Mapped from Features array)
             ...(property.features && property.features.length > 0 && {
                 "amenityFeature": property.features.map(feature => ({
                     "@type": "LocationFeatureSpecification",
@@ -215,25 +251,21 @@ const PropertySeoInjector = ({ seo, property }) => {
                     "value": "true"
                 }))
             }),
-
-            // The Offer (Price & Availability)
             "offers": {
                 "@type": "Offer",
                 "price": property.price,
                 "priceCurrency": "KES",
-                "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0], // Valid for 1 year
+                "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
                 "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
                 "url": pageUrl,
-                "seller": getAgentSchema() // Uses logic from step 2
+                "seller": getAgentSchema()
             }
         };
-        
         return schema;
     };
 
     const schemaData = generatePropertySchema();
 
-    // Breadcrumb Schema for better navigation structure in SERPs
     const breadcrumbSchema = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -246,29 +278,22 @@ const PropertySeoInjector = ({ seo, property }) => {
 
     return (
         <Helmet>
-            {/* Standard Meta Tags */}
             <title>{seo.metaTitle}</title>
             <meta name="description" content={seo.metaDescription} />
             {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
             <link rel="canonical" href={canonical} />
-
-            {/* Open Graph / Facebook */}
             <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
             <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
             <meta property="og:url" content={pageUrl} />
-            <meta property="og:type" content="product" /> {/* Changed to product for better intent */}
+            <meta property="og:type" content="product" />
             <meta property="og:image" content={firstImageUrl} /> 
             <meta property="og:price:amount" content={property.price} />
             <meta property="og:price:currency" content="KES" />
-
-            {/* Twitter */}
             <meta property="twitter:card" content="summary_large_image" />
             <meta property="twitter:url" content={pageUrl} />
             <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
             <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
             <meta property="twitter:image" content={firstImageUrl} /> 
-            
-            {/* JSON-LD Schemas */}
             <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
             <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
         </Helmet>
@@ -307,15 +332,27 @@ const PropertyDetails = () => {
   const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
   const allImageUrls = safeImageDetails.map(img => img.url);
 
+  // ✅ NEW Logic: Determine if image section should be shown
+  const hasImages = allImageUrls.length > 0;
+  const hasVideo = property?.video && property.video.length > 0;
+
   const fetchPropertyData = async () => {
     try {
       setLoading(true); setAgentProperties([]); 
       const propertyRes = await apiClient.get(`/properties/slug/${slug}`); 
       const propData = propertyRes.data;
       setProperty(propData);
+      
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
-      setActiveImage(urlsList[0] || placeholderImage);
+      
+      // ✅ LOGIC: Only set image if actual images exist. No fallback to video thumbnail here.
+      if (urlsList.length > 0) {
+        setActiveImage(urlsList[0]);
+      } else {
+        setActiveImage(placeholderImage);
+      }
+
       if (propData.agent && propData.agent._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`); 
         setAgentProperties(agentRes.data.filter(p => p._id !== propData._id));
@@ -412,23 +449,34 @@ const PropertyDetails = () => {
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
-            <motion.div className="mb-6" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <img src={activeImage} alt={safeImageDetails?.[0]?.altText || property.title} className="rounded-lg w-full h-96 object-cover mb-4" />
-              {allImageUrls.length > 1 && (
-                <div className="grid grid-cols-5 gap-2">
-                  {allImageUrls.map((imgUrl, index) => (
-                    <img key={imgUrl} src={imgUrl} alt={safeImageDetails?.[index]?.altText || `Thumbnail ${index + 1}`} onClick={() => setActiveImage(imgUrl)} className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${activeImage === imgUrl ? 'ring-2 ring-blue-500' : 'opacity-70 hover:opacity-100'} active:scale-95`} />
-                  ))}
-                </div>
-              )}
+            {/* ✅ LOGIC: Conditionally Render Image Section */}
+            {/* Show if images exist OR if there is NO video (to show placeholder/fallback) */}
+            {(hasImages || !hasVideo) && (
+              <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+                <img src={activeImage} alt={safeImageDetails?.[0]?.altText || property.title} className="rounded-lg w-full h-96 object-cover mb-4 shadow-md" />
+                {allImageUrls.length > 1 && (
+                  <div className="grid grid-cols-5 gap-2">
+                    {allImageUrls.map((imgUrl, index) => (
+                      <img key={imgUrl} src={imgUrl} alt={safeImageDetails?.[index]?.altText || `Thumbnail ${index + 1}`} onClick={() => setActiveImage(imgUrl)} className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${activeImage === imgUrl ? 'ring-2 ring-blue-500' : 'opacity-70 hover:opacity-100'} active:scale-95`} />
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ✅ VIDEO PLAYER SECTION */}
+            {/* If NO images, this will effectively be at the top */}
+            <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+               <VideoPlayerSection videoUrl={property.video} />
             </motion.div>
             
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.5 }}>
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-3">Description</h2>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{property.description}</p>
+            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+              <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
+                  <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b dark:border-gray-800 pb-2">Description</h2>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{property.description}</p>
+              </div>
             </motion.div>
 
-            {/* ✅ INSERTED: NEW LIVING ESSENTIALS WIDGET */}
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
                <LivingEssentialsWidget property={property} />
             </motion.div>

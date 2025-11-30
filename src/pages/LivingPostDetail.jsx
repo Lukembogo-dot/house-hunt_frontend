@@ -1,12 +1,14 @@
+// src/pages/LivingPostDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   FaArrowLeft, FaUserSecret, FaShieldAlt, FaMapMarkerAlt, 
-  FaReply, FaPaperPlane, FaSpinner, FaCrown 
+  FaReply, FaPaperPlane, FaSpinner, FaCrown, FaHome 
 } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import apiClient from '../utils/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { Helmet } from 'react-helmet-async'; // ✅ IMPORT HELMET
 
 const LivingPostDetail = () => {
   const { id } = useParams();
@@ -72,8 +74,39 @@ const LivingPostDetail = () => {
   // Check if the logged-in user is the original author (for highlighting)
   const isCurrentUserAuthor = user && post.user === user._id;
 
+  // ✅ 1. GENERATE SCHEMA FOR SEO
+  const discussionSchema = {
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
+    "headline": `${post.category} in ${post.neighborhood}`,
+    "text": post.content,
+    "author": {
+      "@type": "Person",
+      "name": post.authorAlias
+    },
+    "interactionStatistic": {
+      "@type": "InteractionCounter",
+      "interactionType": "https://schema.org/CommentAction",
+      "userInteractionCount": post.replies.length
+    },
+    "contentLocation": {
+      "@type": "Place",
+      "name": post.neighborhood
+    },
+    "datePublished": post.createdAt
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
+      
+      {/* ✅ 2. INJECT SEO META DATA */}
+      <Helmet>
+        <title>{post.category}: {post.neighborhood} Updates | HouseHunt Kenya</title>
+        <meta name="description" content={`Real-time ${post.category} update from residents in ${post.neighborhood}: "${post.content.substring(0, 100)}..."`} />
+        <link rel="canonical" href={`https://www.househuntkenya.co.ke/living-feed/${id}`} />
+        <script type="application/ld+json">{JSON.stringify(discussionSchema)}</script>
+      </Helmet>
+
       {/* Header / Nav */}
       <div className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center">
@@ -105,9 +138,15 @@ const LivingPostDetail = () => {
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
                     <span>•</span>
-                    <span className="flex items-center gap-1">
+                    
+                    {/* ✅ 3. pSEO LINK: Neighborhood clicks go to Real Estate Search */}
+                    <Link 
+                      to={`/search/rent/${post.neighborhood.toLowerCase()}`} 
+                      className="flex items-center gap-1 text-blue-600 hover:underline font-bold"
+                      title={`See apartments in ${post.neighborhood}`}
+                    >
                       <FaMapMarkerAlt size={10} /> {post.neighborhood}
-                    </span>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -119,6 +158,16 @@ const LivingPostDetail = () => {
             <p className="text-gray-800 dark:text-gray-200 text-base leading-relaxed whitespace-pre-wrap">
               {post.content}
             </p>
+
+            {/* ✅ 4. CTA to Search Properties in this area */}
+            <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <Link 
+                  to={`/search/rent/${post.neighborhood.toLowerCase()}`}
+                  className="flex items-center gap-2 text-sm text-purple-600 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 p-2 rounded-lg transition w-max"
+                >
+                   <FaHome /> View Homes for Rent in {post.neighborhood}
+                </Link>
+            </div>
           </div>
         </div>
 

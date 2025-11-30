@@ -1,12 +1,12 @@
 // src/components/PropertyCard.jsx
-// (UPDATED: 3D Flip, Glassmorphism, Agent Info on Back)
+// (UPDATED: Added Video Thumbnail Fallback & "Video Tour" Indicator)
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { 
   FaHeart, FaRegHeart, FaStar, FaCheckCircle, 
-  FaUserCircle, FaInfoCircle, FaArrowRight, FaTimes 
+  FaUserCircle, FaInfoCircle, FaArrowRight, FaTimes, FaPlayCircle 
 } from "react-icons/fa";
 import { motion } from 'framer-motion';
 
@@ -26,6 +26,21 @@ const getSafeImageDetails = (imagesArray, propertyTitle) => {
     });
 };
 
+// ✅ HELPER: Get Thumbnail from Video URL
+const getVideoThumbnail = (url) => {
+  if (!url) return null;
+  // YouTube
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    const videoId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  }
+  // Cloudinary (Replace extension with .jpg)
+  if (url.includes('cloudinary')) {
+    return url.replace(/\.[^/.]+$/, ".jpg");
+  }
+  return null;
+};
+
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
   
@@ -39,9 +54,25 @@ export default function PropertyCard({ property }) {
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
   
   const safeImageDetails = getSafeImageDetails(property.images, property.title);
-  const images = safeImageDetails.length > 0
-    ? safeImageDetails.map(img => img.url)
-    : (property.imageUrl ? [property.imageUrl] : [placeholderImage]);
+  
+  // ✅ LOGIC: Determine Image Source (Images > Video Thumbnail > Placeholder)
+  let images = [];
+  let isVideoPreview = false;
+
+  if (safeImageDetails.length > 0) {
+    images = safeImageDetails.map(img => img.url);
+  } else if (property.video) {
+    const videoThumb = getVideoThumbnail(property.video);
+    if (videoThumb) {
+      images = [videoThumb];
+      isVideoPreview = true;
+    }
+  }
+
+  // Final Fallback
+  if (images.length === 0) {
+    images = [property.imageUrl || placeholderImage];
+  }
 
   // Slider Logic
   useEffect(() => {
@@ -148,6 +179,15 @@ export default function PropertyCard({ property }) {
               loading="lazy"
             />
             
+            {/* ✅ VIDEO INDICATOR OVERLAY */}
+            {isVideoPreview && !isSoldOrRented && (
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+                  <div className="bg-black/50 backdrop-blur-sm p-3 rounded-full text-white animate-pulse">
+                     <FaPlayCircle size={30} />
+                  </div>
+               </div>
+            )}
+            
             {/* Slider Dots */}
             {images.length > 1 && (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1.5 z-20">
@@ -177,6 +217,13 @@ export default function PropertyCard({ property }) {
               <span className="absolute bottom-3 right-3 z-20 flex items-center bg-yellow-400/90 text-gray-900 text-xs px-3 py-1 rounded-full uppercase font-bold shadow-md backdrop-blur-sm">
                 <FaStar className="mr-1.5" /> Featured
               </span>
+            )}
+
+            {/* Video Badge (Top Center) */}
+            {isVideoPreview && (
+               <span className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-red-600/90 text-white text-[10px] px-2 py-0.5 rounded-md uppercase font-bold shadow-md z-20 backdrop-blur-md flex items-center gap-1">
+                  <FaPlayCircle size={10} /> Video Tour
+               </span>
             )}
 
             {/* Status Center Badge */}

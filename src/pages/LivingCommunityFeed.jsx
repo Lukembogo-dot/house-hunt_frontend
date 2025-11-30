@@ -1,8 +1,10 @@
+// src/pages/LivingCommunityFeed.jsx
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaFilter, FaBullhorn, FaMapMarkerAlt } from 'react-icons/fa';
 import apiClient from '../utils/apiClient';
-import CommunityPostCard from '../components/Community/CommunityPostCard'; // Ensure this path is correct
-import { Link } from 'react-router-dom';
+import CommunityPostCard from '../components/Community/CommunityPostCard'; 
+import { Link, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async'; // ✅ IMPORT HELMET FOR pSEO
 
 const LivingCommunityFeed = () => {
   const [posts, setPosts] = useState([]);
@@ -11,6 +13,17 @@ const LivingCommunityFeed = () => {
   // Filters
   const [neighborhood, setNeighborhood] = useState('');
   const [category, setCategory] = useState('');
+
+  // ✅ Read URL params to allow deep linking (e.g., /living-feed?neighborhood=Kilimani)
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const urlNeighborhood = searchParams.get('neighborhood');
+    if (urlNeighborhood) {
+      setNeighborhood(urlNeighborhood);
+    }
+  }, [location]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -39,8 +52,25 @@ const LivingCommunityFeed = () => {
     return () => clearTimeout(timeoutId);
   }, [neighborhood, category]);
 
+  // ✅ DYNAMIC pSEO TITLE GENERATION
+  // This turns every search filter into a unique SEO landing page
+  const pageTitle = neighborhood 
+    ? `Living in ${neighborhood}: Reviews, Security & Alerts | HouseHunt Kenya`
+    : 'Living Experience Feed: Real-time Neighborhood Updates | HouseHunt Kenya';
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
+      
+      {/* ✅ INJECT DYNAMIC SEO META DATA */}
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta 
+          name="description" 
+          content={`Real-time updates from verified residents in ${neighborhood || 'Kenya'}. Security alerts, water availability, and community reviews. View homes for rent in ${neighborhood || 'Nairobi'}.`} 
+        />
+        <link rel="canonical" href={window.location.href} />
+      </Helmet>
+
       {/* --- Hero Header --- */}
       <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white py-12 px-6 text-center relative overflow-hidden">
         <div className="relative z-10 max-w-3xl mx-auto">

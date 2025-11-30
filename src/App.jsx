@@ -51,10 +51,11 @@ import EditServiceProvider from './pages/admin/EditServiceProvider';
 // Static Pages
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform'; 
+import RatedPropertiesPage from './pages/RatedPropertiesPage'; // ✅ IMPORT NEW PAGE
 
 // ✅ IMPORT THE SEARCH ENGINES
 import DynamicSearchPage from './pages/DynamicSearchPage';
-import DynamicServiceSearch from './pages/DynamicServiceSearch'; // ✅ NEW: Service pSEO Engine
+import DynamicServiceSearch from './pages/DynamicServiceSearch'; 
 import DynamicAgentSearch from './pages/DynamicAgentSearch';
 import DynamicNeighbourhoodSearch from './pages/DynamicNeighbourhoodSearch'; 
 // --- Context & API ---
@@ -146,12 +147,7 @@ const AgentRouteHandler = () => {
 
   if (viewType === 'loading') return <PageLoader />;
   
-  // You likely have an AgentProfile component (or TopAgents acts as list)
-  // If you don't have a specific AgentProfile page yet, map 'profile' to a generic detail view
-  // For now, assuming 'search' is the priority for pSEO:
   if (viewType === 'profile') {
-      // REPLACE THIS with your actual <AgentDetails /> component if you have one
-      // or reuse a generic profile view
       return <div className="p-20 text-center">Agent Profile View (Coming Soon)</div>; 
   }
   
@@ -339,6 +335,9 @@ function MainLayout() {
                 <Route path="/living-feed" element={<LivingCommunityFeed />} />
                 <Route path="/living-feed/:id" element={<LivingPostDetail />} />
                 
+                {/* ✅ NEW RATED PROPERTIES PAGE */}
+                <Route path="/rated-properties" element={<RatedPropertiesPage />} />
+
                 {/* ✅ Dynamic Search Page */}
                 <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
                 <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />

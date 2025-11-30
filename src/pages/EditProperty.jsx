@@ -1,5 +1,5 @@
 // src/pages/EditProperty.jsx
-// (UPDATED: Added Nairobi Survival Features - Matatu, Mama Mboga, Internet)
+// (UPDATED: Fixed Tailwind CSS Conflict in Video Upload Label)
 
 import React, { useState, useEffect } from 'react'; 
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,7 +7,7 @@ import apiClient from '../api/axios';
 import { 
   FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
   FaSpinner, FaUserCheck, FaSearch, FaStar, FaCheckSquare, FaSquare, FaPlus,
-  FaBus, FaWifi, FaShoppingBasket // ✅ NEW ICONS
+  FaBus, FaWifi, FaShoppingBasket, FaVideo, FaGem, FaCloudUploadAlt, FaLock // ✅ ADDED NEW ICONS
 } from 'react-icons/fa'; 
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext'; 
@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent'; 
 import SmartPricingWidget from '../components/SmartPricingWidget'; 
 
-const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_MB = 2; // (Note: Video check uses 50MB internally in handler)
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
 const FEATURE_PRICE_PER_DAY = 170; 
 
@@ -73,6 +73,10 @@ const EditProperty = () => {
   const { user } = useAuth(); 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
 
+  // ✅ Dynamic Limits
+  const isPremium = user?.role === 'admin' || user?.isLeadSubscribed;
+  const MAX_IMAGES = isPremium ? 10 : 5;
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -83,6 +87,7 @@ const EditProperty = () => {
     landSize: '', 
     priceFrequency: 'month',
     amenities: [], 
+    video: '', 
 
     // ✅ NEW: NAIROBI SURVIVAL FIELDS
     matatuRoute: '',
@@ -116,6 +121,9 @@ const EditProperty = () => {
   const [newImageAltTexts, setNewImageAltTexts] = useState({});
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
+  
+  // ✅ NEW: Video State
+  const [videoFile, setVideoFile] = useState(null);
 
   const [customAmenityInput, setCustomAmenityInput] = useState('');
 
@@ -157,6 +165,7 @@ const EditProperty = () => {
           landSize: data.landSize || '',
           priceFrequency: data.priceFrequency || 'month',
           amenities: data.amenities || [], 
+          video: data.video || '', 
 
           // ✅ LOAD NEW FIELDS
           matatuRoute: data.matatuRoute || '',
@@ -301,21 +310,33 @@ const EditProperty = () => {
     }));
   };
 
+  // ✅ UPDATED: Image File Handler with Dynamic Limits
   const handleFileChange = (e) => {
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedNewFiles = [...newImageFiles, ...newlySelectedFiles];
-    if (combinedNewFiles.length > 5) {
-      setStatus({ message: `Error: Max 5 new images allowed.`, type: 'error' });
+    
+    // Check against TOTAL images (Existing + New)
+    const totalImages = existingImages.length + combinedNewFiles.length;
+
+    if (totalImages > MAX_IMAGES) {
+      setStatus({ 
+        message: `Limit exceeded. You have ${existingImages.length} existing images. You can add ${MAX_IMAGES - existingImages.length} more. Total limit: ${MAX_IMAGES}. ${!isPremium ? 'Upgrade for 10 images.' : ''}`, 
+        type: 'error' 
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       e.target.value = null; 
       return;
     }
+    
     const oversizedFiles = combinedNewFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
       e.target.value = null;
       return;
     }
+    
     setNewImageFiles(combinedNewFiles);
+    
     const initialAltTexts = {};
     const existingCount = newImageFiles.length; 
     newlySelectedFiles.forEach((_, index) => {
@@ -323,8 +344,44 @@ const EditProperty = () => {
       initialAltTexts[combinedIndex] = `${formData.title} new image ${combinedIndex + 1}`.trim();
     });
     setNewImageAltTexts(prev => ({ ...prev, ...initialAltTexts }));
+    
     setStatus({ message: '', type: '' });
     e.target.value = null;
+  };
+
+  // ✅ NEW: Video File Handler
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) { 
+        setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
+        e.target.value = null;
+        return;
+    }
+
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (video.duration > 120) { 
+        setStatus({ message: 'Video too long. Max duration is 2 minutes.', type: 'error' });
+        setVideoFile(null);
+      } else {
+        setVideoFile(file);
+        setStatus({ message: '', type: '' });
+      }
+    }
+    video.src = URL.createObjectURL(file);
+  };
+
+  // ✅ NEW: Premium Interaction Handler
+  const handlePremiumInteraction = () => {
+    setStatus({ 
+      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!', 
+      type: 'error' 
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleRemoveExistingImage = (imageUrlToRemove) => {
@@ -377,6 +434,9 @@ const EditProperty = () => {
 
     const dataToSend = new FormData();
     Object.keys(formData).forEach(key => {
+      // Skip video string here if we have a file, but keep it if we don't
+      if (key === 'video' && videoFile) return;
+
       // JSON Fields
       if (key === 'ownerDetails' && user && user.role === 'admin' && formData.ownerDetails.name) {
           dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
@@ -388,6 +448,11 @@ const EditProperty = () => {
         dataToSend.append(key, formData[key]);
       }
     });
+    
+    // ✅ Handle Video File
+    if (videoFile) {
+        dataToSend.append('video', videoFile);
+    }
 
     if (formData.agentId) dataToSend.append('agentId', formData.agentId);
 
@@ -449,10 +514,10 @@ const EditProperty = () => {
         </h1>
         
         {status.message && (
-          <div key={status.message} className={`p-4 mb-6 text-sm rounded-lg ${
+          <div key={status.message} className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 ${
             status.type === 'success' 
               ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
-              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
+              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 border border-red-200'
           }`} role="alert">
             {status.message}
           </div>
@@ -744,6 +809,69 @@ const EditProperty = () => {
             currentPrice={formData.price}
           />
 
+          {/* ✅ UPDATED: PREMIUM VIDEO TOUR SECTION */}
+          {/* Visible to all, but locked for unsubscribed users */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700 relative">
+             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaGem className="text-purple-500" /> Premium Video Tour
+             </h2>
+             
+             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
+                
+                {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
+                {!isPremium && (
+                    <div 
+                        onClick={handlePremiumInteraction}
+                        className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
+                    >
+                         <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
+                             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
+                                <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
+                             </div>
+                             <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
+                             <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
+                         </div>
+                    </div>
+                )}
+
+                {/* Actual Input Section (Blurred if not premium) */}
+                <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
+                    <div className="space-y-4">
+                        {/* Option 1: File Upload */}
+                        <div>
+                            {/* ✅ FIXED: Removed 'block' class which conflicted with 'flex' */}
+                            <label className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                              <FaCloudUploadAlt /> Upload New Video File (Max 2 mins)
+                            </label>
+                            <input 
+                              type="file" 
+                              accept="video/mp4,video/webm" 
+                              onChange={handleVideoFileChange}
+                              className="w-full text-sm text-purple-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"
+                            />
+                            {videoFile && <p className="text-xs text-green-600 mt-1 font-bold">New video selected: {videoFile.name}</p>}
+                            {!videoFile && formData.video && !formData.video.includes('youtu') && (
+                                <p className="text-xs text-gray-500 mt-1">Currently using uploaded video.</p>
+                            )}
+                        </div>
+
+                        <div className="text-center text-xs text-gray-400 font-bold">- OR -</div>
+
+                        {/* Option 2: URL Link */}
+                        <InputField 
+                            label="Paste YouTube/Vimeo Link" 
+                            name="video" 
+                            value={formData.video} 
+                            onChange={handleChange} 
+                            placeholder="https://youtu.be/..." 
+                            required={false}
+                            icon={<FaVideo />}
+                        />
+                    </div>
+                </div>
+             </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
               Property Status
@@ -790,9 +918,16 @@ const EditProperty = () => {
           )}
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="new-images">
-              Add New Images
-            </label>
+            <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="new-images">
+                  Add New Images
+                </label>
+                {/* Visual indicator of the limit */}
+                <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                   Limit: {MAX_IMAGES} Total Images
+                </span>
+            </div>
+
             <input
               type="file"
               id="new-images"
@@ -801,7 +936,20 @@ const EditProperty = () => {
               multiple
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-            {newImageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {newImageFiles.length} new files</p>}
+            
+            <div className="flex justify-between mt-1 items-start">
+                <p className={`text-xs ${(existingImages.length + newImageFiles.length) > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                   Total: {existingImages.length + newImageFiles.length} / {MAX_IMAGES} (Existing + New)
+                </p>
+                {!isPremium && (
+                   <div className="flex flex-col items-end">
+                      <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
+                      <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
+                         <FaGem size={10} /> Upgrade for 10 Images
+                      </button>
+                   </div>
+                )}
+            </div>
           </div>
           
           {newImageFiles.length > 0 && (

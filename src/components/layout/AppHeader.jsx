@@ -1,5 +1,5 @@
 // src/components/layout/AppHeader.jsx
-// (UPDATED: Added Community Dropdown Menu)
+// (UPDATED: Added Rated Properties Link)
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -92,10 +92,18 @@ const AppHeader = () => {
                 </Link>
                 <Link 
                   to="/living-feed" 
-                  className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-50 dark:border-gray-700/50"
                 >
                   <span className="font-bold block text-purple-600 dark:text-purple-400">Living Experience Feed</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">Real-time updates from residents</span>
+                </Link>
+                {/* ✅ ADDED: RATED PROPERTIES LINK */}
+                <Link 
+                  to="/rated-properties" 
+                  className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                >
+                  <span className="font-bold block text-green-600 dark:text-green-400">Rated Properties</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">See verified tenant reviews</span>
                 </Link>
               </div>
             </div>
@@ -241,12 +249,19 @@ const AppHeader = () => {
               <Link to="/living-feed" className="block text-gray-700 dark:text-gray-200 hover:text-purple-600 font-medium" onClick={closeMobileMenu}>
                 Living Experience Feed
               </Link>
+              {/* ✅ ADDED: RATED PROPERTIES (MOBILE) */}
+              <Link to="/rated-properties" className="block text-gray-700 dark:text-gray-200 hover:text-green-600 font-medium" onClick={closeMobileMenu}>
+                Rated Properties
+              </Link>
             </div>
 
             <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium" onClick={closeMobileMenu}>About</Link>
-            <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium" onClick={closeMobileMenu}>Contact</Link>
             
-            {!user && <Link to="/for-agents" className="block text-blue-600 dark:text-blue-400 font-bold" onClick={closeMobileMenu}>Partner with Us (Agents)</Link>}
+            {!user && (
+              <Link to="/for-agents" className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-md transform hover:-translate-y-0.5 text-sm font-bold" onClick={closeMobileMenu}>
+                List Property
+              </Link>
+            )}
             
             <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3">
               {realUser && (

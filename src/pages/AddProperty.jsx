@@ -1,5 +1,5 @@
 // src/pages/AddProperty.jsx
-// (UPDATED: Added Nairobi Survival Features & Parity with EditProperty)
+// (UPDATED: Fixed 500 Error by removing manual Content-Type & fixing Coordinate sending)
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,13 +9,13 @@ import {
   FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
   FaSpinner, FaStar, FaUserCheck, FaSearch, FaExclamationCircle, FaUser,
   FaCheckSquare, FaSquare, FaPlus, FaTimes,
-  FaBus, FaWifi, FaShoppingBasket // ✅ NEW ICONS
+  FaBus, FaWifi, FaShoppingBasket, FaVideo, FaGem, FaCloudUploadAlt, FaLock
 } from 'react-icons/fa';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 import MapComponent from '../components/MapComponent';
 import SmartPricingWidget from '../components/SmartPricingWidget'; 
 
-const MAX_FILE_SIZE_MB = 2; 
+const MAX_FILE_SIZE_MB = 5; 
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
 const FEATURE_PRICE_PER_DAY = 170; 
 
@@ -26,7 +26,6 @@ const AMENITIES_LIST = [
   "Security Guard", "Balcony", "Wheelchair Access", "Fiber Internet", "Pet Friendly"
 ];
 
-// ✅ NEW: ISP LIST
 const ISP_LIST = ["Safaricom Home Fibre", "Zuku", "JTL Faiba", "Starlink", "Liquid Home", "Telkom"];
 
 const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
@@ -60,18 +59,15 @@ const initialFormState = {
   location: '',
   price: '',
   bedrooms: '',
-  
   landSize: '', 
   priceFrequency: 'month', 
   amenities: [], 
-
-  // ✅ NEW: NAIROBI SURVIVAL FIELDS
+  video: '', 
   matatuRoute: '',
   matatuFare: '',
   mamaMbogaDistance: '',
   internetReady: false,
   internetProviders: [],
-
   type: 'apartment',
   status: 'available', 
   listingType: 'sale',
@@ -96,15 +92,19 @@ const AddProperty = () => {
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
   
+  const [videoFile, setVideoFile] = useState(null); 
   const [customAmenityInput, setCustomAmenityInput] = useState('');
 
-  // Search State
   const [existingAgents, setExistingAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // ✅ Dynamic Limits: Admin/Subscribed = 10 images + Video. Others = 5 images + No Video.
+  const isPremium = user?.role === 'admin' || user?.isLeadSubscribed;
+  const MAX_IMAGES = isPremium ? 10 : 5;
 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
@@ -135,14 +135,13 @@ const AddProperty = () => {
       }
     };
     fetchAgents();
-
   }, [user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
     if (type === 'checkbox' && name === 'isFeatured') processedValue = checked;
-    else if (type === 'checkbox' && name === 'internetReady') processedValue = checked; // ✅ Handle Internet Toggle
+    else if (type === 'checkbox' && name === 'internetReady') processedValue = checked;
     else if (name === 'featuredDays') processedValue = Number(value);
     
     setFormData(prevData => ({
@@ -162,7 +161,6 @@ const AddProperty = () => {
     });
   };
 
-  // ✅ NEW: Handle ISP Toggle
   const handleISPToggle = (isp) => {
     setFormData(prev => {
       const current = prev.internetProviders || [];
@@ -190,7 +188,6 @@ const AddProperty = () => {
 
   const handleOwnerChange = (e) => {
     const { name, value } = e.target;
-    
     setFormData(prevData => ({
       ...prevData,
       ownerDetails: {
@@ -239,29 +236,71 @@ const AddProperty = () => {
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedFiles = [...imageFiles, ...newlySelectedFiles];
     
-    if (combinedFiles.length > 5) {
-      setStatus({ message: `Error: You can only upload a maximum of 5 images total.`, type: 'error' });
+    // ✅ Enforce Dynamic Image Limit (5 for Normal, 10 for Premium)
+    if (combinedFiles.length > MAX_IMAGES) {
+      setStatus({ 
+        message: `Limit exceeded. You can upload ${MAX_IMAGES} images on your plan. ${!isPremium ? 'Upgrade to Premium for 10 images.' : ''}`, 
+        type: 'error' 
+      });
+      // Scroll to top to ensure they see the error
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       e.target.value = null; 
       return;
     }
     
     const oversizedFiles = combinedFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      setStatus({ message: `Error: Some files exceed the ${MAX_FILE_SIZE_MB}MB limit.`, type: 'error' });
+      setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
       e.target.value = null; 
       return;
     }
     
     setImageFiles(combinedFiles);
+    
     const initialAltTexts = {};
     const existingCount = imageFiles.length; 
-    newlySelectedFiles.forEach((file, index) => {
+    newlySelectedFiles.forEach((_, index) => {
       const combinedIndex = existingCount + index;
       initialAltTexts[combinedIndex] = `${formData.title} image ${combinedIndex + 1}`.trim();
     });
     setImageAltTexts(prev => ({ ...prev, ...initialAltTexts }));
+    
     setStatus({ message: '', type: '' });
     e.target.value = null; 
+  };
+
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) { 
+        setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
+        e.target.value = null;
+        return;
+    }
+
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = function() {
+      window.URL.revokeObjectURL(video.src);
+      if (video.duration > 120) { 
+        setStatus({ message: 'Video too long. Max duration is 2 minutes.', type: 'error' });
+        setVideoFile(null);
+      } else {
+        setVideoFile(file);
+        setStatus({ message: '', type: '' });
+      }
+    }
+    video.src = URL.createObjectURL(file);
+  };
+
+  // ✅ NEW: Handler to intercept clicks on Premium features for unsubscribed users
+  const handlePremiumInteraction = () => {
+    setStatus({ 
+      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!', 
+      type: 'error' 
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleMapClick = async (e) => {
@@ -302,17 +341,21 @@ const AddProperty = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (imageFiles.length === 0) {
-      setStatus({ message: 'Please select at least one image to upload.', type: 'error' });
+    
+    // ✅ UPDATED VALIDATION: Require either Image OR Video
+    if (imageFiles.length === 0 && !videoFile && !formData.video) {
+      setStatus({ message: 'Please add at least one image OR a video tour to submit.', type: 'error' });
       return;
     }
+
     setLoading(true);
     setStatus({ message: '', type: '' });
 
     const dataToSend = new FormData();
     
     Object.keys(formData).forEach(key => {
-      if (key === 'ownerDetails') {
+      if (key === 'video') return; 
+      else if (key === 'ownerDetails') {
         if (user && user.role === 'admin' && formData.ownerDetails.name) {
           dataToSend.append('ownerDetails[name]', formData.ownerDetails.name);
           dataToSend.append('ownerDetails[whatsapp]', formData.ownerDetails.whatsapp);
@@ -323,7 +366,7 @@ const AddProperty = () => {
       else if (key === 'amenities') {
           dataToSend.append('amenities', JSON.stringify(formData.amenities));
       }
-      else if (key === 'internetProviders') { // ✅ NEW: Send ISPs as JSON
+      else if (key === 'internetProviders') {
           dataToSend.append('internetProviders', JSON.stringify(formData.internetProviders));
       }
       else {
@@ -331,13 +374,19 @@ const AddProperty = () => {
       }
     });
 
+    if (videoFile) {
+      dataToSend.append('video', videoFile); 
+    } else if (formData.video) {
+      dataToSend.append('video', formData.video); 
+    }
+
     if (formData.agentId) {
         dataToSend.append('agentId', formData.agentId);
     }
     
+    // ✅ FIX 2.1: Send coordinates as a JSON string to ensure proper backend parsing
     if (coordinates) {
-      dataToSend.append('coordinates[lat]', coordinates.lat);
-      dataToSend.append('coordinates[lng]', coordinates.lng);
+      dataToSend.append('coordinates', JSON.stringify(coordinates));
     }
     
     const altTextsArray = [];
@@ -348,9 +397,11 @@ const AddProperty = () => {
     dataToSend.append('imageAltTexts', JSON.stringify(altTextsArray)); 
 
     try {
+      // ✅ FIX 1: REMOVE 'Content-Type': 'multipart/form-data'. 
+      // Axios MUST generate this automatically to include the boundary.
       const response = await apiClient.post("/properties", dataToSend, {
         withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' },
+        // headers: { 'Content-Type': 'multipart/form-data' }, <--- REMOVED THIS LINE
       });
 
       if (formData.isFeatured && response.data.paymentRedirectUrl) {
@@ -383,10 +434,10 @@ const AddProperty = () => {
         </h1>
         
         {status.message && (
-          <div className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 ${
+          <div className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 animate-pulse ${
             status.type === 'success' 
               ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
-              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
+              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 border border-red-200'
           }`} role="alert">
             {status.type === 'error' && <FaExclamationCircle />}
             {status.message}
@@ -394,7 +445,6 @@ const AddProperty = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* --- Main Property Details --- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField 
               label="Property Title" 
@@ -465,7 +515,6 @@ const AddProperty = () => {
             </div>
           </div>
           
-          {/* Map Section */}
           <div className="space-y-6 pt-6 border-t dark:border-gray-700">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
               Location
@@ -481,14 +530,11 @@ const AddProperty = () => {
                 />
               </div>
               <div className="md:col-span-1">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 invisible">
-                  Find on Map
-                </label>
                 <button
                   type="button"
                   onClick={handleGeocodeAddress}
                   disabled={isGeocoding}
-                  className="w-full h-11 flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 disabled:opacity-50"
+                  className="mt-6 w-full h-11 flex items-center justify-center space-x-2 bg-gray-600 text-white py-2.5 rounded-lg hover:bg-gray-700 transition-all duration-150 disabled:opacity-50"
                 >
                   {isGeocoding ? <FaSpinner className="animate-spin" /> : <FaMapMarkerAlt />}
                   <span>Find on Map</span>
@@ -566,7 +612,6 @@ const AddProperty = () => {
             </div>
           </div>
 
-          {/* Amenities Section */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                Amenities & Features
@@ -627,7 +672,6 @@ const AddProperty = () => {
              </div>
           </div>
 
-          {/* ✅ NEW: NAIROBI LIVING ESSENTIALS SECTION */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
              <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
@@ -666,7 +710,6 @@ const AddProperty = () => {
                    icon={<FaShoppingBasket />}
                 />
                 
-                {/* Internet Section */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                     <div className="flex items-center justify-between mb-3">
                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -712,26 +755,106 @@ const AddProperty = () => {
             currentPrice={formData.price}
           />
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="image">
-              Property Images (Select up to 5)
-            </label>
+          {/* ✅ UPDATED: PREMIUM VIDEO TOUR SECTION */}
+          {/* Now visible to all, but clickable only for premium users */}
+          <div className="space-y-4 pt-6 border-t dark:border-gray-700 relative">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaGem className="text-purple-500" /> Premium Video Tour
+            </h2>
+            
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
+                
+                {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
+                {!isPremium && (
+                    <div 
+                        onClick={handlePremiumInteraction}
+                        className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
+                    >
+                         <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
+                             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
+                                <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
+                             </div>
+                             <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
+                             <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
+                         </div>
+                    </div>
+                )}
+
+                {/* Actual Input Section (Now Always Rendered but blocked by overlay if not premium) */}
+                <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
+                    <div className="space-y-4">
+                        {/* Option 1: File Upload */}
+                        <div>
+                            {/* ✅ FIXED: Removed 'block' class which conflicted with 'flex' */}
+                            <label className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                              <FaCloudUploadAlt /> Upload Video File (Max 2 mins)
+                            </label>
+                            <input 
+                              type="file" 
+                              accept="video/mp4,video/webm" 
+                              onChange={handleVideoFileChange}
+                              className="w-full text-sm text-purple-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"
+                            />
+                            {videoFile && <p className="text-xs text-green-600 mt-1 font-bold">Video selected: {videoFile.name}</p>}
+                        </div>
+
+                        <div className="text-center text-xs text-gray-400 font-bold">- OR -</div>
+
+                        {/* Option 2: URL Link */}
+                        <InputField 
+                            label="Paste YouTube/Vimeo Link" 
+                            name="video" 
+                            value={formData.video} 
+                            onChange={handleChange} 
+                            placeholder="https://youtu.be/..." 
+                            required={false}
+                            icon={<FaVideo />}
+                        />
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t dark:border-gray-700">
+            <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="image">
+                  Property Images (Max {MAX_IMAGES})
+                </label>
+                {/* Visual indicator of the limit */}
+                <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                   Limit: {MAX_IMAGES} Images
+                </span>
+            </div>
+            
             <input
               type="file"
               id="image"
               name="image"
               onChange={handleFileChange}
-              required={imageFiles.length === 0}
+              required={false} // ✅ UPDATED: Removed required constraint (images optional if video exists)
               multiple
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-             {imageFiles.length > 0 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Selected: {imageFiles.length} files (Max {MAX_FILE_SIZE_MB}MB each)</p>}
+            
+            <div className="flex justify-between mt-1 items-start">
+                <p className={`text-xs ${imageFiles.length > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                   Selected: {imageFiles.length} / {MAX_IMAGES}
+                </p>
+                {!isPremium && (
+                   <div className="flex flex-col items-end">
+                      <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
+                      <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
+                         <FaGem size={10} /> Upgrade for 10 Images
+                      </button>
+                   </div>
+                )}
+            </div>
           </div>
 
           {imageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Image SEO Alt Text</h3>
-              {imageFiles.map((file, index) => (
+              {imageFiles.slice(0, MAX_IMAGES).map((file, index) => (
                 <InputField
                   key={index}
                   label={`Alt Text for Image ${index + 1} (${file.name})`}
@@ -745,7 +868,6 @@ const AddProperty = () => {
             </div>
           )}
 
-          {/* Owner & Social Media Details (Admin Only) */}
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -755,7 +877,6 @@ const AddProperty = () => {
                 (Admin Only) Search by Agent Name, <strong>Company Name</strong>, or Phone Number.
               </p>
               
-              {/* Search Container */}
               <div className="relative z-50 mb-4"> 
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="search-agent">
                   Owner/Agent Name (Searchable)
@@ -777,7 +898,6 @@ const AddProperty = () => {
                   />
                 </div>
                 
-                {/* Suggestions Dropdown */}
                 {showSuggestions && filteredAgents.length > 0 && (
                   <div className="absolute z-50 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl mt-1 max-h-60 overflow-y-auto">
                     {filteredAgents.map((agent) => (
