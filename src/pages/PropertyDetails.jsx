@@ -1,5 +1,5 @@
 // src/pages/PropertyDetails.jsx
-// (UPDATED - Logic changed: If only video exists, hide image section and show Video Player first)
+// (UPDATED: Fixed Sidebar visibility issue by removing viewport-based animation)
 
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
@@ -24,6 +24,7 @@ import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
 import PropertyAmenities from "../components/property/PropertyAmenities";
 import LivingEssentialsWidget from "../components/LivingEssentialsWidget"; 
+import PropertyLocalServices from "../components/property/PropertyLocalServices"; 
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -332,7 +333,7 @@ const PropertyDetails = () => {
   const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
   const allImageUrls = safeImageDetails.map(img => img.url);
 
-  // ✅ NEW Logic: Determine if image section should be shown
+  // Logic: Determine if image section should be shown
   const hasImages = allImageUrls.length > 0;
   const hasVideo = property?.video && property.video.length > 0;
 
@@ -346,7 +347,7 @@ const PropertyDetails = () => {
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
       
-      // ✅ LOGIC: Only set image if actual images exist. No fallback to video thumbnail here.
+      // LOGIC: Only set image if actual images exist. No fallback to video thumbnail here.
       if (urlsList.length > 0) {
         setActiveImage(urlsList[0]);
       } else {
@@ -359,13 +360,7 @@ const PropertyDetails = () => {
       }
       const reviewsRes = await apiClient.get(`/reviews/${propData._id}`);
       setComments(reviewsRes.data || []);
-      if (propData.location) {
-        try {
-          const primaryLocation = propData.location.split(',')[0].trim();
-          const servicesRes = await apiClient.get(`/services/location/${primaryLocation}`);
-          setLocalServices(servicesRes.data);
-        } catch (err) { console.warn('No local services.', err); }
-      }
+      
     } catch (error) { console.error("❌ Error fetching property:", error); } finally { setLoading(false); }
   };
 
@@ -450,7 +445,6 @@ const PropertyDetails = () => {
             <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
 
             {/* ✅ LOGIC: Conditionally Render Image Section */}
-            {/* Show if images exist OR if there is NO video (to show placeholder/fallback) */}
             {(hasImages || !hasVideo) && (
               <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
                 <img src={activeImage} alt={safeImageDetails?.[0]?.altText || property.title} className="rounded-lg w-full h-96 object-cover mb-4 shadow-md" />
@@ -464,8 +458,6 @@ const PropertyDetails = () => {
               </motion.div>
             )}
 
-            {/* ✅ VIDEO PLAYER SECTION */}
-            {/* If NO images, this will effectively be at the top */}
             <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
                <VideoPlayerSection videoUrl={property.video} />
             </motion.div>
@@ -481,7 +473,6 @@ const PropertyDetails = () => {
                <LivingEssentialsWidget property={property} />
             </motion.div>
 
-            {/* Existing Amenities Component */}
             {property.amenities && property.amenities.length > 0 && (
                 <PropertyAmenities amenities={property.amenities} />
             )}
@@ -516,26 +507,10 @@ const PropertyDetails = () => {
               ) : <p className="text-gray-500 dark:text-gray-400">No popular amenities found within 1.5km.</p>}
             </motion.div>
 
-            {localServices.length > 0 && (
-              <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Neighbourhood Watch</h2>
-                <div className="space-y-4">
-                  {localServices.map(service => (
-                    <Link key={service._id} to={`/services/${service.slug}`} className="block group bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition">
-                      <div className="flex justify-between items-center mb-1">
-                        <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 group-hover:underline">{service.title}</h3>
-                        <span className="text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-full flex-shrink-0">{service.serviceType}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <FaStar className="text-yellow-400" size={16} />
-                        <span className="font-semibold text-gray-700 dark:text-gray-300 text-sm">{service.averageRating.toFixed(1)}</span>
-                        <span className="text-gray-500 dark:text-gray-400 text-sm">({service.numReviews} review{service.numReviews !== 1 ? 's' : ''})</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+            {/* ✅ ADDED: Property Local Services / Neighborhood Watch */}
+            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
+               <PropertyLocalServices location={property.location} />
+            </motion.div>
 
             <PropertyFaqSection location={property.location.split(',')[0]} />
 
@@ -554,7 +529,8 @@ const PropertyDetails = () => {
 
           </div>
 
-          <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+          {/* ✅ FIXED: Removed motion.div wrapper from Sidebar to ensure immediate visibility */}
+          <div>
              <PropertySidebar 
                property={property} 
                user={user} 
@@ -564,7 +540,7 @@ const PropertyDetails = () => {
                isStartingChat={isStartingChat}
                handleLogLead={handleLogLead}
              />
-          </motion.div>
+          </div>
         </div>
 
         {(!property.ownerDetails || !property.ownerDetails.name) && agentProperties.length > 0 && property.agent && (
