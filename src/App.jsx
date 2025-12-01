@@ -20,7 +20,8 @@ import HouseHuntRequest from "./components/HouseHuntRequest";
 import PreviewBanner from './components/PreviewBanner';
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 import MarketFactsTable from "./components/MarketFactsTable"; 
-import FeaturedReviews from "./components/FeaturedReviews"; 
+// FeaturedReviews import removed
+import TrendingMtaaScores from "./components/TrendingMtaaScores"; // ✅ IMPORT NEW COMPONENT
 
 // --- New Layout Components ---
 import AppHeader from "./components/layout/AppHeader";
@@ -51,7 +52,7 @@ import EditServiceProvider from './pages/admin/EditServiceProvider';
 // Static Pages
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform'; 
-import RatedPropertiesPage from './pages/RatedPropertiesPage'; // ✅ IMPORT NEW PAGE
+import RatedPropertiesPage from './pages/RatedPropertiesPage'; 
 
 // ✅ IMPORT THE SEARCH ENGINES
 import DynamicSearchPage from './pages/DynamicSearchPage';
@@ -90,25 +91,22 @@ const ContactButton = () => {
   );
 };
 
-// ✅ UPDATED: Intelligent Router for Services
-// Checks: Provider? -> Post? -> Dynamic Search (pSEO)
+// ... (ServiceRouteHandler and AgentRouteHandler remain unchanged) ...
+
 const ServiceRouteHandler = () => {
   const { slug } = useParams();
-  const [viewType, setViewType] = useState('loading'); // 'provider' | 'post' | 'search' | 'loading'
+  const [viewType, setViewType] = useState('loading'); 
 
   useEffect(() => {
     const resolveRoute = async () => {
       try {
-        // 1. Check if it's a Service Provider
         await apiClient.get(`/service-providers/${slug}`);
         setViewType('provider');
       } catch (err) {
         try {
-          // 2. Check if it's a Service Post (Article)
           await apiClient.get(`/services/slug/${slug}`);
           setViewType('post');
         } catch (err2) {
-          // 3. Fallback: It's a pSEO Search Page
           setViewType('search');
         }
       }
@@ -119,13 +117,9 @@ const ServiceRouteHandler = () => {
   if (viewType === 'loading') return <PageLoader />;
   if (viewType === 'provider') return <ServiceProviderDetails />;
   if (viewType === 'post') return <ServicePostDetails />;
-  
-  // ✅ Renders the Service pSEO Page instead of 404
   return <DynamicServiceSearch />;
 };
 
-// ✅ NEW: Intelligent Router for Agents
-// Checks: Single Agent Profile? -> pSEO Search
 const AgentRouteHandler = () => {
   const { slug } = useParams();
   const [viewType, setViewType] = useState('loading'); 
@@ -133,12 +127,9 @@ const AgentRouteHandler = () => {
   useEffect(() => {
     const resolveRoute = async () => {
       try {
-        // 1. Check if it's a specific Agent (e.g. /agents/john-doe)
-        // Adjust endpoint based on your actual single-agent fetch
         await apiClient.get(`/users/agents/${slug}`); 
         setViewType('profile');
       } catch (err) {
-        // 2. Fallback: It's a pSEO Search Page (e.g. /agents/agents-in-kilimani)
         setViewType('search');
       }
     };
@@ -146,14 +137,12 @@ const AgentRouteHandler = () => {
   }, [slug]);
 
   if (viewType === 'loading') return <PageLoader />;
-  
   if (viewType === 'profile') {
       return <div className="p-20 text-center">Agent Profile View (Coming Soon)</div>; 
   }
-  
-  // ✅ Render the pSEO Engine
   return <DynamicAgentSearch />;
 };
+
 function MainLayout() {
   const { previewRole } = useAuth(); 
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
@@ -183,13 +172,10 @@ function MainLayout() {
     fetchHomeData();
   }, []);
 
-  const handleHomeFilterSubmit = () => setSubmittedHomeFilters({ ...homeFilters });
-
   const HomePageElement = (
     <>
       <SeoInjector seo={homeSeo} />
 
-      {/* ✅ 1. NEW HERO SECTION: No Image, Clean Text, Animation */}
       <section id="home" className="pt-32 pb-6 px-6 text-center bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <motion.h1 
@@ -212,7 +198,6 @@ function MainLayout() {
       </section>
 
       <main id="properties" className="flex-grow bg-gray-50 dark:bg-gray-900">
-        {/* ✅ 2. GLOBAL SEARCH BAR: Reduced spacing, flows naturally */}
         <section className="px-6 pb-8">
            <GlobalSearchBar />
         </section>
@@ -226,12 +211,13 @@ function MainLayout() {
            </section>
         ) : (
           <>
-            {/* 3. Top Agents (Reduced padding) */}
             <div className="py-6">
                <TopAgents />
             </div>
 
-            {/* 4. Featured Properties (Reduced padding, Continuous background) */}
+            {/* ✅ INSERTED: The New Flip-Card Section for Mtaa Scores */}
+            <TrendingMtaaScores />
+
             <section className="py-6 px-6">
               <div className="max-w-6xl mx-auto">
                 <h2 className="text-3xl font-bold text-center mb-8 dark:text-white">Featured Properties</h2>
@@ -239,17 +225,13 @@ function MainLayout() {
               </div>
             </section>
             
-            {/* 5. HouseHunt Request */}
             <div className="py-6">
                <HouseHuntRequest />
             </div>
 
-            {/* 6. TOOLS SECTION (Quiz + Cost Calculator) */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
                <section className="py-8 px-6">
                   <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
-                    
-                    {/* Neighbourhood Quiz */}
                     {isQuizEnabled && (
                       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition duration-300">
                          <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
@@ -265,7 +247,6 @@ function MainLayout() {
                       </div>
                     )}
 
-                    {/* Cost of Living Calculator */}
                     {isCostCalculatorEnabled && (
                       <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 text-center hover:shadow-md transition duration-300">
                          <div className="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
@@ -280,7 +261,6 @@ function MainLayout() {
                          </Link>
                       </div>
                     )}
-
                   </div>
                </section>
             )}
@@ -289,10 +269,7 @@ function MainLayout() {
                <HomeFaqSection />
             </div>
 
-            {/* Featured Reviews */}
-            <div className="py-6">
-               <FeaturedReviews />
-            </div>
+            {/* FeaturedReviews section removed */}
 
             <NeighbourhoodWatchHome />
           </>
@@ -310,7 +287,6 @@ function MainLayout() {
       <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-                
                 <Route path="/wanted/post" element={
                   <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
                     <div className="max-w-4xl mx-auto">
@@ -335,15 +311,12 @@ function MainLayout() {
                 <Route path="/living-feed" element={<LivingCommunityFeed />} />
                 <Route path="/living-feed/:id" element={<LivingPostDetail />} />
                 
-                {/* ✅ NEW RATED PROPERTIES PAGE */}
                 <Route path="/rated-properties" element={<RatedPropertiesPage />} />
 
-                {/* ✅ Dynamic Search Page */}
                 <Route path="/search/:listingType/:location" element={<DynamicSearchPage />} />
                 <Route path="/search/:listingType/:propertyType/:location" element={<DynamicSearchPage />} />
                 <Route path="/neighbourhood/:slug" element={<DynamicNeighbourhoodSearch />} />
                 <Route path="*" element={<AppRoutesConfig homeElement={HomePageElement} />} />
-            
             </Routes>
         </AnimatePresence>
       </Suspense>
@@ -379,6 +352,10 @@ function App() {
           user-select: text;
           -webkit-user-select: text;
         }
+        .perspective-1000 { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
       `}</style>
       <ScrollToTop />
       <MainLayout />
