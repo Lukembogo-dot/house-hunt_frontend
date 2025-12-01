@@ -4,12 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { 
   FaStar, FaMapMarkerAlt, FaHome, FaShieldAlt, 
   FaWater, FaWifi, FaBus, FaCheckCircle, FaSpinner,
-  FaCity
+  FaCity, FaPassport, FaArrowRight, FaPlusCircle
 } from 'react-icons/fa';
 import apiClient from '../utils/apiClient';
 
 // --- SHARED HELPER: Consistent Status Colors ---
-// (Ideally, move this to a src/utils/colors.js file in future)
 const getStatusColors = (type, value) => {
   if (!value) return 'text-gray-500 bg-gray-50 border-gray-100';
 
@@ -20,7 +19,6 @@ const getStatusColors = (type, value) => {
   }
   
   if (type === 'security') {
-    // Value is a number or string number
     const rating = Number(value);
     if (rating >= 4) return 'text-green-600 bg-green-50 border-green-100';
     if (rating >= 3) return 'text-yellow-600 bg-yellow-50 border-yellow-100';
@@ -31,7 +29,6 @@ const getStatusColors = (type, value) => {
 };
 
 // --- HELPER: Generate Consistent Gradients based on Name ---
-// Same logic as TrendingMtaaScores for visual consistency
 const getBuildingGradient = (name) => {
   const gradients = [
     'from-blue-500 via-indigo-500 to-purple-600',
@@ -43,6 +40,49 @@ const getBuildingGradient = (name) => {
   const index = name.length % gradients.length;
   return gradients[index];
 };
+
+// --- COMPONENT: The "Add Passport" Promo Card ---
+const PassportPromoCard = () => (
+  <div className="flex flex-col h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl overflow-hidden text-white relative group transform hover:-translate-y-1 transition-all duration-300">
+    
+    {/* Background Texture */}
+    <FaPassport className="absolute text-white opacity-10 text-[12rem] -bottom-10 -right-10 rotate-12 group-hover:rotate-6 transition-transform duration-700" />
+    
+    <div className="p-8 flex flex-col h-full relative z-10">
+      <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-inner border border-white/30">
+        <FaPlusCircle className="text-3xl text-white" />
+      </div>
+      
+      <h3 className="text-2xl font-extrabold mb-2 leading-tight">
+        Own Your Rental History
+      </h3>
+      
+      <p className="text-blue-100 text-sm mb-6 leading-relaxed">
+        Get your <strong className="text-white">Housing Passport</strong> today. Rate your landlord, verify your history, and help the community.
+      </p>
+      
+      <ul className="space-y-3 mb-8 text-sm font-medium text-blue-50">
+        <li className="flex items-center gap-2">
+          <FaCheckCircle className="text-green-400" /> Earn <strong>+50 XP</strong> per review
+        </li>
+        <li className="flex items-center gap-2">
+          <FaCheckCircle className="text-green-400" /> Unlock "Verified Tenant" badge
+        </li>
+        <li className="flex items-center gap-2">
+          <FaCheckCircle className="text-green-400" /> Access hidden reviews
+        </li>
+      </ul>
+
+      {/* ✅ UPDATED LINK: Pointing to /living-feed */}
+      <Link 
+        to="/living-feed" 
+        className="mt-auto w-full bg-white text-blue-700 font-bold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition shadow-lg"
+      >
+        Create Passport <FaArrowRight />
+      </Link>
+    </div>
+  </div>
+);
 
 const MtaaScoreGrid = ({ score }) => {
   if (!score) return null;
@@ -137,7 +177,6 @@ const RatedPropertiesPage = () => {
                 rating: (totalRating / count).toFixed(1),
                 reviews: count,
                 price: rentItem ? rentItem.rentalDetails.monthlyRent.toLocaleString() : '---',
-                // ✅ UPDATED: Use consistent gradient logic instead of placeholder image
                 gradient: getBuildingGradient(group.name),
                 image: items[0].photos?.[0] || null, 
                 badges: count > 2 ? ["Verified", "Trending"] : ["New Entry"],
@@ -190,10 +229,15 @@ const RatedPropertiesPage = () => {
         ) : (
           /* Property Grid */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            {/* ✅ 1. THE PROMO CARD (Always First) */}
+            <PassportPromoCard />
+
+            {/* 2. THE RATED PROPERTIES */}
             {properties.map((property) => (
               <div key={property.id} className="flex flex-col bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full group">
                 
-                {/* 1. PROPERTY HEADER (Dynamic Gradient or Image) */}
+                {/* PROPERTY HEADER (Dynamic Gradient or Image) */}
                 <Link to={`/property/${property.id}`} className="block relative h-56 overflow-hidden">
                   {property.image ? (
                      <img 
@@ -202,7 +246,6 @@ const RatedPropertiesPage = () => {
                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                      />
                   ) : (
-                    // ✅ FALLBACK: Consistent Gradient Animation
                     <div className={`w-full h-full bg-gradient-to-br ${property.gradient} flex items-center justify-center p-6 text-center`}>
                        <FaCity className="absolute text-white opacity-10 text-[10rem] -bottom-6 -right-6 rotate-12" />
                        <h3 className="text-2xl font-black text-white drop-shadow-md uppercase tracking-tight relative z-10">
@@ -224,7 +267,7 @@ const RatedPropertiesPage = () => {
                   </div>
                 </Link>
 
-                {/* 2. CARD BODY */}
+                {/* CARD BODY */}
                 <div className="px-6 pt-5 pb-4 flex-1 flex flex-col">
                   {/* Title & Price */}
                   <div className="flex justify-between items-start mb-3">
@@ -245,7 +288,7 @@ const RatedPropertiesPage = () => {
                       ))}
                   </div>
 
-                  {/* ✅ THE MTAA SCORE GRID */}
+                  {/* MTAA SCORE GRID */}
                   <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 mb-4">
                      <p className="text-[10px] uppercase font-bold text-gray-400 mb-2 flex items-center gap-1">
                        <FaCheckCircle className="text-blue-500"/> Verified Mtaa Score
