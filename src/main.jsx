@@ -1,4 +1,4 @@
-// src/main.jsx (UPDATED)
+// src/main.jsx (UPDATED: Hardcoded Google Client ID for Debugging)
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
@@ -22,10 +22,13 @@ if (gaMeasurementId) {
   console.log("GA4 Initialized with ID:", gaMeasurementId);
 }
 
+// ⚠️ PASTE YOUR FULL GOOGLE CLIENT ID INSIDE THE QUOTES BELOW ⚠️
+const GOOGLE_CLIENT_ID = "454827380731-thk71v8cp7tqs3pqdh2anvjt4d46ct31.apps.googleusercontent.com"; 
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    {/* ✅ 2. Wrap the entire app with GoogleOAuthProvider */}
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    {/* ✅ 2. Use Hardcoded ID to force it to work on Vercel */}
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <HelmetProvider>
         <AuthProvider>
           <ThemeProvider>
