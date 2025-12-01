@@ -1,24 +1,51 @@
+// src/pages/Register.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // ✅ Re-enabled useNavigate
 import apiClient from "../api/axios"; 
-// import { useAuth } from '../context/AuthContext'; // We no longer need login
+import { useAuth } from '../context/AuthContext'; // ✅ Re-enabled useAuth
 import { motion } from 'framer-motion'; 
+
+// ✅ 1. Import Google Component
+import { GoogleLogin } from '@react-oauth/google';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState(''); // ✅ 1. Added confirm password
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(''); // ✅ 2. Added success state
-  // const navigate = useNavigate(); // No longer needed
-  // const { login } = useAuth(); // No longer needed
+  const [success, setSuccess] = useState('');
+  
+  // ✅ Re-enabled hooks for Google Login flow
+  const navigate = useNavigate(); 
+  const { login } = useAuth(); 
+
+  // ✅ 2. Handle Google Success
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    try {
+      const { credential } = credentialResponse;
+      
+      const response = await apiClient.post(
+        "/auth/google",
+        { token: credential },
+        { withCredentials: true }
+      );
+
+      // Google users are verified immediately, so we log them in
+      login(response.data);
+      navigate('/');
+
+    } catch (err) {
+      console.error("Google Sign Up Error:", err);
+      setError(err.response?.data?.message || "Google sign-up failed.");
+    }
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     
-    // ✅ 3. Added validation
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
@@ -39,10 +66,7 @@ const Register = () => {
         { withCredentials: true }
       );
       
-      // ✅ 4. Set success message instead of logging in
       setSuccess(response.data.message);
-      // login(response.data);
-      // navigate('/');
 
     } catch (err) {
       const message = err.response?.data?.message || 'Registration failed. Please try again.';
@@ -67,7 +91,6 @@ const Register = () => {
           </h2>
         </div>
 
-        {/* ✅ 5. Handle Success or Error Message */}
         {success ? (
           <div className="p-4 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 rounded-md text-center">
             <h3 className="font-bold text-lg">Success!</h3>
@@ -75,99 +98,123 @@ const Register = () => {
             <p className="mt-2">You may now close this page.</p>
           </div>
         ) : (
-          <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-            {error && (
-              <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md text-center">
-                {error}
+          <>
+            <form className="mt-8 space-y-6" onSubmit={handleRegister}>
+              {error && (
+                <div className="p-3 bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 rounded-md text-center">
+                  {error}
+                </div>
+              )}
+              <div className="rounded-md shadow-sm -space-y-px">
+                <div>
+                  <label htmlFor="name" className="sr-only">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="Full Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email-address" className="sr-only">
+                    Email address
+                  </label>
+                  <input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="sr-only">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="confirm-password" className="sr-only">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
               </div>
-            )}
-            <div className="rounded-md shadow-sm -space-y-px">
-              <div>
-                <label htmlFor="name" className="sr-only">
-                  Full Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  placeholder="Full Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="email-address" className="sr-only">
-                  Email address
-                </label>
-                <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {/* ✅ 6. Added Confirm Password Field */}
-              <div>
-                <label htmlFor="confirm-password" className="sr-only">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
-                  Already have an account? Sign in
-                </Link>
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
+                    Already have an account? Sign in
+                  </Link>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
+                    submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
+                  }`}
+                >
+                  {submitting ? 'Creating account...' : 'Sign up'}
+                </button>
+              </div>
+            </form>
+
+            {/* ✅ 3. Google Sign Up Button */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or sign up with</span>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setError("Google Sign Up Failed")}
+                  theme="filled_blue"
+                  shape="pill"
+                  text="signup_with"
+                  width="100%"
+                />
               </div>
             </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
-                  submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
-                }`}
-              >
-                {submitting ? 'Creating account...' : 'Sign up'}
-              </button>
-            </div>
-          </form>
+          </>
         )}
       </motion.div>
     </div>
