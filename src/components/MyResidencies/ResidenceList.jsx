@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaHome, FaLock, FaUnlock, FaEyeSlash, FaBullhorn, FaEdit, FaHistory, FaCheckCircle, FaSearch, FaStar } from 'react-icons/fa'; // Added FaSearch, FaStar
+import { FaHome, FaLock, FaUnlock, FaEyeSlash, FaBullhorn, FaEdit, FaHistory, FaCheckCircle, FaSearch, FaStar } from 'react-icons/fa'; 
 import apiClient from '../../utils/apiClient';
 import { decryptData } from '../../utils/secureVault';
 import AddCommunityPostModal from '../Community/AddCommunityPostModal';
@@ -25,6 +25,7 @@ const ResidenceList = ({ refreshTrigger }) => {
 
   const fetchHistory = async () => {
     try {
+      // ✅ This endpoint now uses ownerHash on the backend, but the frontend call remains the same.
       const { data } = await apiClient.get('/living-community/my-history');
       setHistory(data);
     } catch (error) {
@@ -37,6 +38,12 @@ const ResidenceList = ({ refreshTrigger }) => {
   const handleUnlock = (id, encryptedBlob) => {
     const pin = pinInputs[id];
     if (!pin) return alert("Please enter your Vault PIN.");
+    
+    // Safety check: if blob is missing/null (e.g. user skipped Step 3)
+    if (!encryptedBlob) {
+       return alert("No private data was saved for this residence.");
+    }
+
     const decrypted = decryptData(encryptedBlob, pin);
     if (decrypted) {
       setUnlockedVaults(prev => ({ ...prev, [id]: decrypted }));
@@ -128,6 +135,9 @@ const ResidenceList = ({ refreshTrigger }) => {
   const renderCard = (item, isPast = false) => {
     const isUnlocked = unlockedVaults[item._id];
     const privateDetails = isUnlocked ? unlockedVaults[item._id] : null;
+    
+    // Check if vault data actually exists (User might have skipped Step 3)
+    const hasPrivateData = !!item.privateData;
 
     return (
       <div key={item._id} className={`bg-white dark:bg-gray-800 border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow mb-4 ${isPast ? 'opacity-75 border-gray-200 dark:border-gray-700' : 'border-blue-100 dark:border-blue-800'}`}>
@@ -178,54 +188,60 @@ const ResidenceList = ({ refreshTrigger }) => {
           </div>
         </div>
 
-        {/* Vault Section */}
-        <div className="p-5 border-t border-gray-100 dark:border-gray-700 relative">
-          <div className="flex items-center gap-2 mb-3">
-            {isUnlocked ? <FaUnlock className="text-green-500"/> : <FaLock className="text-red-500"/>}
-            <h5 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Private Vault
-            </h5>
-          </div>
+        {/* Vault Section - Only show if private data exists */}
+        {hasPrivateData ? (
+          <div className="p-5 border-t border-gray-100 dark:border-gray-700 relative">
+            <div className="flex items-center gap-2 mb-3">
+              {isUnlocked ? <FaUnlock className="text-green-500"/> : <FaLock className="text-red-500"/>}
+              <h5 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                Private Vault
+              </h5>
+            </div>
 
-          {isUnlocked ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in">
-              <div>
-                <span className="block text-xs text-gray-500 dark:text-green-200">Unit Number</span>
-                <span className="font-mono font-bold text-gray-800 dark:text-green-100 text-lg">{privateDetails.unitNumber || 'N/A'}</span>
+            {isUnlocked ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-800 animate-in fade-in">
+                <div>
+                  <span className="block text-xs text-gray-500 dark:text-green-200">Unit Number</span>
+                  <span className="font-mono font-bold text-gray-800 dark:text-green-100 text-lg">{privateDetails.unitNumber || 'N/A'}</span>
+                </div>
+                {/* Note: Rent is now Public/Anonymous by default (in rentalDetails), 
+                   but if user saved old private rent or specific notes, show them here.
+                */}
+                <div className="md:col-span-3">
+                  <span className="block text-xs text-gray-500 dark:text-green-200">Private Notes</span>
+                  <p className="text-sm text-gray-700 dark:text-green-100 italic">"{privateDetails.notes || 'No notes'}"</p>
+                </div>
               </div>
-              <div>
-                <span className="block text-xs text-gray-500 dark:text-green-200">Rent Paid</span>
-                <span className="font-mono font-bold text-gray-800 dark:text-green-100 text-lg">KES {privateDetails.exactRent || '---'}</span>
+            ) : (
+              <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                <div className="flex-1 text-sm text-gray-500 dark:text-gray-400 italic flex items-center gap-2">
+                  <FaEyeSlash /> Data encrypted. {isPast ? 'Access archived data with PIN.' : 'Enter PIN to view.'}
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                  <input 
+                    type="password"
+                    placeholder="PIN"
+                    maxLength={4}
+                    className="w-24 px-3 py-2 text-center border rounded bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-white text-sm font-bold tracking-widest"
+                    value={pinInputs[item._id] || ''}
+                    onChange={(e) => handlePinChange(item._id, e.target.value)}
+                  />
+                  <button 
+                    onClick={() => handleUnlock(item._id, item.privateData)}
+                    className="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold hover:bg-gray-700 transition"
+                  >
+                    Unlock
+                  </button>
+                </div>
               </div>
-              <div className="md:col-span-3">
-                <span className="block text-xs text-gray-500 dark:text-green-200">Private Notes</span>
-                <p className="text-sm text-gray-700 dark:text-green-100 italic">"{privateDetails.notes || 'No notes'}"</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col md:flex-row gap-4 items-center bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <div className="flex-1 text-sm text-gray-500 dark:text-gray-400 italic flex items-center gap-2">
-                <FaEyeSlash /> Data encrypted. {isPast ? 'Access archived data with PIN.' : 'Enter PIN to view.'}
-              </div>
-              <div className="flex gap-2 w-full md:w-auto">
-                <input 
-                  type="password"
-                  placeholder="PIN"
-                  maxLength={4}
-                  className="w-24 px-3 py-2 text-center border rounded bg-white dark:bg-gray-900 dark:border-gray-600 dark:text-white text-sm font-bold tracking-widest"
-                  value={pinInputs[item._id] || ''}
-                  onChange={(e) => handlePinChange(item._id, e.target.value)}
-                />
-                <button 
-                  onClick={() => handleUnlock(item._id, item.privateData)}
-                  className="bg-gray-800 text-white px-4 py-2 rounded text-xs font-bold hover:bg-gray-700 transition"
-                >
-                  Unlock
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          // Fallback if no private vault data was set
+          <div className="p-5 border-t border-gray-100 dark:border-gray-700">
+             <p className="text-xs text-gray-400 italic text-center">No private vault data stored.</p>
+          </div>
+        )}
       </div>
     );
   };
@@ -237,7 +253,6 @@ const ResidenceList = ({ refreshTrigger }) => {
         {currentResidences.length > 0 ? (
            currentResidences.map(item => renderCard(item, false))
         ) : (
-           // Only show this small text if they have HISTORY but no CURRENT (e.g. only past tenants)
            history.length > 0 && <p className="text-gray-500 italic text-sm text-center py-4">No active residences.</p>
         )}
       </div>
