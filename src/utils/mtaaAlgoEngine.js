@@ -197,3 +197,61 @@ export const calculateProjectedCostOfLiving = (mtaaStats, lifestyle = 'Standard'
     }
   };
 };
+
+// --- 5. PERSONA MATCHING ENGINE (New) ---
+export const calculatePersonaMatches = (stats) => {
+  if (!stats) return [];
+
+  const breakdown = stats.breakdown; 
+  
+  const personas = [
+    {
+      name: 'Digital Nomad',
+      icon: '💻',
+      // High weight on water (staying home), Security, and Vibe (Amenities)
+      score: (breakdown.water * 0.3) + (breakdown.security * 0.3) + (breakdown.vibe * 0.4) 
+    },
+    {
+      name: 'Young Family',
+      icon: '👨‍👩‍👧',
+      // High weight on Security and Water
+      score: (breakdown.water * 0.4) + (breakdown.security * 0.5) + (breakdown.vibe * 0.1)
+    },
+    {
+      name: 'Student / Budget',
+      icon: '🎓',
+      // Needs Roads (Transport access) and Vibe (Cheap food/Kibandaski)
+      score: (breakdown.roads * 0.4) + (breakdown.vibe * 0.4) + (breakdown.security * 0.2) 
+    },
+    {
+      name: 'Party / Nightlife',
+      icon: '🎉',
+      // Tolerates noise (which usually lowers Vibe score in general algo), but likes Access
+      score: (breakdown.roads * 0.6) + (breakdown.security * 0.4) 
+    }
+  ];
+
+  // Return top 2 matches sorted by score
+  return personas.sort((a, b) => b.score - a.score).slice(0, 2);
+};
+
+// --- 6. TRUE COST BREAKDOWN VISUALIZER (New) ---
+export const calculateTrueCostBreakdown = (mtaaStats) => {
+  if (!mtaaStats || !mtaaStats.averages) return null;
+
+  const rent = mtaaStats.averages.rent;
+  const transport = (mtaaStats.averages.commutePeak + mtaaStats.averages.commuteOffPeak) * 22; 
+  const food = 15000; // Base estimate
+
+  const total = rent + transport + food;
+  if (total === 0) return null;
+
+  return {
+    total,
+    parts: [
+      { label: 'Rent', value: rent, color: 'bg-blue-500', width: (rent / total) * 100 },
+      { label: 'Transport', value: transport, color: 'bg-orange-400', width: (transport / total) * 100 },
+      { label: 'Food & Bills', value: food, color: 'bg-green-500', width: (food / total) * 100 }
+    ]
+  };
+};

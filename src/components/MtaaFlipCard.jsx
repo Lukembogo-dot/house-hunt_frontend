@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
@@ -8,6 +8,7 @@ import {
   FaBolt, FaCheckCircle, FaExclamationTriangle, FaWalking,
   FaCloudRain
 } from 'react-icons/fa';
+import { calculatePersonaMatches, calculateTrueCostBreakdown } from '../utils/mtaaAlgoEngine';
 
 // --- SHARED HELPER: Status Colors ---
 const getStatusColors = (type, value) => {
@@ -28,7 +29,32 @@ const getStatusColors = (type, value) => {
 
 const MtaaFlipCard = ({ property }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const score = property.mtaaScore; // Shortcut
+  const score = property.mtaaScore; 
+
+  // ✅ CALCULATE DERIVED INSIGHTS
+  // 1. Personas: Who matches this building?
+  const personas = useMemo(() => 
+    calculatePersonaMatches({ 
+        breakdown: { 
+            water: score.water?.includes('24/7') ? 100 : 50, 
+            security: parseFloat(score.security) * 20, // Convert 5 to 100
+            vibe: score.amenities?.supermarket ? 80 : 50, // Simple proxy
+            roads: score.roadCondition === 'Tarmac' ? 100 : 50 
+        }, 
+        averages: {} 
+    }), [score]
+  );
+
+  // 2. Cost Breakdown: What is the real monthly price?
+  const costBreakdown = useMemo(() => 
+    calculateTrueCostBreakdown({ 
+        averages: { 
+            rent: 0, // Visual placeholder since we don't have exact rent in this view context often
+            commutePeak: score.fare || 0, 
+            commuteOffPeak: score.fareOffPeak || 0 
+        } 
+    }), [score]
+  );
 
   return (
     <>
@@ -69,9 +95,12 @@ const MtaaFlipCard = ({ property }) => {
               </span>
               <span className="text-xs text-gray-500">for {property.unitType}</span>
           </div>
+          {/* ✅ PERSONA BADGES (New Feature) */}
           <div className="flex flex-wrap gap-2">
-              {property.badges.map((b, i) => (
-                <span key={i} className="text-[10px] font-bold uppercase bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 px-2.5 py-1 rounded-md border border-blue-100 dark:border-blue-800">{b}</span>
+              {personas.map((p, i) => (
+                <span key={i} className="text-[10px] font-bold uppercase bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 px-2.5 py-1 rounded-md border border-purple-100 dark:border-purple-800 flex items-center gap-1">
+                  {p.icon} {p.name}
+                </span>
               ))}
           </div>
         </div>
@@ -93,15 +122,19 @@ const MtaaFlipCard = ({ property }) => {
               layoutId={`card-${property.id}`}
               className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              <div className={`relative h-28 shrink-0 bg-gradient-to-br ${property.gradient} flex items-end p-6`}>
+              <div className={`relative h-28 shrink-0 bg-gradient-to-br ${property.gradient} flex items-end p-6 justify-between`}>
                  <div className="z-10 text-white w-full flex justify-between items-end">
                     <div>
                         <h2 className="text-3xl font-black drop-shadow-md leading-none mb-1">{property.title}</h2>
                         <p className="text-white/90 text-sm font-bold flex items-center gap-2"><FaMapMarkerAlt /> {property.location}</p>
                     </div>
-                    <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1 text-yellow-300 text-2xl font-black drop-shadow-sm">{property.rating} <FaStar className="text-xl" /></div>
-                        <span className="text-[10px] uppercase font-bold text-white/80">{property.reviews} Verified Reviews</span>
+                    {/* Persona Icons in Header */}
+                    <div className="flex gap-2 mb-1">
+                        {personas.map((p, i) => (
+                            <div key={i} className="bg-black/30 backdrop-blur-md text-white px-3 py-1 rounded-lg text-xs font-bold border border-white/10 flex items-center gap-1" title={`Good match for ${p.name}`}>
+                                {p.icon} {p.name}
+                            </div>
+                        ))}
                     </div>
                  </div>
                  <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 bg-black/20 text-white p-2 rounded-full hover:bg-black/40 transition backdrop-blur-sm"><FaTimes /></button>
@@ -110,118 +143,87 @@ const MtaaFlipCard = ({ property }) => {
 
               <div className="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900 space-y-6">
                  
-                 {/* UTILITIES */}
-                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h4 className="flex items-center gap-2 font-bold text-blue-700 dark:text-blue-400 text-sm uppercase mb-3"><FaWater /> Utilities</h4>
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                            <div className={`mt-1 p-1.5 rounded-full ${score.water.includes('24/7') ? 'bg-blue-100 text-blue-600' : 'bg-orange-100 text-orange-600'}`}>
-                                {score.water.includes('24/7') ? <FaCheckCircle size={12}/> : <FaExclamationTriangle size={12}/>}
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">Water availability is <span className="font-bold">{score.water}</span>.</p>
-                                {score.waterRationingSchedule && <p className="text-xs text-gray-500 mt-1">Rationing: <strong className="text-gray-700 dark:text-gray-300">{score.waterRationingSchedule}</strong>.</p>}
-                            </div>
+                 {/* 1. KEY METRICS ROW */}
+                 <div className="grid grid-cols-3 gap-3">
+                    <div className={`p-3 rounded-xl border ${score.water.includes('24/7') ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-orange-50 border-orange-100 text-orange-700'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                            <FaWater className="text-lg" />
+                            {score.water.includes('24/7') && <FaCheckCircle />}
                         </div>
-                        <div className="flex items-start gap-3 border-t border-gray-100 dark:border-gray-700 pt-3">
-                            <div className="mt-1 p-1.5 rounded-full bg-purple-100 text-purple-600"><FaWifi size={12}/></div>
-                            <div>
-                                <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">
-                                    Internet is generally <span className="font-bold">{score.internetSpeed || 'Reliable'}</span>.
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    Most popular provider: <strong className="text-gray-700 dark:text-gray-300">{score.internet || 'Safaricom/Zuku'}</strong>.
-                                </p>
-                            </div>
+                        <p className="text-[10px] uppercase font-bold opacity-70">Water</p>
+                        <p className="text-sm font-black leading-tight">{score.water}</p>
+                    </div>
+                    
+                    <div className="p-3 rounded-xl border bg-green-50 border-green-100 text-green-700">
+                        <div className="flex justify-between items-start mb-2">
+                            <FaShieldAlt className="text-lg" />
+                            <span className="text-xs font-black">{score.security}/5</span>
                         </div>
+                        <p className="text-[10px] uppercase font-bold opacity-70">Security</p>
+                        <p className="text-sm font-black leading-tight">{score.safeAtNight || 'Safe'}</p>
+                    </div>
+
+                    <div className="p-3 rounded-xl border bg-purple-50 border-purple-100 text-purple-700">
+                        <div className="flex justify-between items-start mb-2">
+                            <FaWifi className="text-lg" />
+                            <span className="text-xs font-black">{score.internetSpeed}</span>
+                        </div>
+                        <p className="text-[10px] uppercase font-bold opacity-70">Internet</p>
+                        <p className="text-sm font-black leading-tight">{score.internet || 'Fiber'}</p>
                     </div>
                  </div>
 
-                 {/* COMMUTE & ROADS */}
-                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h4 className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 text-sm uppercase mb-3"><FaBus /> Commute & Access</h4>
-                    <div className="flex justify-between items-center mb-3">
-                        <div className="text-center w-1/2 border-r border-gray-100 dark:border-gray-700">
-                            <span className="text-xs text-gray-500 block">Peak Fare</span>
-                            <span className="font-black text-lg text-gray-800 dark:text-white">{score.fare} KES</span>
-                        </div>
-                        <div className="text-center w-1/2">
-                            <span className="text-xs text-gray-500 block">Off-Peak</span>
-                            <span className="font-black text-lg text-green-600">{score.fareOffPeak || '--'} KES</span>
-                        </div>
-                    </div>
-                    {/* ✅ DISPLAY RAIN & ROADS */}
-                    <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-600">
-                        <p className="text-xs text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                            <FaRoad /> Condition: <strong>{score.roadCondition}</strong>
-                        </p>
-                        {score.rainySeason && score.rainySeason.length > 0 ? (
-                            <p className="text-xs text-orange-600 font-bold mt-1 flex items-center gap-2">
-                                <FaCloudRain /> During Rain: {score.rainySeason.join(', ')}
-                            </p>
-                        ) : (
-                            <p className="text-xs text-green-600 mt-1 flex items-center gap-2">
-                                <FaCheckCircle /> Roads remain passable when raining.
-                            </p>
-                        )}
-                    </div>
-                 </div>
-
-                 {/* SECURITY SECTION */}
-                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <div className="flex justify-between items-center mb-3">
-                        <h4 className="flex items-center gap-2 font-bold text-green-700 dark:text-green-400 text-sm uppercase">
-                           <FaShieldAlt /> Security & Safety
+                 {/* 2. TRUE COST OF LIVING (Visual Bar) */}
+                 {costBreakdown && (
+                     <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
+                        <h4 className="font-bold text-gray-800 dark:text-white text-sm mb-3 flex justify-between">
+                           <span>💰 True Monthly Cost</span>
+                           <span className="text-gray-400 font-normal text-xs">Est. Transport & Food added</span>
                         </h4>
-                        <span className="text-xs font-bold bg-green-50 text-green-700 px-2 py-1 rounded border border-green-100">
-                            Rated {score.security}/5
-                        </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                       Area is considered <strong className={score.safeAtNight?.includes('Unsafe') ? 'text-red-600' : 'text-green-600'}>{score.safeAtNight || 'Safe'}</strong> at night.
-                    </p>
-
-                    {score.securityFeatures && score.securityFeatures.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                            {score.securityFeatures.map((feat, idx) => (
-                                <span key={idx} className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded flex items-center gap-1">
-                                    <FaCheckCircle className="text-green-500 text-[10px]" /> {feat}
-                                </span>
+                        
+                        {/* Stacked Bar */}
+                        <div className="w-full h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex mb-2">
+                            {costBreakdown.parts.map((part, i) => (
+                                <div key={i} className={`h-full ${part.color}`} style={{ width: `${part.width}%` }} title={`${part.label}: ${part.value.toLocaleString()} KES`}></div>
                             ))}
                         </div>
-                    ) : (
-                        <p className="text-xs text-gray-400 italic">No specific security features listed.</p>
-                    )}
-                 </div>
-
-                 {/* VIBE & FOOD */}
-                 <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <h4 className="flex items-center gap-2 font-bold text-orange-700 dark:text-orange-400 text-sm uppercase mb-3"><FaShoppingBasket /> Vibe & Noise</h4>
-                    
-                    {/* NOISE SOURCES */}
-                    <div className="mb-4">
-                        <p className="text-sm text-gray-800 dark:text-white font-medium mb-1">
-                           Noise Level: {score.noiseLevel || 'Moderate'}
-                        </p>
-                        {score.noiseSources && score.noiseSources.length > 0 && (
-                            <p className="text-xs text-gray-500">
-                                Common sources: {score.noiseSources.join(', ')}
-                            </p>
-                        )}
-                    </div>
-
-                    {/* ✅ DISPLAY FOOD AMENITIES */}
-                    <div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400 block mb-2">Local Eats & Amenities</span>
-                        <div className="flex flex-wrap gap-2">
-                            {score.food && score.food.map(f => (
-                                <span key={f} className="text-xs px-2 py-1 bg-orange-50 text-orange-700 rounded border border-orange-100 font-medium">{f}</span>
-                            ))}
-                            {score.amenities?.kiosk && <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">Kiosk</span>}
-                            {score.amenities?.mamaMboga && <span className="text-xs px-2 py-1 bg-green-50 text-green-700 rounded">Mama Mboga</span>}
+                        
+                        {/* Legend */}
+                        <div className="flex justify-between text-xs text-gray-500">
+                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Rent</div>
+                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-orange-400"></div> Transport ({score.fare} KES/Trip)</div>
+                            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div> Food/Utils</div>
                         </div>
-                    </div>
+                     </div>
+                 )}
+
+                 {/* 3. LIFESTYLE & DETAILS */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase mb-2 flex items-center gap-2">
+                           <FaBus /> Commute
+                        </h4>
+                        <ul className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                            <li className="flex justify-between"><span>Condition:</span> <strong className="text-gray-900 dark:text-white">{score.roadCondition}</strong></li>
+                            {score.rainySeason?.length > 0 && (
+                                <li className="flex justify-between text-orange-600"><span>Rain:</span> <strong>{score.rainySeason[0]}</strong></li>
+                            )}
+                            <li className="flex justify-between"><span>Off-Peak Fare:</span> <strong className="text-green-600">{score.fareOffPeak} KES</strong></li>
+                        </ul>
+                     </div>
+
+                     <div className="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-300 text-xs uppercase mb-2 flex items-center gap-2">
+                           <FaShoppingBasket /> Vibe & Food
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                            {score.amenities?.supermarket && <span className="text-[10px] px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded font-bold">Supermarket Nearby</span>}
+                            {score.food && score.food.map((f, i) => (
+                                <span key={i} className="text-[10px] px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">{f}</span>
+                            ))}
+                            {score.noiseSources?.length > 0 && <span className="text-[10px] px-2 py-1 bg-red-50 text-red-600 rounded">Noise: {score.noiseSources[0]}</span>}
+                        </div>
+                     </div>
                  </div>
 
               </div>
