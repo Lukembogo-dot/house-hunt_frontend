@@ -3,9 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { FaSearch, FaFilter, FaBullhorn, FaMapMarkerAlt } from 'react-icons/fa';
 import apiClient from '../utils/apiClient';
 import CommunityPostCard from '../components/Community/CommunityPostCard'; 
-import BuildingReviewsSection from '../components/Community/BuildingReviewsSection'; // ✅ Import New Section
+import BuildingReviewsSection from '../components/Community/BuildingReviewsSection'; 
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; 
+import SeoInjector from '../components/SeoInjector'; // ✅ IMPORT
 
 const LivingCommunityFeed = () => {
   const [posts, setPosts] = useState([]);
@@ -14,14 +14,15 @@ const LivingCommunityFeed = () => {
   // Filters
   const [neighborhood, setNeighborhood] = useState('');
   const [category, setCategory] = useState('');
-  
-  // ✅ BUILDING MODE STATE
   const [buildingName, setBuildingName] = useState('');
+
+  // SEO State
+  const [seoConfig, setSeoConfig] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 1. Sync State with URL
+  // 1. Sync State with URL & Generate Dynamic SEO
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const urlNeighborhood = searchParams.get('neighborhood');
@@ -29,12 +30,31 @@ const LivingCommunityFeed = () => {
 
     if (urlNeighborhood) setNeighborhood(urlNeighborhood);
     if (urlBuilding) setBuildingName(decodeURIComponent(urlBuilding));
-    else setBuildingName(''); // Reset if removed from URL
+    else setBuildingName('');
+
+    // ✅ GENERATE DYNAMIC SEO CONFIG
+    const title = urlBuilding
+        ? `${urlBuilding} Reviews & Photos in ${urlNeighborhood || 'Nairobi'} | HouseHunt`
+        : urlNeighborhood 
+            ? `Living in ${urlNeighborhood}: Reviews, Security & Alerts | HouseHunt`
+            : 'Living Experience Feed: Real-time Neighborhood Updates';
+
+    const desc = urlBuilding
+        ? `Read verified tenant reviews for ${urlBuilding}. Check water reliability, internet speed, and security ratings before you move.`
+        : `Join the ${urlNeighborhood || 'Nairobi'} community. See real-time security alerts, water updates, and apartment reviews.`;
+
+    setSeoConfig({
+        metaTitle: title,
+        metaDescription: desc,
+        pagePath: `/living-feed${location.search}`, // Unique path for every filter combination
+        schemaDescription: desc
+    });
+
   }, [location]);
 
-  // 2. Fetch General Feed (Only if NOT in building mode)
+  // 2. Fetch Data
   useEffect(() => {
-    if (buildingName) return; // Stop fetching feed if showing specific building
+    if (buildingName) return; 
 
     const fetchPosts = async () => {
       setLoading(true);
@@ -56,29 +76,19 @@ const LivingCommunityFeed = () => {
     return () => clearTimeout(timeoutId);
   }, [neighborhood, category, buildingName]);
 
-  // --- Handlers ---
   const handleBackToFeed = () => {
-    // Remove building param, keep neighborhood
     navigate(`/living-feed?neighborhood=${neighborhood || ''}`);
   };
 
   const handleSwitchBuilding = (newName) => {
-    // Switch to neighbor building
     navigate(`/living-feed?neighborhood=${neighborhood || ''}&buildingName=${encodeURIComponent(newName)}`);
   };
 
-  // SEO
-  const pageTitle = buildingName
-    ? `${buildingName} Reviews - ${neighborhood || 'Nairobi'} | HouseHunt`
-    : neighborhood 
-      ? `Living in ${neighborhood}: Updates | HouseHunt Kenya`
-      : 'Living Experience Feed | HouseHunt Kenya';
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
-      <Helmet>
-        <title>{pageTitle}</title>
-      </Helmet>
+      
+      {/* ✅ INJECT DYNAMIC SEO */}
+      {seoConfig && <SeoInjector seo={seoConfig} />}
 
       {/* --- HERO HEADER --- */}
       <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white py-12 px-6 text-center relative overflow-hidden">
@@ -97,7 +107,7 @@ const LivingCommunityFeed = () => {
               to="/profile" 
               className="bg-white text-blue-600 px-6 py-3 rounded-full font-bold text-sm hover:bg-blue-50 transition shadow-lg flex items-center gap-2 transform hover:-translate-y-1"
             >
-              <FaBullhorn /> {buildingName ? 'Write Review' : 'Post Update'}
+              <FaBullhorn /> {buildingName ? 'Review this Building' : 'Post Update'}
             </Link>
           </div>
         </div>
@@ -105,9 +115,7 @@ const LivingCommunityFeed = () => {
 
       <div className="container mx-auto px-4 md:px-8 -mt-8 relative z-20">
         
-        {/* ✅ VIEW SWITCHER LOGIC */}
         {buildingName ? (
-            // A. BUILDING SPECIFIC VIEW
             <BuildingReviewsSection 
                 buildingName={buildingName}
                 neighborhood={neighborhood}
@@ -115,10 +123,9 @@ const LivingCommunityFeed = () => {
                 onSwitchBuilding={handleSwitchBuilding}
             />
         ) : (
-            // B. GENERAL COMMUNITY FEED VIEW (Original Layout)
             <div className="flex flex-col lg:flex-row gap-8">
               
-              {/* Left: Filters */}
+              {/* Filters */}
               <div className="lg:w-1/4">
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-5 sticky top-24 border border-gray-100 dark:border-gray-700">
                   <h3 className="font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-2">
@@ -134,7 +141,10 @@ const LivingCommunityFeed = () => {
                           placeholder="e.g. Kilimani"
                           className="w-full pl-9 p-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                           value={neighborhood}
-                          onChange={(e) => setNeighborhood(e.target.value)}
+                          onChange={(e) => {
+                              setNeighborhood(e.target.value);
+                              if (!e.target.value) handleBackToFeed();
+                          }}
                         />
                       </div>
                     </div>
@@ -155,7 +165,7 @@ const LivingCommunityFeed = () => {
                 </div>
               </div>
 
-              {/* Right: The Feed */}
+              {/* Feed */}
               <div className="lg:w-2/4">
                 {loading ? (
                   <div className="space-y-4">
@@ -187,7 +197,7 @@ const LivingCommunityFeed = () => {
                 )}
               </div>
 
-              {/* Far Right: Promo */}
+              {/* Promo */}
               <div className="hidden lg:block lg:w-1/4">
                  <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl p-6 text-white shadow-lg sticky top-24">
                     <h4 className="font-bold mb-2 text-lg">Earn Mtaa Points</h4>

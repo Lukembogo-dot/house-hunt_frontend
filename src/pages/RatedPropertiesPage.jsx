@@ -9,6 +9,7 @@ import apiClient from '../utils/apiClient';
 import MtaaFlipCard from '../components/MtaaFlipCard';
 import { toast } from 'react-hot-toast';
 import { calculateAdvancedMtaaScore } from '../utils/mtaaAlgoEngine'; 
+import SeoInjector from '../components/SeoInjector'; // ✅ IMPORT SEO ENGINE
 
 // --- 1. PROMO CARD ---
 const PassportPromoCard = () => (
@@ -171,6 +172,15 @@ const RatedPropertiesPage = () => {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ SEO CONFIG
+  const seoConfig = {
+    metaTitle: "Rated Properties in Nairobi | The Reliability Index",
+    metaDescription: "See verified tenant reviews for apartments in Nairobi. Check water consistency, internet speeds, and security ratings before you move.",
+    pagePath: "/rated-properties",
+    schemaDescription: "A database of aggregated tenant reviews for residential buildings in Nairobi, ranked by reliability scores.",
+    focusKeyword: "Apartment Reviews Nairobi"
+  };
+
   useEffect(() => {
     const fetchRealData = async () => {
       try {
@@ -203,9 +213,14 @@ const RatedPropertiesPage = () => {
             };
 
             const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
-            // ✅ AGGREGATE WATER SOURCE
-            const waterSourceList = items.map(i => i.utilities?.waterSource).filter(Boolean);
-            const modeWaterSource = getMode(waterSourceList) || 'Council Water';
+            
+            const waterSourceList = items.map(i => {
+                if (i.utilities?.waterSource) return i.utilities.waterSource;
+                if (i.utilities?.waterConsistency?.toLowerCase().includes('borehole')) return 'Borehole';
+                if (i.utilities?.waterConsistency?.toLowerCase().includes('council')) return 'Council Water';
+                return 'Council Water'; 
+            }).filter(Boolean);
+            const modeWaterSource = getMode(waterSourceList);
 
             const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
             const speedList = items.map(i => i.utilities?.internetSpeed).filter(Boolean);
@@ -220,6 +235,7 @@ const RatedPropertiesPage = () => {
 
             const allSecurityFeatures = [...new Set(items.flatMap(i => i.security?.features || []))];
             const allRainFeatures = [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))];
+            
             const allFoodAmenities = [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))];
             const allNoiseSources = [...new Set(items.flatMap(i => i.amenities?.noiseSources || []))];
 
@@ -228,8 +244,10 @@ const RatedPropertiesPage = () => {
             const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
             const modeUnitType = getMode(unitTypes) || '1 Bedroom'; 
 
-            // ✅ AGGREGATE SUPERMARKET (Boolean Consensus)
-            const hasSupermarket = items.filter(i => i.amenities?.supermarketNearby).length > count / 2;
+            // Calculate Supermarket Consensus
+            const supermarketCount = items.filter(i => i.amenities?.supermarketNearby).length;
+            const hasSupermarket = (supermarketCount / count) > 0.3; 
+
             const hasKiosk = items.filter(i => i.amenities?.proximityToKiosk).length > count / 2;
             const hasMamaMboga = items.filter(i => i.amenities?.proximityToMamaMboga).length > count / 2;
             const hasKibandaski = items.filter(i => i.amenities?.proximityToKibandaski).length > count / 2;
@@ -249,10 +267,9 @@ const RatedPropertiesPage = () => {
                 image: items[0].photos?.[0] || null, 
                 badges: count > 2 ? ["Verified", "Trending"] : ["New Entry"],
                 
-                // ✅ ENRICHED SCORE OBJECT
                 mtaaScore: {
                     water: getMode(waterList) || 'Unknown',
-                    waterSource: modeWaterSource, // ✅ Passed to card
+                    waterSource: modeWaterSource, 
                     waterRationingSchedule: getMode(items.map(i => i.utilities?.waterRationingSchedule).filter(Boolean)),
                     
                     internet: getMode(netList) || 'Unknown',
@@ -272,10 +289,9 @@ const RatedPropertiesPage = () => {
                     noiseLevel: getMode(noiseList) || 'Moderate',
                     noiseSources: allNoiseSources, 
                     
-                    // ✅ Passed properly
                     food: allFoodAmenities, 
                     amenities: {
-                       supermarket: hasSupermarket, // ✅ Passed to card
+                       supermarket: hasSupermarket,
                        kiosk: hasKiosk,
                        mamaMboga: hasMamaMboga,
                        kibandaski: hasKibandaski
@@ -302,6 +318,10 @@ const RatedPropertiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 pt-10">
+      
+      {/* ✅ INJECT GLOBAL SEO ENGINE */}
+      <SeoInjector seo={seoConfig} />
+
       <div className="container mx-auto px-6 md:px-10">
         
         <div className="mb-10 text-center max-w-2xl mx-auto">
