@@ -154,6 +154,7 @@ const MtaaBattleArena = () => {
   );
 };
 
+// --- HELPER: Gradient ---
 const getBuildingGradient = (name) => {
   const gradients = [
     'from-blue-500 via-indigo-500 to-purple-600',
@@ -186,10 +187,8 @@ const RatedPropertiesPage = () => {
             const items = group.items;
             const count = items.length;
             
-            // ✅ USE ALGO ENGINE for Base Scores
             const algoStats = calculateAdvancedMtaaScore(items);
 
-            // --- HELPER: Mode Calculation ---
             const getMode = (arr) => {
                 if (arr.length === 0) return null;
                 const modeMap = {};
@@ -203,71 +202,72 @@ const RatedPropertiesPage = () => {
                 return maxEl;
             };
 
-            // --- DATA AGGREGATION ---
             const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
             const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
             
-            // ✅ Internet Reliability Average
+            // ✅ AGGREGATE NEW FIELDS
+            const speedList = items.map(i => i.utilities?.internetSpeed).filter(Boolean);
+            const modeSpeed = getMode(speedList) || 'Not listed';
+
             const netRelList = items.map(i => i.utilities?.internetReliability).filter(n => n > 0);
-            const avgNetRel = netRelList.length > 0 
-                ? Math.round(netRelList.reduce((a, b) => a + b, 0) / netRelList.length) 
-                : 3;
+            const avgNetRel = netRelList.length > 0 ? Math.round(netRelList.reduce((a, b) => a + b, 0) / netRelList.length) : 3;
 
             const roadList = items.map(i => i.accessibility?.roadCondition).filter(Boolean);
-            const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
             const safeNightList = items.map(i => i.security?.safeAtNight).filter(Boolean);
+            const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
 
-            // ✅ Collect ALL Security Features reported
-            const allFeatures = items.flatMap(i => i.security?.features || []);
-            const uniqueSecurityFeatures = [...new Set(allFeatures)];
+            // ✅ Collect ALL Unique Tags
+            const allSecurityFeatures = [...new Set(items.flatMap(i => i.security?.features || []))];
+            const allRainFeatures = [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))];
+            const allFoodAmenities = [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))];
+            const allNoiseSources = [...new Set(items.flatMap(i => i.amenities?.noiseSources || []))];
 
             const opinionList = items.map(i => i.rentalDetails?.rentOpinion).filter(Boolean);
             const modeOpinion = getMode(opinionList) || 'Fair Value';
-            
             const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
             const modeUnitType = getMode(unitTypes) || '1 Bedroom'; 
 
-            const hasKiosk = items.filter(i => i.amenities?.proximityToKiosk).length > count / 2;
-            const hasMamaMboga = items.filter(i => i.amenities?.proximityToMamaMboga).length > count / 2;
-            const hasKibandaski = items.filter(i => i.amenities?.proximityToKibandaski).length > count / 2;
+            const securityScore100 = algoStats?.breakdown?.security || 0;
+            const securityRating5 = (securityScore100 / 20).toFixed(1);
 
             return {
                 id: items[0]._id, 
                 title: group.name,
                 location: items[0].location?.neighborhood || 'Nairobi',
-                
-                // Score & Reviews
                 rating: algoStats ? algoStats.mtaaIndex : 0, 
                 reviews: count,
-                
                 rentOpinion: modeOpinion,
                 unitType: modeUnitType,
                 gradient: getBuildingGradient(group.name),
                 image: items[0].photos?.[0] || null, 
                 badges: count > 2 ? ["Verified", "Trending"] : ["New Entry"],
                 
-                // ✅ FULL BREAKDOWN FOR CARD
+                // ✅ ENRICHED SCORE OBJECT
                 mtaaScore: {
                     water: getMode(waterList) || 'Unknown',
+                    waterRationingSchedule: getMode(items.map(i => i.utilities?.waterRationingSchedule).filter(Boolean)),
+                    
                     internet: getMode(netList) || 'Unknown',
-                    internetReliability: avgNetRel, // ✅ Added
+                    internetSpeed: modeSpeed, // ✅
+                    internetReliability: avgNetRel, 
+                    
                     fare: algoStats?.averages?.commutePeak || 0, 
-                    fareOffPeak: 0, 
+                    fareOffPeak: algoStats?.averages?.commuteOffPeak || 0, 
+                    
                     roadCondition: getMode(roadList) || 'Tarmac',
-                    security: algoStats?.breakdown?.security || 0,
+                    rainySeason: allRainFeatures, // ✅
+                    
+                    security: securityRating5, 
                     safeAtNight: getMode(safeNightList) || 'Safe',
-                    securityFeatures: uniqueSecurityFeatures, // ✅ Added
+                    securityFeatures: allSecurityFeatures, 
+                    
                     noiseLevel: getMode(noiseList) || 'Moderate',
-                    amenities: {
-                       kiosk: hasKiosk,
-                       mamaMboga: hasMamaMboga,
-                       kibandaski: hasKibandaski
-                    }
+                    noiseSources: allNoiseSources, // ✅
+                    food: allFoodAmenities, // ✅
                 }
             };
         });
 
-        // ✅ SORT BY SCORE (DESCENDING) THEN BY REVIEWS
         const sorted = aggregatedBuildings.sort((a, b) => {
             if (b.rating !== a.rating) return b.rating - a.rating; 
             return b.reviews - a.reviews; 
@@ -308,7 +308,6 @@ const RatedPropertiesPage = () => {
             <PassportPromoCard />
             {properties.map((property, index) => (
               <div key={property.id} className="relative">
-                {/* #1 RANK BADGE */}
                 {index === 0 && property.rating > 0 && (
                   <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
                     <FaCrown className="text-4xl text-yellow-400 drop-shadow-lg animate-bounce" />
@@ -317,8 +316,6 @@ const RatedPropertiesPage = () => {
                     </span>
                   </div>
                 )}
-
-                {/* HIGHLIGHT BORDER FOR TOP RATED */}
                 <div className={index === 0 ? "ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-900 rounded-2xl" : ""}>
                    <MtaaFlipCard property={property} />
                 </div>

@@ -1,6 +1,4 @@
-// src/utils/mtaaAlgoEngine.js
-
-// --- HOUSEHUNT PROPRIETARY ALGORITHM ENGINE (FRONTEND MIRROR) ---
+// --- HOUSEHUNT PROPRIETARY ALGORITHM ENGINE ---
 // This engine calculates the "Mtaa Score" and "Cost of Living" 
 // based on weighted consensus and time-decayed user reviews.
 
@@ -13,41 +11,40 @@ const WEIGHTS = {
 
 // --- 1. SCORING MAPS (The Knowledge Base) ---
 const SCORES = {
-  WATER: {
-    '24/7 Council Water': 100,
-    'Rationed (Weekly)': 65, // Manageable with tanks
-    'Borehole Only (Salty)': 45,
-    'Frequent Shortages': 10
+  WATER_CONSISTENCY: {
+    '24/7': 100,
+    '24/7 Council Water': 100, // Backward compatibility
+    'Rationed (Weekly)': 60,
+    'Frequent Shortages': 10,
+    'Rare/Unpredictable': 20
+  },
+  // Multiplier: How drinkable/usable is it?
+  WATER_QUALITY_PENALTY: {
+    'Fresh': 1.0,          // Perfect
+    'Slightly Salty': 0.8, // 20% Penalty (Usable for washing)
+    'Salty': 0.5           // 50% Penalty (Hard to live with)
   },
   ROAD: {
     'Tarmac': 100,
     'Cabro': 95,
-    'Murram (All Weather)': 60,
-    'Rough Road': 30,
-    'Muddy when raining': 10
+    'Murram (All Weather)': 65,
+    'Rough Road': 30
   },
   SECURITY_NIGHT: {
     'Very Safe': 100,
     'Safe until 10pm': 75,
     'Risky after dark': 40,
-    'Unsafe': 10
-  },
-  NOISE: {
-    'Silent': 100,
-    'Moderate': 70,
-    'Noisy (Club/Road)': 30
+    'Unsafe': 10,
+    'Unsafe (Avoid night walking)': 10
   }
 };
 
 // --- 2. TIME DECAY FUNCTION ---
 // Reviews lose 15% relevance every 3 months.
-// This ensures the "Mtaa Score" reflects the CURRENT reality.
 const calculateTimeWeight = (date) => {
   const now = new Date();
   const reviewDate = new Date(date);
   const diffMonths = (now.getFullYear() - reviewDate.getFullYear()) * 12 + (now.getMonth() - reviewDate.getMonth());
-  
-  // Decay formula: Weight = 1 / (1 + 0.15 * months)
   return Math.max(0.1, 1 / (1 + 0.15 * diffMonths));
 };
 
@@ -57,63 +54,105 @@ export const calculateAdvancedMtaaScore = (experiences) => {
 
   let scoreWater = 0, scoreSecurity = 0, scoreAccess = 0, scoreAmenities = 0;
   let totalWeight = 0;
-
-  // Aggregate Data Buckets
+  
   let rentSum = 0, rentCount = 0;
   let farePeakSum = 0, fareOffPeakSum = 0, fareCount = 0;
 
   experiences.forEach(exp => {
     const timeWeight = calculateTimeWeight(exp.createdAt);
     
-    // A. Water Score
-    const waterVal = SCORES.WATER[exp.utilities?.waterConsistency] || 0;
-    scoreWater += (waterVal * timeWeight);
+    // --- A. WATER SCORE (Advanced Logic) ---
+    // 1. Base Score from Consistency
+    let waterBase = SCORES.WATER_CONSISTENCY[exp.utilities?.waterConsistency] || 50;
+    
+    // 2. Adjust for Rationing Schedule (If Rationed)
+    const schedule = exp.utilities?.waterRationingSchedule;
+    if (schedule === '1-2 Days/Week') waterBase += 10; // Not too bad
+    if (schedule === 'Weekends Only') waterBase += 5;  // Predictable
+    if (schedule === '3-4 Days/Week') waterBase -= 10; // Annoying
+    if (schedule === 'Weekdays Only') waterBase -= 5;
 
-    // B. Security Score (Base Rating + Night Factor)
-    const baseSec = (exp.security?.rating || 3) * 20; // Convert 1-5 to 0-100
+    // 3. Apply Quality Penalty
+    const qualityMultiplier = SCORES.WATER_QUALITY_PENALTY[exp.utilities?.waterQuality] || 1.0;
+    
+    // Final Water Calculation
+    scoreWater += (waterBase * qualityMultiplier * timeWeight);
+
+
+    // --- B. SECURITY SCORE ---
+    // 1. Base Rating (User's 1-5 Star Rating)
+    const baseSec = (exp.security?.rating || 3) * 20; 
+    
+    // 2. Night Safety Factor
     const nightSec = SCORES.SECURITY_NIGHT[exp.security?.safeAtNight] || 50;
-    const combinedSec = (baseSec * 0.6) + (nightSec * 0.4); // 60% Rating, 40% Night Safety
+    
+    // 3. Feature Bonus (Tangible Security)
+    let featureBonus = 0;
+    const feats = exp.security?.features || [];
+    if (feats.includes('Electric Fence')) featureBonus += 5;
+    if (feats.includes('24h Guard') || feats.includes('Night Guard')) featureBonus += 5;
+    if (feats.includes('Biometric') || feats.includes('Biometric Entry')) featureBonus += 5;
+    if (feats.includes('CCTV')) featureBonus += 3;
+
+    // Weighted Mix: 60% Perception (Rating) + 40% Night Reality + Bonuses
+    const combinedSec = Math.min(100, (baseSec * 0.6) + (nightSec * 0.4) + featureBonus);
     scoreSecurity += (combinedSec * timeWeight);
 
-    // C. Accessibility Score
-    const roadVal = SCORES.ROAD[exp.accessibility?.roadCondition] || 50;
-    scoreAccess += (roadVal * timeWeight);
 
-    // D. Amenities Score (Bonus Points)
-    let amenityPoints = 50; // Start at average
-    if (exp.amenities?.proximityToMamaMboga) amenityPoints += 15;
-    if (exp.amenities?.proximityToKiosk) amenityPoints += 10;
-    if (exp.amenities?.noiseLevel === 'Silent') amenityPoints += 25;
-    if (exp.amenities?.noiseLevel === 'Noisy (Club/Road)') amenityPoints -= 25;
+    // --- C. ACCESSIBILITY SCORE ---
+    let roadScore = SCORES.ROAD[exp.accessibility?.roadCondition] || 50;
+    
+    // Rainy Season Reality Check
+    const rainIssues = exp.accessibility?.rainySeasonFeatures || [];
+    if (rainIssues.includes('Flooded')) roadScore -= 30; // Major penalty
+    if (rainIssues.includes('Muddy')) roadScore -= 20;
+    if (rainIssues.includes('Slippery')) roadScore -= 10;
+    if (rainIssues.includes('Passable')) roadScore += 10;
+
+    scoreAccess += (Math.max(0, roadScore) * timeWeight);
+
+
+    // --- D. AMENITIES & VIBE SCORE ---
+    let amenityPoints = 50;
+    
+    // Food Access
+    if (exp.amenities?.supermarketNearby) amenityPoints += 15;
+    if (exp.amenities?.foodAmenities?.length > 2) amenityPoints += 10; // Vibrant street food scene
+    
+    // Noise Factor
+    const noise = exp.amenities?.noiseLevel;
+    if (noise === 'Silent') amenityPoints += 25;
+    if (noise === 'Moderate') amenityPoints += 10;
+    if (noise && noise.includes('Noisy')) amenityPoints -= 25;
+
     scoreAmenities += (amenityPoints * timeWeight);
 
-    // E. Cost Data (Unweighted averages, but filtered for valid numbers)
+
+    // --- E. AVERAGES (Rent & Fare) ---
     if (exp.rentalDetails?.monthlyRent > 0) {
       rentSum += exp.rentalDetails.monthlyRent;
       rentCount++;
     }
-    
-    // Fare Logic
     const peakFare = exp.accessibility?.matatuFarePeak;
     if (peakFare > 0) {
-      farePeakSum += peakFare;
-      // Use reported offpeak or fallback to peak if missing
-      fareOffPeakSum += (exp.accessibility.matatuFareOffPeak || peakFare);
-      fareCount++;
+        farePeakSum += peakFare;
+        // Use reported offpeak or fallback to peak if missing
+        fareOffPeakSum += (exp.accessibility?.matatuFareOffPeak || peakFare);
+        fareCount++;
     }
 
     totalWeight += timeWeight;
   });
 
-  // Prevent divide by zero
   if (totalWeight === 0) return null;
 
-  // Final Calculations
+  // Normalize Scores
   const finalWater = scoreWater / totalWeight;
   const finalSecurity = scoreSecurity / totalWeight;
   const finalAccess = scoreAccess / totalWeight;
   const finalAmenities = scoreAmenities / totalWeight;
 
+  // Calculate Master Index
   const mtaaIndex = Math.round(
     (finalWater * WEIGHTS.WATER) +
     (finalSecurity * WEIGHTS.SECURITY) +
@@ -122,7 +161,7 @@ export const calculateAdvancedMtaaScore = (experiences) => {
   );
 
   return {
-    mtaaIndex, // The "Master Score" (0-100)
+    mtaaIndex,
     breakdown: {
       water: Math.round(finalWater),
       security: Math.round(finalSecurity),
@@ -138,21 +177,19 @@ export const calculateAdvancedMtaaScore = (experiences) => {
 };
 
 // --- 4. COST OF LIVING PROJECTION ---
-export const calculateProjectedCostOfLiving = (mtaaData, lifestyle = 'Standard') => {
-  if (!mtaaData || !mtaaData.averages) return null;
+export const calculateProjectedCostOfLiving = (mtaaStats, lifestyle = 'Standard') => {
+  if (!mtaaStats || !mtaaStats.averages) return { estimatedTotal: 0 };
 
-  const avgRent = mtaaData.averages.rent;
-  const dailyFare = (mtaaData.averages.commutePeak + mtaaData.averages.commuteOffPeak); // Round trip
-  const monthlyTransport = dailyFare * 22; // 22 Work days
+  const avgRent = mtaaStats.averages.rent || 0;
+  // Estimate 22 working days x Round Trip
+  const monthlyTransport = (mtaaStats.averages.commutePeak + mtaaStats.averages.commuteOffPeak) * 22 || 0; 
 
   let foodBase = 15000; 
   if (lifestyle === 'Budget') foodBase = 10000;
   if (lifestyle === 'Premium') foodBase = 25000;
 
-  const estimatedTotal = avgRent + monthlyTransport + foodBase;
-
   return {
-    estimatedTotal,
+    estimatedTotal: avgRent + monthlyTransport + foodBase,
     breakdown: {
       rent: avgRent,
       transport: monthlyTransport,
