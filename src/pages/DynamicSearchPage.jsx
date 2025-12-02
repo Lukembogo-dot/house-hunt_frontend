@@ -1,9 +1,9 @@
 // src/pages/DynamicSearchPage.jsx
-// (UPDATED: Refined "Start a Buzz" logic based on Login Status)
+// (UPDATED: Fully wired to SeoInjector & SEO Manager)
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { useParams, Link, useLocation } from 'react-router-dom';
+// ❌ Removed manual Helmet import
 import apiClient from '../api/axios';
 import PropertyList from '../components/PropertyList';
 import { motion } from 'framer-motion';
@@ -12,11 +12,12 @@ import {
   FaQuestionCircle, FaChevronRight, FaExclamationTriangle, 
   FaBell, FaClipboardList, FaBullhorn, FaStar, FaUsers 
 } from 'react-icons/fa';
-import { generateDynamicLocationContent, generateFAQSchema } from '../utils/seoContentGenerator';
+import { generateDynamicLocationContent } from '../utils/seoContentGenerator'; // Removed generateFAQSchema (handled in Injector now)
 import SmartOwnerBanner from '../components/SmartOwnerBanner';
 import Breadcrumbs from '../components/Breadcrumbs';
 import PropertyAlertForm from '../components/PropertyAlertForm';
-import { useAuth } from '../context/AuthContext'; // ✅ Added Auth Hook
+import { useAuth } from '../context/AuthContext';
+import SeoInjector from '../components/SeoInjector'; // ✅ 1. Import Injector
 
 // Helper function
 const capitalize = (s) => {
@@ -26,11 +27,10 @@ const capitalize = (s) => {
     .join(' ');
 };
 
-// --- NO RESULTS DASHBOARD ---
+// ... [NoResultsDashboard Component - No Changes] ...
 const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-12">
-      {/* Header */}
       <div className="bg-blue-50 dark:bg-gray-700/50 p-8 text-center border-b border-blue-100 dark:border-gray-600">
         <FaExclamationTriangle className="text-5xl text-orange-500 mx-auto mb-4" />
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -40,9 +40,7 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
           Inventory moves fast! Don't waste time refreshing. Tell us what you want, and we'll notify you instantly when a match hits the market.
         </p>
       </div>
-
       <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x border-gray-100 dark:border-gray-700">
-        {/* Column 1: Demand Side (Alerts) */}
         <div className="p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-blue-100 text-blue-600 rounded-full">
@@ -58,8 +56,6 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
             compact={true} 
           />
         </div>
-
-        {/* Column 2: Supply Side (Agent CTA) */}
         <div className="p-8 bg-gray-50 dark:bg-gray-800/50 flex flex-col justify-center">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-green-100 text-green-600 rounded-full">
@@ -78,8 +74,6 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
           </Link>
         </div>
       </div>
-
-      {/* Footer: Nearby Links */}
       <div className="bg-gray-100 dark:bg-gray-900 p-6 border-t dark:border-gray-700">
         <p className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider mb-3 text-center">
           Or try these nearby locations
@@ -100,7 +94,7 @@ const NoResultsDashboard = ({ location, listingType, nearbyLocations }) => {
   );
 };
 
-// --- MARKET SNAPSHOT ---
+// ... [MarketSnapshot Component - No Changes] ...
 const MarketSnapshot = ({ stats, loading }) => {
   const StatCardSkeleton = () => (
     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 animate-pulse">
@@ -148,7 +142,8 @@ const MarketSnapshot = ({ stats, loading }) => {
 
 const DynamicSearchPage = () => {
   const { listingType, propertyType, location, bedrooms } = useParams();
-  const { user } = useAuth(); // ✅ Access Auth State
+  const { user } = useAuth();
+  const urlLocation = useLocation(); // Hook to get current path
   
   const filterOverrides = {
     listingType: listingType,
@@ -159,7 +154,10 @@ const DynamicSearchPage = () => {
 
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [seoData, setSeoData] = useState({ title: '', intro: '', marketInsight: '' });
+  
+  // ✅ 2. Unified SEO State
+  const [finalSeoData, setFinalSeoData] = useState(null);
+  
   const [locationFaqs, setLocationFaqs] = useState([]);
   const [communityInsights, setCommunityInsights] = useState([]);
 
@@ -171,33 +169,58 @@ const DynamicSearchPage = () => {
       try {
         const params = new URLSearchParams(filterOverrides);
         
-        const { data } = await apiClient.get(`/properties/stats?${params.toString()}`);
-        setStats(data);
+        // 1. Get Live Stats (Count, Avg Price)
+        const { data: statsData } = await apiClient.get(`/properties/stats?${params.toString()}`);
+        setStats(statsData);
 
+        // 2. Fetch Auxiliary Data (FAQs, Community)
         if (filterOverrides.location) {
           try {
             const [faqRes, insightRes] = await Promise.allSettled([
                 apiClient.get(`/faqs?search=${filterOverrides.location}`),
                 apiClient.get(`/community/location/${filterOverrides.location}`)
             ]);
-
             if (faqRes.status === 'fulfilled') setLocationFaqs(faqRes.value.data.slice(0, 3));
             if (insightRes.status === 'fulfilled') setCommunityInsights(insightRes.value.data);
-            
           } catch (e) { console.error("Auxiliary data fetch error", e); }
         } else {
           setLocationFaqs([]);
           setCommunityInsights([]);
         }
 
+        // ✅ 3. SEO GENERATION STRATEGY
+        // Step A: Generate Auto-Content (Baseline)
         const loc = filterOverrides.location || 'Nairobi';
-        const content = generateDynamicLocationContent(
+        const autoContent = generateDynamicLocationContent(
           loc,
           listingType || 'rent',
-          data.count || 0,
-          data.avgPrice || 0
+          statsData.count || 0,
+          statsData.avgPrice || 0
         );
-        setSeoData(content);
+
+        // Step B: Check for Admin Overrides from SEO Manager
+        let dbSeo = {};
+        try {
+            // Encode the full path (e.g., /search/rent/kilimani)
+            const currentPath = urlLocation.pathname;
+            const { data } = await apiClient.get(`/seo/${encodeURIComponent(currentPath)}`);
+            dbSeo = data;
+        } catch (e) {
+            // No custom override found, relying on auto-gen
+        }
+
+        // Step C: Merge (Admin DB > Auto-Gen)
+        setFinalSeoData({
+            metaTitle: dbSeo.metaTitle || autoContent.title,
+            metaDescription: dbSeo.metaDescription || autoContent.intro.substring(0, 160),
+            intro: autoContent.intro, // Usually kept dynamic
+            marketInsight: autoContent.marketInsight, // Kept dynamic based on stats
+            // Pass other SEO Manager fields if they exist
+            focusKeyword: dbSeo.focusKeyword || `${listingType} in ${loc}`,
+            canonicalUrl: dbSeo.canonicalUrl,
+            faqs: dbSeo.faqs || [], // If admin added custom FAQs for this page
+            pagePath: urlLocation.pathname // Required for SeoInjector to build Dataset Schema
+        });
 
       } catch (error) {
         console.error("Failed to fetch property stats:", error);
@@ -209,23 +232,15 @@ const DynamicSearchPage = () => {
     
     fetchStatsAndGenerateContent();
     
-  }, [listingType, propertyType, location, bedrooms]);
+  }, [listingType, propertyType, location, bedrooms, urlLocation.pathname]);
 
   const hasResults = stats && stats.count > 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
-      <Helmet>
-        <title>{seoData.title} | HouseHunt Kenya</title>
-        <meta name="description" content={seoData.intro} />
-        <meta name="robots" content="index, follow" />
-        <link rel="canonical" href={window.location.href} />
-        {stats && (
-            <script type="application/ld+json">
-              {generateFAQSchema(filterOverrides.location, listingType, stats.avgPrice)}
-            </script>
-        )}
-      </Helmet>
+      
+      {/* ✅ 4. SEO INJECTOR (Replaces Manual Helmet) */}
+      {finalSeoData && <SeoInjector seo={finalSeoData} />}
 
       <div className="container mx-auto max-w-6xl px-4 py-8">
         
@@ -240,16 +255,16 @@ const DynamicSearchPage = () => {
                   <div className="h-8 w-2/3 bg-gray-200 dark:bg-gray-700 animate-pulse rounded mb-4"></div>
               ) : (
                   <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
-                    {seoData.title}
+                    {finalSeoData?.metaTitle}
                   </h1>
               )}
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                {seoData.intro}
+                {finalSeoData?.intro}
               </p>
-              {seoData.marketInsight && !loadingStats && hasResults && (
+              {finalSeoData?.marketInsight && !loadingStats && hasResults && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r">
                   <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">Market Insight: {filterOverrides.location || 'Nairobi'}</h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-200">{seoData.marketInsight}</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-200">{finalSeoData.marketInsight}</p>
                 </div>
               )}
           </div>
@@ -303,7 +318,7 @@ const DynamicSearchPage = () => {
            />
         )}
 
-        {/* --- ✅ NEW: "START A BUZZ" CTA (Responsive Logic) --- */}
+        {/* --- "START A BUZZ" CTA --- */}
         <div className="my-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white text-center relative overflow-hidden">
           <div className="relative z-10">
             <div className="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -318,7 +333,6 @@ const DynamicSearchPage = () => {
             </p>
             
             <div className="flex flex-col md:flex-row gap-4 justify-center">
-              {/* ✅ DYNAMIC LOGIC: Profile if logged in, Feed if not */}
               <Link 
                 to={user ? "/profile" : "/living-feed"} 
                 className="inline-flex items-center justify-center gap-2 bg-yellow-400 text-purple-900 font-extrabold px-8 py-3 rounded-full shadow-md hover:bg-yellow-300 transition transform hover:scale-105"
@@ -335,8 +349,6 @@ const DynamicSearchPage = () => {
               </Link>
             </div>
           </div>
-          
-          {/* Decorative circles */}
           <div className="absolute top-0 left-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 right-0 w-48 h-48 bg-white opacity-10 rounded-full translate-x-1/3 translate-y-1/3"></div>
         </div>

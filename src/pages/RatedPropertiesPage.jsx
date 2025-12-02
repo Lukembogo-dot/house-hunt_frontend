@@ -203,9 +203,11 @@ const RatedPropertiesPage = () => {
             };
 
             const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
+            // ✅ AGGREGATE WATER SOURCE
+            const waterSourceList = items.map(i => i.utilities?.waterSource).filter(Boolean);
+            const modeWaterSource = getMode(waterSourceList) || 'Council Water';
+
             const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
-            
-            // ✅ AGGREGATE NEW FIELDS
             const speedList = items.map(i => i.utilities?.internetSpeed).filter(Boolean);
             const modeSpeed = getMode(speedList) || 'Not listed';
 
@@ -216,7 +218,6 @@ const RatedPropertiesPage = () => {
             const safeNightList = items.map(i => i.security?.safeAtNight).filter(Boolean);
             const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
 
-            // ✅ Collect ALL Unique Tags
             const allSecurityFeatures = [...new Set(items.flatMap(i => i.security?.features || []))];
             const allRainFeatures = [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))];
             const allFoodAmenities = [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))];
@@ -226,6 +227,12 @@ const RatedPropertiesPage = () => {
             const modeOpinion = getMode(opinionList) || 'Fair Value';
             const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
             const modeUnitType = getMode(unitTypes) || '1 Bedroom'; 
+
+            // ✅ AGGREGATE SUPERMARKET (Boolean Consensus)
+            const hasSupermarket = items.filter(i => i.amenities?.supermarketNearby).length > count / 2;
+            const hasKiosk = items.filter(i => i.amenities?.proximityToKiosk).length > count / 2;
+            const hasMamaMboga = items.filter(i => i.amenities?.proximityToMamaMboga).length > count / 2;
+            const hasKibandaski = items.filter(i => i.amenities?.proximityToKibandaski).length > count / 2;
 
             const securityScore100 = algoStats?.breakdown?.security || 0;
             const securityRating5 = (securityScore100 / 20).toFixed(1);
@@ -245,25 +252,34 @@ const RatedPropertiesPage = () => {
                 // ✅ ENRICHED SCORE OBJECT
                 mtaaScore: {
                     water: getMode(waterList) || 'Unknown',
+                    waterSource: modeWaterSource, // ✅ Passed to card
                     waterRationingSchedule: getMode(items.map(i => i.utilities?.waterRationingSchedule).filter(Boolean)),
                     
                     internet: getMode(netList) || 'Unknown',
-                    internetSpeed: modeSpeed, // ✅
+                    internetSpeed: modeSpeed,
                     internetReliability: avgNetRel, 
                     
                     fare: algoStats?.averages?.commutePeak || 0, 
                     fareOffPeak: algoStats?.averages?.commuteOffPeak || 0, 
                     
                     roadCondition: getMode(roadList) || 'Tarmac',
-                    rainySeason: allRainFeatures, // ✅
+                    rainySeason: allRainFeatures,
                     
                     security: securityRating5, 
                     safeAtNight: getMode(safeNightList) || 'Safe',
                     securityFeatures: allSecurityFeatures, 
                     
                     noiseLevel: getMode(noiseList) || 'Moderate',
-                    noiseSources: allNoiseSources, // ✅
-                    food: allFoodAmenities, // ✅
+                    noiseSources: allNoiseSources, 
+                    
+                    // ✅ Passed properly
+                    food: allFoodAmenities, 
+                    amenities: {
+                       supermarket: hasSupermarket, // ✅ Passed to card
+                       kiosk: hasKiosk,
+                       mamaMboga: hasMamaMboga,
+                       kibandaski: hasKibandaski
+                    }
                 }
             };
         });
