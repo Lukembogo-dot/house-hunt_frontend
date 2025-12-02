@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { FaShieldAlt, FaStar, FaBolt } from 'react-icons/fa';
+import { FaShieldAlt, FaStar, FaBolt, FaTrophy, FaFistRaised } from 'react-icons/fa';
 import apiClient from '../../utils/apiClient'; 
 
-const HeroStats = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+const HeroStats = ({ stats: propStats }) => {
+  const [stats, setStats] = useState(propStats || null);
+  const [loading, setLoading] = useState(!propStats);
 
   useEffect(() => {
+    // ✅ Optimization: Use props if provided by parent (MyProfile)
+    if (propStats) {
+        setStats(propStats);
+        setLoading(false);
+        return;
+    }
+
     const fetchAbilities = async () => {
       try {
         // Fetches from the new endpoint we made: /api/users/my-abilities
@@ -19,7 +26,7 @@ const HeroStats = () => {
       }
     };
     fetchAbilities();
-  }, []);
+  }, [propStats]);
 
   if (loading) return <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse"></div>;
   if (!stats) return null;
@@ -46,11 +53,24 @@ const HeroStats = () => {
           </div>
           <h2 className="text-4xl font-extrabold text-white mb-2">{stats.level}</h2>
           
-          <div className="flex items-center gap-2 text-sm font-medium opacity-90">
+          <div className="flex items-center gap-2 text-sm font-medium opacity-90 mb-4">
              <span className="bg-white/20 px-2 py-0.5 rounded text-white">{stats.score} XP</span>
              <span>•</span>
              <span>{pointsToNext} XP to {stats.nextMilestone?.level}</span>
           </div>
+
+          {/* ✅ NEW: Battle Stats Display */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
+                <FaTrophy className="text-yellow-400" />
+                <span className="text-sm font-bold">{stats.battleWins || 0} Wins</span>
+            </div>
+            <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
+                <FaFistRaised className="text-orange-400" />
+                <span className="text-sm font-bold">{stats.battleVotes || 0} Votes</span>
+            </div>
+          </div>
+
         </div>
 
         {/* Progress Bar */}

@@ -4,7 +4,8 @@ import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, u
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCalculator, FaMapMarkedAlt, FaChartLine, FaEnvelope } from "react-icons/fa"; 
-import { Helmet } from 'react-helmet-async'; 
+import { Helmet } from 'react-helmet-async';
+import { Toaster } from 'react-hot-toast'; // ✅ NEW IMPORT
 
 // --- Components ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -280,6 +281,9 @@ function MainLayout() {
 
   return (
     <div className="min-h-screen flex flex-col font-inter scroll-smooth bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
+      {/* ✅ ADDED TOASTER HERE */}
+      <Toaster position="top-center" reverseOrder={false} />
+      
       <AppHeader />
       <GlobalSchemaInjector />
       {previewRole && <PreviewBanner />}

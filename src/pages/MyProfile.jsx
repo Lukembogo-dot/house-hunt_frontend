@@ -97,7 +97,9 @@ const MyProfile = () => {
   const handleShare = async (platform) => {
     if (!gameData) return;
 
-    const shareText = `I'm a Level ${gameData.level} ${gameData.title || 'Contributor'} on HouseHunt Kenya! 🛡️ I've earned ${gameData.score} XP helping the community. Rate your building anonymously and join me!`;
+    // ✅ UPDATE: Include Battle Stats in Share Text
+    const battleText = gameData.battleWins > 0 ? ` & ${gameData.battleWins} Battle Wins 🏆` : '';
+    const shareText = `I'm a Level ${gameData.level} ${gameData.title || 'Contributor'} on HouseHunt Kenya! 🛡️ I've earned ${gameData.score} XP${battleText}. Rate your building anonymously and join me!`;
     const shareUrl = 'https://www.househuntkenya.co.ke';
 
     if (platform === 'native' && navigator.share) {

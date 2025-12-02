@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
-  FaStar, FaMapMarkerAlt, FaHome, FaShieldAlt, 
-  FaWater, FaWifi, FaBus, FaCheckCircle, FaSpinner,
-  FaCity, FaPassport, FaArrowRight, FaPlusCircle, FaTag
+  FaStar, FaHome, FaSpinner, FaPassport, FaArrowRight, FaPlusCircle, 
+  FaCheckCircle, FaCrown, FaTrophy, FaFire, FaFistRaised
 } from 'react-icons/fa';
 import apiClient from '../utils/apiClient';
 import MtaaFlipCard from '../components/MtaaFlipCard';
+import { toast } from 'react-hot-toast';
+import { calculateAdvancedMtaaScore } from '../utils/mtaaAlgoEngine'; 
 
-// --- PROMO CARD ---
+// --- 1. PROMO CARD ---
 const PassportPromoCard = () => (
   <div className="flex flex-col h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl overflow-hidden text-white relative group transform hover:-translate-y-1 transition-all duration-300 min-h-[24rem]">
     <FaPassport className="absolute text-white opacity-10 text-[12rem] -bottom-10 -right-10 rotate-12 group-hover:rotate-6 transition-transform duration-700" />
@@ -33,7 +34,126 @@ const PassportPromoCard = () => (
   </div>
 );
 
-// --- HELPER: Gradient ---
+// --- 2. MTAA BATTLE ARENA ---
+const MtaaBattleArena = () => {
+  const [battle, setBattle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchBattle = async () => {
+      try {
+        const { data } = await apiClient.get('/battles/active');
+        setBattle(data);
+      } catch (error) {
+        console.error("No active battle found", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBattle();
+  }, []);
+
+  const handleVote = async (neighborhood) => {
+    if (!user) {
+      toast.error("Please login to vote!");
+      navigate('/login');
+      return;
+    }
+    try {
+      const { data } = await apiClient.post(`/battles/${battle._id}/vote`, { neighborhood });
+      toast.success(`Voted for ${neighborhood}! (+${data.weightApplied} points)`);
+      
+      setBattle(prev => ({
+        ...prev,
+        contenders: prev.contenders.map(c => 
+          c.neighborhood === neighborhood 
+            ? { ...c, voteCount: (data.updatedCounts[neighborhood]) } 
+            : c
+        )
+      }));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Voting failed");
+    }
+  };
+
+  if (loading) return null;
+  if (!battle || !battle.contenders) return null;
+
+  const c1 = battle.contenders[0];
+  const c2 = battle.contenders[1];
+  const totalVotes = c1.voteCount + c2.voteCount || 1; 
+  const c1Percent = Math.round((c1.voteCount / totalVotes) * 100);
+  const c2Percent = 100 - c1Percent;
+
+  return (
+    <div className="w-full max-w-5xl mx-auto mb-12 transform hover:scale-[1.01] transition-transform duration-300">
+      <div className="bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-700 relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-900/40 to-blue-900/40 z-0"></div>
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-1 rounded-b-xl font-black text-xs uppercase tracking-widest shadow-lg z-20 flex items-center gap-2">
+          <FaTrophy /> Mtaa Battle of the Week
+        </div>
+
+        <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8 text-white">
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500 mb-2">
+              {c1.neighborhood}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-gray-300 justify-center md:justify-start mb-4">
+               <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c1.statsSnapshot?.waterScore || 50}%</span>
+               <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c1.statsSnapshot?.securityScore || 50}%</span>
+            </div>
+            <button 
+              onClick={() => handleVote(c1.neighborhood)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-8 rounded-full shadow-lg shadow-red-900/50 transition flex items-center gap-2 mx-auto md:mx-0"
+            >
+              <FaFire /> Vote {c1.neighborhood}
+            </button>
+          </div>
+
+          <div className="shrink-0">
+             <div className="w-20 h-20 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center shadow-xl">
+                <span className="font-black text-2xl text-gray-400 italic">VS</span>
+             </div>
+          </div>
+
+          <div className="flex-1 text-center md:text-right">
+            <h3 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-500 mb-2">
+              {c2.neighborhood}
+            </h3>
+            <div className="flex items-center gap-2 text-sm text-gray-300 justify-center md:justify-end mb-4">
+               <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c2.statsSnapshot?.waterScore || 50}%</span>
+               <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c2.statsSnapshot?.securityScore || 50}%</span>
+            </div>
+            <button 
+              onClick={() => handleVote(c2.neighborhood)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-full shadow-lg shadow-blue-900/50 transition flex items-center gap-2 mx-auto md:ml-auto md:mr-0"
+            >
+              Vote {c2.neighborhood} <FaFistRaised />
+            </button>
+          </div>
+        </div>
+
+        <div className="relative h-4 w-full bg-gray-800">
+          <div 
+             className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-red-600 transition-all duration-1000 ease-out"
+             style={{ width: `${c1Percent}%` }}
+          ></div>
+          <div 
+             className="absolute top-0 right-0 h-full bg-gradient-to-l from-cyan-500 to-blue-600 transition-all duration-1000 ease-out"
+             style={{ width: `${c2Percent}%` }}
+          ></div>
+          <div className="absolute inset-0 flex justify-between px-4 items-center text-[10px] font-bold text-white uppercase tracking-widest">
+            <span>{c1Percent}% Votes</span>
+            <span>{c2Percent}% Votes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const getBuildingGradient = (name) => {
   const gradients = [
     'from-blue-500 via-indigo-500 to-purple-600',
@@ -66,7 +186,10 @@ const RatedPropertiesPage = () => {
             const items = group.items;
             const count = items.length;
             
-            // Helper to find the most common value (Mode)
+            // ✅ USE ALGO ENGINE for Base Scores
+            const algoStats = calculateAdvancedMtaaScore(items);
+
+            // --- HELPER: Mode Calculation ---
             const getMode = (arr) => {
                 if (arr.length === 0) return null;
                 const modeMap = {};
@@ -80,31 +203,30 @@ const RatedPropertiesPage = () => {
                 return maxEl;
             };
 
-            const totalRating = items.reduce((sum, item) => sum + (item.review?.rating || 0), 0);
-            const totalSecurity = items.reduce((sum, item) => sum + (item.security?.rating || 0), 0);
-            
-            // Transport Aggregation
-            const totalFare = items.reduce((sum, item) => sum + (item.accessibility?.matatuFarePeak || 0), 0);
-            const validFareCount = items.filter(i => i.accessibility?.matatuFarePeak > 0).length;
-            
-            const totalOffPeak = items.reduce((sum, item) => sum + (item.accessibility?.matatuFareOffPeak || 0), 0);
-            const validOffPeakCount = items.filter(i => i.accessibility?.matatuFareOffPeak > 0).length;
-
+            // --- DATA AGGREGATION ---
             const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
             const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
+            
+            // ✅ Internet Reliability Average
+            const netRelList = items.map(i => i.utilities?.internetReliability).filter(n => n > 0);
+            const avgNetRel = netRelList.length > 0 
+                ? Math.round(netRelList.reduce((a, b) => a + b, 0) / netRelList.length) 
+                : 3;
+
             const roadList = items.map(i => i.accessibility?.roadCondition).filter(Boolean);
             const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
             const safeNightList = items.map(i => i.security?.safeAtNight).filter(Boolean);
 
-            // Opinion Mode
+            // ✅ Collect ALL Security Features reported
+            const allFeatures = items.flatMap(i => i.security?.features || []);
+            const uniqueSecurityFeatures = [...new Set(allFeatures)];
+
             const opinionList = items.map(i => i.rentalDetails?.rentOpinion).filter(Boolean);
             const modeOpinion = getMode(opinionList) || 'Fair Value';
             
-            // Unit Type Mode
             const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
             const modeUnitType = getMode(unitTypes) || '1 Bedroom'; 
 
-            // Amenities Consensus (True if > 50% report it)
             const hasKiosk = items.filter(i => i.amenities?.proximityToKiosk).length > count / 2;
             const hasMamaMboga = items.filter(i => i.amenities?.proximityToMamaMboga).length > count / 2;
             const hasKibandaski = items.filter(i => i.amenities?.proximityToKibandaski).length > count / 2;
@@ -113,27 +235,30 @@ const RatedPropertiesPage = () => {
                 id: items[0]._id, 
                 title: group.name,
                 location: items[0].location?.neighborhood || 'Nairobi',
-                rating: (totalRating / count).toFixed(1),
+                
+                // Score & Reviews
+                rating: algoStats ? algoStats.mtaaIndex : 0, 
                 reviews: count,
                 
-                // Passed to FlipCard Front
                 rentOpinion: modeOpinion,
                 unitType: modeUnitType,
                 gradient: getBuildingGradient(group.name),
                 image: items[0].photos?.[0] || null, 
                 badges: count > 2 ? ["Verified", "Trending"] : ["New Entry"],
                 
-                // Passed to FlipCard Back (Mtaa Score)
+                // ✅ FULL BREAKDOWN FOR CARD
                 mtaaScore: {
                     water: getMode(waterList) || 'Unknown',
                     internet: getMode(netList) || 'Unknown',
-                    fare: validFareCount > 0 ? Math.round(totalFare / validFareCount) : 0,
-                    fareOffPeak: validOffPeakCount > 0 ? Math.round(totalOffPeak / validOffPeakCount) : 0, // ✅ NEW
-                    roadCondition: getMode(roadList) || 'Tarmac', // ✅ NEW
-                    security: (totalSecurity / count).toFixed(1),
-                    safeAtNight: getMode(safeNightList) || 'Safe', // ✅ NEW
-                    noiseLevel: getMode(noiseList) || 'Moderate', // ✅ NEW
-                    amenities: { // ✅ NEW
+                    internetReliability: avgNetRel, // ✅ Added
+                    fare: algoStats?.averages?.commutePeak || 0, 
+                    fareOffPeak: 0, 
+                    roadCondition: getMode(roadList) || 'Tarmac',
+                    security: algoStats?.breakdown?.security || 0,
+                    safeAtNight: getMode(safeNightList) || 'Safe',
+                    securityFeatures: uniqueSecurityFeatures, // ✅ Added
+                    noiseLevel: getMode(noiseList) || 'Moderate',
+                    amenities: {
                        kiosk: hasKiosk,
                        mamaMboga: hasMamaMboga,
                        kibandaski: hasKibandaski
@@ -142,7 +267,13 @@ const RatedPropertiesPage = () => {
             };
         });
 
-        setProperties(aggregatedBuildings);
+        // ✅ SORT BY SCORE (DESCENDING) THEN BY REVIEWS
+        const sorted = aggregatedBuildings.sort((a, b) => {
+            if (b.rating !== a.rating) return b.rating - a.rating; 
+            return b.reviews - a.reviews; 
+        });
+
+        setProperties(sorted);
       } catch (error) {
         console.error("Error fetching rated properties:", error);
       } finally {
@@ -166,6 +297,8 @@ const RatedPropertiesPage = () => {
           </p>
         </div>
 
+        <MtaaBattleArena />
+
         {loading ? (
           <div className="flex justify-center items-center h-64">
              <FaSpinner className="animate-spin text-blue-600 text-4xl" />
@@ -173,8 +306,23 @@ const RatedPropertiesPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <PassportPromoCard />
-            {properties.map((property) => (
-              <MtaaFlipCard key={property.id} property={property} />
+            {properties.map((property, index) => (
+              <div key={property.id} className="relative">
+                {/* #1 RANK BADGE */}
+                {index === 0 && property.rating > 0 && (
+                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
+                    <FaCrown className="text-4xl text-yellow-400 drop-shadow-lg animate-bounce" />
+                    <span className="bg-yellow-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">
+                      Top Rated
+                    </span>
+                  </div>
+                )}
+
+                {/* HIGHLIGHT BORDER FOR TOP RATED */}
+                <div className={index === 0 ? "ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-900 rounded-2xl" : ""}>
+                   <MtaaFlipCard property={property} />
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -184,8 +332,8 @@ const RatedPropertiesPage = () => {
             <FaHome className="mx-auto text-gray-300 dark:text-gray-600 mb-4" size={48} />
             <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300">No Rated Properties Yet</h3>
             <p className="text-gray-500 mb-6">Be the first to create a Housing Passport and rate your apartment!</p>
-            <Link to="/community" className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition">
-               Add a Review
+            <Link to="/living-feed" className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition">
+               Create Passport
             </Link>
           </div>
         )}

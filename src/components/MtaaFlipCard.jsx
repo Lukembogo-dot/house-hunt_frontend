@@ -121,181 +121,149 @@ const MtaaFlipCard = ({ property }) => {
             {/* Modal Content */}
             <motion.div 
               layoutId={`card-${property.id}`}
-              className="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="relative w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-              {/* Modal Header */}
-              <div className={`relative h-40 bg-gradient-to-br ${property.gradient} flex items-center justify-center`}>
-                 <button 
-                   onClick={() => setIsOpen(false)}
-                   className="absolute top-4 right-4 bg-black/20 text-white p-2 rounded-full hover:bg-black/40 transition z-20"
-                 >
-                   <FaTimes />
-                 </button>
-                 <FaCity className="absolute text-white opacity-10 text-[12rem] -bottom-10 -left-10 rotate-12" />
-                 <div className="text-center z-10">
-                    <h2 className="text-3xl font-black text-white drop-shadow-md">{property.title}</h2>
-                    <p className="text-white/80 font-bold flex items-center justify-center gap-2 mt-1">
+              {/* Compact Header (Reduced Height) */}
+              <div className={`relative h-24 shrink-0 bg-gradient-to-br ${property.gradient} flex items-center px-6 justify-between`}>
+                 <div className="z-10 text-white">
+                    <h2 className="text-2xl font-black drop-shadow-md truncate max-w-md">{property.title}</h2>
+                    <p className="text-white/90 text-xs font-bold flex items-center gap-2">
                        <FaMapMarkerAlt /> {property.location}
                     </p>
                  </div>
-              </div>
-
-              {/* Scrollable Body */}
-              <div className="p-6 overflow-y-auto">
                  
-                 {/* Top Stats */}
-                 <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-3">
-                       <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-xl border border-blue-100 dark:border-blue-800">
-                          {property.rating}
-                       </div>
-                       <div>
-                          <p className="text-xs uppercase font-bold text-gray-400">Overall Rating</p>
-                          <div className="flex text-yellow-400 text-sm">
-                             {renderStars(Math.round(property.rating))}
-                          </div>
-                       </div>
-                    </div>
-                    <div className="text-right">
-                       <span className={`text-sm font-bold px-3 py-1 rounded-full border ${getStatusColors('opinion', property.rentOpinion)}`}>
+                 <div className="flex items-center gap-3 z-10">
+                    <div className="flex flex-col items-end">
+                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white`}>
                           {property.rentOpinion}
                        </span>
-                       <p className="text-xs text-gray-400 mt-1">Unit: {property.unitType}</p>
+                       <div className="flex items-center gap-1 text-yellow-300 text-xs mt-1">
+                          <span className="font-bold text-white text-lg leading-none">{property.rating}</span>
+                          <FaStar />
+                       </div>
                     </div>
+                    <button 
+                       onClick={() => setIsOpen(false)}
+                       className="bg-black/20 text-white p-2 rounded-full hover:bg-black/40 transition"
+                    >
+                       <FaTimes />
+                    </button>
                  </div>
+                 <FaCity className="absolute text-white opacity-10 text-[8rem] -bottom-4 -left-4 rotate-12" />
+              </div>
 
-                 {/* Detailed Grid */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Denser Grid Body */}
+              <div className="p-4 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900">
+                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     
-                    {/* Water Detail */}
-                    <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
-                       <h4 className="flex items-center gap-2 font-bold text-blue-800 dark:text-blue-300 mb-2">
-                          <FaWater /> Water Consistency
+                    {/* Water */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50 shadow-sm flex flex-col justify-between">
+                       <h4 className="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300 text-xs uppercase mb-1">
+                          <FaWater /> Water
                        </h4>
-                       <p className="text-2xl font-bold text-gray-800 dark:text-white mb-1">
-                          {property.mtaaScore.water}
-                       </p>
-                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {property.mtaaScore.water.includes('24/7') 
-                             ? "Reliable council water reported by tenants." 
-                             : "Tenants report rationing. Check for backup tanks."}
-                       </p>
+                       <div>
+                          <p className="text-sm font-bold text-gray-800 dark:text-white leading-tight">
+                             {property.mtaaScore.water}
+                          </p>
+                          <p className="text-[10px] text-gray-500 mt-1 leading-snug">
+                             {property.mtaaScore.water.includes('24/7') ? "Consistent supply." : "Rationing likely."}
+                          </p>
+                       </div>
                     </div>
 
-                    {/* Internet Detail */}
-                    <div className="bg-purple-50 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800">
-                       <h4 className="flex items-center gap-2 font-bold text-purple-800 dark:text-purple-300 mb-2">
-                          <FaWifi /> Internet Provider
+                    {/* Internet */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-purple-100 dark:border-purple-900/50 shadow-sm flex flex-col justify-between">
+                       <h4 className="flex items-center gap-1.5 font-bold text-purple-800 dark:text-purple-300 text-xs uppercase mb-1">
+                          <FaWifi /> Internet
                        </h4>
-                       <div className="flex justify-between items-end">
-                          <div>
-                             <p className="text-2xl font-bold text-gray-800 dark:text-white mb-1">
-                                {property.mtaaScore.internet}
-                             </p>
-                             <div className="flex gap-1 text-purple-400 text-xs">
-                                {renderStars(property.mtaaScore.internetReliability || 4)} 
-                             </div>
+                       <div>
+                          <p className="text-sm font-bold text-gray-800 dark:text-white leading-tight">
+                             {property.mtaaScore.internet}
+                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                             <div className="flex gap-0.5">{renderStars(property.mtaaScore.internetReliability || 4)}</div>
+                             <span className="text-[10px] font-bold text-purple-600">Fast</span>
                           </div>
-                          <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded font-bold">Fast</span>
                        </div>
                     </div>
 
-                    {/* Security Detail (Expanded) */}
-                    <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-800 md:col-span-2">
-                       <div className="flex justify-between items-start mb-3">
-                          <h4 className="flex items-center gap-2 font-bold text-green-800 dark:text-green-300">
-                             <FaShieldAlt /> Security & Safety
+                    {/* Security (Spans 1 col on mobile, 1 on desktop) */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-green-100 dark:border-green-900/50 shadow-sm flex flex-col justify-between">
+                       <div className="flex justify-between items-start">
+                          <h4 className="flex items-center gap-1.5 font-bold text-green-800 dark:text-green-300 text-xs uppercase">
+                             <FaShieldAlt /> Safety
                           </h4>
-                          <div className="text-right">
-                             <span className="text-xl font-bold text-green-700 dark:text-green-400 block">{property.mtaaScore.security}/5.0</span>
-                             <span className="text-[10px] text-gray-500 bg-white dark:bg-gray-800 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 flex items-center gap-1">
-                               <FaMoon className="text-blue-400"/> {property.mtaaScore.safeAtNight || 'Safe'}
-                             </span>
+                          <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-bold">{property.mtaaScore.security}/5</span>
+                       </div>
+                       <div className="mt-1">
+                          <div className="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-300 mb-1">
+                             <FaMoon className="text-blue-400 text-[8px]"/> {property.mtaaScore.safeAtNight || 'Safe'}
                           </div>
-                       </div>
-                       
-                       {/* Feature List */}
-                       <div className="flex flex-wrap gap-2">
-                          {(property.mtaaScore.securityFeatures && property.mtaaScore.securityFeatures.length > 0) ? (
-                             property.mtaaScore.securityFeatures.map((feat, i) => (
-                               <span key={i} className="flex items-center gap-1 text-xs font-bold bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg shadow-sm text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700">
-                                  <FaCheckCircle className="text-green-500" /> {feat}
-                               </span>
-                             ))
-                          ) : (
-                             <span className="text-xs text-gray-400 italic">No specific features reported.</span>
-                          )}
-                       </div>
-                    </div>
-
-                    {/* Transport Detail (Expanded) */}
-                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 md:col-span-2">
-                       <div className="flex justify-between items-center mb-4">
-                          <h4 className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300">
-                             <FaBus /> Transport & Roads
-                          </h4>
-                          <span className="flex items-center gap-1 text-xs bg-white dark:bg-gray-700 px-2 py-1 rounded border border-gray-200 dark:border-gray-600">
-                             <FaRoad /> {property.mtaaScore.roadCondition || 'Tarmac'}
-                          </span>
-                       </div>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-gray-100 dark:border-gray-600 text-center">
-                             <p className="text-[10px] uppercase font-bold text-gray-400">Peak Fare</p>
-                             <p className="text-lg font-black text-gray-800 dark:text-white">
-                                {property.mtaaScore.fare} <span className="text-xs font-normal text-gray-500">KES</span>
-                             </p>
-                          </div>
-                          <div className="bg-white dark:bg-gray-700 p-3 rounded-lg border border-gray-100 dark:border-gray-600 text-center">
-                             <p className="text-[10px] uppercase font-bold text-gray-400">Off-Peak</p>
-                             <p className="text-lg font-black text-green-600 dark:text-green-400">
-                                {property.mtaaScore.fareOffPeak || '--'} <span className="text-xs font-normal text-gray-500">KES</span>
-                             </p>
+                          <div className="flex overflow-x-auto gap-1 pb-1 no-scrollbar">
+                             {(property.mtaaScore.securityFeatures || ['Gate']).slice(0, 2).map((f,i) => (
+                                <span key={i} className="whitespace-nowrap text-[9px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">{f}</span>
+                             ))}
+                             {(property.mtaaScore.securityFeatures?.length > 2) && <span className="text-[9px] text-gray-400">+More</span>}
                           </div>
                        </div>
                     </div>
 
-                    {/* Amenities Detail (New) */}
-                    <div className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-xl border border-orange-100 dark:border-orange-800 md:col-span-2">
-                        <div className="flex justify-between items-center mb-3">
-                           <h4 className="flex items-center gap-2 font-bold text-orange-800 dark:text-orange-300">
-                              <FaShoppingBasket /> Convenience
+                    {/* Transport (Spans 2 cols) */}
+                    <div className="col-span-2 md:col-span-2 bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between">
+                        <div className="flex justify-between items-center mb-2">
+                           <h4 className="flex items-center gap-1.5 font-bold text-gray-700 dark:text-gray-300 text-xs uppercase">
+                              <FaBus /> Commute (CBD)
                            </h4>
-                           <span className="flex items-center gap-1 text-xs font-bold text-orange-600 dark:text-orange-300">
-                              <FaVolumeUp /> Noise: {property.mtaaScore.noiseLevel || 'Moderate'}
+                           <span className="text-[10px] flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300 font-bold">
+                              <FaRoad /> {property.mtaaScore.roadCondition || 'Tarmac'}
                            </span>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                           {property.mtaaScore.amenities?.kiosk && (
-                              <span className="px-2 py-1 bg-white dark:bg-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 rounded border border-orange-200">🏪 Kiosk Nearby</span>
-                           )}
-                           {property.mtaaScore.amenities?.mamaMboga && (
-                              <span className="px-2 py-1 bg-white dark:bg-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 rounded border border-orange-200">🥬 Mama Mboga</span>
-                           )}
-                           {property.mtaaScore.amenities?.kibandaski && (
-                              <span className="px-2 py-1 bg-white dark:bg-gray-800 text-xs font-bold text-gray-600 dark:text-gray-300 rounded border border-orange-200">🍲 Kibandaski</span>
-                           )}
-                           {!property.mtaaScore.amenities?.kiosk && !property.mtaaScore.amenities?.mamaMboga && (
-                              <span className="text-xs text-gray-400 italic">No specific amenities reported.</span>
-                           )}
+                        <div className="flex items-center gap-4">
+                           <div className="flex-1">
+                              <p className="text-[9px] text-gray-400 uppercase font-bold">Peak Fare</p>
+                              <p className="text-base font-black text-gray-800 dark:text-white">
+                                 {property.mtaaScore.fare} <span className="text-[10px] font-medium text-gray-500">KES</span>
+                              </p>
+                           </div>
+                           <div className="w-px h-8 bg-gray-100 dark:bg-gray-700"></div>
+                           <div className="flex-1">
+                              <p className="text-[9px] text-gray-400 uppercase font-bold">Off-Peak</p>
+                              <p className="text-base font-black text-green-600 dark:text-green-400">
+                                 {property.mtaaScore.fareOffPeak || '--'} <span className="text-[10px] font-medium text-gray-500">KES</span>
+                              </p>
+                           </div>
+                        </div>
+                    </div>
+
+                    {/* Vibe / Amenities (Spans 1 col on desktop) */}
+                    <div className="bg-white dark:bg-gray-800 p-3 rounded-xl border border-orange-100 dark:border-orange-900/50 shadow-sm flex flex-col justify-between">
+                        <div className="flex justify-between items-center mb-1">
+                           <h4 className="flex items-center gap-1.5 font-bold text-orange-800 dark:text-orange-300 text-xs uppercase">
+                              <FaShoppingBasket /> Vibe
+                           </h4>
+                           <FaVolumeUp className="text-orange-300 text-xs" title={property.mtaaScore.noiseLevel}/>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                           <div className="flex flex-wrap gap-1">
+                              {property.mtaaScore.amenities?.kiosk && <span className="text-[9px] px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded">Kiosk</span>}
+                              {property.mtaaScore.amenities?.mamaMboga && <span className="text-[9px] px-1.5 py-0.5 bg-orange-50 text-orange-700 rounded">Mama Mboga</span>}
+                           </div>
+                           <p className="text-[9px] text-gray-400 italic leading-tight">
+                              {property.mtaaScore.noiseLevel || 'Moderate Noise'}
+                           </p>
                         </div>
                     </div>
 
                  </div>
               </div>
 
-              {/* Footer CTA */}
-              <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 flex gap-3">
-                 <button 
-                   onClick={() => setIsOpen(false)}
-                   className="flex-1 py-3 text-gray-500 font-bold text-sm hover:text-gray-700 transition"
-                 >
-                   Close
-                 </button>
+              {/* Compact Footer CTA - Corrected Link */}
+              <div className="p-3 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex gap-3 shrink-0">
                  <Link 
-                   to={`/living-feed?neighborhood=${property.location}`}
-                   className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition"
+                   to={`/living-feed?buildingName=${encodeURIComponent(property.title)}`}
+                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-md transition text-sm"
                  >
-                   Read Resident Reviews <FaArrowRight />
+                   View Reviews for {property.title} <FaArrowRight />
                  </Link>
               </div>
 

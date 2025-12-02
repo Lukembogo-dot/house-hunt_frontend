@@ -25,7 +25,8 @@ import {
   FaUserSecret, 
   FaListAlt,
   FaCommentDots,
-  FaIdCard 
+  FaIdCard,
+  FaFistRaised 
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
@@ -35,7 +36,9 @@ import AssignAgentModal from '../components/admin/AssignAgentModal';
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
 import CommunityModeration from '../components/admin/CommunityModeration';
 import PropertyManager from '../components/admin/PropertyManager'; 
-import ServiceManager from '../components/admin/ServiceManager'; 
+import ServiceManager from '../components/admin/ServiceManager';
+// ✅ FIXED: Changed '../components/Admin/...' to '../components/admin/...'
+import BattleManager from '../components/admin/BattleManager'; 
 
 import { motion, AnimatePresence } from 'framer-motion'; 
 import { format } from 'date-fns'; 
@@ -452,6 +455,20 @@ const AdminDashboard = () => {
                   <div><h3 className="text-xl font-semibold dark:text-gray-100">Feature Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage rollouts.</p></div>
               </Link>
           </div>
+        </section>
+
+        {/* ✅ NEW: MTAA BATTLE ARENA (Admin Controls) */}
+        <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 dark:text-white flex items-center gap-2">
+                <FaFistRaised className="text-red-500" /> Mtaa Battle Arena
+            </h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <BattleManager />
+                {/* Placeholder for future Battle Stats Widget */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center text-gray-400">
+                    <p>Live Battle Stats Coming Soon...</p>
+                </div>
+            </div>
         </section>
 
         <section className="mb-12">
