@@ -156,21 +156,22 @@ function MainLayout() {
     <>
       <SeoInjector seo={homeSeo} />
 
-      {/* --- HERO SECTION: THE MOVEMENT --- */}
-      <section id="home" className="pt-32 pb-14 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
+      {/* --- HERO SECTION: COMPACT & ALIGNED --- */}
+      {/* Reduced padding-top to 24 (6rem) to bring it closer to navbar */}
+      <section id="home" className="pt-18 pb-8 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-slate-200/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] [mask-image:linear-gradient(to_bottom,transparent,black)] pointer-events-none"></div>
         
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 10 }} 
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-widest mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-widest mb-4"
           >
              <FaRocket /> The Next Gen Real Estate Tech
           </motion.div>
 
           <motion.h1 
-            className="text-4xl md:text-7xl font-black mb-6 text-gray-900 dark:text-white leading-tight" 
+            className="text-4xl md:text-7xl font-black mb-4 text-gray-900 dark:text-white leading-tight" 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.5 }}
@@ -191,7 +192,8 @@ function MainLayout() {
       </section>
 
       <main id="properties" className="flex-grow bg-gray-50 dark:bg-gray-900">
-        <section className="px-6 pb-12">
+        {/* Compact Search Bar Spacing */}
+        <section className="px-6 pb-6">
            <GlobalSearchBar />
         </section>
 
@@ -204,25 +206,30 @@ function MainLayout() {
            </section>
         ) : (
           <>
-            <div className="py-6">
+            {/* Reduced vertical padding between components */}
+            <div className="py-4">
                <TopAgents />
             </div>
 
-            <TrendingMtaaScores />
+            <div className="py-4">
+               <TrendingMtaaScores />
+            </div>
 
-            <FeaturedProperties />
+            <div className="py-4">
+               <FeaturedProperties />
+            </div>
             
-            {/* --- HOUSE HUNT REQUEST (UNIFORM STYLE) --- */}
-            <section className="py-20 px-6 bg-white dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
+            {/* --- HOUSE HUNT REQUEST (COMPACT) --- */}
+            <section className="py-12 px-6 bg-white dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
                <div className="max-w-7xl mx-auto flex flex-col items-center">
-                  <div className="text-center mb-10 max-w-3xl">
-                      <div className="inline-block p-4 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full mb-6 text-4xl shadow-sm">
+                  <div className="text-center mb-8 max-w-3xl">
+                      <div className="inline-block p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full mb-4 text-3xl shadow-sm">
                          <FaSearchLocation />
                       </div>
-                      <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tight text-gray-900 dark:text-white">
+                      <h2 className="text-3xl md:text-4xl font-black mb-3 tracking-tight text-gray-900 dark:text-white">
                          Hit a Wall? Let Technology Do the Heavy Lifting.
                       </h2>
-                      <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+                      <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
                          Stop scrolling endlessly. Tell our intelligent network exactly what you need, and let the verified agents come to you with perfect matches.
                       </p>
                   </div>
@@ -234,41 +241,41 @@ function MainLayout() {
                </div>
             </section>
 
-            {/* --- DECISION TOOLS --- */}
+            {/* --- DECISION TOOLS (COMPACT) --- */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
-               <section className="py-20 px-6">
+               <section className="py-12 px-6">
                   <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-8">
                         <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-xs mb-2 block">Data-Driven Moves</span>
                         <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">Make Smarter Decisions</h2>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
+                    <div className="grid md:grid-cols-2 gap-6">
                       {isQuizEnabled && (
-                        <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.02] transition duration-300 group">
-                           <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl group-hover:rotate-12 transition-transform">
+                        <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.01] transition duration-300 group">
+                           <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-12 transition-transform">
                               <FaLightbulb />
                            </div>
-                           <h3 className="text-2xl font-bold mb-4 dark:text-white">Neighbourhood Matchmaker AI</h3>
-                           <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg">
+                           <h3 className="text-xl font-bold mb-3 dark:text-white">Neighbourhood Matchmaker AI</h3>
+                           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                              Not sure where to live? Answer a few lifestyle questions, and our algorithm will find your perfect estate match.
                            </p>
-                           <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-blue-700 transition shadow-xl shadow-blue-600/20">
+                           <Link to="/find-my-neighbourhood" className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-blue-700 transition shadow-xl shadow-blue-600/20">
                              Launch Quiz
                            </Link>
                         </div>
                       )}
 
                       {isCostCalculatorEnabled && (
-                        <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.02] transition duration-300 group">
-                           <div className="w-20 h-20 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl group-hover:rotate-12 transition-transform">
+                        <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.01] transition duration-300 group">
+                           <div className="w-16 h-16 bg-green-50 dark:bg-green-900/30 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-12 transition-transform">
                               <FaCalculator />
                            </div>
-                           <h3 className="text-2xl font-bold mb-4 dark:text-white">True Cost of Living</h3>
-                           <p className="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed text-lg">
+                           <h3 className="text-xl font-bold mb-3 dark:text-white">True Cost of Living</h3>
+                           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
                              Budgeting shouldn't be a guess. Calculate real-world expenses including rent, matatu fares, and groceries for any area.
                            </p>
-                           <Link to="/tools/cost-of-living" className="inline-block bg-green-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-green-700 transition shadow-xl shadow-green-600/20">
+                           <Link to="/tools/cost-of-living" className="inline-block bg-green-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-green-700 transition shadow-xl shadow-green-600/20">
                              Calculate Now
                            </Link>
                         </div>
@@ -278,15 +285,15 @@ function MainLayout() {
                </section>
             )}
 
-            {/* --- NEIGHBOURHOOD WATCH (MOVED HERE) --- */}
-            <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+            {/* --- NEIGHBOURHOOD WATCH (COMPACT) --- */}
+            <section className="py-12 px-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                <div className="max-w-6xl mx-auto">
-                  <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
+                  <div className="flex flex-col md:flex-row items-end justify-between mb-8 gap-6">
                      <div className="max-w-2xl">
-                        <span className="text-red-500 dark:text-red-400 font-bold uppercase tracking-widest text-xs mb-3 flex items-center gap-2">
+                        <span className="text-red-500 dark:text-red-400 font-bold uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Live Updates
                         </span>
-                        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
+                        <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">
                            The Community Pulse.
                         </h2>
                         <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
@@ -298,17 +305,16 @@ function MainLayout() {
                      </Link>
                   </div>
 
-                  {/* Redesigned Card Container */}
                   <div className="relative">
                      <NeighbourhoodWatchHome />
                   </div>
                </div>
             </section>
             
-            {/* --- FAQ SECTION --- */}
-            <div className="py-16 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-               <div className="text-center mb-10">
-                  <FaQuestionCircle className="text-4xl text-gray-300 mx-auto mb-4" />
+            {/* --- FAQ SECTION (COMPACT) --- */}
+            <div className="py-12 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+               <div className="text-center mb-8">
+                  <FaQuestionCircle className="text-3xl text-gray-300 mx-auto mb-3" />
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Curious Minds Ask...</h2>
                </div>
                <HomeFaqSection />
