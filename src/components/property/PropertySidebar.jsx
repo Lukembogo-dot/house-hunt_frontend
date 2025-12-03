@@ -1,6 +1,6 @@
 // src/components/property/PropertySidebar.jsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   FaWhatsapp, FaCalendarAlt, FaCommentDots, 
@@ -104,8 +104,10 @@ const PropertySidebar = ({
 }) => {
   
   const [showExternalModal, setShowExternalModal] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // --- Helpers moved inside component ---
+  // --- Helpers ---
   const currentUrl = window.location.href;
   const shareTitle = `Check out this amazing property on HouseHunt Kenya: ${property?.title || 'Property Listing'}`;
 
@@ -117,6 +119,18 @@ const PropertySidebar = ({
     return encodeURIComponent(`${greeting} I am interested in *${title}* located in *${loc}*${price}. Is it still available? \n\nLink: ${currentUrl}`);
   };
 
+  // --- Auth Guard Helper ---
+  const handleRestrictedAction = (actionCallback) => {
+    if (!user) {
+      // Redirect to login, saving the current location to return to
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    // Proceed if user is logged in
+    if (actionCallback) actionCallback();
+  };
+
+  // --- Sharing Functions (Public) ---
   const shareOnFacebook = () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
   const shareOnTwitter = () => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(shareTitle)}`, '_blank');
   const shareOnWhatsApp = () => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this property: ${property?.title} \n${currentUrl}`)}`, '_blank');
@@ -136,31 +150,42 @@ const PropertySidebar = ({
   const shadowInstagram = hasShadowAgent ? displayAgent.instagram : null;
   const agentEmail = hasShadowAgent ? displayAgent.email : displayAgent?.email;
 
-  // ✅ Helper for Frequency Display
   const getPriceSuffix = () => {
     if (property.listingType === 'sale') return '';
     const freq = property.priceFrequency || 'month';
     return ` / ${freq}`;
   };
 
-  // ✅ Handle Contact Click (Internal or External)
+  // ✅ Handle Contact Click (Restricted)
   const onContactAgent = () => {
-    if (hasShadowAgent) {
-      setShowExternalModal(true);
-      handleLogLead();
-    } else {
-      handleStartChat();
-    }
+    handleRestrictedAction(() => {
+      if (hasShadowAgent) {
+        setShowExternalModal(true);
+        handleLogLead();
+      } else {
+        handleStartChat();
+      }
+    });
   };
 
-  // ✅ Handle Schedule Click (Internal or External)
+  // ✅ Handle Schedule Click (Restricted)
   const onScheduleViewing = () => {
-    if (hasShadowAgent) {
-      setShowExternalModal(true); // Shadow agents use external modal for scheduling too
-      handleLogLead();
-    } else {
-      handleScheduleClick(); // Registered agents use internal system
-    }
+    handleRestrictedAction(() => {
+        if (hasShadowAgent) {
+          setShowExternalModal(true);
+          handleLogLead();
+        } else {
+          handleScheduleClick();
+        }
+    });
+  };
+
+  // ✅ Generic Link Opener (Restricted)
+  const openExternalLink = (url) => {
+    handleRestrictedAction(() => {
+        handleLogLead();
+        window.open(url, '_blank');
+    });
   };
 
   return (
@@ -188,7 +213,6 @@ const PropertySidebar = ({
           </li>
         )}
         
-        {/* ✅ UPDATED: Show Land Size OR Bedrooms */}
         {property.type === 'land' ? (
            <li className="flex justify-between">
              <span>Land Size:</span>
@@ -204,7 +228,6 @@ const PropertySidebar = ({
         <li>Type: <span className="capitalize">{property.type || "N/A"}</span></li>
         <li>Location: {property.location}</li>
         
-        {/* ✅ UPDATED: Show Price Frequency */}
         <li>
           Price: <span className="font-semibold">Ksh {property.price?.toLocaleString()}{getPriceSuffix()}</span>
         </li>
@@ -212,7 +235,6 @@ const PropertySidebar = ({
       
       {!isAgentOwner && property.status === 'available' && (
         <div className="mt-6 flex flex-col space-y-3">
-          {/* ✅ REPLACED: Generic Contact Button (Replaces old WhatsApp Button) */}
           <button 
             onClick={onContactAgent} 
             disabled={isStartingChat} 
@@ -222,7 +244,6 @@ const PropertySidebar = ({
             <span>{isStartingChat ? 'Starting Chat...' : 'Contact Agent'}</span>
           </button>
 
-          {/* ✅ UPDATED: Schedule Button Logic */}
           <button 
             onClick={onScheduleViewing} 
             className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-blue-600 text-blue-600 dark:bg-transparent dark:border-blue-500 dark:text-blue-400 py-2.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-150 active:scale-[0.98] font-semibold"
@@ -246,16 +267,47 @@ const PropertySidebar = ({
                   <FaUserCircle className="text-gray-500 dark:text-gray-400" size={40} />
                 </div>
               )}
-              <div>
-                <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg">
+              
+              <div className="flex flex-col">
+                <p className="text-gray-800 dark:text-gray-200 font-semibold text-lg mb-1">
                   {hasShadowAgent ? agentName : <Link to={`/agent/${displayAgent._id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition">{agentName}</Link>}
                 </p>
+                
+                {/* ✅ STANDARDIZED SHADOW AGENT ICONS (Same size as WhatsApp) */}
                 {hasShadowAgent ? (
-                  <div className="flex items-center space-x-2 mt-1">
-                    {/* ✅ Email replaces duplicate WhatsApp here */}
-                    {agentEmail && <a href={`mailto:${agentEmail}`} className="text-blue-500 hover:text-blue-600 transition" onClick={handleLogLead}><FaEnvelope size={16} /></a>}
-                    {shadowTiktok && <a href={`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-black dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition" onClick={handleLogLead}><FaTiktok size={16} /></a>}
-                    {shadowInstagram && <a href={`https://instagram.com/${shadowInstagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-600 transition" onClick={handleLogLead}><FaInstagram size={18} /></a>}
+                  <div className="flex items-center space-x-2">
+                    {/* Email */}
+                    {agentEmail && (
+                        <button 
+                            onClick={() => openExternalLink(`mailto:${agentEmail}`)} 
+                            className="p-3 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rounded-full hover:bg-blue-200 dark:hover:bg-blue-900/50 transition shadow-sm"
+                            title="Send Email"
+                        >
+                            <FaEnvelope size={20} />
+                        </button>
+                    )}
+                    
+                    {/* TikTok */}
+                    {shadowTiktok && (
+                        <button 
+                            onClick={() => openExternalLink(`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`)} 
+                            className="p-3 bg-gray-100 text-black dark:bg-gray-700 dark:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition shadow-sm"
+                            title="View TikTok"
+                        >
+                            <FaTiktok size={20} />
+                        </button>
+                    )}
+                    
+                    {/* Instagram */}
+                    {shadowInstagram && (
+                        <button 
+                            onClick={() => openExternalLink(`https://instagram.com/${shadowInstagram.replace('@', '')}`)} 
+                            className="p-3 bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 rounded-full hover:bg-pink-200 dark:hover:bg-pink-900/50 transition shadow-sm"
+                            title="View Instagram"
+                        >
+                            <FaInstagram size={20} />
+                        </button>
+                    )}
                   </div>
                 ) : (
                   <p className="text-gray-600 dark:text-gray-400 text-sm">Registered Agent</p>
@@ -263,11 +315,15 @@ const PropertySidebar = ({
               </div>
             </div>
             
-            {/* ✅ Direct WhatsApp Button (Small, in 'Listed By' section for both types) */}
+            {/* ✅ Direct WhatsApp Button (Locked & Size 20) */}
             {agentWhatsapp && (
-              <a href={`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full hover:bg-green-200 dark:hover:bg-green-900/50 transition shadow-sm" onClick={handleLogLead}>
+              <button 
+                onClick={() => openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`)}
+                className="p-3 bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rounded-full hover:bg-green-200 dark:hover:bg-green-900/50 transition shadow-sm"
+                title="Chat on WhatsApp"
+              >
                 <FaWhatsapp size={20} />
-              </a>
+              </button>
             )}
           </div>
         ) : (
@@ -289,7 +345,6 @@ const PropertySidebar = ({
         </div>
       </div>
 
-      {/* ✅ Render the External Contact Modal */}
       <ExternalContactModal 
         show={showExternalModal} 
         onClose={() => setShowExternalModal(false)} 
