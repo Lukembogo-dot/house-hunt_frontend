@@ -4,7 +4,7 @@ import apiClient from "../api/axios";
 import PropertyCard from "./PropertyCard";
 import { 
   FaComments, FaTruck, FaIdCard, FaStar, FaUserTie, 
-  FaBullhorn, FaArrowRight, FaQuestionCircle, FaHandHoldingUsd, FaRocket 
+  FaBullhorn, FaArrowRight, FaQuestionCircle, FaHandHoldingUsd, FaRocket, FaHandshake 
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import ServiceCard from "./services/ServiceCard";
@@ -300,18 +300,23 @@ export default function PropertyList({
         </div>
       )}
 
-      {/* Related Services */}
+      {/* --- ✅ TRUSTED PARTNERS (Conversational Redesign) --- */}
       {relatedServices.length > 0 && (
         <div className="mt-20 pt-10 border-t dark:border-gray-700">
-            <div className="flex items-center gap-3 mb-8">
-               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600">
-                  <FaTruck size={24} />
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-10 text-center md:text-left">
+               <div className="p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 shadow-sm">
+                  <FaHandshake size={28} />
                </div>
                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Trusted Service Partners</h3>
-                  <p className="text-sm text-gray-500">Movers, Internet, and Cleaners in {locationName}</p>
+                  <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">
+                     Need a Hand Moving In?
+                  </h3>
+                  <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+                     We don't just find you a house; we help you settle in. From verified movers to reliable internet—we've got the connections you need in <span className="text-orange-600 dark:text-orange-400 font-bold">{locationName}</span>.
+                  </p>
                </div>
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {relatedServices.map((service) => (
                   <div key={service._id} className="h-96"><ServiceCard service={service} /></div>
