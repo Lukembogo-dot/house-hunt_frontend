@@ -1,11 +1,8 @@
 // frontend/src/components/TopAgents.jsx
-// (FIXED: Removed invalid 'FaClose' import)
-
 import React, { useState, useEffect } from 'react';
 import apiClient from '../api/axios';
 import { Link } from 'react-router-dom';
-// ✅ FIXED: Removed FaClose, Kept FaTimes
-import { FaStar, FaUserTie, FaBuilding, FaArrowRight, FaTimes } from 'react-icons/fa';
+import { FaStar, FaBuilding, FaArrowRight, FaTimes, FaHandshake } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 // --- HELPER: Mini Star Rating ---
@@ -14,7 +11,7 @@ const MiniStarRating = ({ rating }) => {
   const roundedRating = safeRating.toFixed(1);
 
   return (
-    <div className="flex items-center space-x-1 bg-yellow-100/80 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-700/50 backdrop-blur-sm">
+    <div className="flex items-center space-x-1 bg-yellow-100/80 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-700/50 backdrop-blur-sm" title="Average Rating based on Client Reviews">
       <FaStar className="text-yellow-500 text-xs" />
       <span className="text-yellow-700 dark:text-yellow-400 text-xs font-bold">{roundedRating}</span>
     </div>
@@ -55,15 +52,13 @@ const AgentCard = ({ agent }) => {
         <div 
           style={{ backfaceVisibility: 'hidden' }}
           className="absolute inset-0 w-full h-full 
-            /* Light Mode: White Frost */
             bg-white/90 backdrop-blur-md border border-white/40 
-            /* Dark Mode: Blue/Gray Glass */
             dark:bg-gray-800/90 dark:border-gray-700/50
             rounded-2xl shadow-xl overflow-hidden flex flex-col items-center justify-center p-6"
           onClick={handleFlip}
         >
           <div className="relative mb-4">
-            <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg">
+            <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
                 <img 
                     src={displayImage} 
                     alt={agent.name} 
@@ -71,7 +66,7 @@ const AgentCard = ({ agent }) => {
                 />
             </div>
             {/* Online Indicator */}
-            <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full shadow-sm"></div>
+            <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full shadow-sm" title="Verified & Active"></div>
           </div>
 
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 text-center line-clamp-1">
@@ -80,16 +75,16 @@ const AgentCard = ({ agent }) => {
           
           <div className="flex items-center gap-2 mt-1">
              <MiniStarRating rating={agent.averageRating} />
-             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-               ({agent.numReviews || 0} reviews)
+             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium italic">
+               Trusted by {agent.numReviews || 0} clients
              </span>
           </div>
 
-          <div className="mt-6 w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors
-            bg-blue-50/80 text-blue-600 border border-blue-100 backdrop-blur-sm
+          <div className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all
+            bg-blue-50 text-blue-600 border border-blue-100 shadow-sm
             dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/50
-            group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent">
-             Tap to View Stats
+            group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent group-hover:shadow-md">
+             Tap to See Track Record
           </div>
         </div>
 
@@ -97,9 +92,7 @@ const AgentCard = ({ agent }) => {
         <div 
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           className="absolute inset-0 w-full h-full 
-            /* Light: Clear Glass */
             bg-white/90 backdrop-blur-xl border border-white/60
-            /* Dark: Deep Dark Glass */
             dark:bg-gray-950 dark:border-gray-700/50
             rounded-2xl shadow-xl overflow-hidden flex flex-col"
         >
@@ -110,7 +103,6 @@ const AgentCard = ({ agent }) => {
                alt="Background" 
                className="w-full h-full object-cover opacity-40 blur-2xl scale-150"
              />
-             {/* Adaptive Overlay: White in Light Mode, Dark Blue/Black in Dark Mode */}
              <div className="absolute inset-0 bg-white/80 dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" /> 
           </div>
 
@@ -122,14 +114,15 @@ const AgentCard = ({ agent }) => {
               className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md
                 hover:bg-gray-200 text-gray-500
                 dark:hover:bg-white/10 dark:text-white/80"
+              title="Close Stats"
             >
-              <FaTimes /> {/* ✅ Using FaTimes here */}
+              <FaTimes /> 
             </button>
 
             <div className="mb-6 text-center w-full">
                 <h4 className="text-xs font-bold uppercase tracking-widest mb-3
-                  text-blue-600 dark:text-blue-300 opacity-90">
-                    Agent Performance
+                  text-blue-600 dark:text-blue-300 opacity-90 flex items-center justify-center gap-2">
+                    <FaHandshake /> Performance Check
                 </h4>
                 
                 <div className="flex flex-col items-center p-5 rounded-2xl shadow-inner border backdrop-blur-md
@@ -139,8 +132,14 @@ const AgentCard = ({ agent }) => {
                     <span className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
                         {agent.propertyPostCount || 0}
                     </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1">Active Listings</span>
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1 uppercase tracking-wide">
+                       Properties Managed
+                    </span>
                 </div>
+                
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-3 italic px-4">
+                  "{agent.name.split(' ')[0]} is actively helping families find homes in your area."
+                </p>
             </div>
 
             <Link 
@@ -150,7 +149,7 @@ const AgentCard = ({ agent }) => {
                  bg-blue-600 text-white hover:bg-blue-700
                  dark:bg-white dark:text-blue-900 dark:hover:bg-gray-100"
             >
-              View Profile <FaArrowRight />
+              Let's Connect <FaArrowRight />
             </Link>
           </div>
         </div>
@@ -185,7 +184,7 @@ const TopAgents = () => {
       <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-            Top Agents
+            Meet the Experts
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[...Array(5)].map((_, i) => (
@@ -208,12 +207,15 @@ const TopAgents = () => {
   return (
     <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto max-w-6xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">
-          Top Rated Agents
-        </h2>
-        <p className="text-center text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
-          Connect with the most active and trusted real estate professionals in Kenya.
-        </p>
+        <div className="text-center mb-12">
+           <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-xs mb-2 block">Trusted Professionals</span>
+           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
+             Meet Your Local <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Property Experts</span>
+           </h2>
+           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
+             Don't navigate the market alone. These top-rated agents have the track record and local knowledge to guide you home.
+           </p>
+        </div>
         
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {agents.slice(0, 5).map(agent => (
