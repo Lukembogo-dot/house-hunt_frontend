@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FaWater, FaWifi, FaBus, FaShieldAlt, FaStar, 
   FaMapMarkerAlt, FaInfoCircle, FaArrowRight, FaCity,
@@ -131,6 +131,7 @@ const MtaaScoreGrid = ({ score }) => {
 const MtaaFlipCard = ({ item }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const handleFlip = () => setIsFlipped(!isFlipped);
+  const navigate = useNavigate();
 
   const variants = {
     front: { rotateY: 0 },
@@ -203,13 +204,16 @@ const MtaaFlipCard = ({ item }) => {
              <MtaaScoreGrid score={item.mtaaScore} />
           </div>
 
-          <Link 
-            to={`/living-feed?buildingName=${encodeURIComponent(item.title)}`} 
-            onClick={(e) => e.stopPropagation()}
+          {/* ✅ UPDATED: Link goes to Rated Properties page first */}
+          <button 
+            onClick={(e) => {
+               e.stopPropagation();
+               navigate('/rated-properties');
+            }}
             className="mt-auto w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-lg"
           >
             View Full Report <FaArrowRight />
-          </Link>
+          </button>
         </div>
       </motion.div>
     </div>
