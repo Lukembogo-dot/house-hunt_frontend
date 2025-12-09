@@ -3,30 +3,30 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import apiClient from '../api/axios'; 
+import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FaEdit, 
-  FaTrash, 
-  FaUserShield, 
-  FaSitemap, 
-  FaUserPlus, 
-  FaTimes, 
-  FaSpinner, 
-  FaFlag, 
-  FaMoneyBillWave, 
-  FaClock, 
-  FaLink, 
-  FaImage, 
-  FaQuestionCircle, 
-  FaUserCheck, 
-  FaPlusCircle, 
-  FaSearch, 
-  FaUserSecret, 
+import {
+  FaEdit,
+  FaTrash,
+  FaUserShield,
+  FaSitemap,
+  FaUserPlus,
+  FaTimes,
+  FaSpinner,
+  FaFlag,
+  FaMoneyBillWave,
+  FaClock,
+  FaLink,
+  FaImage,
+  FaQuestionCircle,
+  FaUserCheck,
+  FaPlusCircle,
+  FaSearch,
+  FaUserSecret,
   FaListAlt,
   FaCommentDots,
   FaIdCard,
-  FaFistRaised 
+  FaFistRaised
 } from 'react-icons/fa';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
@@ -35,170 +35,171 @@ import LeadManager from '../components/admin/LeadManager';
 import AssignAgentModal from '../components/admin/AssignAgentModal';
 import PaymentSettingsManager from '../components/admin/PaymentSettingsManager';
 import CommunityModeration from '../components/admin/CommunityModeration';
-import PropertyManager from '../components/admin/PropertyManager'; 
+import PropertyManager from '../components/admin/PropertyManager';
 import ServiceManager from '../components/admin/ServiceManager';
 // ✅ FIXED: Changed '../components/Admin/...' to '../components/admin/...'
-import BattleManager from '../components/admin/BattleManager'; 
+import BattleManager from '../components/admin/BattleManager';
+import ReportManager from '../components/admin/ReportManager';
 
-import { motion, AnimatePresence } from 'framer-motion'; 
-import { format } from 'date-fns'; 
+import { motion, AnimatePresence } from 'framer-motion';
+import { format } from 'date-fns';
 
 
 // --- BULK ASSIGN PROPERTIES MODAL ---
 const BulkAssignModal = ({ show, onClose, agent, adminProperties, onBulkAssign }) => {
-    const [selectedPropIds, setSelectedPropIds] = useState([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPropIds, setSelectedPropIds] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (!show || !agent) return null;
+  if (!show || !agent) return null;
 
-    const toggleProperty = (id) => {
-        setSelectedPropIds(prev => 
-            prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
-        );
-    };
-
-    const handleAssign = async () => {
-        if (selectedPropIds.length === 0) return alert("Select at least one property.");
-        setIsSubmitting(true);
-        await onBulkAssign(agent._id, selectedPropIds);
-        setIsSubmitting(false);
-        setSelectedPropIds([]); // Reset
-        onClose();
-    };
-
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 relative flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
-          <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><FaTimes size={20} /></button>
-          
-          <div className="mb-4">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Assign Properties</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Assigning to: <span className="font-semibold text-blue-600">{agent.name}</span>
-            </p>
-          </div>
-
-          <div className="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-900/50">
-             {adminProperties.length === 0 ? (
-                 <p className="text-center py-4 text-gray-500">No admin properties available to assign.</p>
-             ) : (
-                 adminProperties.map(prop => (
-                     <div key={prop._id} onClick={() => toggleProperty(prop._id)} className={`flex items-center p-3 mb-2 rounded cursor-pointer border transition ${selectedPropIds.includes(prop._id) ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100'}`}>
-                         <input type="checkbox" checked={selectedPropIds.includes(prop._id)} onChange={() => {}} className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500" />
-                         <div className="ml-3">
-                             <p className="text-sm font-medium text-gray-900 dark:text-white">{prop.title}</p>
-                             <p className="text-xs text-gray-500">{prop.location} • {prop.price.toLocaleString()} Ksh</p>
-                         </div>
-                     </div>
-                 ))
-             )}
-          </div>
-
-          <div className="mt-4 flex justify-between items-center">
-              <p className="text-sm text-gray-500">{selectedPropIds.length} selected</p>
-              <button onClick={handleAssign} disabled={isSubmitting || selectedPropIds.length === 0} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                  {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Selected'}
-              </button>
-          </div>
-        </motion.div>
-      </motion.div>
+  const toggleProperty = (id) => {
+    setSelectedPropIds(prev =>
+      prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]
     );
+  };
+
+  const handleAssign = async () => {
+    if (selectedPropIds.length === 0) return alert("Select at least one property.");
+    setIsSubmitting(true);
+    await onBulkAssign(agent._id, selectedPropIds);
+    setIsSubmitting(false);
+    setSelectedPropIds([]); // Reset
+    onClose();
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6 relative flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><FaTimes size={20} /></button>
+
+        <div className="mb-4">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Assign Properties</h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
+            Assigning to: <span className="font-semibold text-blue-600">{agent.name}</span>
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 bg-gray-50 dark:bg-gray-900/50">
+          {adminProperties.length === 0 ? (
+            <p className="text-center py-4 text-gray-500">No admin properties available to assign.</p>
+          ) : (
+            adminProperties.map(prop => (
+              <div key={prop._id} onClick={() => toggleProperty(prop._id)} className={`flex items-center p-3 mb-2 rounded cursor-pointer border transition ${selectedPropIds.includes(prop._id) ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-100'}`}>
+                <input type="checkbox" checked={selectedPropIds.includes(prop._id)} onChange={() => { }} className="h-5 w-5 text-blue-600 rounded focus:ring-blue-500" />
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{prop.title}</p>
+                  <p className="text-xs text-gray-500">{prop.location} • {prop.price.toLocaleString()} Ksh</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="mt-4 flex justify-between items-center">
+          <p className="text-sm text-gray-500">{selectedPropIds.length} selected</p>
+          <button onClick={handleAssign} disabled={isSubmitting || selectedPropIds.length === 0} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            {isSubmitting ? <FaSpinner className="animate-spin" /> : 'Assign Selected'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 };
 
 // --- APPROVE CLAIM MODAL ---
 const ApproveClaimModal = ({ show, onClose, user, onApprove }) => {
-    const [realEmail, setRealEmail] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-  
-    const handleSubmit = async () => {
-      if (!realEmail) return alert("Please enter the real agent's email.");
-      if (!window.confirm(`Are you sure you want to transfer "${user.name}" to "${realEmail}"? This action is irreversible.`)) return;
-      
-      setIsSubmitting(true);
-      await onApprove(user._id, realEmail);
-      setIsSubmitting(false);
-      onClose();
-    };
-  
-    if (!show) return null;
-  
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
-            <FaTimes size={20} />
-          </button>
-          
-          <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Approve Profile Claim
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-            Transferring ownership of <strong>{user.name}</strong> ({user.whatsappNumber}).
-          </p>
-  
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Enter Real Agent's Email (from notification)
-            </label>
-            <input
-              type="email"
-              value={realEmail}
-              onChange={(e) => setRealEmail(e.target.value)}
-              placeholder="e.g., realagent@gmail.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div>
-  
-          <div className="flex justify-end space-x-3">
-            <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200">
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50"
-            >
-              {isSubmitting ? 'Merging...' : 'Approve & Merge'}
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    );
+  const [realEmail, setRealEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!realEmail) return alert("Please enter the real agent's email.");
+    if (!window.confirm(`Are you sure you want to transfer "${user.name}" to "${realEmail}"? This action is irreversible.`)) return;
+
+    setIsSubmitting(true);
+    await onApprove(user._id, realEmail);
+    setIsSubmitting(false);
+    onClose();
   };
+
+  if (!show) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+          <FaTimes size={20} />
+        </button>
+
+        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Approve Profile Claim
+        </h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
+          Transferring ownership of <strong>{user.name}</strong> ({user.whatsappNumber}).
+        </p>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Enter Real Agent's Email (from notification)
+          </label>
+          <input
+            type="email"
+            value={realEmail}
+            onChange={(e) => setRealEmail(e.target.value)}
+            placeholder="e.g., realagent@gmail.com"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+          />
+        </div>
+
+        <div className="flex justify-end space-x-3">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50"
+          >
+            {isSubmitting ? 'Merging...' : 'Approve & Merge'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [properties, setProperties] = useState([]);
   const [reviews, setReviews] = useState([]);
-  
+
   // ✅ SEPARATED STATE for clearer logic
-  const [serviceProviders, setServiceProviders] = useState([]); 
+  const [serviceProviders, setServiceProviders] = useState([]);
   const [servicePosts, setServicePosts] = useState([]); // Blog posts
 
-  const [allAgents, setAllAgents] = useState([]); 
-  const [orders, setOrders] = useState([]); 
-  
+  const [allAgents, setAllAgents] = useState([]);
+  const [orders, setOrders] = useState([]);
+
   const [claimRequests, setClaimRequests] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [isMigrating, setIsMigrating] = useState(false);
-  
+
   const { user } = useAuth();
 
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -216,32 +217,32 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       // ✅ FETCH BOTH: Providers AND Posts
       const [usersRes, propertiesRes, reviewsRes, providersRes, postsRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
-        apiClient.get('/properties?limit=1000'), 
+        apiClient.get('/properties?limit=1000'),
         apiClient.get('/reviews', { withCredentials: true }),
         apiClient.get('/service-providers?limit=100'), // 1. Providers (People)
         apiClient.get('/services'),                    // 2. Posts (Blogs/Articles)
-        apiClient.get('/users/all-agents', { withCredentials: true }), 
+        apiClient.get('/users/all-agents', { withCredentials: true }),
         apiClient.get('/payments', { withCredentials: true }),
-        apiClient.get('/admin/claim-requests', { withCredentials: true }), 
+        apiClient.get('/admin/claim-requests', { withCredentials: true }),
       ]);
-      
+
       setUsers(usersRes.data);
       const propsData = propertiesRes.data.properties ? propertiesRes.data.properties : propertiesRes.data;
       setProperties(Array.isArray(propsData) ? propsData : []);
-      
+
       setReviews(reviewsRes.data);
-      
+
       // ✅ Assign correctly
       setServiceProviders(providersRes.data.providers || providersRes.data || []);
       setServicePosts(postsRes.data.services || postsRes.data || []); // Blog posts
 
-      setAllAgents(agentsRes.data); 
-      setOrders(ordersRes.data); 
-      setClaimRequests(claimsRes.data || []); 
+      setAllAgents(agentsRes.data);
+      setOrders(ordersRes.data);
+      setClaimRequests(claimsRes.data || []);
 
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
@@ -249,22 +250,22 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   // DERIVED STATE
-  const shadowAgents = users.filter(u => 
-      u.role === 'agent' && 
-      (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
+  const shadowAgents = users.filter(u =>
+    u.role === 'agent' &&
+    (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
   );
-  
+
   const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin');
 
   // --- ACTION HANDLERS ---
-  
+
   const deleteReview = async (id) => {
     if (window.confirm('Are you sure you want to delete this review?')) {
       try {
@@ -275,7 +276,7 @@ const AdminDashboard = () => {
       }
     }
   };
-  
+
   const deleteUser = async (id) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       if (id === user._id) {
@@ -296,7 +297,7 @@ const AdminDashboard = () => {
       try {
         // Assuming standard endpoint for deleting service posts
         await apiClient.delete(`/services/${id}`, { withCredentials: true });
-        fetchData(); 
+        fetchData();
       } catch (err) {
         alert('Failed to delete post.');
       }
@@ -307,13 +308,13 @@ const AdminDashboard = () => {
     if (window.confirm(`Are you sure you want to change this user's role to ${newRole}?`)) {
       try {
         await apiClient.put(`/users/${id}`, { role: newRole }, { withCredentials: true });
-        fetchData(); 
+        fetchData();
       } catch (err) {
         alert('Failed to update user role.');
       }
     }
   };
-  
+
   const openAssignModal = (property) => {
     setSelectedProperty(property);
     setIsAssignModalOpen(true);
@@ -327,12 +328,12 @@ const AdminDashboard = () => {
   const handleAssignAgent = async (propertyId, payload) => {
     try {
       const { data } = await apiClient.put(
-        `/admin/properties/${propertyId}/assign-agent`, 
-        payload, 
+        `/admin/properties/${propertyId}/assign-agent`,
+        payload,
         { withCredentials: true }
       );
       alert(data.message);
-      fetchData(); 
+      fetchData();
     } catch (err) {
       alert(`Failed to assign agent: ${err.response?.data?.message || 'Server Error'}`);
       console.error(err);
@@ -346,41 +347,41 @@ const AdminDashboard = () => {
 
   const handleApproveClaim = async (userId, realEmail) => {
     try {
-        const { data } = await apiClient.post('/users/approve-claim', { 
-            userId, 
-            realEmail 
-        });
-        alert(data.message);
-        fetchData(); 
+      const { data } = await apiClient.post('/users/approve-claim', {
+        userId,
+        realEmail
+      });
+      alert(data.message);
+      fetchData();
     } catch (err) {
-        alert(`Failed to approve claim: ${err.response?.data?.message || 'Error'}`);
+      alert(`Failed to approve claim: ${err.response?.data?.message || 'Error'}`);
     }
   };
 
   const handleApproveRequest = async (request) => {
-      if (!window.confirm(`Approve claim for "${request.realName}"? This will merge account ${request.shadowUser?.name} with email ${request.realEmail}.`)) return;
-      await handleApproveClaim(request.shadowUser._id, request.realEmail);
+    if (!window.confirm(`Approve claim for "${request.realName}"? This will merge account ${request.shadowUser?.name} with email ${request.realEmail}.`)) return;
+    await handleApproveClaim(request.shadowUser._id, request.realEmail);
   };
 
   const openBulkAssign = (agent) => {
-      setSelectedBulkAgent(agent);
-      setIsBulkModalOpen(true);
+    setSelectedBulkAgent(agent);
+    setIsBulkModalOpen(true);
   };
 
   const handleBulkAssign = async (agentId, propertyIds) => {
-      try {
-          const promises = propertyIds.map(id => 
-              apiClient.put(`/admin/properties/${id}/assign-agent`, { agentId }, { withCredentials: true })
-          );
-          await Promise.all(promises);
-          alert(`Successfully assigned ${propertyIds.length} properties.`);
-          fetchData();
-      } catch (error) {
-          alert("Some assignments may have failed.");
-          console.error(error);
-      }
+    try {
+      const promises = propertyIds.map(id =>
+        apiClient.put(`/admin/properties/${id}/assign-agent`, { agentId }, { withCredentials: true })
+      );
+      await Promise.all(promises);
+      alert(`Successfully assigned ${propertyIds.length} properties.`);
+      fetchData();
+    } catch (error) {
+      alert("Some assignments may have failed.");
+      console.error(error);
+    }
   };
-  
+
   const handleRegisterIPN = async () => {
     if (!window.confirm("This will register the IPN URL with Pesapal. Proceed?")) return;
     try {
@@ -411,7 +412,7 @@ const AdminDashboard = () => {
   const totalRevenue = orders
     .filter(o => o.status === 'completed')
     .reduce((acc, order) => acc + order.amount, 0);
-  
+
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   return (
@@ -421,219 +422,222 @@ const AdminDashboard = () => {
 
         <section className="mb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Stats Cards */}
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <FaMoneyBillWave className="text-4xl text-green-500 mb-2" />
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Revenue</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">Ksh {totalRevenue.toLocaleString()}</p>
-              </div>
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <FaClock className="text-4xl text-yellow-500 mb-2" />
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Pending Orders</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{pendingOrders}</p>
-              </div>
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
-              </div>
-              <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
-                  <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
-              </div>
-              
-              {/* Navigation Links */}
-              <Link to="/admin/seo-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
-                  <FaSitemap className="text-4xl text-blue-500" />
-                  <div><h3 className="text-xl font-semibold dark:text-gray-100">SEO Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage meta tags.</p></div>
-              </Link>
-              <Link to="/admin/faq-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
-                  <FaQuestionCircle className="text-4xl text-orange-500" />
-                  <div><h3 className="text-xl font-semibold dark:text-gray-100">FAQ Hub</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage questions.</p></div>
-              </Link>
-              <Link to="/admin/feature-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
-                  <FaFlag className="text-4xl text-purple-500" />
-                  <div><h3 className="text-xl font-semibold dark:text-gray-100">Feature Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage rollouts.</p></div>
-              </Link>
+            {/* Stats Cards */}
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              <FaMoneyBillWave className="text-4xl text-green-500 mb-2" />
+              <h3 className="text-xl font-semibold dark:text-gray-100">Total Revenue</h3>
+              <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">Ksh {totalRevenue.toLocaleString()}</p>
+            </div>
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              <FaClock className="text-4xl text-yellow-500 mb-2" />
+              <h3 className="text-xl font-semibold dark:text-gray-100">Pending Orders</h3>
+              <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{pendingOrders}</p>
+            </div>
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
+              <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
+            </div>
+            <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-semibold dark:text-gray-100">Total Users</h3>
+              <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{users.length}</p>
+            </div>
+
+            {/* Navigation Links */}
+            <Link to="/admin/seo-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+              <FaSitemap className="text-4xl text-blue-500" />
+              <div><h3 className="text-xl font-semibold dark:text-gray-100">SEO Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage meta tags.</p></div>
+            </Link>
+            <Link to="/admin/faq-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+              <FaQuestionCircle className="text-4xl text-orange-500" />
+              <div><h3 className="text-xl font-semibold dark:text-gray-100">FAQ Hub</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage questions.</p></div>
+            </Link>
+            <Link to="/admin/feature-manager" className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+              <FaFlag className="text-4xl text-purple-500" />
+              <div><h3 className="text-xl font-semibold dark:text-gray-100">Feature Manager</h3><p className="text-sm text-gray-500 dark:text-gray-400">Manage rollouts.</p></div>
+            </Link>
           </div>
         </section>
 
         {/* ✅ NEW: MTAA BATTLE ARENA (Admin Controls) */}
         <section className="mb-12">
-            <h2 className="text-2xl font-bold mb-4 dark:text-white flex items-center gap-2">
-                <FaFistRaised className="text-red-500" /> Mtaa Battle Arena
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BattleManager />
-                {/* Placeholder for future Battle Stats Widget */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center text-gray-400">
-                    <p>Live Battle Stats Coming Soon...</p>
-                </div>
+          <h2 className="text-2xl font-bold mb-4 dark:text-white flex items-center gap-2">
+            <FaFistRaised className="text-red-500" /> Mtaa Battle Arena
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <BattleManager />
+            {/* Placeholder for future Battle Stats Widget */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-center text-gray-400">
+              <p>Live Battle Stats Coming Soon...</p>
             </div>
+          </div>
         </section>
 
         <section className="mb-12">
-            <CommunityModeration />
+          <CommunityModeration />
+        </section>
+
+        <section className="mb-12">
+          <ReportManager />
         </section>
 
         {claimRequests.length > 0 && (
-            <section className="mb-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow border border-yellow-200 dark:border-yellow-700 p-6">
-                <h2 className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-2 mb-4">
-                    <FaIdCard /> Pending Account Claims ({claimRequests.length})
-                </h2>
-                <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase text-xs">
-                            <tr>
-                                <th className="p-3">Request Date</th>
-                                <th className="p-3">Requester (Real)</th>
-                                <th className="p-3">Target Profile (Shadow)</th>
-                                <th className="p-3">Verification</th>
-                                <th className="p-3">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {claimRequests.map(req => (
-                                <tr key={req._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td className="p-3 whitespace-nowrap text-gray-600 dark:text-gray-300">
-                                        {format(new Date(req.createdAt), 'MMM d, yyyy HH:mm')}
-                                    </td>
-                                    <td className="p-3">
-                                        <div className="font-bold text-gray-900 dark:text-white">{req.realName}</div>
-                                        <div className="text-xs text-gray-500">{req.realEmail}</div>
-                                        <div className="text-xs font-mono text-blue-600">{req.realWhatsapp}</div>
-                                    </td>
-                                    <td className="p-3">
-                                        {req.shadowUser ? (
-                                            <>
-                                                <div className="font-bold text-gray-900 dark:text-white">{req.shadowUser.name}</div>
-                                                {req.shadowUser.isAccountClaimed ? (
-                                                    <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">Already Claimed</span>
-                                                ) : (
-                                                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Shadow Active</span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className="text-red-500">Profile Deleted</span>
-                                        )}
-                                    </td>
-                                    <td className="p-3">
-                                        <a 
-                                            href={`https://wa.me/${req.realWhatsapp.replace(/\+/g,'')}?text=Hello ${req.realName}, verifying your claim request.`} 
-                                            target="_blank" 
-                                            rel="noreferrer"
-                                            className="text-blue-600 hover:underline text-xs"
-                                        >
-                                            Verify via WhatsApp
-                                        </a>
-                                    </td>
-                                    <td className="p-3">
-                                        {req.shadowUser && !req.shadowUser.isAccountClaimed && (
-                                            <button 
-                                                onClick={() => handleApproveRequest(req)}
-                                                className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1"
-                                            >
-                                                <FaUserCheck /> Approve Merge
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+          <section className="mb-12 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl shadow border border-yellow-200 dark:border-yellow-700 p-6">
+            <h2 className="text-2xl font-bold text-yellow-800 dark:text-yellow-200 flex items-center gap-2 mb-4">
+              <FaIdCard /> Pending Account Claims ({claimRequests.length})
+            </h2>
+            <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 uppercase text-xs">
+                  <tr>
+                    <th className="p-3">Request Date</th>
+                    <th className="p-3">Requester (Real)</th>
+                    <th className="p-3">Target Profile (Shadow)</th>
+                    <th className="p-3">Verification</th>
+                    <th className="p-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {claimRequests.map(req => (
+                    <tr key={req._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="p-3 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                        {format(new Date(req.createdAt), 'MMM d, yyyy HH:mm')}
+                      </td>
+                      <td className="p-3">
+                        <div className="font-bold text-gray-900 dark:text-white">{req.realName}</div>
+                        <div className="text-xs text-gray-500">{req.realEmail}</div>
+                        <div className="text-xs font-mono text-blue-600">{req.realWhatsapp}</div>
+                      </td>
+                      <td className="p-3">
+                        {req.shadowUser ? (
+                          <>
+                            <div className="font-bold text-gray-900 dark:text-white">{req.shadowUser.name}</div>
+                            {req.shadowUser.isAccountClaimed ? (
+                              <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">Already Claimed</span>
+                            ) : (
+                              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded">Shadow Active</span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-red-500">Profile Deleted</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <a
+                          href={`https://wa.me/${req.realWhatsapp.replace(/\+/g, '')}?text=Hello ${req.realName}, verifying your claim request.`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline text-xs"
+                        >
+                          Verify via WhatsApp
+                        </a>
+                      </td>
+                      <td className="p-3">
+                        {req.shadowUser && !req.shadowUser.isAccountClaimed && (
+                          <button
+                            onClick={() => handleApproveRequest(req)}
+                            className="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 flex items-center gap-1"
+                          >
+                            <FaUserCheck /> Approve Merge
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         )}
 
         {/* Shadow Accounts Manager */}
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <FaUserSecret className="text-yellow-500" /> Manage Shadow Accounts
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">View unclaimed profiles and assign listings directly.</p>
-                </div>
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <FaUserSecret className="text-yellow-500" /> Manage Shadow Accounts
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">View unclaimed profiles and assign listings directly.</p>
             </div>
+          </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm">
-                            <th className="p-3">Agent Name</th>
-                            <th className="p-3">Company</th>
-                            <th className="p-3">WhatsApp</th>
-                            <th className="p-3">Listings</th>
-                            <th className="p-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found.</td></tr>}
-                        {shadowAgents.map(agent => (
-                            <tr key={agent._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                <td className="p-3 font-medium dark:text-white flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                                        <img src={agent.profilePicture} alt="" className="w-full h-full object-cover" />
-                                    </div>
-                                    {agent.name}
-                                </td>
-                                <td className="p-3 dark:text-gray-300">{agent.companyName || '-'}</td>
-                                <td className="p-3 dark:text-gray-300 font-mono text-xs">{agent.whatsappNumber || 'N/A'}</td>
-                                <td className="p-3 dark:text-gray-300">
-                                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">
-                                        {agent.propertyPostCount || 0}
-                                    </span>
-                                </td>
-                                <td className="p-3">
-                                    <button onClick={() => openBulkAssign(agent)} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition shadow-sm">
-                                        <FaListAlt /> Assign Properties
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm">
+                  <th className="p-3">Agent Name</th>
+                  <th className="p-3">Company</th>
+                  <th className="p-3">WhatsApp</th>
+                  <th className="p-3">Listings</th>
+                  <th className="p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found.</td></tr>}
+                {shadowAgents.map(agent => (
+                  <tr key={agent._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <td className="p-3 font-medium dark:text-white flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                        <img src={agent.profilePicture} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      {agent.name}
+                    </td>
+                    <td className="p-3 dark:text-gray-300">{agent.companyName || '-'}</td>
+                    <td className="p-3 dark:text-gray-300 font-mono text-xs">{agent.whatsappNumber || 'N/A'}</td>
+                    <td className="p-3 dark:text-gray-300">
+                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">
+                        {agent.propertyPostCount || 0}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <button onClick={() => openBulkAssign(agent)} className="flex items-center gap-2 bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition shadow-sm">
+                        <FaListAlt /> Assign Properties
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
-        
+
         <section className="mb-12 p-6 bg-yellow-50 dark:bg-gray-800/50 rounded-xl border-l-4 border-yellow-400">
-            <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
-              <FaSitemap /> System Maintenance
-            </h2>
-            <div className="flex gap-4">
-                <button 
-                  onClick={handleWatermarkMigration} 
-                  disabled={isMigrating}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${
-                    isMigrating ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-                  }`}
-                >
-                  {isMigrating ? <FaSpinner className="animate-spin" /> : <FaImage />}
-                  {isMigrating ? 'Processing...' : 'Apply Watermark to Old Photos'}
-                </button>
-            </div>
+          <h2 className="text-xl font-bold text-yellow-800 dark:text-yellow-300 mb-2 flex items-center gap-2">
+            <FaSitemap /> System Maintenance
+          </h2>
+          <div className="flex gap-4">
+            <button
+              onClick={handleWatermarkMigration}
+              disabled={isMigrating}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${isMigrating ? 'bg-gray-400 cursor-not-allowed text-white' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
+                }`}
+            >
+              {isMigrating ? <FaSpinner className="animate-spin" /> : <FaImage />}
+              {isMigrating ? 'Processing...' : 'Apply Watermark to Old Photos'}
+            </button>
+          </div>
         </section>
-        
+
         <PendingApprovals />
-        
+
         <section className="mb-12">
-           <LeadManager />
+          <LeadManager />
         </section>
 
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
-             <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties</h2>
+            <h2 className="text-2xl font-semibold dark:text-gray-100">Manage Properties</h2>
           </div>
-          
-          <PropertyManager 
-             properties={properties} 
-             fetchData={fetchData} 
-             onAssignAgent={openAssignModal}
+
+          <PropertyManager
+            properties={properties}
+            fetchData={fetchData}
+            onAssignAgent={openAssignModal}
           />
         </section>
 
         {/* ✅ NEW SECTION: SERVICE PROVIDER MANAGER (Using serviceProviders state) */}
         <section className="mb-12">
-           <ServiceManager services={serviceProviders} onRefresh={fetchData} />
+          <ServiceManager services={serviceProviders} onRefresh={fetchData} />
         </section>
 
         {/* ✅ FIXED SECTION: Manage Neighbourhood Watch / Blog Posts (Using servicePosts state) */}
@@ -646,14 +650,14 @@ const AdminDashboard = () => {
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
             <table className="w-full min-w-[600px]"><thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Title</th>
-                  <th className="p-3 text-left dark:text-gray-300">Service Type</th>
-                  <th className="p-3 text-left dark:text-gray-300">Location</th>
-                  <th className="p-3 text-left dark:text-gray-300">Reviews</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
+              <tr className="border-b dark:border-gray-600">
+                <th className="p-3 text-left dark:text-gray-300">Title</th>
+                <th className="p-3 text-left dark:text-gray-300">Service Type</th>
+                <th className="p-3 text-left dark:text-gray-300">Location</th>
+                <th className="p-3 text-left dark:text-gray-300">Reviews</th>
+                <th className="p-3 text-left dark:text-gray-300">Actions</th>
+              </tr>
+            </thead>
               <tbody>
                 {servicePosts.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No blog posts found.</td></tr>}
                 {servicePosts.map((post) => (
@@ -685,13 +689,13 @@ const AdminDashboard = () => {
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Users ({users.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
             <table className="w-full min-w-[500px]"><thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-300">Name</th>
-                  <th className="p-3 text-left dark:text-gray-300">Email</th>
-                  <th className="p-3 text-left dark:text-gray-300">Role</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
+              <tr className="border-b dark:border-gray-600">
+                <th className="p-3 text-left dark:text-gray-300">Name</th>
+                <th className="p-3 text-left dark:text-gray-300">Email</th>
+                <th className="p-3 text-left dark:text-gray-300">Role</th>
+                <th className="p-3 text-left dark:text-gray-300">Actions</th>
+              </tr>
+            </thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -701,11 +705,10 @@ const AdminDashboard = () => {
                     </td>
                     <td className="p-3 dark:text-gray-20Details">{u.email}</td>
                     <td className="p-3">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        u.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                        : u.role === 'agent' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                      }`}>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'admin' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : u.role === 'agent' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                          : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}>
                         {u.role}
                       </span>
                     </td>
@@ -725,7 +728,7 @@ const AdminDashboard = () => {
         </section>
 
         <FailedQueries />
-        
+
         <section id="revenue-management" className="mb-12">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-semibold dark:text-gray-100">
@@ -766,21 +769,21 @@ const AdminDashboard = () => {
         </section>
 
         <section className="mb-12">
-           <PaymentSettingsManager />
+          <PaymentSettingsManager />
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100">Manage Property Reviews ({reviews.length})</h2>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md dark:border dark:border-gray-700 overflow-x-auto">
             <table className="w-full min-w-[600px]"><thead className="bg-gray-50 dark:bg-gray-700">
-                <tr className="border-b dark:border-gray-600">
-                  <th className="p-3 text-left dark:text-gray-30D0">Comment</th>
-                  <th className="p-3 text-left dark:text-gray-300">Rating</th>
-                  <th className="p-3 text-left dark:text-gray-300">User</th>
-                  <th className="p-3 text-left dark:text-gray-300">Property</th>
-                  <th className="p-3 text-left dark:text-gray-300">Actions</th>
-                </tr>
-              </thead>
+              <tr className="border-b dark:border-gray-600">
+                <th className="p-3 text-left dark:text-gray-30D0">Comment</th>
+                <th className="p-3 text-left dark:text-gray-300">Rating</th>
+                <th className="p-3 text-left dark:text-gray-300">User</th>
+                <th className="p-3 text-left dark:text-gray-300">Property</th>
+                <th className="p-3 text-left dark:text-gray-300">Actions</th>
+              </tr>
+            </thead>
               <tbody>
                 {reviews.map((review) => (
                   <tr key={review._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -803,35 +806,35 @@ const AdminDashboard = () => {
 
       <AnimatePresence>
         {isAssignModalOpen && (
-            <AssignAgentModal
-                key="assign-modal"
-                show={isAssignModalOpen}
-                onClose={closeAssignModal}
-                property={selectedProperty}
-                agents={allAgents}
-                onAssign={handleAssignAgent}
-            />
+          <AssignAgentModal
+            key="assign-modal"
+            show={isAssignModalOpen}
+            onClose={closeAssignModal}
+            property={selectedProperty}
+            agents={allAgents}
+            onAssign={handleAssignAgent}
+          />
         )}
-        
+
         {isClaimModalOpen && (
-            <ApproveClaimModal
-                key="approve-modal"
-                show={isClaimModalOpen}
-                onClose={() => setIsClaimModalOpen(false)}
-                user={selectedShadowUser}
-                onApprove={handleApproveClaim}
-            />
+          <ApproveClaimModal
+            key="approve-modal"
+            show={isClaimModalOpen}
+            onClose={() => setIsClaimModalOpen(false)}
+            user={selectedShadowUser}
+            onApprove={handleApproveClaim}
+          />
         )}
 
         {isBulkModalOpen && (
-            <BulkAssignModal 
-                key="bulk-modal"
-                show={isBulkModalOpen} 
-                onClose={() => setIsBulkModalOpen(false)} 
-                agent={selectedBulkAgent} 
-                adminProperties={adminProperties} 
-                onBulkAssign={handleBulkAssign} 
-            />
+          <BulkAssignModal
+            key="bulk-modal"
+            show={isBulkModalOpen}
+            onClose={() => setIsBulkModalOpen(false)}
+            agent={selectedBulkAgent}
+            adminProperties={adminProperties}
+            onBulkAssign={handleBulkAssign}
+          />
         )}
       </AnimatePresence>
     </>

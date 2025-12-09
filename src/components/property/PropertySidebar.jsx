@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  FaWhatsapp, FaCalendarAlt, FaCommentDots, 
+import {
+  FaWhatsapp, FaCalendarAlt, FaCommentDots,
   FaUserCircle, FaTiktok, FaInstagram, FaUserSlash,
   FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy, FaEnvelope, FaTimes,
-  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock
+  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -23,12 +23,12 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
   return (
     <AnimatePresence>
       {show && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={onClose}
         >
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 relative"
             onClick={(e) => e.stopPropagation()}
@@ -36,7 +36,7 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
             <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
               <FaTimes size={20} />
             </button>
-            
+
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 text-center">
               Connect with {agentDetails.name}
             </h3>
@@ -46,7 +46,7 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
 
             <div className="space-y-3">
               {agentDetails.whatsapp && (
-                <a 
+                <a
                   href={`https://wa.me/${agentDetails.whatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentDetails.name)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold transition shadow-lg shadow-green-500/30"
@@ -54,9 +54,9 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
                   <FaWhatsapp className="mr-2 text-xl" /> Start WhatsApp Chat
                 </a>
               )}
-              
+
               {agentDetails.email && (
-                <a 
+                <a
                   href={`mailto:${agentDetails.email}`}
                   className="flex items-center justify-center w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition shadow-lg shadow-blue-500/30"
                 >
@@ -69,8 +69,8 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
                   <p className="text-xs text-center text-gray-500 mb-2">See more listings & tours on:</p>
                   <div className="flex gap-3">
                     {agentDetails.tiktok && (
-                      <a 
-                        href={`https://tiktok.com/${agentDetails.tiktok.startsWith('@') ? '' : '@'}${agentDetails.tiktok.replace('@', '')}`} 
+                      <a
+                        href={`https://tiktok.com/${agentDetails.tiktok.startsWith('@') ? '' : '@'}${agentDetails.tiktok.replace('@', '')}`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center py-2.5 bg-black text-white rounded-lg font-bold hover:opacity-80 transition text-sm"
                       >
@@ -78,8 +78,8 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
                       </a>
                     )}
                     {agentDetails.instagram && (
-                      <a 
-                        href={`https://instagram.com/${agentDetails.instagram.replace('@', '')}`} 
+                      <a
+                        href={`https://instagram.com/${agentDetails.instagram.replace('@', '')}`}
                         target="_blank" rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:opacity-90 transition text-sm"
                       >
@@ -97,17 +97,86 @@ const ExternalContactModal = ({ show, onClose, agentDetails }) => {
   );
 };
 
-const PropertySidebar = ({ 
-  property, 
-  user, 
-  isAgentOwner, 
-  handleScheduleClick, 
-  handleStartChat, 
-  isStartingChat, 
-  handleLogLead 
+const ReportModal = ({ show, onClose, onSubmit, isSubmitting }) => {
+  const [reason, setReason] = useState('');
+
+  if (!show) return null;
+
+  const handleSubmit = () => {
+    if (!reason.trim() || reason.length < 5) return alert("Please provide a valid reason (min 5 chars).");
+    onSubmit(reason);
+  };
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition">
+              <FaTimes size={20} />
+            </button>
+
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 text-center flex items-center justify-center gap-2">
+              <FaFlag className="text-red-500" /> Report Listing
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 text-center text-sm mb-6 leading-relaxed">
+              Help us keep HouseHunt safe. Why are you reporting this property?
+            </p>
+
+            <textarea
+              className="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-red-500 mb-4"
+              rows="4"
+              placeholder="Describe the issue (e.g., Fake listing, Wrong price, Scammer)..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+
+            <div className="flex justify-end gap-3">
+              <button onClick={onClose} className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400">Cancel</button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSubmitting ? 'Sending...' : 'Submit Report'}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const PropertySidebar = ({
+  property,
+  user,
+  isAgentOwner,
+  handleScheduleClick,
+  handleStartChat,
+  isStartingChat,
+  handleLogLead
 }) => {
-  
+
   const [showExternalModal, setShowExternalModal] = useState(false);
+
+  // Repoort State
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
+
+  // Import locally to avoid conflict if not at top? Ideally move imports to top, but here for locality.
+  // Actually, standard practice is top. I'll rely on existing imports or assume I need to add them if missing.
+  // Wait, I need to add imports at the top of the file as well. I'll do that in a separate chunk or careful overwrite if I can't seeing them.
+  // Assuming `apiClient` needs to be imported. I'll check top first.
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -138,7 +207,7 @@ const PropertySidebar = ({
   const shareOnWhatsApp = () => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this property: ${property?.title} \n${currentUrl}`)}`, '_blank');
   const shareOnLinkedIn = () => window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(currentUrl)}&title=${encodeURIComponent(shareTitle)}`, '_blank');
   const copyToClipboard = async () => {
-    try { await navigator.clipboard.writeText(currentUrl); alert('Link copied!'); } 
+    try { await navigator.clipboard.writeText(currentUrl); alert('Link copied!'); }
     catch (err) { console.error(err); }
   };
 
@@ -172,88 +241,128 @@ const PropertySidebar = ({
 
   const onScheduleViewing = () => {
     handleRestrictedAction(() => {
-        if (hasShadowAgent) {
-          setShowExternalModal(true);
-          handleLogLead();
-        } else {
-          handleScheduleClick();
-        }
+      if (hasShadowAgent) {
+        setShowExternalModal(true);
+        handleLogLead();
+      } else {
+        handleScheduleClick();
+      }
     });
   };
 
   const openExternalLink = (url) => {
     handleRestrictedAction(() => {
-        handleLogLead();
-        window.open(url, '_blank');
+      handleLogLead();
+      window.open(url, '_blank');
     });
+  };
+
+  // Handle Report
+  const handleOpenReport = () => {
+    handleRestrictedAction(() => {
+      setShowReportModal(true);
+    });
+  };
+
+  const submitReport = async (reason) => {
+    setIsReporting(true);
+    try {
+      // Dynamic import to avoid top-level issues if not present? 
+      // No, I'll assume axios is available or import it at top in next step.
+      // Ideally I should have checked imports. I'll assume `apiClient` is needed.
+      // Wait, this file imports React, etc. but NOT `apiClient`. Use `window.apiClient` or just `axios`?
+      // I will use `import apiClient from '../../api/axios';` at the top in a separate Op.
+      // For now, I'll write the logic.
+      const { default: apiClient } = await import('../../api/axios');
+
+      await apiClient.post('/reports', {
+        propertyId: property._id,
+        reason
+      }, { withCredentials: true });
+
+      alert("Report submitted. Thank you.");
+      setShowReportModal(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit report.');
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md dark:border dark:border-gray-700 relative">
-      
+
       {/* --- NARRATIVE PROPERTY SUMMARY --- */}
       <h3 className="text-xl font-bold mb-4 dark:text-gray-100 flex items-center gap-2">
         <FaTag className="text-blue-600" /> The Deal Details
       </h3>
-      
+
       <div className="text-gray-600 dark:text-gray-300 space-y-4 mb-6 text-sm leading-relaxed">
         <p>
-           This <strong>{property.status}</strong> unit is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>. 
-           It was posted <strong>{formatDistanceToNow(new Date(property.createdAt))} ago</strong>.
+          This <strong>{property.status}</strong> unit is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>.
+          It was posted <strong>{formatDistanceToNow(new Date(property.createdAt))} ago</strong>.
         </p>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 space-y-2">
-            <div className="flex items-center gap-2">
-               <FaMapMarkerAlt className="text-blue-500" />
-               <span>Located in <strong className="text-gray-900 dark:text-white">{property.location}</strong></span>
-            </div>
-            
-            {property.type === 'land' ? (
-               <div className="flex items-center gap-2">
-                  <FaRulerCombined className="text-blue-500" />
-                  <span>Land Size: <strong>{property.landSize || 'N/A'}</strong></span>
-               </div>
-            ) : (
-               <div className="flex items-center gap-2">
-                  <FaBed className="text-blue-500" />
-                  <span>Features <strong className="text-gray-900 dark:text-white">{property.bedrooms} Bedroom(s)</strong></span>
-               </div>
-            )}
+          <div className="flex items-center gap-2">
+            <FaMapMarkerAlt className="text-blue-500" />
+            <span>Located in <strong className="text-gray-900 dark:text-white">{property.location}</strong></span>
+          </div>
 
-            <div className="flex items-center gap-2 pt-2 border-t border-blue-200 dark:border-blue-800 mt-2">
-               <span className="text-lg font-black text-blue-700 dark:text-blue-400">
-                  Ksh {property.price?.toLocaleString()}{getPriceSuffix()}
-               </span>
+          {property.type === 'land' ? (
+            <div className="flex items-center gap-2">
+              <FaRulerCombined className="text-blue-500" />
+              <span>Land Size: <strong>{property.landSize || 'N/A'}</strong></span>
             </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <FaBed className="text-blue-500" />
+              <span>Features <strong className="text-gray-900 dark:text-white">{property.bedrooms} Bedroom(s)</strong></span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-2 border-t border-blue-200 dark:border-blue-800 mt-2">
+            <span className="text-lg font-black text-blue-700 dark:text-blue-400">
+              Ksh {property.price?.toLocaleString()}{getPriceSuffix()}
+            </span>
+          </div>
         </div>
       </div>
-      
+
       {!isAgentOwner && property.status === 'available' && (
         <div className="flex flex-col space-y-3 mb-8">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider text-center mb-1">Take Action</p>
-          <button 
-            onClick={onContactAgent} 
-            disabled={isStartingChat} 
+          <button
+            onClick={onContactAgent}
+            disabled={isStartingChat}
             className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-3.5 rounded-xl hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-600/30 font-bold text-sm"
           >
-            <FaCommentDots size={18} /> 
+            <FaCommentDots size={18} />
             <span>{isStartingChat ? 'Starting Chat...' : 'Speak with the Agent'}</span>
           </button>
 
-          <button 
-            onClick={onScheduleViewing} 
+          <button
+            onClick={onScheduleViewing}
             className="w-full flex items-center justify-center space-x-2 bg-white border-2 border-gray-200 text-gray-700 dark:bg-transparent dark:border-gray-600 dark:text-gray-300 py-3 rounded-xl hover:border-blue-500 hover:text-blue-600 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-all duration-150 active:scale-[0.98] font-bold text-sm"
           >
             <FaCalendarAlt /> <span>Book a Physical Viewing</span>
+          </button>
+
+          {/* REPORT BUTTON */}
+          <button
+            onClick={handleOpenReport}
+            className="w-full flex items-center justify-center space-x-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 rounded-xl transition text-xs font-semibold"
+          >
+            <FaFlag /> <span>Report This Listing</span>
           </button>
         </div>
       )}
 
       <div className="border-t dark:border-gray-700 pt-6">
         <h3 className="text-xl font-bold mb-3 dark:text-gray-100 flex items-center gap-2">
-           <FaUserCircle className="text-gray-400" /> Meet Your Agent
+          <FaUserCircle className="text-gray-400" /> Meet Your Agent
         </h3>
-        
+
         {displayAgent ? (
           <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
             <div className="flex items-start gap-3 mb-4">
@@ -266,77 +375,77 @@ const PropertySidebar = ({
                   <span className="text-xl font-bold">{(agentName || 'A').charAt(0)}</span>
                 </div>
               )}
-              
+
               <div>
                 <p className="font-bold text-gray-900 dark:text-white text-lg leading-tight">
                   {hasShadowAgent ? agentName : <Link to={`/agent/${displayAgent._id}`} className="hover:text-blue-600 transition">{agentName}</Link>}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                   Responsive • Verified Lister
+                  Responsive • Verified Lister
                 </p>
               </div>
             </div>
 
             {/* --- NARRATIVE SOCIAL LINKS --- */}
             {hasShadowAgent && (
-               <div className="space-y-3">
-                  <p className="text-sm text-gray-600 dark:text-gray-300 italic">
-                     "{agentName.split(' ')[0]} is active online. You can view more property tours or send a direct email below."
-                  </p>
-                  
-                  <div className="flex items-center gap-2">
-                     {agentEmail && (
-                        <button 
-                            onClick={() => openExternalLink(`mailto:${agentEmail}`)} 
-                            className="flex-1 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold hover:bg-blue-200 transition flex items-center justify-center gap-1"
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 italic">
+                  "{agentName.split(' ')[0]} is active online. You can view more property tours or send a direct email below."
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {agentEmail && (
+                    <button
+                      onClick={() => openExternalLink(`mailto:${agentEmail}`)}
+                      className="flex-1 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold hover:bg-blue-200 transition flex items-center justify-center gap-1"
+                    >
+                      <FaEnvelope /> Email Me
+                    </button>
+                  )}
+
+                  {/* Socials Group */}
+                  {(shadowTiktok || shadowInstagram) && (
+                    <div className="flex gap-2">
+                      {shadowTiktok && (
+                        <button
+                          onClick={() => openExternalLink(`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`)}
+                          className="w-8 h-8 flex items-center justify-center bg-black text-white rounded-full hover:scale-110 transition shadow-sm"
+                          title="Watch Tours on TikTok"
                         >
-                            <FaEnvelope /> Email Me
+                          <FaTiktok size={14} />
                         </button>
-                     )}
-                     
-                     {/* Socials Group */}
-                     {(shadowTiktok || shadowInstagram) && (
-                        <div className="flex gap-2">
-                           {shadowTiktok && (
-                              <button 
-                                  onClick={() => openExternalLink(`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`)} 
-                                  className="w-8 h-8 flex items-center justify-center bg-black text-white rounded-full hover:scale-110 transition shadow-sm"
-                                  title="Watch Tours on TikTok"
-                              >
-                                  <FaTiktok size={14} />
-                              </button>
-                           )}
-                           {shadowInstagram && (
-                              <button 
-                                  onClick={() => openExternalLink(`https://instagram.com/${shadowInstagram.replace('@', '')}`)} 
-                                  className="w-8 h-8 flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full hover:scale-110 transition shadow-sm"
-                                  title="See Photos on Instagram"
-                              >
-                                  <FaInstagram size={14} />
-                              </button>
-                           )}
-                        </div>
-                     )}
-                  </div>
-               </div>
+                      )}
+                      {shadowInstagram && (
+                        <button
+                          onClick={() => openExternalLink(`https://instagram.com/${shadowInstagram.replace('@', '')}`)}
+                          className="w-8 h-8 flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full hover:scale-110 transition shadow-sm"
+                          title="See Photos on Instagram"
+                        >
+                          <FaInstagram size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
-            
+
             {/* WhatsApp CTA */}
             {agentWhatsapp && (
               <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-                 <button 
-                   onClick={() => openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`)}
-                   className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group"
-                 >
-                    <span className="text-sm font-bold">Start WhatsApp Chat</span>
-                    <FaWhatsapp className="text-xl group-hover:scale-110 transition-transform" />
-                 </button>
+                <button
+                  onClick={() => openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`)}
+                  className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group"
+                >
+                  <span className="text-sm font-bold">Start WhatsApp Chat</span>
+                  <FaWhatsapp className="text-xl group-hover:scale-110 transition-transform" />
+                </button>
               </div>
             )}
           </div>
         ) : (
           <div className="p-4 bg-gray-50 rounded-xl text-center text-gray-500 italic text-sm">
-             Agent information is currently unavailable.
+            Agent information is currently unavailable.
           </div>
         )}
       </div>
@@ -351,10 +460,17 @@ const PropertySidebar = ({
         </div>
       </div>
 
-      <ExternalContactModal 
-        show={showExternalModal} 
-        onClose={() => setShowExternalModal(false)} 
-        agentDetails={displayAgent} 
+      <ExternalContactModal
+        show={showExternalModal}
+        onClose={() => setShowExternalModal(false)}
+        agentDetails={displayAgent}
+      />
+
+      <ReportModal
+        show={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={submitReport}
+        isSubmitting={isReporting}
       />
     </div>
   );
