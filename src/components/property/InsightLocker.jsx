@@ -4,8 +4,28 @@ import { FaLock, FaPenAlt } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const InsightLocker = ({ children, isLocked }) => {
+const InsightLocker = ({ children, isLocked, propertyId }) => {
     const { user } = useAuth();
+    const [isGuestAllowed, setIsGuestAllowed] = React.useState(false);
+
+    // Check Guest Access on Mount
+    React.useEffect(() => {
+        if (!user && propertyId) {
+            const freeViewId = localStorage.getItem('guest_free_view_id');
+
+            if (!freeViewId) {
+                // First time viewing ANY card
+                localStorage.setItem('guest_free_view_id', propertyId);
+                setIsGuestAllowed(true);
+            } else if (freeViewId === String(propertyId)) {
+                // Re-viewing the SAME free card
+                setIsGuestAllowed(true);
+            } else {
+                // Viewing a different card -> Blocked
+                setIsGuestAllowed(false);
+            }
+        }
+    }, [user, propertyId]);
 
     // Logic: Locked if user hasn't contributed a review yet
     // We check for 'contributionCount' explicitly.
@@ -14,7 +34,10 @@ const InsightLocker = ({ children, isLocked }) => {
     // Admin/Agent bypass
     const isPrivileged = user && (user.role === 'admin' || user.role === 'agent');
 
-    const shouldLock = isLocked || (!isPrivileged && !userHasContributed);
+    // UNLOCK CONDITIONS:
+    // 1. Not forcefully locked via prop
+    // 2. AND ( User is Privileged OR User Contributed OR User is Guest consuming Free View)
+    const shouldLock = isLocked || (!isPrivileged && !userHasContributed && !isGuestAllowed);
 
     if (!shouldLock) return children;
 
@@ -32,20 +55,42 @@ const InsightLocker = ({ children, isLocked }) => {
                         <FaLock size={20} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Unlock the Real Tea ☕
+                        {user ? 'Unlock the Real Tea ☕' : 'Free Preview Used 🔒'}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-6">
-                        To see exact <strong>water rationing schedules</strong>, <strong>internet speeds</strong>, and <strong>noise recordings</strong>, you must contribute at least 1 review of a place you've lived in.
+                        {user ? (
+                            <span>To see exact <strong>water rationing schedules</strong> and <strong>noise recordings</strong>, you must contribute at least 1 review.</span>
+                        ) : (
+                            <span>You've used your free preview. <strong>Log in and complete your basic Housing Passport</strong> (1 review) to unlock unlimited insights.</span>
+                        )}
                     </p>
-                    <Link
-                        to="/my-profile?tab=residency"
-                        className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2"
-                    >
-                        <FaPenAlt /> Write a Review to Unlock
-                    </Link>
-                    <p className="text-xs text-gray-400 mt-4">
-                        It takes less than 2 minutes. Help the community!
-                    </p>
+
+                    {user ? (
+                        <Link
+                            to="/my-profile?tab=residency"
+                            className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <FaPenAlt /> Write a Review to Unlock
+                        </Link>
+                    ) : (
+                        <div className="space-y-3 w-full">
+                            <Link
+                                to="/login"
+                                className="block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition transform active:scale-95"
+                            >
+                                Log In to Continue
+                            </Link>
+                            <p className="text-xs text-gray-500">
+                                It opens the door to honest data.
+                            </p>
+                        </div>
+                    )}
+
+                    {user && (
+                        <p className="text-xs text-gray-400 mt-4">
+                            It takes less than 2 minutes. Help the community!
+                        </p>
+                    )}
                 </div>
             </div>
         </div>

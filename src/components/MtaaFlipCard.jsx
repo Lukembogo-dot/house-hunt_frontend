@@ -158,7 +158,7 @@ const MtaaFlipCard = ({ property }) => {
 
                             {/* SCROLLABLE NARRATIVE BODY */}
                             <div className="p-6 overflow-y-auto flex-1 bg-gray-50 dark:bg-gray-900 space-y-6">
-                                <InsightLocker>
+                                <InsightLocker propertyId={property.id || property._id}>
                                     {/* 1. THE COMMUTE STORY */}
                                     <div className="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm">
                                         <h4 className="flex items-center gap-2 font-bold text-gray-700 dark:text-gray-300 text-sm uppercase mb-3"><FaBus /> The Commute</h4>
