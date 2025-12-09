@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FaStar, FaHome, FaSpinner, FaPassport, FaArrowRight, FaPlusCircle, 
+import {
+  FaStar, FaHome, FaSpinner, FaPassport, FaArrowRight, FaPlusCircle,
   FaCheckCircle, FaCrown, FaTrophy, FaFire, FaFistRaised
 } from 'react-icons/fa';
 import apiClient from '../utils/apiClient';
 import MtaaFlipCard from '../components/MtaaFlipCard';
 import { toast } from 'react-hot-toast';
-import { calculateAdvancedMtaaScore } from '../utils/mtaaAlgoEngine'; 
+import { calculateAdvancedMtaaScore } from '../utils/mtaaAlgoEngine';
 import SeoInjector from '../components/SeoInjector'; // ✅ IMPORT SEO ENGINE
 
 // --- 1. PROMO CARD ---
@@ -65,12 +65,12 @@ const MtaaBattleArena = () => {
     try {
       const { data } = await apiClient.post(`/battles/${battle._id}/vote`, { neighborhood });
       toast.success(`Voted for ${neighborhood}! (+${data.weightApplied} points)`);
-      
+
       setBattle(prev => ({
         ...prev,
-        contenders: prev.contenders.map(c => 
-          c.neighborhood === neighborhood 
-            ? { ...c, voteCount: (data.updatedCounts[neighborhood]) } 
+        contenders: prev.contenders.map(c =>
+          c.neighborhood === neighborhood
+            ? { ...c, voteCount: (data.updatedCounts[neighborhood]) }
             : c
         )
       }));
@@ -84,7 +84,7 @@ const MtaaBattleArena = () => {
 
   const c1 = battle.contenders[0];
   const c2 = battle.contenders[1];
-  const totalVotes = c1.voteCount + c2.voteCount || 1; 
+  const totalVotes = c1.voteCount + c2.voteCount || 1;
   const c1Percent = Math.round((c1.voteCount / totalVotes) * 100);
   const c2Percent = 100 - c1Percent;
 
@@ -102,10 +102,10 @@ const MtaaBattleArena = () => {
               {c1.neighborhood}
             </h3>
             <div className="flex items-center gap-2 text-sm text-gray-300 justify-center md:justify-start mb-4">
-               <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c1.statsSnapshot?.waterScore || 50}%</span>
-               <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c1.statsSnapshot?.securityScore || 50}%</span>
+              <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c1.statsSnapshot?.waterScore || 50}%</span>
+              <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c1.statsSnapshot?.securityScore || 50}%</span>
             </div>
-            <button 
+            <button
               onClick={() => handleVote(c1.neighborhood)}
               className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-8 rounded-full shadow-lg shadow-red-900/50 transition flex items-center gap-2 mx-auto md:mx-0"
             >
@@ -114,9 +114,9 @@ const MtaaBattleArena = () => {
           </div>
 
           <div className="shrink-0">
-             <div className="w-20 h-20 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center shadow-xl">
-                <span className="font-black text-2xl text-gray-400 italic">VS</span>
-             </div>
+            <div className="w-20 h-20 rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center shadow-xl">
+              <span className="font-black text-2xl text-gray-400 italic">VS</span>
+            </div>
           </div>
 
           <div className="flex-1 text-center md:text-right">
@@ -124,10 +124,10 @@ const MtaaBattleArena = () => {
               {c2.neighborhood}
             </h3>
             <div className="flex items-center gap-2 text-sm text-gray-300 justify-center md:justify-end mb-4">
-               <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c2.statsSnapshot?.waterScore || 50}%</span>
-               <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c2.statsSnapshot?.securityScore || 50}%</span>
+              <span className="bg-gray-800 px-2 py-1 rounded">💧 Water: {c2.statsSnapshot?.waterScore || 50}%</span>
+              <span className="bg-gray-800 px-2 py-1 rounded">🛡️ Safety: {c2.statsSnapshot?.securityScore || 50}%</span>
             </div>
-            <button 
+            <button
               onClick={() => handleVote(c2.neighborhood)}
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-full shadow-lg shadow-blue-900/50 transition flex items-center gap-2 mx-auto md:ml-auto md:mr-0"
             >
@@ -137,13 +137,13 @@ const MtaaBattleArena = () => {
         </div>
 
         <div className="relative h-4 w-full bg-gray-800">
-          <div 
-             className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-red-600 transition-all duration-1000 ease-out"
-             style={{ width: `${c1Percent}%` }}
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-red-600 transition-all duration-1000 ease-out"
+            style={{ width: `${c1Percent}%` }}
           ></div>
-          <div 
-             className="absolute top-0 right-0 h-full bg-gradient-to-l from-cyan-500 to-blue-600 transition-all duration-1000 ease-out"
-             style={{ width: `${c2Percent}%` }}
+          <div
+            className="absolute top-0 right-0 h-full bg-gradient-to-l from-cyan-500 to-blue-600 transition-all duration-1000 ease-out"
+            style={{ width: `${c2Percent}%` }}
           ></div>
           <div className="absolute inset-0 flex justify-between px-4 items-center text-[10px] font-bold text-white uppercase tracking-widest">
             <span>{c1Percent}% Votes</span>
@@ -185,7 +185,7 @@ const RatedPropertiesPage = () => {
     const fetchRealData = async () => {
       try {
         const { data: experiences } = await apiClient.get('/living-community/experience');
-        
+
         const grouped = experiences.reduce((acc, curr) => {
           const key = curr.buildingName.trim().toLowerCase();
           if (!acc[key]) acc[key] = { name: curr.buildingName, items: [] };
@@ -194,115 +194,163 @@ const RatedPropertiesPage = () => {
         }, {});
 
         const aggregatedBuildings = Object.values(grouped).map(group => {
-            const items = group.items;
-            const count = items.length;
-            
-            const algoStats = calculateAdvancedMtaaScore(items);
+          const items = group.items;
+          const count = items.length;
 
-            const getMode = (arr) => {
-                if (arr.length === 0) return null;
-                const modeMap = {};
-                let maxEl = arr[0], maxCount = 1;
-                for(let i = 0; i < arr.length; i++) {
-                    let el = arr[i];
-                    if(modeMap[el] == null) modeMap[el] = 1;
-                    else modeMap[el]++;  
-                    if(modeMap[el] > maxCount) { maxEl = el; maxCount = modeMap[el]; }
-                }
-                return maxEl;
-            };
+          const algoStats = calculateAdvancedMtaaScore(items);
 
-            const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
-            
-            const waterSourceList = items.map(i => {
-                if (i.utilities?.waterSource) return i.utilities.waterSource;
-                if (i.utilities?.waterConsistency?.toLowerCase().includes('borehole')) return 'Borehole';
-                if (i.utilities?.waterConsistency?.toLowerCase().includes('council')) return 'Council Water';
-                return 'Council Water'; 
-            }).filter(Boolean);
-            const modeWaterSource = getMode(waterSourceList);
+          const getMode = (arr) => {
+            if (arr.length === 0) return null;
+            const modeMap = {};
+            let maxEl = arr[0], maxCount = 1;
+            for (let i = 0; i < arr.length; i++) {
+              let el = arr[i];
+              if (modeMap[el] == null) modeMap[el] = 1;
+              else modeMap[el]++;
+              if (modeMap[el] > maxCount) { maxEl = el; maxCount = modeMap[el]; }
+            }
+            return maxEl;
+          };
 
-            const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
-            const speedList = items.map(i => i.utilities?.internetSpeed).filter(Boolean);
-            const modeSpeed = getMode(speedList) || 'Not listed';
 
-            const netRelList = items.map(i => i.utilities?.internetReliability).filter(n => n > 0);
-            const avgNetRel = netRelList.length > 0 ? Math.round(netRelList.reduce((a, b) => a + b, 0) / netRelList.length) : 3;
 
-            const roadList = items.map(i => i.accessibility?.roadCondition).filter(Boolean);
-            const safeNightList = items.map(i => i.security?.safeAtNight).filter(Boolean);
-            const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
+          const waterSourceList = items.map(i => {
+            if (i.utilities?.waterSource) return i.utilities.waterSource;
+            const consistency = i.utilities?.waterConsistency?.toLowerCase() || '';
+            if (consistency.includes('borehole')) return 'Borehole';
+            if (consistency.includes('council')) return 'Council Water';
+            return 'Council Water';
+          }).filter(Boolean);
+          const modeWaterSource = getMode(waterSourceList);
 
-            const allSecurityFeatures = [...new Set(items.flatMap(i => i.security?.features || []))];
-            const allRainFeatures = [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))];
-            
-            const allFoodAmenities = [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))];
-            const allNoiseSources = [...new Set(items.flatMap(i => i.amenities?.noiseSources || []))];
+          const netList = items.map(i => i.utilities?.internetProvider).filter(Boolean);
+          const speedList = items.map(i => i.utilities?.internetSpeed).filter(Boolean);
+          const modeSpeed = getMode(speedList) || 'Not listed';
 
-            const opinionList = items.map(i => i.rentalDetails?.rentOpinion).filter(Boolean);
-            const modeOpinion = getMode(opinionList) || 'Fair Value';
-            const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
-            const modeUnitType = getMode(unitTypes) || '1 Bedroom'; 
+          const netRelList = items.map(i => i.utilities?.internetReliability).filter(n => n > 0);
+          const avgNetRel = netRelList.length > 0 ? Math.round(netRelList.reduce((a, b) => a + b, 0) / netRelList.length) : 3;
 
-            // Calculate Supermarket Consensus
-            const supermarketCount = items.filter(i => i.amenities?.supermarketNearby).length;
-            const hasSupermarket = (supermarketCount / count) > 0.3; 
+          const roadList = items.map(i => i.accessibility?.roadCondition).filter(Boolean);
+          const safeNightList = items.map(i => i.security?.safeAtNight).filter(Boolean);
+          const noiseList = items.map(i => i.amenities?.noiseLevel).filter(Boolean);
 
-            const hasKiosk = items.filter(i => i.amenities?.proximityToKiosk).length > count / 2;
-            const hasMamaMboga = items.filter(i => i.amenities?.proximityToMamaMboga).length > count / 2;
-            const hasKibandaski = items.filter(i => i.amenities?.proximityToKibandaski).length > count / 2;
+          const allSecurityFeatures = [...new Set(items.flatMap(i => i.security?.features || []))];
+          const allRainFeatures = [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))];
 
-            const securityScore100 = algoStats?.breakdown?.security || 0;
-            const securityRating5 = (securityScore100 / 20).toFixed(1);
+          const allFoodAmenities = [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))];
+          const allNoiseSources = [...new Set(items.flatMap(i => i.amenities?.noiseSources || []))];
 
-            return {
-                id: items[0]._id, 
-                title: group.name,
-                location: items[0].location?.neighborhood || 'Nairobi',
-                rating: algoStats ? algoStats.mtaaIndex : 0, 
-                reviews: count,
-                rentOpinion: modeOpinion,
-                unitType: modeUnitType,
-                gradient: getBuildingGradient(group.name),
-                image: items[0].photos?.[0] || null, 
-                badges: count > 2 ? ["Verified", "Trending"] : ["New Entry"],
-                
-                mtaaScore: {
-                    water: getMode(waterList) || 'Unknown',
-                    waterSource: modeWaterSource, 
-                    waterRationingSchedule: getMode(items.map(i => i.utilities?.waterRationingSchedule).filter(Boolean)),
-                    
-                    internet: getMode(netList) || 'Unknown',
-                    internetSpeed: modeSpeed,
-                    internetReliability: avgNetRel, 
-                    
-                    fare: algoStats?.averages?.commutePeak || 0, 
-                    fareOffPeak: algoStats?.averages?.commuteOffPeak || 0, 
-                    
-                    roadCondition: getMode(roadList) || 'Tarmac',
-                    rainySeason: allRainFeatures,
-                    
-                    security: securityRating5, 
-                    safeAtNight: getMode(safeNightList) || 'Safe',
-                    securityFeatures: allSecurityFeatures, 
-                    
-                    noiseLevel: getMode(noiseList) || 'Moderate',
-                    noiseSources: allNoiseSources, 
-                    
-                    food: allFoodAmenities, 
-                    amenities: {
-                       supermarket: hasSupermarket,
-                       kiosk: hasKiosk,
-                       mamaMboga: hasMamaMboga,
-                       kibandaski: hasKibandaski
-                    }
-                }
-            };
+          const opinionList = items.map(i => i.rentalDetails?.rentOpinion).filter(Boolean);
+          const modeOpinion = getMode(opinionList) || 'Fair Value';
+          const unitTypes = items.map(i => i.rentalDetails?.unitType).filter(Boolean);
+          const modeUnitType = getMode(unitTypes) || '1 Bedroom';
+
+          const waterList = items.map(i => i.utilities?.waterConsistency).filter(Boolean);
+          const modeWater = getMode(waterList) || '24/7';
+
+          const waterQualityList = items.map(i => i.utilities?.waterQuality).filter(Boolean);
+          const modeWaterQuality = getMode(waterQualityList) || 'Fresh';
+
+          const powerList = items.map(i => i.utilities?.powerStability).filter(Boolean);
+          const modePowerStability = getMode(powerList) || 'Stable';
+
+          const ratings = items.map(i => i.review?.rating).filter(n => n > 0);
+          const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : "5.0";
+
+          const mgmtRatings = items.map(i => i.management?.rating).filter(n => n > 0);
+          const avgMgmt = mgmtRatings.length > 0 ? (mgmtRatings.reduce((a, b) => a + b, 0) / mgmtRatings.length).toFixed(1) : "3.0";
+
+          // RENT RANGE CALCULATION
+          const rentList = items.map(i => i.rentalDetails?.monthlyRent).filter(n => n > 0);
+          let rentRange = "Ask Agent";
+          if (rentList.length > 0) {
+            const minRent = Math.min(...rentList);
+            const maxRent = Math.max(...rentList);
+            const formatRent = (val) => val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val;
+
+            rentRange = minRent === maxRent
+              ? `${formatRent(minRent)}`
+              : `${formatRent(minRent)} - ${formatRent(maxRent)}`;
+          }
+
+          // NEW AGGREGATIONS
+          const cleanlinessRatings = items.map(i => i.sanitation?.cleanlinessRating).filter(n => n > 0);
+          const avgCleanliness = cleanlinessRatings.length > 0 ? (cleanlinessRatings.reduce((a, b) => a + b, 0) / cleanlinessRatings.length).toFixed(1) : "3.0";
+
+          const garbageList = items.map(i => i.sanitation?.garbageCollection).filter(Boolean);
+          const modeGarbage = getMode(garbageList) || 'Weekly';
+
+          const sewerList = items.map(i => i.sanitation?.sewerSystem);
+          const sewerConsensus = sewerList.filter(Boolean).length > (sewerList.length / 2);
+
+          const allFacilities = [...new Set(items.flatMap(i => i.buildingFacilities || []))];
+
+          const schoolsList = items.map(i => i.socialAmenities?.schools).filter(Boolean);
+          const mallsList = items.map(i => i.socialAmenities?.malls).filter(Boolean);
+          const hospitalsList = items.map(i => i.socialAmenities?.hospitals).filter(Boolean);
+
+          const improvementList = items.map(i => i.improvementSuggestion).filter(Boolean);
+
+          return {
+            id: group.name,
+            title: group.name,
+            location: items[0].location?.neighborhood || 'Nairobi',
+            image: null,
+            gradient: "from-blue-600 to-blue-900",
+            rating: avgRating,
+            reviews: items.length,
+            rentOpinion: modeOpinion,
+            rentRange: rentRange, // ✅ NEW FIELD
+            unitType: modeUnitType,
+            mtaaScore: {
+              water: modeWater,
+              waterSource: items[0].utilities?.waterSource,
+              waterRationingSchedule: items[0].utilities?.waterRationingSchedule,
+              security: items[0].security?.safeAtNight === 'Very Safe' ? '5.0' : '3.0',
+              safeAtNight: items[0].security?.safeAtNight,
+              securityFeatures: [...new Set(items.flatMap(i => i.security?.features || []))],
+              roads: items[0].accessibility?.roadCondition,
+              roadCondition: items[0].accessibility?.roadCondition,
+              rainySeasonFeatures: [...new Set(items.flatMap(i => i.accessibility?.rainySeasonFeatures || []))],
+              amenities: {
+                supermarket: items.some(i => i.amenities?.supermarketNearby),
+                noiseLevel: items[0].amenities?.noiseLevel,
+                noiseSources: allNoiseSources
+              },
+              fare: items[0].accessibility?.matatuFarePeak || 50,
+              fareOffPeak: items[0].accessibility?.matatuFareOffPeak || 30,
+              distanceToStage: items[0].accessibility?.distanceToStage,
+              matatuAvailability: items[0].accessibility?.matatuAvailability,
+              internetReliability: items[0].utilities?.internetReliability,
+              internetProvider: items[0].utilities?.internetProvider,
+              internetSpeed: items[0].utilities?.internetSpeed,
+              food: [...new Set(items.flatMap(i => i.amenities?.foodAmenities || []))],
+
+              management: {
+                rating: avgMgmt,
+                responsiveness: items[0].management?.responsiveness,
+                friendliness: items[0].management?.caretakerFriendliness
+              },
+
+              sanitation: {
+                cleanliness: avgCleanliness,
+                garbage: modeGarbage,
+                sewer: sewerConsensus
+              },
+              social: {
+                schools: getMode(schoolsList) || 'Short Drive',
+                malls: getMode(mallsList) || 'Short Drive',
+                hospitals: getMode(hospitalsList) || 'Short Drive'
+              },
+              facilities: allFacilities,
+              improvements: improvementList.slice(0, 3)
+            }
+          };
         });
 
         const sorted = aggregatedBuildings.sort((a, b) => {
-            if (b.rating !== a.rating) return b.rating - a.rating; 
-            return b.reviews - a.reviews; 
+          if (b.rating !== a.rating) return b.rating - a.rating;
+          return b.reviews - a.reviews;
         });
 
         setProperties(sorted);
@@ -318,12 +366,12 @@ const RatedPropertiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 pt-10">
-      
+
       {/* ✅ INJECT GLOBAL SEO ENGINE */}
       <SeoInjector seo={seoConfig} />
 
       <div className="container mx-auto px-6 md:px-10">
-        
+
         <div className="mb-10 text-center max-w-2xl mx-auto">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
             The <span className="text-blue-600">Reliability</span> Index
@@ -337,7 +385,7 @@ const RatedPropertiesPage = () => {
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-             <FaSpinner className="animate-spin text-blue-600 text-4xl" />
+            <FaSpinner className="animate-spin text-blue-600 text-4xl" />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -353,7 +401,7 @@ const RatedPropertiesPage = () => {
                   </div>
                 )}
                 <div className={index === 0 ? "ring-4 ring-yellow-400 ring-offset-2 ring-offset-gray-50 dark:ring-offset-gray-900 rounded-2xl" : ""}>
-                   <MtaaFlipCard property={property} />
+                  <MtaaFlipCard property={property} />
                 </div>
               </div>
             ))}
@@ -366,7 +414,7 @@ const RatedPropertiesPage = () => {
             <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300">No Rated Properties Yet</h3>
             <p className="text-gray-500 mb-6">Be the first to create a Housing Passport and rate your apartment!</p>
             <Link to="/living-feed" className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition">
-               Create Passport
+              Create Passport
             </Link>
           </div>
         )}

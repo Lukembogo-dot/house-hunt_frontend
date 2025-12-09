@@ -22,19 +22,19 @@ class MyUploadAdapter {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       })
-      .then(response => {
-        if (response.data.imageUrl) {
-          resolve({ default: response.data.imageUrl });
-        } else {
-          reject('Image URL not returned from server.');
-        }
-      })
-      .catch(error => {
-        reject(error.response?.data?.message || 'Image upload failed.');
-      });
+        .then(response => {
+          if (response.data.imageUrl) {
+            resolve({ default: response.data.imageUrl });
+          } else {
+            reject('Image URL not returned from server.');
+          }
+        })
+        .catch(error => {
+          reject(error.response?.data?.message || 'Image upload failed.');
+        });
     }));
   }
-  abort() {}
+  abort() { }
 }
 
 function MyCustomUploadAdapterPlugin(editor) {
@@ -179,11 +179,10 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
                     <button
                       onClick={() => handleToggleEmphasize(kw)}
                       disabled={isSaving === kw._id}
-                      className={`p-2 rounded-full transition-colors ${
-                        kw.isEmphasized 
-                          ? 'text-yellow-400 hover:text-yellow-300' 
+                      className={`p-2 rounded-full transition-colors ${kw.isEmphasized
+                          ? 'text-yellow-400 hover:text-yellow-300'
                           : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
-                      }`}
+                        }`}
                       title={kw.isEmphasized ? 'De-emphasize (Remove from Footer)' : 'Emphasize (Add to Footer)'}
                     >
                       {isSaving === kw._id ? (
@@ -196,11 +195,10 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
                   <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{kw.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">{kw.path}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      kw.engine === 'property' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                      kw.engine === 'agent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                      kw.engine === 'intel' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${kw.engine === 'property' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        kw.engine === 'agent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                          kw.engine === 'intel' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                      }`}>
                       {kw.engine}
                     </span>
                   </td>
@@ -234,110 +232,162 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [keywordSuggestions, setKeywordSuggestions] = useState([]);
-  
+
   const [postContent, setPostContent] = useState('');
-  
+
   // ✅ UPDATED: Identifiers for Mongo Objects
   const [currentMongoId, setCurrentMongoId] = useState(null);
-  
+
   // ✅ UPDATED: Flags to toggle Editor vs Standard Form
   const [isServicePost, setIsServicePost] = useState(false);
   const [isProvider, setIsProvider] = useState(false);
-  
+
   const staticPages = [
-      { pagePath: '/', metaTitle: 'Homepage', breadCrumbTitle: 'Home' },
-      { pagePath: '/buy', metaTitle: 'Buy Page', breadCrumbTitle: 'Buy' },
-      { pagePath: '/rent', metaTitle: 'Rent Page', breadCrumbTitle: 'Rent' },
-      { pagePath: '/about', metaTitle: 'About Us', breadCrumbTitle: 'About' },
-      { pagePath: '/contact', metaTitle: 'Contact Us', breadCrumbTitle: 'Contact' },
+    { pagePath: '/', metaTitle: 'Homepage', breadCrumbTitle: 'Home' },
+    { pagePath: '/buy', metaTitle: 'Buy Page', breadCrumbTitle: 'Buy' },
+    { pagePath: '/rent', metaTitle: 'Rent Page', breadCrumbTitle: 'Rent' },
+    { pagePath: '/about', metaTitle: 'About Us', breadCrumbTitle: 'About' },
+    { pagePath: '/contact', metaTitle: 'Contact Us', breadCrumbTitle: 'Contact' },
+
+    // ✅ Added All Pages
+    { pagePath: '/add-property', metaTitle: 'Add Property', breadCrumbTitle: 'Add Property' },
+    { pagePath: '/admin-add-service', metaTitle: 'Admin Add Service', breadCrumbTitle: 'Add Service' },
+    { pagePath: '/admin-dashboard', metaTitle: 'Admin Dashboard', breadCrumbTitle: 'Admin' },
+    { pagePath: '/admin-faq-manager', metaTitle: 'FAQ Manager', breadCrumbTitle: 'FAQ Manager' },
+    { pagePath: '/agent-analytics', metaTitle: 'Agent Analytics', breadCrumbTitle: 'Analytics' },
+    { pagePath: '/agent-dashboard', metaTitle: 'Agent Dashboard', breadCrumbTitle: 'Dashboard' },
+    { pagePath: '/agent-finder-page', metaTitle: 'Find an Agent', breadCrumbTitle: 'Agent Finder' },
+    { pagePath: '/agent-public-profile', metaTitle: 'Agent Profile', breadCrumbTitle: 'Agent Profile' },
+    { pagePath: '/agent-wallet', metaTitle: 'Agent Wallet', breadCrumbTitle: 'Wallet' },
+    { pagePath: '/chat-page', metaTitle: 'Chat', breadCrumbTitle: 'Chat' },
+    { pagePath: '/community-hub', metaTitle: 'Community Hub', breadCrumbTitle: 'Community' },
+    { pagePath: '/community-post', metaTitle: 'Community Post', breadCrumbTitle: 'Post' },
+    { pagePath: '/cost-of-living-calculator', metaTitle: 'Cost of Living Calculator', breadCrumbTitle: 'Calculator' },
+    { pagePath: '/create-intel-post', metaTitle: 'Create Intel Post', breadCrumbTitle: 'Create Intel' },
+    { pagePath: '/dynamic-agent-search', metaTitle: 'Search Agents', breadCrumbTitle: 'Search Agents' },
+    { pagePath: '/dynamic-neighbourhood-search', metaTitle: 'Search Neighbourhoods', breadCrumbTitle: 'Neighbourhoods' },
+    { pagePath: '/dynamic-search-page', metaTitle: 'Search Properties', breadCrumbTitle: 'Search' },
+    { pagePath: '/dynamic-service-search', metaTitle: 'Search Services', breadCrumbTitle: 'Search Services' },
+    { pagePath: '/edit-profile-settings', metaTitle: 'Edit Profile', breadCrumbTitle: 'Edit Profile' },
+    { pagePath: '/edit-property', metaTitle: 'Edit Property', breadCrumbTitle: 'Edit Property' },
+    { pagePath: '/faq-details', metaTitle: 'FAQ Details', breadCrumbTitle: 'FAQ Details' },
+    { pagePath: '/faq-index', metaTitle: 'FAQs', breadCrumbTitle: 'FAQ' },
+    { pagePath: '/feature-manager', metaTitle: 'Feature Manager', breadCrumbTitle: 'Features' },
+    { pagePath: '/for-agents', metaTitle: 'For Agents', breadCrumbTitle: 'For Agents' },
+    { pagePath: '/forgot-password', metaTitle: 'Forgot Password', breadCrumbTitle: 'Forgot Password' },
+    { pagePath: '/home-page', metaTitle: 'Home Alternate', breadCrumbTitle: 'Home' },
+    { pagePath: '/living-community-feed', metaTitle: 'Living Community', breadCrumbTitle: 'Living Community' },
+    { pagePath: '/living-post-detail', metaTitle: 'Community Post', breadCrumbTitle: 'Post' },
+    { pagePath: '/login', metaTitle: 'Login', breadCrumbTitle: 'Login' },
+    { pagePath: '/my-profile', metaTitle: 'My Profile', breadCrumbTitle: 'Profile' },
+    { pagePath: '/neighbourhood-intel-page', metaTitle: 'Neighbourhood Intel', breadCrumbTitle: 'Intel' },
+    { pagePath: '/neighbourhood-quiz', metaTitle: 'Neighbourhood Quiz', breadCrumbTitle: 'Quiz' },
+    { pagePath: '/not-found', metaTitle: 'Page Not Found', breadCrumbTitle: '404' },
+    { pagePath: '/our-platform', metaTitle: 'Our Platform', breadCrumbTitle: 'Platform' },
+    { pagePath: '/payment-cancel', metaTitle: 'Payment Cancelled', breadCrumbTitle: 'Cancelled' },
+    { pagePath: '/payment-success', metaTitle: 'Payment Success', breadCrumbTitle: 'Success' },
+    { pagePath: '/privacy-policy', metaTitle: 'Privacy Policy', breadCrumbTitle: 'Privacy' },
+    { pagePath: '/property-details', metaTitle: 'Property Details', breadCrumbTitle: 'Property' },
+    { pagePath: '/rated-properties-page', metaTitle: 'Rated Properties', breadCrumbTitle: 'Rated' },
+    { pagePath: '/register', metaTitle: 'Register', breadCrumbTitle: 'Register' },
+    { pagePath: '/reset-password', metaTitle: 'Reset Password', breadCrumbTitle: 'Reset Password' },
+    { pagePath: '/seo-manager', metaTitle: 'SEO Manager', breadCrumbTitle: 'SEO' },
+    { pagePath: '/service-post-details', metaTitle: 'Service Details', breadCrumbTitle: 'Service' },
+    { pagePath: '/service-provider-details', metaTitle: 'Provider Details', breadCrumbTitle: 'Provider' },
+    { pagePath: '/services', metaTitle: 'Services', breadCrumbTitle: 'Services' },
+    { pagePath: '/share-insight', metaTitle: 'Share Insight', breadCrumbTitle: 'Share' },
+    { pagePath: '/sold-properties-page', metaTitle: 'Sold Properties', breadCrumbTitle: 'Sold' },
+    { pagePath: '/terms-of-service', metaTitle: 'Terms of Service', breadCrumbTitle: 'Terms' },
+    { pagePath: '/verify-email', metaTitle: 'Verify Email', breadCrumbTitle: 'Verify' },
+    { pagePath: '/wanted-request-page', metaTitle: 'Wanted Requests', breadCrumbTitle: 'Requests' },
   ];
-  
+
   // ✅ 1. UPDATED: Fetch Providers, Posts & FAQs
   const fetchPagesList = useCallback(async () => {
     try {
-        // 1. Get Configured SEO Pages
-        const { data: dynamicPagesData } = await apiClient.get('/seo/pages');
-        const dynamicPages = Array.isArray(dynamicPagesData) ? dynamicPagesData : [];
-        
-        // 2. Get Service Posts
-        const { data: servicePosts } = await apiClient.get('/services'); 
+      // 1. Get Configured SEO Pages
+      const { data: dynamicPagesData } = await apiClient.get('/seo/pages');
+      const dynamicPages = Array.isArray(dynamicPagesData) ? dynamicPagesData : [];
 
-        // 3. Get FAQs
-        const { data: faqPosts } = await apiClient.get('/faqs');
-        
-        // ✅ 4. NEW: Get Service Providers
-        const { data: serviceProvidersWrapper } = await apiClient.get('/service-providers?limit=1000');
-        const serviceProviders = serviceProvidersWrapper.providers || serviceProvidersWrapper || [];
+      // 2. Get Service Posts
+      const { data: servicePosts } = await apiClient.get('/services');
 
-        // 5. Map pSEO
-        const pSeoPages = keywordLibrary.map(kw => ({
-            pagePath: kw.path,
-            metaTitle: `${kw.name} (pSEO)`,
-            breadCrumbTitle: kw.name,
-            type: 'Keyword'
-        }));
+      // 3. Get FAQs
+      const { data: faqPosts } = await apiClient.get('/faqs');
 
-        // 6. Map Service Posts
-        const servicePostPages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
-            pagePath: `/services/${sp.slug}`,
-            metaTitle: sp.title,
-            breadCrumbTitle: sp.title,
-            type: 'Service Post',
-            isPost: true, // Identify as Post
-            mongoId: sp._id
-        }));
+      // ✅ 4. NEW: Get Service Providers
+      const { data: serviceProvidersWrapper } = await apiClient.get('/service-providers?limit=1000');
+      const serviceProviders = serviceProvidersWrapper.providers || serviceProvidersWrapper || [];
 
-        // ✅ 7. NEW: Map Service Providers
-        const providerPages = serviceProviders.map(sp => ({
-            pagePath: `/services/${sp.slug}`,
-            metaTitle: sp.title,
-            breadCrumbTitle: sp.title,
-            type: 'Service Provider',
-            isProvider: true, // Identify as Provider
-            mongoId: sp._id
-        }));
+      // 5. Map pSEO
+      const pSeoPages = keywordLibrary.map(kw => ({
+        pagePath: kw.path,
+        metaTitle: `${kw.name} (pSEO)`,
+        breadCrumbTitle: kw.name,
+        type: 'Keyword'
+      }));
 
-        // 8. Map FAQs
-        const faqPages = (Array.isArray(faqPosts) ? faqPosts : []).map(faq => ({
-            pagePath: `/faq/${faq.slug}`,
-            metaTitle: faq.question, 
-            breadCrumbTitle: 'FAQ',
-            type: 'FAQ'
-        }));
+      // 6. Map Service Posts
+      const servicePostPages = (Array.isArray(servicePosts) ? servicePosts : []).map(sp => ({
+        pagePath: `/services/${sp.slug}`,
+        metaTitle: sp.title,
+        breadCrumbTitle: sp.title,
+        type: 'Service Post',
+        isPost: true, // Identify as Post
+        mongoId: sp._id
+      }));
 
-        const pageMap = new Map();
-        
-        // Populate Map (Order implies display priority if paths conflict)
-        faqPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
-        pSeoPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
-        staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false, type: 'Static' }));
-        servicePostPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true })); 
-        
-        // ✅ Add Providers to Map
-        providerPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+      // ✅ 7. NEW: Map Service Providers
+      const providerPages = serviceProviders.map(sp => ({
+        pagePath: `/services/${sp.slug}`,
+        metaTitle: sp.title,
+        breadCrumbTitle: sp.title,
+        type: 'Service Provider',
+        isProvider: true, // Identify as Provider
+        mongoId: sp._id
+      }));
 
-        // Overwrite with existing DB SEO settings
-        dynamicPages.forEach(page => {
-          const existing = pageMap.get(page.pagePath) || {};
-          pageMap.set(page.pagePath, { ...existing, ...page, isDynamic: true });
-        });
+      // 8. Map FAQs
+      const faqPages = (Array.isArray(faqPosts) ? faqPosts : []).map(faq => ({
+        pagePath: `/faq/${faq.slug}`,
+        metaTitle: faq.question,
+        breadCrumbTitle: 'FAQ',
+        type: 'FAQ'
+      }));
 
-        const uniquePages = Array.from(pageMap.values());
-        uniquePages.sort((a, b) => a.pagePath.localeCompare(b.pagePath));
-        
-        setPagesList(uniquePages);
-        if (uniquePages.length > 0 && !selectedPagePath) {
-            setSelectedPagePath(uniquePages[0].pagePath);
-        }
+      const pageMap = new Map();
+
+      // Populate Map (Order implies display priority if paths conflict)
+      faqPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+      pSeoPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+      staticPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: false, type: 'Static' }));
+      servicePostPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+
+      // ✅ Add Providers to Map
+      providerPages.forEach(page => pageMap.set(page.pagePath, { ...page, isDynamic: true }));
+
+      // Overwrite with existing DB SEO settings
+      dynamicPages.forEach(page => {
+        const existing = pageMap.get(page.pagePath) || {};
+        pageMap.set(page.pagePath, { ...existing, ...page, isDynamic: true });
+      });
+
+      const uniquePages = Array.from(pageMap.values());
+      uniquePages.sort((a, b) => a.pagePath.localeCompare(b.pagePath));
+
+      setPagesList(uniquePages);
+      if (uniquePages.length > 0 && !selectedPagePath) {
+        setSelectedPagePath(uniquePages[0].pagePath);
+      }
     } catch (err) {
-        console.error("Failed to fetch pages list:", err);
-        setError('Failed to load configurable pages from the server.');
-        setPagesList(staticPages);
+      console.error("Failed to fetch pages list:", err);
+      setError('Failed to load configurable pages from the server.');
+      setPagesList(staticPages);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   }, [selectedPagePath, keywordLibrary]);
-  
+
   // ✅ 2. UPDATED: Fetch Data Logic (Handles Providers)
   const fetchSeoData = useCallback(async (path) => {
     if (!path) return;
@@ -355,88 +405,88 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     const isThisPost = pageObj?.isPost;
 
     try {
-        const encodedPath = encodeURIComponent(path);
-        const { data } = await apiClient.get(`/seo/${encodedPath}`);
-        
-        setSeoData({
-            pagePath: path,
-            metaTitle: data.metaTitle || '',
-            metaDescription: data.metaDescription || '',
-            ogTitle: data.ogTitle || '',
-            ogDescription: data.ogDescription || '',
-            twitterTitle: data.twitterTitle || '',
-            twitterDescription: data.twitterDescription || '',
-            focusKeyword: data.focusKeyword || '',
-            canonicalUrl: data.canonicalUrl || '',
-            schemaFocusKeyword: data.schemaFocusKeyword || '',
-            schemaDescription: data.schemaDescription || '',
-            breadCrumbTitle: data.breadCrumbTitle || '',
-            faqs: data.faqs || [],
-        });
+      const encodedPath = encodeURIComponent(path);
+      const { data } = await apiClient.get(`/seo/${encodedPath}`);
 
-        // ✅ LOGIC A: If Service Provider
-        if (isThisProvider) {
-          setIsProvider(true);
-          try {
-             // Fetch Provider details using the ID from list
-             const { data: provider } = await apiClient.get(`/service-providers/${pageObj.mongoId}`);
-             setPostContent(provider.content || ''); // Bio / Content
-             setCurrentMongoId(provider._id);
-             
-             // Autofill SEO if missing
-             if (!data.metaTitle) {
-               setSeoData(prev => ({
-                 ...prev,
-                 metaTitle: provider.metaTitle || provider.title,
-                 metaDescription: provider.metaDescription || provider.description,
-               }));
-             }
-          } catch (err) {
-             console.error("Failed to fetch provider content:", err);
+      setSeoData({
+        pagePath: path,
+        metaTitle: data.metaTitle || '',
+        metaDescription: data.metaDescription || '',
+        ogTitle: data.ogTitle || '',
+        ogDescription: data.ogDescription || '',
+        twitterTitle: data.twitterTitle || '',
+        twitterDescription: data.twitterDescription || '',
+        focusKeyword: data.focusKeyword || '',
+        canonicalUrl: data.canonicalUrl || '',
+        schemaFocusKeyword: data.schemaFocusKeyword || '',
+        schemaDescription: data.schemaDescription || '',
+        breadCrumbTitle: data.breadCrumbTitle || '',
+        faqs: data.faqs || [],
+      });
+
+      // ✅ LOGIC A: If Service Provider
+      if (isThisProvider) {
+        setIsProvider(true);
+        try {
+          // Fetch Provider details using the ID from list
+          const { data: provider } = await apiClient.get(`/service-providers/${pageObj.mongoId}`);
+          setPostContent(provider.content || ''); // Bio / Content
+          setCurrentMongoId(provider._id);
+
+          // Autofill SEO if missing
+          if (!data.metaTitle) {
+            setSeoData(prev => ({
+              ...prev,
+              metaTitle: provider.metaTitle || provider.title,
+              metaDescription: provider.metaDescription || provider.description,
+            }));
           }
+        } catch (err) {
+          console.error("Failed to fetch provider content:", err);
         }
-        // ✅ LOGIC B: If Service Post (Existing Logic)
-        else if (path.startsWith('/services/') || isThisPost) {
-          setIsServicePost(true);
-          try {
-            const slug = path.split('/services/')[1];
-            const { data: postData } = await apiClient.get(`/services/slug/${slug}`);
-            setPostContent(postData.content || '');
-            setCurrentMongoId(postData._id);
-            
-            if (!data.metaTitle) {
-               setSeoData(prev => ({
-                 ...prev,
-                 metaTitle: postData.metaTitle || postData.title,
-                 metaDescription: postData.metaDescription || (postData.content ? postData.content.substring(0, 150).replace(/<[^>]+>/g, '') : ''),
-               }));
-            }
-          } catch (postErr) {
-            // Might be a directory page or static page
+      }
+      // ✅ LOGIC B: If Service Post (Existing Logic)
+      else if (path.startsWith('/services/') || isThisPost) {
+        setIsServicePost(true);
+        try {
+          const slug = path.split('/services/')[1];
+          const { data: postData } = await apiClient.get(`/services/slug/${slug}`);
+          setPostContent(postData.content || '');
+          setCurrentMongoId(postData._id);
+
+          if (!data.metaTitle) {
+            setSeoData(prev => ({
+              ...prev,
+              metaTitle: postData.metaTitle || postData.title,
+              metaDescription: postData.metaDescription || (postData.content ? postData.content.substring(0, 150).replace(/<[^>]+>/g, '') : ''),
+            }));
           }
+        } catch (postErr) {
+          // Might be a directory page or static page
         }
+      }
 
     } catch (err) {
-        // Fallback
-        setSeoData({
-            pagePath: path,
-            metaTitle: '', metaDescription: '', ogTitle: '', ogDescription: '',
-            twitterTitle: '', twitterDescription: '', focusKeyword: '',
-            canonicalUrl: '', schemaFocusKeyword: '', schemaDescription: '',
-            breadCrumbTitle: '', faqs: []
-        });
+      // Fallback
+      setSeoData({
+        pagePath: path,
+        metaTitle: '', metaDescription: '', ogTitle: '', ogDescription: '',
+        twitterTitle: '', twitterDescription: '', focusKeyword: '',
+        canonicalUrl: '', schemaFocusKeyword: '', schemaDescription: '',
+        breadCrumbTitle: '', faqs: []
+      });
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
   }, [pagesList]);
 
   useEffect(() => {
     fetchPagesList();
   }, [fetchPagesList]);
-  
+
   useEffect(() => {
     if (selectedPagePath && pagesList.length > 0) {
-        fetchSeoData(selectedPagePath);
+      fetchSeoData(selectedPagePath);
     }
   }, [selectedPagePath, pagesList]);
 
@@ -469,39 +519,39 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setSaving(true);
     setError('');
     setSuccess('');
-    
+
     try {
-        const encodedPath = encodeURIComponent(seoData.pagePath);
-        await apiClient.put(`/seo/${encodedPath}`, seoData);
-        
-        // ✅ CASE 1: Service Provider Update
-        if (isProvider && currentMongoId) {
-            const formData = new FormData();
-            formData.append('content', postContent);
-            formData.append('metaTitle', seoData.metaTitle);
-            formData.append('metaDescription', seoData.metaDescription);
-            
-            await apiClient.put(`/service-providers/${currentMongoId}`, formData, {
-                 headers: { 'Content-Type': 'multipart/form-data' }
-            });
-        }
-        // ✅ CASE 2: Service Post Update
-        else if (isServicePost && currentMongoId) {
-          await apiClient.put(`/services/${currentMongoId}`, {
-            content: postContent,
-            title: seoData.metaTitle, 
-            metaTitle: seoData.metaTitle,
-            metaDescription: seoData.metaDescription,
-          });
-        }
-        
-        setSuccess(`Successfully updated all settings for ${seoData.pagePath}!`);
-        fetchPagesList(); 
+      const encodedPath = encodeURIComponent(seoData.pagePath);
+      await apiClient.put(`/seo/${encodedPath}`, seoData);
+
+      // ✅ CASE 1: Service Provider Update
+      if (isProvider && currentMongoId) {
+        const formData = new FormData();
+        formData.append('content', postContent);
+        formData.append('metaTitle', seoData.metaTitle);
+        formData.append('metaDescription', seoData.metaDescription);
+
+        await apiClient.put(`/service-providers/${currentMongoId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+      // ✅ CASE 2: Service Post Update
+      else if (isServicePost && currentMongoId) {
+        await apiClient.put(`/services/${currentMongoId}`, {
+          content: postContent,
+          title: seoData.metaTitle,
+          metaTitle: seoData.metaTitle,
+          metaDescription: seoData.metaDescription,
+        });
+      }
+
+      setSuccess(`Successfully updated all settings for ${seoData.pagePath}!`);
+      fetchPagesList();
     } catch (err) {
-        console.error("Failed to save data:", err.response?.data);
-        setError(err.response?.data?.message || 'Failed to save data. Check server logs.');
+      console.error("Failed to save data:", err.response?.data);
+      setError(err.response?.data?.message || 'Failed to save data. Check server logs.');
     } finally {
-        setSaving(false);
+      setSaving(false);
     }
   };
 
@@ -523,13 +573,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         disabled={loading || saving}
       >
         {loading ? (
-            <option>Loading pages...</option>
+          <option>Loading pages...</option>
         ) : (
-            pagesList.map((page) => (
-              <option key={page.pagePath} value={page.pagePath}>
-                {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
-              </option>
-            ))
+          pagesList.map((page) => (
+            <option key={page.pagePath} value={page.pagePath}>
+              {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
+            </option>
+          ))
         )}
       </select>
       {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
@@ -537,13 +587,13 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
   );
 
   if (loading) return <div className="p-10 text-center dark:text-gray-300"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>Loading SEO Configuration...</div>;
-  
+
   if (!seoData) return <div className="p-10 text-center dark:text-gray-300"><PageSelector /><div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto mb-4 mt-8"></div>Loading page data...</div>;
 
   return (
     <div className="space-y-8">
       <PageSelector />
-        
+
       {success && (
         <div className="bg-green-100 dark:bg-green-900/50 border border-green-400 text-green-700 dark:text-green-300 px-4 py-3 rounded relative mb-6" role="alert">
           <span className="block sm:inline">{success}</span>
@@ -556,7 +606,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
       )}
 
       <form onSubmit={handleSave} className="space-y-8">
-        
+
         {/* ✅ Updated Condition: Show CKEditor if it is a Service Post OR Service Provider */}
         {(isServicePost || isProvider) && (
           <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
@@ -582,7 +632,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
             <FaTag className="mr-2 text-purple-500" /> Page Meta Tags
           </h2>
           <div className="space-y-4">
-            
+
             <div className="relative">
               <label htmlFor="focusKeyword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Focus Keyword
@@ -799,7 +849,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
           </h2>
           {/* (Content preserved implicitly as it was in your provided code, assuming it was empty or just the header) */}
         </section>
-        
+
         <div className="pt-4">
           <button
             type="submit"
@@ -837,7 +887,7 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
     try {
       await apiClient.post('/redirects', newRedirect);
       setNewRedirect({ fromPath: '', toPath: '' });
-      fetchRedirects(); 
+      fetchRedirects();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create redirect.');
     } finally {
@@ -849,7 +899,7 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
     if (window.confirm('Are you sure you want to delete this redirect?')) {
       try {
         await apiClient.delete(`/redirects/${id}`);
-        fetchRedirects(); 
+        fetchRedirects();
       } catch (err) {
         setError('Failed to delete redirect.');
       }
@@ -860,7 +910,7 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
     if (window.confirm('Are you sure you want to delete this log? This is just a log, not the error itself.')) {
       try {
         await apiClient.delete(`/redirects/404s/${id}`);
-        fetchBrokenLinks(); 
+        fetchBrokenLinks();
       } catch (err) {
         setError('Failed to delete broken link log.');
       }
@@ -941,10 +991,10 @@ const RedirectManager = ({ redirects, brokenLinks, fetchRedirects, fetchBrokenLi
             </table>
           </div>
         </section>
-        
+
         <section className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <h3 className="text-xl font-semibold p-6 dark:text-gray-100 flex items-center">
-             <FaExclamationTriangle className="mr-2 text-yellow-400" /> Logged 404 Errors ({brokenLinks.length})
+            <FaExclamationTriangle className="mr-2 text-yellow-400" /> Logged 404 Errors ({brokenLinks.length})
           </h3>
           <div className="overflow-x-auto max-h-[500px]">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -994,8 +1044,8 @@ const GlobalSettingsManager = () => {
     phoneNumber: '',
     address: {
       streetAddress: '',
-      addressLocality: '', 
-      addressRegion: '', 
+      addressLocality: '',
+      addressRegion: '',
       postalCode: '',
       addressCountry: 'KE',
     },
@@ -1222,11 +1272,10 @@ const SEOManager = () => {
   const TabButton = ({ tabName, label, icon }) => (
     <button
       onClick={() => setActiveTab(tabName)}
-      className={`flex items-center space-x-2 px-4 py-3 font-semibold text-sm rounded-md transition ${
-        activeTab === tabName
+      className={`flex items-center space-x-2 px-4 py-3 font-semibold text-sm rounded-md transition ${activeTab === tabName
           ? 'bg-blue-600 text-white shadow-md'
           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-      }`}
+        }`}
     >
       {icon}
       <span>{label}</span>
@@ -1240,36 +1289,36 @@ const SEOManager = () => {
       </h1>
 
       <div className="flex flex-wrap gap-2 mb-8 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <TabButton 
-          tabName="pageSettings" 
-          label="Content & Meta Editor" 
-          icon={<FaTag />} 
+        <TabButton
+          tabName="pageSettings"
+          label="Content & Meta Editor"
+          icon={<FaTag />}
         />
-        <TabButton 
-          tabName="keywordLibrary" 
-          label="pSEO Keyword Library" 
-          icon={<FaKey />} 
+        <TabButton
+          tabName="keywordLibrary"
+          label="pSEO Keyword Library"
+          icon={<FaKey />}
         />
-        <TabButton 
-          tabName="redirects" 
-          label="Redirects & 404s" 
-          icon={<FaLink />} 
+        <TabButton
+          tabName="redirects"
+          label="Redirects & 404s"
+          icon={<FaLink />}
         />
-        <TabButton 
-          tabName="globalSettings" 
-          label="Global Settings" 
-          icon={<FaBuilding />} 
+        <TabButton
+          tabName="globalSettings"
+          label="Global Settings"
+          icon={<FaBuilding />}
         />
       </div>
 
       <div>
         {activeTab === 'pageSettings' && (
-          <PageSettingsEditor 
+          <PageSettingsEditor
             keywordLibrary={keywordLibrary}
           />
         )}
         {activeTab === 'keywordLibrary' && (
-          <KeywordLibrary 
+          <KeywordLibrary
             keywordLibrary={keywordLibrary}
             loading={keywordsLoading}
             error={keywordsError}

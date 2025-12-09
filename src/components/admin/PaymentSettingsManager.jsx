@@ -3,12 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/axios';
-import { 
-  FaEdit, 
-  FaSave, 
-  FaTimes, 
-  FaMoneyBillWave, 
-  FaClock, 
+import {
+  FaEdit,
+  FaSave,
+  FaTimes,
+  FaMoneyBillWave,
+  FaClock,
   FaCogs,
   FaSpinner,
   FaExclamationTriangle
@@ -25,37 +25,37 @@ const PaymentSettingsManager = () => {
   // ✅ CONFIG: Define the settings we want to manage
   // We list 'possibleKeys' to catch data whether it's stored as 'featuredListingPrice' OR 'featured_listing_price'
   const SETTING_DEFINITIONS = [
-    { 
-      id: 'featured_listing_price', 
+    {
+      id: 'featured_listing_price',
       possibleKeys: ['featuredListingPrice', 'featured_listing_price', 'featuredPrice'],
-      label: 'Featured Listing Price', 
-      icon: 'money', 
-      dataType: 'number', 
-      description: 'Cost to feature a property (Ksh).' 
+      label: 'Featured Listing Price',
+      icon: 'money',
+      dataType: 'number',
+      description: 'Cost to feature a property (Ksh).'
     },
-    { 
-      id: 'featured_listing_duration', 
+    {
+      id: 'featured_listing_duration',
       possibleKeys: ['featuredListingDuration', 'featured_listing_duration', 'featuredDuration'],
-      label: 'Featured Duration', 
-      icon: 'time', 
-      dataType: 'number', 
-      description: 'Duration in Days.' 
+      label: 'Featured Duration',
+      icon: 'time',
+      dataType: 'number',
+      description: 'Duration in Days.'
     },
-    { 
-      id: 'listing_refresh_price', 
+    {
+      id: 'listing_refresh_price',
       possibleKeys: ['listingRefreshPrice', 'listing_refresh_price', 'refreshPrice'],
-      label: 'Listing Refresh Price', 
-      icon: 'money', 
-      dataType: 'number', 
-      description: 'Cost to refresh/boost a listing (Ksh).' 
+      label: 'Listing Refresh Price',
+      icon: 'money',
+      dataType: 'number',
+      description: 'Cost to refresh/boost a listing (Ksh).'
     },
-    { 
-      id: 'lead_subscription_price', 
+    {
+      id: 'lead_subscription_price',
       possibleKeys: ['leadSubscriptionPrice', 'lead_subscription_price', 'subscriptionPrice'],
-      label: 'Lead Subscription Price', 
-      icon: 'money', 
-      dataType: 'number', 
-      description: 'Monthly cost for lead access.' 
+      label: 'Lead Subscription Price',
+      icon: 'money',
+      dataType: 'number',
+      description: 'Monthly cost for lead access.'
     }
   ];
 
@@ -65,8 +65,8 @@ const PaymentSettingsManager = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data } = await apiClient.get('/settings', { withCredentials: true });
-      
+      const { data } = await apiClient.get('/system-settings', { withCredentials: true });
+
       console.log("Settings API Response:", data); // Debugging
 
       if (data) {
@@ -127,8 +127,8 @@ const PaymentSettingsManager = () => {
     setSaving(true);
     try {
       // We send the update. The backend should handle creating the key if it doesn't exist.
-      await apiClient.put(`/settings/${key}`, { value: editValue }, { withCredentials: true });
-      
+      await apiClient.put(`/system-settings/${key}`, { value: editValue }, { withCredentials: true });
+
       // Update local state immediately for UI responsiveness
       setSettings(prev => prev.map(s => s.key === key ? { ...s, value: editValue } : s));
       setEditingKey(null);
@@ -145,48 +145,46 @@ const PaymentSettingsManager = () => {
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <FaCogs className="text-gray-500" /> Payment & System Configuration
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-                Adjust prices and durations dynamically. Changes reflect immediately.
-            </p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <FaCogs className="text-gray-500" /> Payment & System Configuration
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Adjust prices and durations dynamically. Changes reflect immediately.
+          </p>
         </div>
       </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-2 border border-red-200">
-            <FaExclamationTriangle /> 
-            <span className="font-semibold">{error}</span>
+          <FaExclamationTriangle />
+          <span className="font-semibold">{error}</span>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {settings.map((setting) => (
-          <div 
-            key={setting.key} 
-            className={`p-4 rounded-lg border transition-all ${
-              editingKey === setting.key 
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500' 
+          <div
+            key={setting.key}
+            className={`p-4 rounded-lg border transition-all ${editingKey === setting.key
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
                 : 'border-gray-200 dark:border-gray-700 hover:shadow-md'
-            }`}
+              }`}
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
-                <div className={`p-2 rounded-full ${
-                    setting.icon === 'money' ? 'bg-green-100 text-green-600' : 
+                <div className={`p-2 rounded-full ${setting.icon === 'money' ? 'bg-green-100 text-green-600' :
                     setting.icon === 'time' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'
-                }`}>
-                    {setting.icon === 'money' ? <FaMoneyBillWave /> : setting.icon === 'time' ? <FaClock /> : <FaCogs />}
+                  }`}>
+                  {setting.icon === 'money' ? <FaMoneyBillWave /> : setting.icon === 'time' ? <FaClock /> : <FaCogs />}
                 </div>
                 <div>
-                    <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{setting.label}</h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{setting.description}</p>
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{setting.label}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{setting.description}</p>
                 </div>
               </div>
-              
+
               {editingKey !== setting.key && (
-                <button 
+                <button
                   onClick={() => startEditing(setting)}
                   className="text-gray-400 hover:text-blue-600 transition p-1"
                   title="Edit Value"
@@ -197,37 +195,37 @@ const PaymentSettingsManager = () => {
             </div>
 
             <div className="mt-3">
-               {editingKey === setting.key ? (
-                 <div className="flex items-center gap-2">
-                    <input 
-                      type={setting.dataType === 'number' ? 'number' : 'text'}
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="w-full px-3 py-1.5 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      autoFocus
-                    />
-                    <button 
-                      onClick={() => handleSave(setting.key)}
-                      disabled={saving}
-                      className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
-                    </button>
-                    <button 
-                      onClick={cancelEditing}
-                      className="bg-gray-200 text-gray-600 p-2 rounded hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200"
-                    >
-                      <FaTimes />
-                    </button>
-                 </div>
-               ) : (
-                 <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
-                    {setting.dataType === 'number' ? Number(setting.value).toLocaleString() : setting.value}
-                    <span className="text-xs font-normal text-gray-500 ml-1">
-                        {setting.icon === 'money' ? 'Ksh' : setting.icon === 'time' ? 'Days' : ''}
-                    </span>
-                 </p>
-               )}
+              {editingKey === setting.key ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type={setting.dataType === 'number' ? 'number' : 'text'}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    autoFocus
+                  />
+                  <button
+                    onClick={() => handleSave(setting.key)}
+                    disabled={saving}
+                    className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {saving ? <FaSpinner className="animate-spin" /> : <FaSave />}
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="bg-gray-200 text-gray-600 p-2 rounded hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xl font-bold text-gray-800 dark:text-gray-100">
+                  {setting.dataType === 'number' ? Number(setting.value).toLocaleString() : setting.value}
+                  <span className="text-xs font-normal text-gray-500 ml-1">
+                    {setting.icon === 'money' ? 'Ksh' : setting.icon === 'time' ? 'Days' : ''}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         ))}
