@@ -10,8 +10,8 @@ import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
 // Define a re-usable animation variant
 const fadeInSlideUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -19,42 +19,42 @@ const fadeInSlideUp = {
 
 export default function About() {
   const seo = useSeoData(
-    '/about', 
-    'About HouseHunt Kenya - Our Mission and Vision', 
+    '/about',
+    'About HouseHunt Kenya - Our Mission and Vision',
     'Learn about HouseHunt Kenya: our mission to simplify property ownership, our vision for a transparent marketplace, and our core values of integrity and customer satisfaction.'
   );
-  
+
   const isAgentCtaEnabled = useFeatureFlag('agent-landing-page-cta');
   const isPlatformCtaEnabled = useFeatureFlag('platform-overview-cta');
 
   return (
     <>
       <SeoInjector seo={seo} />
-      
+
       {/* ✅ UPDATED: Clean, Continuous Section with Reduced Spacing */}
       <section className="bg-gray-50 dark:bg-gray-950 min-h-screen pt-32 pb-12 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          
+
           {/* ✅ HERO: Text Only, Animated, No Background Image */}
           <div className="mb-10">
-            <motion.h1 
-              className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight"
+            <motion.h1
+              className="text-4xl md:text-7xl font-black mb-4 text-gray-900 dark:text-white leading-tight"
               initial="hidden"
               animate="visible"
               variants={fadeInSlideUp}
             >
-              About HouseHunt Kenya
+              Join the Housing <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 animate-gradient">Revolution in Kenya.</span>
             </motion.h1>
-            
-            <motion.p 
-              className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed"
+
+            <motion.p
+              className="text-lg md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium"
               initial="hidden"
               animate="visible"
               variants={fadeInSlideUp}
               transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
             >
-              Your trusted real estate partner dedicated to helping you find your dream home. 
-              We combine innovation, transparency, and local expertise to make property hunting simple.
+              We are shifting the power back to you. From the capital to the coast, access verified data, real community intel, and a smarter way to find home. Don't just browse—<span className="text-gray-900 dark:text-white font-bold">be part of the change.</span>
             </motion.p>
           </div>
 
@@ -62,8 +62,8 @@ export default function About() {
 
           {/* ✅ VALUES GRID: Closer to Hero for continuous flow */}
           <div className="grid md:grid-cols-3 gap-6 text-left mb-12">
-            
-            <motion.div 
+
+            <motion.div
               className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition"
               initial="hidden"
               whileInView="visible"
@@ -72,12 +72,12 @@ export default function About() {
             >
               <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-3">Our Mission</h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                To simplify property discovery and ownership through technology, ensuring every client 
+                To simplify property discovery and ownership through technology, ensuring every client
                 finds a place they can proudly call home.
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition"
               initial="hidden"
               whileInView="visible"
@@ -87,12 +87,12 @@ export default function About() {
             >
               <h3 className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-3">Our Vision</h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                To become Kenya’s most trusted digital property marketplace by offering 
+                To become Kenya’s most trusted digital property marketplace by offering
                 affordable, transparent, and seamless real estate experiences.
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition"
               initial="hidden"
               whileInView="visible"
@@ -111,7 +111,7 @@ export default function About() {
           </div>
 
           {/* --- FEATURE CTA SECTIONS (Reduced Margins: mt-10 instead of mt-20) --- */}
-          
+
           {isPlatformCtaEnabled && (
             <motion.div
               className="mt-10 py-12 px-8 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm text-gray-900 dark:text-white"
@@ -155,7 +155,7 @@ export default function About() {
           )}
 
           {/* ✅ Final Call to Action (Reduced spacing) */}
-          <motion.div 
+          <motion.div
             className="mt-12"
             initial="hidden"
             whileInView="visible"

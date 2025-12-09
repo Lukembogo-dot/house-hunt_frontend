@@ -193,25 +193,6 @@ function MainLayout() {
             >
               <FaRocket /> The Next Gen Real Estate Tech
             </motion.div>
-
-            <motion.h1
-              className="text-4xl md:text-7xl font-black mb-4 text-gray-900 dark:text-white leading-tight"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Join the Housing <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 animate-gradient">Revolution in Kenya.</span>
-            </motion.h1>
-
-            <motion.p
-              className="text-lg md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed font-medium"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              We are shifting the power back to you. From the capital to the coast, access verified data, real community intel, and a smarter way to find home. Don't just browse—<span className="text-gray-900 dark:text-white font-bold">be part of the change.</span>
-            </motion.p>
           </motion.div>
         </div>
       </section>
