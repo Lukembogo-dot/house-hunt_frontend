@@ -181,6 +181,10 @@ const RatedPropertiesPage = () => {
     focusKeyword: "Apartment Reviews Nairobi"
   };
 
+  // ✅ Read 'building' param for Global Search deep-linking
+  const params = new URLSearchParams(window.location.search);
+  const filterBuilding = params.get('building');
+
   useEffect(() => {
     const fetchRealData = async () => {
       try {
@@ -353,7 +357,13 @@ const RatedPropertiesPage = () => {
           return b.reviews - a.reviews;
         });
 
-        setProperties(sorted);
+        // ✅ APPLY FILTER from Query Param
+        if (filterBuilding) {
+          const filtered = sorted.filter(p => p.title.toLowerCase().includes(filterBuilding.toLowerCase()));
+          setProperties(filtered);
+        } else {
+          setProperties(sorted);
+        }
       } catch (error) {
         console.error("Error fetching rated properties:", error);
       } finally {
