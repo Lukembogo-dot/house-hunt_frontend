@@ -4,18 +4,18 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import apiClient from "../api/axios";
-import { 
+import {
   FaStar, FaTimes, FaRegHeart, FaHeart,
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark,
-  FaGem, FaPlay 
-} from "react-icons/fa"; 
-import MapComponent from "../components/MapComponent";
-import { useAuth } from "../context/AuthContext"; 
+  FaGem, FaPlay, FaMapMarkerAlt
+} from "react-icons/fa";
+
+import { useAuth } from "../context/AuthContext";
 import PropertyCard from "../components/PropertyCard";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import useSeoData from "../hooks/useSeoData"; 
+import useSeoData from "../hooks/useSeoData";
 import Breadcrumbs from "../components/Breadcrumbs";
 import PropertyFaqSection from "../components/PropertyFaqSection";
 
@@ -23,13 +23,13 @@ import PropertyFaqSection from "../components/PropertyFaqSection";
 import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
 import PropertyAmenities from "../components/property/PropertyAmenities";
-import LivingEssentialsWidget from "../components/LivingEssentialsWidget"; 
-import PropertyLocalServices from "../components/property/PropertyLocalServices"; 
+import LivingEssentialsWidget from "../components/LivingEssentialsWidget";
+import PropertyLocalServices from "../components/property/PropertyLocalServices";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.5, ease: "easeOut" }
   }
@@ -51,7 +51,7 @@ const placeIconMap = {
 const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
 function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; 
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -59,16 +59,16 @@ function getDistance(lat1, lon1, lat2, lon2) {
     Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; 
-  return d.toFixed(1); 
+  const d = R * c;
+  return d.toFixed(1);
 }
 
 const getSafeImageDetails = (imagesArray, propertyTitle) => {
-    if (!Array.isArray(imagesArray) || imagesArray.length === 0) return [];
-    return imagesArray.map((img, index) => {
-        if (typeof img === 'string') return { url: img, altText: `${propertyTitle} image ${index + 1}` };
-        return { url: img.url, altText: img.altText || `${propertyTitle} image ${index + 1}` };
-    });
+  if (!Array.isArray(imagesArray) || imagesArray.length === 0) return [];
+  return imagesArray.map((img, index) => {
+    if (typeof img === 'string') return { url: img, altText: `${propertyTitle} image ${index + 1}` };
+    return { url: img.url, altText: img.altText || `${propertyTitle} image ${index + 1}` };
+  });
 };
 
 // --- INTERNAL COMPONENTS (Modal, SEO & Video) ---
@@ -78,48 +78,48 @@ const VideoPlayerSection = ({ videoUrl }) => {
 
   const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
   const isVimeo = videoUrl.includes('vimeo.com');
-  
+
   return (
     <div className="mb-10 group">
       <div className="flex items-center gap-2 mb-3">
-         <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-            <FaPlay className="text-red-600 text-lg" /> Virtual Tour
-         </h2>
-         <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
-            <FaGem size={10} /> Premium
-         </span>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <FaPlay className="text-red-600 text-lg" /> Virtual Tour
+        </h2>
+        <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+          <FaGem size={10} /> Premium
+        </span>
       </div>
 
       <div className="p-1 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-xl transform transition-transform duration-300 hover:scale-[1.01]">
-         <div className="bg-black rounded-xl overflow-hidden relative shadow-inner">
-            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-               {isYouTube ? (
-                  <iframe 
-                     src={videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')} 
-                     className="absolute top-0 left-0 w-full h-full"
-                     frameBorder="0" 
-                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                     allowFullScreen
-                     title="Property Video Tour"
-                  ></iframe>
-               ) : isVimeo ? (
-                  <iframe 
-                     src={videoUrl.replace('vimeo.com/', 'player.vimeo.com/video/')} 
-                     className="absolute top-0 left-0 w-full h-full"
-                     frameBorder="0" 
-                     allowFullScreen
-                     title="Property Video Tour"
-                  ></iframe>
-               ) : (
-                  <video 
-                     src={videoUrl} 
-                     controls 
-                     controlsList="nodownload"
-                     className="absolute top-0 left-0 w-full h-full object-contain bg-black"
-                  />
-               )}
-            </div>
-         </div>
+        <div className="bg-black rounded-xl overflow-hidden relative shadow-inner">
+          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            {isYouTube ? (
+              <iframe
+                src={videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')}
+                className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title="Property Video Tour"
+              ></iframe>
+            ) : isVimeo ? (
+              <iframe
+                src={videoUrl.replace('vimeo.com/', 'player.vimeo.com/video/')}
+                className="absolute top-0 left-0 w-full h-full"
+                frameBorder="0"
+                allowFullScreen
+                title="Property Video Tour"
+              ></iframe>
+            ) : (
+              <video
+                src={videoUrl}
+                controls
+                controlsList="nodownload"
+                className="absolute top-0 left-0 w-full h-full object-contain bg-black"
+              />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -136,7 +136,7 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     if (!scheduledDate) { setError('Please select a date and time.'); return; }
     if (new Date(scheduledDate) < new Date()) { setError('You cannot schedule a viewing in the past.'); return; }
 
@@ -181,132 +181,132 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
 };
 
 const PropertySeoInjector = ({ seo, property }) => {
-    if (!property) return null;
+  if (!property) return null;
 
-    const safeImages = getSafeImageDetails(property.images, property.title);
-    const schemaImages = safeImages.slice(0, 3).map(img => img.url); 
-    const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
-    
-    const pageUrl = window.location.href;
-    const canonical = seo.canonicalUrl 
-        ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`) 
-        : pageUrl;
+  const safeImages = getSafeImageDetails(property.images, property.title);
+  const schemaImages = safeImages.slice(0, 3).map(img => img.url);
+  const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
 
-    const getSchemaType = (type) => {
-        const mapping = {
-            'apartment': 'Apartment',
-            'house': 'House',
-            'airbnb': 'VacationRental',
-            'land': 'Landform', 
-        };
-        return mapping[type] || 'Product';
+  const pageUrl = window.location.href;
+  const canonical = seo.canonicalUrl
+    ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`)
+    : pageUrl;
+
+  const getSchemaType = (type) => {
+    const mapping = {
+      'apartment': 'Apartment',
+      'house': 'House',
+      'airbnb': 'VacationRental',
+      'land': 'Landform',
     };
+    return mapping[type] || 'Product';
+  };
 
-    const getAgentSchema = () => {
-        if (property.ownerDetails && property.ownerDetails.name) {
-            return {
-                "@type": "RealEstateAgent",
-                "name": property.ownerDetails.name,
-                "telephone": property.ownerDetails.whatsapp || property.ownerDetails.email || undefined
-            };
+  const getAgentSchema = () => {
+    if (property.ownerDetails && property.ownerDetails.name) {
+      return {
+        "@type": "RealEstateAgent",
+        "name": property.ownerDetails.name,
+        "telephone": property.ownerDetails.whatsapp || property.ownerDetails.email || undefined
+      };
+    }
+    if (property.agent && property.agent.name) {
+      return {
+        "@type": "RealEstateAgent",
+        "name": property.agent.name,
+        "image": property.agent.profilePicture || undefined,
+        "telephone": property.agent.phoneNumber || property.agent.whatsappNumber || undefined
+      };
+    }
+    return { "@type": "Organization", "name": "HouseHunt Kenya" };
+  };
+
+  const generatePropertySchema = () => {
+    const schemaType = getSchemaType(property.type);
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": schemaType,
+      "name": seo.metaTitle || property.title,
+      "description": seo.metaDescription || property.description?.substring(0, 160),
+      "url": pageUrl,
+      "image": schemaImages,
+      "identifier": property._id,
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": property.location.split(',')[0].trim(),
+        "addressLocality": "Nairobi",
+        "addressCountry": "KE"
+      },
+      ...(property.coordinates?.lat && {
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": property.coordinates.lat,
+          "longitude": property.coordinates.lng
         }
-        if (property.agent && property.agent.name) {
-            return {
-                "@type": "RealEstateAgent",
-                "name": property.agent.name,
-                "image": property.agent.profilePicture || undefined,
-                "telephone": property.agent.phoneNumber || property.agent.whatsappNumber || undefined
-            };
-        }
-        return { "@type": "Organization", "name": "HouseHunt Kenya" };
+      }),
+      ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
+      ...(property.features && property.features.length > 0 && {
+        "amenityFeature": property.features.map(feature => ({
+          "@type": "LocationFeatureSpecification",
+          "name": feature,
+          "value": "true"
+        }))
+      }),
+      "offers": {
+        "@type": "Offer",
+        "price": property.price,
+        "priceCurrency": "KES",
+        "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+        "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
+        "url": pageUrl,
+        "seller": getAgentSchema()
+      }
     };
+    return schema;
+  };
 
-    const generatePropertySchema = () => {
-        const schemaType = getSchemaType(property.type);
-        const schema = {
-            "@context": "https://schema.org",
-            "@type": schemaType,
-            "name": seo.metaTitle || property.title,
-            "description": seo.metaDescription || property.description?.substring(0, 160),
-            "url": pageUrl,
-            "image": schemaImages, 
-            "identifier": property._id,
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": property.location.split(',')[0].trim(),
-                "addressLocality": "Nairobi",
-                "addressCountry": "KE"
-            },
-            ...(property.coordinates?.lat && { 
-                "geo": { 
-                    "@type": "GeoCoordinates", 
-                    "latitude": property.coordinates.lat, 
-                    "longitude": property.coordinates.lng 
-                } 
-            }),
-            ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
-            ...(property.features && property.features.length > 0 && {
-                "amenityFeature": property.features.map(feature => ({
-                    "@type": "LocationFeatureSpecification",
-                    "name": feature,
-                    "value": "true"
-                }))
-            }),
-            "offers": {
-                "@type": "Offer",
-                "price": property.price,
-                "priceCurrency": "KES",
-                "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-                "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
-                "url": pageUrl,
-                "seller": getAgentSchema()
-            }
-        };
-        return schema;
-    };
+  const schemaData = generatePropertySchema();
 
-    const schemaData = generatePropertySchema();
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
+      { "@type": "ListItem", "position": 2, "name": property.listingType === 'rent' ? "For Rent" : "For Sale", "item": `https://www.househuntkenya.co.ke/search/${property.listingType}/nairobi` },
+      { "@type": "ListItem", "position": 3, "name": property.title, "item": pageUrl }
+    ]
+  };
 
-    const breadcrumbSchema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
-            { "@type": "ListItem", "position": 2, "name": property.listingType === 'rent' ? "For Rent" : "For Sale", "item": `https://www.househuntkenya.co.ke/search/${property.listingType}/nairobi` },
-            { "@type": "ListItem", "position": 3, "name": property.title, "item": pageUrl }
-        ]
-    };
-
-    return (
-        <Helmet>
-            <title>{seo.metaTitle}</title>
-            <meta name="description" content={seo.metaDescription} />
-            {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
-            <link rel="canonical" href={canonical} />
-            <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
-            <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
-            <meta property="og:url" content={pageUrl} />
-            <meta property="og:type" content="product" />
-            <meta property="og:image" content={firstImageUrl} /> 
-            <meta property="og:price:amount" content={property.price} />
-            <meta property="og:price:currency" content="KES" />
-            <meta property="twitter:card" content="summary_large_image" />
-            <meta property="twitter:url" content={pageUrl} />
-            <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
-            <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
-            <meta property="twitter:image" content={firstImageUrl} /> 
-            <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
-            <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
-        </Helmet>
-    );
+  return (
+    <Helmet>
+      <title>{seo.metaTitle}</title>
+      <meta name="description" content={seo.metaDescription} />
+      {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
+      <link rel="canonical" href={canonical} />
+      <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
+      <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
+      <meta property="og:url" content={pageUrl} />
+      <meta property="og:type" content="product" />
+      <meta property="og:image" content={firstImageUrl} />
+      <meta property="og:price:amount" content={property.price} />
+      <meta property="og:price:currency" content="KES" />
+      <meta property="twitter:card" content="summary_large_image" />
+      <meta property="twitter:url" content={pageUrl} />
+      <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
+      <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
+      <meta property="twitter:image" content={firstImageUrl} />
+      <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
+      <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+    </Helmet>
+  );
 };
 
 const PropertyDetails = () => {
   const { slug } = useParams();
-  const { user, addFavoriteContext, removeFavoriteContext } = useAuth(); 
-  const navigate = useNavigate(); 
+  const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState([]);
@@ -321,7 +321,7 @@ const PropertyDetails = () => {
   const [amenitiesPage, setAmenitiesPage] = useState(1);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const itemsPerPage = 8;
-  
+
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [localServices, setLocalServices] = useState([]);
@@ -339,14 +339,14 @@ const PropertyDetails = () => {
 
   const fetchPropertyData = async () => {
     try {
-      setLoading(true); setAgentProperties([]); 
-      const propertyRes = await apiClient.get(`/properties/slug/${slug}`); 
+      setLoading(true); setAgentProperties([]);
+      const propertyRes = await apiClient.get(`/properties/slug/${slug}`);
       const propData = propertyRes.data;
       setProperty(propData);
-      
+
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
-      
+
       // LOGIC: Only set image if actual images exist. No fallback to video thumbnail here.
       if (urlsList.length > 0) {
         setActiveImage(urlsList[0]);
@@ -355,16 +355,16 @@ const PropertyDetails = () => {
       }
 
       if (propData.agent && propData.agent._id) {
-        const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`); 
+        const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`);
         setAgentProperties(agentRes.data.filter(p => p._id !== propData._id));
       }
       const reviewsRes = await apiClient.get(`/reviews/${propData._id}`);
       setComments(reviewsRes.data || []);
-      
+
     } catch (error) { console.error("❌ Error fetching property:", error); } finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchPropertyData(); }, [slug]); 
+  useEffect(() => { fetchPropertyData(); }, [slug]);
 
   useEffect(() => {
     if (property && property.coordinates?.lat) {
@@ -372,13 +372,13 @@ const PropertyDetails = () => {
         try {
           setLoadingPlaces(true);
           const { lat, lng } = property.coordinates;
-          const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`); 
+          const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`);
           setNearbyPlaces(data.sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)));
         } catch (error) { console.error("Failed to fetch places:", error); } finally { setLoadingPlaces(false); }
       };
       fetchNearbyPlaces();
     } else if (property) { setLoadingPlaces(false); }
-  }, [property]); 
+  }, [property]);
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -389,7 +389,7 @@ const PropertyDetails = () => {
       fetchPropertyData(); setReviewText(""); setRating(0); setHoverRating(0);
     } catch (error) { console.error("❌ Error submitting review:", error); alert(error.response?.data?.message || "Failed to submit review."); } finally { setSubmitting(false); }
   };
-  
+
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property?._id);
   const handleFavoriteClick = () => {
     if (!user || !property) { alert("Please log in to save properties."); navigate("/login", { state: { from: location.pathname } }); return; }
@@ -402,7 +402,7 @@ const PropertyDetails = () => {
     const distance = getDistance(property.coordinates.lat, property.coordinates.lng, place.location.lat, place.location.lng);
     setSelectedPlace({ ...place, distance });
   };
-  
+
   const handleScheduleClick = () => {
     if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
     handleLogLead(); setShowScheduleModal(true);
@@ -419,13 +419,13 @@ const PropertyDetails = () => {
 
   if (loading) return <div className="flex justify-center items-center min-h-screen dark:bg-gray-950"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
   if (!property) return <div className="text-center mt-20 text-gray-500 dark:text-gray-400"><p>Property not found.</p></div>;
-  
+
   const avgRating = comments.length > 0 ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1) : 0;
   const isAgentOwner = user && property.agent && user._id === property.agent._id;
 
   return (
     <>
-      <PropertySeoInjector seo={seo} property={property} /> 
+      <PropertySeoInjector seo={seo} property={property} />
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
@@ -459,27 +459,57 @@ const PropertyDetails = () => {
             )}
 
             <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-               <VideoPlayerSection videoUrl={property.video} />
+              <VideoPlayerSection videoUrl={property.video} />
             </motion.div>
-            
+
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
               <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                  <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b dark:border-gray-800 pb-2">Description</h2>
-                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{property.description}</p>
+                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b dark:border-gray-800 pb-2">Description</h2>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{property.description}</p>
               </div>
             </motion.div>
 
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-               <LivingEssentialsWidget property={property} />
+              <LivingEssentialsWidget property={property} />
             </motion.div>
 
             {property.amenities && property.amenities.length > 0 && (
-                <PropertyAmenities amenities={property.amenities} />
+              <PropertyAmenities amenities={property.amenities} />
             )}
-            
-             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
+
+            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
               <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location & Nearby Amenities</h2>
-              {property.coordinates && property.coordinates.lat ? <MapComponent coordinates={property.coordinates} places={nearbyPlaces} /> : <p className="text-gray-500 dark:text-gray-400">Map data is not available for this property.</p>}
+              {(property.coordinates?.lat &&
+                (Math.abs(property.coordinates.lat - (-1.286389)) > 0.0001 ||
+                  Math.abs(property.coordinates.lng - 36.817223) > 0.0001)) ? (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    View the exact pin location of this property on Google Maps.
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${property.coordinates.lat},${property.coordinates.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <FaMapMarkerAlt /> View on Google Maps
+                  </a>
+                </div>
+              ) : property.location ? (
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    View the approximate location of this property on Google Maps.
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <FaMapMarkerAlt /> View on Google Maps
+                  </a>
+                </div>
+              ) : <p className="text-gray-500 dark:text-gray-400">Location data is not available for this property.</p>}
             </motion.div>
 
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
@@ -509,7 +539,7 @@ const PropertyDetails = () => {
 
             {/* ✅ ADDED: Property Local Services / Neighborhood Watch */}
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
-               <PropertyLocalServices location={property.location} />
+              <PropertyLocalServices location={property.location} />
             </motion.div>
 
             <PropertyFaqSection location={property.location.split(',')[0]} />
@@ -531,17 +561,17 @@ const PropertyDetails = () => {
 
           {/* ✅ FIXED: Removed motion.div wrapper from Sidebar to ensure immediate visibility */}
           <div>
-             <PropertySidebar 
-               property={property} 
-               user={user} 
-               isAgentOwner={isAgentOwner}
-               handleScheduleClick={handleScheduleClick}
-               handleStartChat={handleStartChat}
-               isStartingChat={isStartingChat}
-               handleLogLead={handleLogLead}
-             />
+            <PropertySidebar
+              property={property}
+              user={user}
+              isAgentOwner={isAgentOwner}
+              handleScheduleClick={handleScheduleClick}
+              handleStartChat={handleStartChat}
+              isStartingChat={isStartingChat}
+              handleLogLead={handleLogLead}
+            />
           </div>
-        </div>
+        </div >
 
         {(!property.ownerDetails || !property.ownerDetails.name) && agentProperties.length > 0 && property.agent && (
           <section className="max-w-6xl mx-auto mt-16">
@@ -550,13 +580,14 @@ const PropertyDetails = () => {
               {agentProperties.map((prop) => (<PropertyCard key={prop._id} property={prop} />))}
             </div>
           </section>
-        )}
-      </div>
+        )
+        }
+      </div >
 
       <AnimatePresence>
         <ScheduleModal show={showScheduleModal} onClose={() => setShowScheduleModal(false)} propertyId={property?._id} propertyTitle={property.title} />
       </AnimatePresence>
-      
+
       <AnimatePresence>
         {selectedPlace && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedPlace(null)}>
