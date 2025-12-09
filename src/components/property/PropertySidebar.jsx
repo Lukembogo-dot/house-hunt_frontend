@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { formatPrice } from '../../utils/formatPrice';
 import {
   FaWhatsapp, FaCalendarAlt, FaCommentDots,
   FaUserCircle, FaTiktok, FaInstagram, FaUserSlash,
@@ -222,6 +223,10 @@ const PropertySidebar = ({
   const agentEmail = hasShadowAgent ? displayAgent.email : displayAgent?.email;
 
   const getPriceSuffix = () => {
+    if (property.type === 'land' && property.pricePer && property.pricePer !== 'total') {
+      const mapping = { acre: ' / Acre', plot: ' / Plot', sqm: ' / Sq Meter' };
+      return mapping[property.pricePer] || '';
+    }
     if (property.listingType === 'sale') return '';
     const freq = property.priceFrequency || 'month';
     return ` / ${freq}`;
@@ -323,7 +328,7 @@ const PropertySidebar = ({
 
           <div className="flex items-center gap-2 pt-2 border-t border-blue-200 dark:border-blue-800 mt-2">
             <span className="text-lg font-black text-blue-700 dark:text-blue-400">
-              Ksh {property.price?.toLocaleString()}{getPriceSuffix()}
+              Ksh {formatPrice(property.price)}{getPriceSuffix()}
             </span>
           </div>
         </div>

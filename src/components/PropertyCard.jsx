@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { 
-  FaHeart, FaRegHeart, FaStar, FaCheckCircle, 
+import { formatPrice } from "../utils/formatPrice";
+import {
+  FaHeart, FaRegHeart, FaStar, FaCheckCircle,
   FaInfoCircle, FaArrowRight, FaTimes, FaPlayCircle,
   FaHandshake, FaBed, FaMapMarkerAlt
 } from "react-icons/fa";
@@ -13,16 +14,16 @@ const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Ima
 
 // ✅ UTILITY FUNCTION FOR BACKWARD COMPATIBILITY
 const getSafeImageDetails = (imagesArray, propertyTitle) => {
-    if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
-        return [];
-    }
+  if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
+    return [];
+  }
 
-    return imagesArray.map((img, index) => {
-        if (typeof img === 'string') {
-            return { url: img, altText: `${propertyTitle} image ${index + 1}` };
-        }
-        return { url: img.url, altText: img.altText || `${propertyTitle} image ${index + 1}` };
-    });
+  return imagesArray.map((img, index) => {
+    if (typeof img === 'string') {
+      return { url: img, altText: `${propertyTitle} image ${index + 1}` };
+    }
+    return { url: img.url, altText: img.altText || `${propertyTitle} image ${index + 1}` };
+  });
 };
 
 // ✅ HELPER: Get Thumbnail from Video URL
@@ -42,18 +43,18 @@ const getVideoThumbnail = (url) => {
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
-  
+
   // --- 3D FLIP STATE ---
   const [isFlipped, setIsFlipped] = useState(false);
-  
+
   // --- SLIDER STATE ---
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
-  
+
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
-  
+
   const safeImageDetails = getSafeImageDetails(property.images, property.title);
-  
+
   // ✅ LOGIC: Determine Image Source (Images > Video Thumbnail > Placeholder)
   let images = [];
   let isVideoPreview = false;
@@ -78,7 +79,7 @@ export default function PropertyCard({ property }) {
     if (isHovering && images.length > 1 && !isFlipped) {
       const interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-      }, 1000); 
+      }, 1000);
       return () => clearInterval(interval);
     }
   }, [isHovering, images.length, isFlipped]);
@@ -93,7 +94,7 @@ export default function PropertyCard({ property }) {
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property._id);
 
   const handleFavoriteClick = (e) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     if (!user) {
       alert("Please log in to save properties.");
       navigate("/login");
@@ -119,7 +120,7 @@ export default function PropertyCard({ property }) {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="relative w-full h-[450px] cursor-pointer group perspective-1000"
       style={{ perspective: '1000px' }} // Inline failsafe
       onMouseEnter={() => setIsHovering(true)}
@@ -144,7 +145,7 @@ export default function PropertyCard({ property }) {
         {/* ============================== */}
         {/* FRONT SIDE              */}
         {/* ============================== */}
-        <div 
+        <div
           style={{ backfaceVisibility: 'hidden' }}
           className="absolute inset-0 w-full h-full 
             bg-white/90 backdrop-blur-md border border-white/40 
@@ -159,8 +160,8 @@ export default function PropertyCard({ property }) {
 
           {/* Image Section */}
           <div className="relative h-64 w-full overflow-hidden bg-gray-200 dark:bg-gray-700">
-             {/* Badges */}
-             {user && !isSoldOrRented && (
+            {/* Badges */}
+            {user && !isSoldOrRented && (
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={handleFavoriteClick}
@@ -172,21 +173,21 @@ export default function PropertyCard({ property }) {
             )}
 
             <img
-              src={images[currentImageIndex]} 
-              alt={safeImageDetails?.[currentImageIndex]?.altText || property.title} 
+              src={images[currentImageIndex]}
+              alt={safeImageDetails?.[currentImageIndex]?.altText || property.title}
               className={`w-full h-full object-cover transition-opacity duration-300 ${isSoldOrRented ? 'grayscale' : ''}`}
               loading="lazy"
             />
-            
+
             {/* ✅ VIDEO INDICATOR OVERLAY */}
             {isVideoPreview && !isSoldOrRented && (
-               <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
-                  <div className="bg-black/50 backdrop-blur-sm p-3 rounded-full text-white animate-pulse">
-                     <FaPlayCircle size={30} />
-                  </div>
-               </div>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/20">
+                <div className="bg-black/50 backdrop-blur-sm p-3 rounded-full text-white animate-pulse">
+                  <FaPlayCircle size={30} />
+                </div>
+              </div>
             )}
-            
+
             {/* Slider Dots */}
             {images.length > 1 && (
               <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-1.5 z-20">
@@ -198,7 +199,7 @@ export default function PropertyCard({ property }) {
                 ))}
               </div>
             )}
-            
+
             {/* Listing Type Badge */}
             <span className="absolute top-3 left-3 bg-blue-600/90 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full uppercase font-bold shadow-md z-20">
               For {property.listingType}
@@ -220,9 +221,9 @@ export default function PropertyCard({ property }) {
 
             {/* Video Badge (Top Center) */}
             {isVideoPreview && (
-               <span className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-red-600/90 text-white text-[10px] px-2 py-0.5 rounded-md uppercase font-bold shadow-md z-20 backdrop-blur-md flex items-center gap-1">
-                  <FaPlayCircle size={10} /> Video Tour
-               </span>
+              <span className="absolute top-3 left-1/2 transform -translate-x-1/2 bg-red-600/90 text-white text-[10px] px-2 py-0.5 rounded-md uppercase font-bold shadow-md z-20 backdrop-blur-md flex items-center gap-1">
+                <FaPlayCircle size={10} /> Video Tour
+              </span>
             )}
 
             {/* Status Center Badge */}
@@ -232,7 +233,7 @@ export default function PropertyCard({ property }) {
               </span>
             )}
           </div>
-          
+
           {/* Details Section */}
           <div className="p-5 flex flex-col flex-grow justify-between">
             <div>
@@ -240,28 +241,33 @@ export default function PropertyCard({ property }) {
                 {property.title}
               </h2>
               <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-xs mb-3">
-                 <FaMapMarkerAlt className="text-blue-500" />
-                 <span className="line-clamp-1">{property.location}</span>
+                <FaMapMarkerAlt className="text-blue-500" />
+                <span className="line-clamp-1">{property.location}</span>
               </div>
-              
+
               <div className="flex items-baseline gap-1 mb-1">
-                 <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Asking Price:</span>
-                 <p className="text-blue-700 dark:text-blue-400 font-extrabold text-lg">
-                    Ksh {property.price?.toLocaleString()} 
-                    {property.listingType === 'rent' && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/mo</span>}
-                 </p>
+                <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">Asking Price:</span>
+                <p className="text-blue-700 dark:text-blue-400 font-extrabold text-lg">
+                  Ksh {formatPrice(property.price)}
+                  {property.listingType === 'rent' && <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">/mo</span>}
+                  {property.type === 'land' && property.pricePer && property.pricePer !== 'total' && (
+                    <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-1">
+                      / {property.pricePer === 'sqm' ? 'Sq Meter' : property.pricePer.charAt(0).toUpperCase() + property.pricePer.slice(1)}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
 
             {/* Conversational Footer */}
             <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                <span className="italic flex items-center gap-1">
-                    <FaHandshake className="text-blue-400" />
-                    {property.status === 'available' ? "Ready for viewing" : "Off the market"}
-                </span>
-                <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 group-hover:underline">
-                   Flip to Meet Host <FaInfoCircle />
-                </span>
+              <span className="italic flex items-center gap-1">
+                <FaHandshake className="text-blue-400" />
+                {property.status === 'available' ? "Ready for viewing" : "Off the market"}
+              </span>
+              <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-1 group-hover:underline">
+                Flip to Meet Host <FaInfoCircle />
+              </span>
             </div>
           </div>
         </div>
@@ -269,7 +275,7 @@ export default function PropertyCard({ property }) {
         {/* ============================== */}
         {/* BACK SIDE              */}
         {/* ============================== */}
-        <div 
+        <div
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           className="absolute inset-0 w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col
             /* Light Mode: White Glass */
@@ -279,18 +285,18 @@ export default function PropertyCard({ property }) {
         >
           {/* Background Overlay */}
           <div className="absolute inset-0 z-0 pointer-events-none">
-             <img 
-               src={images[0]} 
-               alt="Background" 
-               className="w-full h-full object-cover opacity-20 blur-2xl scale-150"
-             />
-             <div className="absolute inset-0 bg-white/80 dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" /> 
+            <img
+              src={images[0]}
+              alt="Background"
+              className="w-full h-full object-cover opacity-20 blur-2xl scale-150"
+            />
+            <div className="absolute inset-0 bg-white/80 dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" />
           </div>
 
           {/* Back Content */}
           <div className="relative z-10 flex flex-col h-full p-6 items-center justify-center text-center text-gray-900 dark:text-white">
-            
-            <button 
+
+            <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
               className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md
                 hover:bg-gray-200 text-gray-500
@@ -302,41 +308,40 @@ export default function PropertyCard({ property }) {
 
             {/* Host Section */}
             <div className="mb-6">
-                <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-600 dark:text-blue-300 opacity-80 flex items-center justify-center gap-2">
-                    <FaHandshake /> Meet Your Host
-                </h4>
-                <div className="flex flex-col items-center">
-                    <div className="w-20 h-20 rounded-full p-1 mb-3 shadow-md border bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 backdrop-blur-md group-hover:scale-105 transition-transform">
-                        <img 
-                           src={agentImage} 
-                           alt={agentName} 
-                           className="w-full h-full rounded-full object-cover" 
-                        />
-                    </div>
-                    <h3 className="text-lg font-bold leading-tight">{agentName}</h3>
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
-                       "{property.agent ? 'I represent a verified agency.' : 'I am the private owner of this unit.'}"
-                    </span>
+              <h4 className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-600 dark:text-blue-300 opacity-80 flex items-center justify-center gap-2">
+                <FaHandshake /> Meet Your Host
+              </h4>
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 rounded-full p-1 mb-3 shadow-md border bg-white dark:bg-white/10 border-gray-200 dark:border-white/20 backdrop-blur-md group-hover:scale-105 transition-transform">
+                  <img
+                    src={agentImage}
+                    alt={agentName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 </div>
+                <h3 className="text-lg font-bold leading-tight">{agentName}</h3>
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">
+                  "{property.agent ? 'I represent a verified agency.' : 'I am the private owner of this unit.'}"
+                </span>
+              </div>
             </div>
 
             {/* Narrative Status */}
-            <div className={`mb-6 px-5 py-2 rounded-xl text-xs font-bold border backdrop-blur-md ${
-                property.status === 'available' 
-                ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/30'
-                : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30'
-            }`}>
-               {property.status === 'available' 
-                 ? "Good news! This home is available." 
-                 : `Sorry, this home is ${property.status}.`}
+            <div className={`mb-6 px-5 py-2 rounded-xl text-xs font-bold border backdrop-blur-md ${property.status === 'available'
+              ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-500/10 dark:text-green-300 dark:border-green-500/30'
+              : 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30'
+              }`}>
+              {property.status === 'available'
+                ? "Good news! This home is available."
+                : `Sorry, this home is ${property.status}.`}
             </div>
 
             {/* Main CTA */}
             <button
               onClick={handleViewDetails}
               className={`w-full py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold shadow-lg transition transform hover:scale-105 text-sm backdrop-blur-md
-                ${isSoldOrRented 
-                  ? 'bg-gray-400 text-white cursor-not-allowed dark:bg-gray-700' 
+                ${isSoldOrRented
+                  ? 'bg-gray-400 text-white cursor-not-allowed dark:bg-gray-700'
                   : 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-white dark:text-blue-900 dark:hover:bg-gray-100'
                 }`}
             >

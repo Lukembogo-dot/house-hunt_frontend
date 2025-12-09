@@ -1,23 +1,23 @@
 // src/pages/EditProperty.jsx
 // (UPDATED: Fixed Tailwind CSS Conflict in Video Upload Label)
 
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { 
-  FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt, 
+import {
+  FaTimes, FaWhatsapp, FaTiktok, FaInstagram, FaMapMarkerAlt,
   FaSpinner, FaUserCheck, FaSearch, FaStar, FaCheckSquare, FaSquare, FaPlus,
   FaBus, FaWifi, FaShoppingBasket, FaVideo, FaGem, FaCloudUploadAlt, FaLock // ✅ ADDED NEW ICONS
-} from 'react-icons/fa'; 
+} from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
-import { useFeatureFlag } from '../context/FeatureFlagContext'; 
+import { useFeatureFlag } from '../context/FeatureFlagContext';
 import { motion } from 'framer-motion';
-import MapComponent from '../components/MapComponent'; 
-import SmartPricingWidget from '../components/SmartPricingWidget'; 
+import MapComponent from '../components/MapComponent';
+import SmartPricingWidget from '../components/SmartPricingWidget';
 
 const MAX_FILE_SIZE_MB = 2; // (Note: Video check uses 50MB internally in handler)
-const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 }; 
-const FEATURE_PRICE_PER_DAY = 170; 
+const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
+const FEATURE_PRICE_PER_DAY = 170;
 
 // Standard Amenities
 const AMENITIES_LIST = [
@@ -70,7 +70,7 @@ const AltTextInputField = ({ label, value, onChange }) => (
 
 
 const EditProperty = () => {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
 
   // ✅ Dynamic Limits
@@ -83,11 +83,11 @@ const EditProperty = () => {
     location: '',
     price: '',
     bedrooms: '',
-    
-    landSize: '', 
+
+    landSize: '',
     priceFrequency: 'month',
-    amenities: [], 
-    video: '', 
+    amenities: [],
+    video: '',
 
     // ✅ NEW: NAIROBI SURVIVAL FIELDS
     matatuRoute: '',
@@ -97,13 +97,13 @@ const EditProperty = () => {
     internetProviders: [],
 
     type: 'apartment',
-    status: 'available', 
+    status: 'available',
     listingType: 'sale',
-    
+
     isFeatured: false,
     featuredDays: 3,
 
-    agentId: '', 
+    agentId: '',
     ownerDetails: {
       name: '',
       whatsapp: '',
@@ -111,17 +111,17 @@ const EditProperty = () => {
       instagram: '',
     },
   });
-  
+
   const [coordinates, setCoordinates] = useState(null);
   const [mapCenter, setMapCenter] = useState(NAIROBI_COORDS);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  
-  const [existingImages, setExistingImages] = useState([]); 
+
+  const [existingImages, setExistingImages] = useState([]);
   const [newImageFiles, setNewImageFiles] = useState([]);
   const [newImageAltTexts, setNewImageAltTexts] = useState({});
   const [status, setStatus] = useState({ message: '', type: '' });
   const [loading, setLoading] = useState(false);
-  
+
   // ✅ NEW: Video State
   const [videoFile, setVideoFile] = useState(null);
 
@@ -134,25 +134,25 @@ const EditProperty = () => {
 
   const navigate = useNavigate();
   const { id: propertyId } = useParams();
-  
+
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
 
   useEffect(() => {
     const fetchPropertyAndAgents = async () => {
       try {
         setLoading(true);
-        
+
         // 1. Fetch Property Data
         const { data } = await apiClient.get(`/properties/${propertyId}`);
-        
+
         // 2. Fetch Agents (Admin only)
         if (user && user.role === 'admin') {
-            try {
-                const agentsRes = await apiClient.get('/users/all-agents', { withCredentials: true });
-                setExistingAgents(agentsRes.data);
-            } catch (err) {
-                console.error("Failed to fetch agents list", err);
-            }
+          try {
+            const agentsRes = await apiClient.get('/users/all-agents', { withCredentials: true });
+            setExistingAgents(agentsRes.data);
+          } catch (err) {
+            console.error("Failed to fetch agents list", err);
+          }
         }
 
         setFormData({
@@ -160,12 +160,13 @@ const EditProperty = () => {
           description: data.description,
           location: data.location,
           price: data.price,
-          bedrooms: data.bedrooms || '', 
-          
+          bedrooms: data.bedrooms || '',
+
           landSize: data.landSize || '',
+          pricePer: data.pricePer || 'total', // ✅ Load pricePer
           priceFrequency: data.priceFrequency || 'month',
-          amenities: data.amenities || [], 
-          video: data.video || '', 
+          amenities: data.amenities || [],
+          video: data.video || '',
 
           // ✅ LOAD NEW FIELDS
           matatuRoute: data.matatuRoute || '',
@@ -175,28 +176,28 @@ const EditProperty = () => {
           internetProviders: data.internetProviders || [],
 
           type: data.type,
-          status: data.status || 'available', 
+          status: data.status || 'available',
           listingType: data.listingType || 'sale',
-          
+
           isFeatured: data.isFeatured || false,
           featuredDays: 3,
 
-          agentId: data.agent ? data.agent._id : '', 
+          agentId: data.agent ? data.agent._id : '',
           ownerDetails: data.ownerDetails || { name: '', whatsapp: '', tiktok: '', instagram: '' },
         });
-        
+
         if (data.coordinates && data.coordinates.lat) {
           setCoordinates(data.coordinates);
           setMapCenter(data.coordinates);
         } else {
           setCoordinates(NAIROBI_COORDS);
         }
-        
+
         let imagesToSet = [];
         if (data.images && data.images.length > 0) {
           imagesToSet = data.images;
         } else if (data.imageUrl) {
-          imagesToSet = [{ url: data.imageUrl, altText: `${data.title} image` }]; 
+          imagesToSet = [{ url: data.imageUrl, altText: `${data.title} image` }];
         }
         setExistingImages(imagesToSet);
 
@@ -221,7 +222,7 @@ const EditProperty = () => {
       [name]: processedValue,
     }));
   };
-  
+
   const handleAmenityToggle = (amenity) => {
     setFormData(prev => {
       const current = prev.amenities || [];
@@ -246,10 +247,10 @@ const EditProperty = () => {
   };
 
   const handleAddCustomAmenity = (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     const trimmed = customAmenityInput.trim();
     if (!trimmed) return;
-    
+
     if (!formData.amenities.includes(trimmed)) {
       setFormData(prev => ({
         ...prev,
@@ -271,8 +272,8 @@ const EditProperty = () => {
 
     if (name === 'name' && user.role === 'admin') {
       if (value.length > 1) {
-        const matches = existingAgents.filter(agent => 
-          agent.name.toLowerCase().includes(value.toLowerCase()) || 
+        const matches = existingAgents.filter(agent =>
+          agent.name.toLowerCase().includes(value.toLowerCase()) ||
           (agent.whatsappNumber && agent.whatsappNumber.includes(value))
         );
         setFilteredAgents(matches);
@@ -286,7 +287,7 @@ const EditProperty = () => {
   const selectShadowAgent = (agent) => {
     setFormData(prev => ({
       ...prev,
-      agentId: agent._id, 
+      agentId: agent._id,
       ownerDetails: {
         name: agent.name,
         whatsapp: agent.whatsappNumber || '',
@@ -296,13 +297,13 @@ const EditProperty = () => {
     }));
     setShowSuggestions(false);
   };
-  
+
   const handleExistingAltTextChange = (index, value) => {
-    setExistingImages(prevImages => prevImages.map((img, i) => 
+    setExistingImages(prevImages => prevImages.map((img, i) =>
       i === index ? { ...img, altText: value } : img
     ));
   };
-  
+
   const handleNewAltTextChange = (index, value) => {
     setNewImageAltTexts(prev => ({
       ...prev,
@@ -314,37 +315,37 @@ const EditProperty = () => {
   const handleFileChange = (e) => {
     const newlySelectedFiles = Array.from(e.target.files);
     const combinedNewFiles = [...newImageFiles, ...newlySelectedFiles];
-    
+
     // Check against TOTAL images (Existing + New)
     const totalImages = existingImages.length + combinedNewFiles.length;
 
     if (totalImages > MAX_IMAGES) {
-      setStatus({ 
-        message: `Limit exceeded. You have ${existingImages.length} existing images. You can add ${MAX_IMAGES - existingImages.length} more. Total limit: ${MAX_IMAGES}. ${!isPremium ? 'Upgrade for 10 images.' : ''}`, 
-        type: 'error' 
+      setStatus({
+        message: `Limit exceeded. You have ${existingImages.length} existing images. You can add ${MAX_IMAGES - existingImages.length} more. Total limit: ${MAX_IMAGES}. ${!isPremium ? 'Upgrade for 10 images.' : ''}`,
+        type: 'error'
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      e.target.value = null; 
+      e.target.value = null;
       return;
     }
-    
+
     const oversizedFiles = combinedNewFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
       setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
       e.target.value = null;
       return;
     }
-    
+
     setNewImageFiles(combinedNewFiles);
-    
+
     const initialAltTexts = {};
-    const existingCount = newImageFiles.length; 
+    const existingCount = newImageFiles.length;
     newlySelectedFiles.forEach((_, index) => {
       const combinedIndex = existingCount + index;
       initialAltTexts[combinedIndex] = `${formData.title} new image ${combinedIndex + 1}`.trim();
     });
     setNewImageAltTexts(prev => ({ ...prev, ...initialAltTexts }));
-    
+
     setStatus({ message: '', type: '' });
     e.target.value = null;
   };
@@ -354,17 +355,17 @@ const EditProperty = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) { 
-        setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
-        e.target.value = null;
-        return;
+    if (file.size > 50 * 1024 * 1024) {
+      setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
+      e.target.value = null;
+      return;
     }
 
     const video = document.createElement('video');
     video.preload = 'metadata';
-    video.onloadedmetadata = function() {
+    video.onloadedmetadata = function () {
       window.URL.revokeObjectURL(video.src);
-      if (video.duration > 120) { 
+      if (video.duration > 120) {
         setStatus({ message: 'Video too long. Max duration is 2 minutes.', type: 'error' });
         setVideoFile(null);
       } else {
@@ -377,9 +378,9 @@ const EditProperty = () => {
 
   // ✅ NEW: Premium Interaction Handler
   const handlePremiumInteraction = () => {
-    setStatus({ 
-      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!', 
-      type: 'error' 
+    setStatus({
+      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!',
+      type: 'error'
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -387,12 +388,12 @@ const EditProperty = () => {
   const handleRemoveExistingImage = (imageUrlToRemove) => {
     setExistingImages(existingImages.filter(img => img.url !== imageUrlToRemove));
   };
-  
+
   const handleMapClick = async (e) => {
     const clickedCoords = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-    setCoordinates(clickedCoords); 
-    setIsGeocoding(true); 
-    
+    setCoordinates(clickedCoords);
+    setIsGeocoding(true);
+
     try {
       const { data } = await apiClient.get(`/maps/reverse-geocode?lat=${clickedCoords.lat}&lng=${clickedCoords.lng}`);
       setFormData(prev => ({ ...prev, location: data.address }));
@@ -403,7 +404,7 @@ const EditProperty = () => {
       setIsGeocoding(false);
     }
   };
-  
+
   const handleGeocodeAddress = async () => {
     if (!formData.location) {
       setStatus({ message: 'Please enter a location to find on map.', type: 'error' });
@@ -415,7 +416,7 @@ const EditProperty = () => {
       if (data.results && data.results.length > 0) {
         const { lat, lng } = data.results[0].geometry.location;
         setCoordinates({ lat, lng });
-        setMapCenter({ lat, lng }); 
+        setMapCenter({ lat, lng });
       } else {
         setStatus({ message: 'Could not find coordinates for that address.', type: 'error' });
       }
@@ -439,19 +440,19 @@ const EditProperty = () => {
 
       // JSON Fields
       if (key === 'ownerDetails' && user && user.role === 'admin' && formData.ownerDetails.name) {
-          dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
+        dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
       } else if (key === 'amenities') {
-          dataToSend.append('amenities', JSON.stringify(formData.amenities));
+        dataToSend.append('amenities', JSON.stringify(formData.amenities));
       } else if (key === 'internetProviders') { // ✅ NEW: Serialize Providers
-          dataToSend.append('internetProviders', JSON.stringify(formData.internetProviders));
+        dataToSend.append('internetProviders', JSON.stringify(formData.internetProviders));
       } else {
         dataToSend.append(key, formData[key]);
       }
     });
-    
+
     // ✅ Handle Video File
     if (videoFile) {
-        dataToSend.append('video', videoFile);
+      dataToSend.append('video', videoFile);
     }
 
     if (formData.agentId) dataToSend.append('agentId', formData.agentId);
@@ -460,10 +461,10 @@ const EditProperty = () => {
       dataToSend.append('coordinates[lat]', coordinates.lat);
       dataToSend.append('coordinates[lng]', coordinates.lng);
     }
-    
+
     const validExistingImages = existingImages.filter(img => img.url);
     dataToSend.append('existingImages', JSON.stringify(validExistingImages));
-    
+
     const newImageAltTextsArray = [];
     if (newImageFiles && newImageFiles.length > 0) {
       for (let i = 0; i < newImageFiles.length; i++) {
@@ -491,9 +492,9 @@ const EditProperty = () => {
 
     } catch (error) {
       console.error("Error updating property:", error);
-      setStatus({ 
-        message: `Failed to update property: ${error.response?.data?.message || 'Check console.'}`, 
-        type: 'error' 
+      setStatus({
+        message: `Failed to update property: ${error.response?.data?.message || 'Check console.'}`,
+        type: 'error'
       });
     } finally {
       setLoading(false);
@@ -502,8 +503,8 @@ const EditProperty = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div 
-        key={propertyId} 
+      <motion.div
+        key={propertyId}
         className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl dark:border dark:border-gray-700"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -512,71 +513,88 @@ const EditProperty = () => {
         <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
           Edit Property
         </h1>
-        
+
         {status.message && (
-          <div key={status.message} className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 ${
-            status.type === 'success' 
-              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
-              : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 border border-red-200'
-          }`} role="alert">
+          <div key={status.message} className={`p-4 mb-6 text-sm rounded-lg flex items-center gap-2 ${status.type === 'success'
+            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
+            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 border border-red-200'
+            }`} role="alert">
             {status.message}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <InputField label="Property Title" name="title" value={formData.title} onChange={handleChange} />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="flex gap-2">
-                <div className="flex-1">
-                  <InputField 
-                    label="Price (Ksh)" 
-                    name="price" 
-                    type="number" 
-                    value={formData.price}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <InputField
+                  label="Price (Ksh)"
+                  name="price"
+                  type="number"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15M'}
+                  min={100}
+                />
+              </div>
+              {(formData.type === 'airbnb' || formData.listingType === 'rent') && (
+                <div className="w-1/3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
+                  <select
+                    name="priceFrequency"
+                    value={formData.priceFrequency}
                     onChange={handleChange}
-                    placeholder={formData.listingType === 'rent' ? 'e.g., 50000' : 'e.g., 15M'}
-                    min={100} 
+                    className="w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="month">/ Month</option>
+                    <option value="night">/ Night</option>
+                    <option value="week">/ Week</option>
+                    <option value="year">/ Year</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {formData.type === 'land' ? (
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <InputField
+                    label="Land Size"
+                    name="landSize"
+                    type="text"
+                    value={formData.landSize}
+                    onChange={handleChange}
+                    placeholder="e.g., 50x100, 1 Acre"
+                    required={true}
                   />
                 </div>
-                {(formData.type === 'airbnb' || formData.listingType === 'rent') && (
-                   <div className="w-1/3">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency</label>
-                      <select
-                         name="priceFrequency"
-                         value={formData.priceFrequency}
-                         onChange={handleChange}
-                         className="w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      >
-                         <option value="month">/ Month</option>
-                         <option value="night">/ Night</option>
-                         <option value="week">/ Week</option>
-                         <option value="year">/ Year</option>
-                      </select>
-                   </div>
-                )}
-             </div>
-
-             {formData.type === 'land' ? (
-              <InputField 
-                label="Land Size" 
-                name="landSize" 
-                type="text" 
-                value={formData.landSize}
-                onChange={handleChange}
-                placeholder="e.g., 50x100, 1 Acre, 0.5 Ha"
-                required={true} 
-              />
+                <div className="w-1/3">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price Per</label>
+                  <select
+                    name="pricePer"
+                    value={formData.pricePer}
+                    onChange={handleChange}
+                    className="w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="total">Total Price</option>
+                    <option value="acre">Per Acre</option>
+                    <option value="plot">Per Plot</option>
+                    <option value="sqm">Per Sq Meter</option>
+                  </select>
+                </div>
+              </div>
             ) : (
-              <InputField 
-                label="Bedrooms" 
-                name="bedrooms" 
-                type="number" 
+              <InputField
+                label="Bedrooms"
+                name="bedrooms"
+                type="number"
                 value={formData.bedrooms}
                 onChange={handleChange}
-                min={0} 
+                min={0}
                 placeholder="e.g., 3"
-                required={false} 
+                required={false}
               />
             )}
           </div>
@@ -594,7 +612,7 @@ const EditProperty = () => {
                 <option value="rent">For Rent</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="type">
                 Property Type
@@ -610,7 +628,7 @@ const EditProperty = () => {
               </select>
             </div>
           </div>
-          
+
           {/* Map Section */}
           <div className="space-y-6 pt-6 border-t dark:border-gray-700">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
@@ -618,12 +636,12 @@ const EditProperty = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <InputField 
-                  label="Location (Type or click map)" 
-                  name="location" 
+                <InputField
+                  label="Location (Type or click map)"
+                  name="location"
                   value={formData.location}
                   onChange={handleChange}
-                  placeholder="e.g., Nairobi, Kilimani" 
+                  placeholder="e.g., Nairobi, Kilimani"
                 />
               </div>
               <div className="md:col-span-1">
@@ -646,16 +664,16 @@ const EditProperty = () => {
               {coordinates && (
                 <MapComponent
                   coordinates={mapCenter}
-                  places={[]} 
+                  places={[]}
                   onMapClick={handleMapClick}
-                  markerPosition={coordinates} 
+                  markerPosition={coordinates}
                   isDraggable={true}
-                  onMarkerDragEnd={handleMapClick} 
+                  onMarkerDragEnd={handleMapClick}
                 />
               )}
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">Description</label>
             <textarea id="description" name="description" rows="4" value={formData.description} onChange={handleChange} required
@@ -665,144 +683,143 @@ const EditProperty = () => {
 
           {/* Amenities Section */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
-             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-               Amenities & Features
-             </h2>
-             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {AMENITIES_LIST.map(amenity => (
-                  <div key={amenity} 
-                       onClick={() => handleAmenityToggle(amenity)}
-                       className={`flex items-center p-3 rounded-lg border cursor-pointer transition select-none
-                       ${formData.amenities.includes(amenity) 
-                         ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400' 
-                         : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600'
-                       }`}
-                  >
-                    <div className={`mr-3 text-lg ${formData.amenities.includes(amenity) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                       {formData.amenities.includes(amenity) ? <FaCheckSquare /> : <FaSquare />}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{amenity}</span>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Amenities & Features
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {AMENITIES_LIST.map(amenity => (
+                <div key={amenity}
+                  onClick={() => handleAmenityToggle(amenity)}
+                  className={`flex items-center p-3 rounded-lg border cursor-pointer transition select-none
+                       ${formData.amenities.includes(amenity)
+                      ? 'bg-blue-50 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400'
+                      : 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-600'
+                    }`}
+                >
+                  <div className={`mr-3 text-lg ${formData.amenities.includes(amenity) ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                    {formData.amenities.includes(amenity) ? <FaCheckSquare /> : <FaSquare />}
                   </div>
-                ))}
-             </div>
-
-             <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Add Custom Feature (e.g., Jacuzzi, Solar Heating)
-                </label>
-                <div className="flex gap-2">
-                   <input 
-                     type="text"
-                     value={customAmenityInput}
-                     onChange={(e) => setCustomAmenityInput(e.target.value)}
-                     placeholder="Type and click Add"
-                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                     onKeyDown={(e) => e.key === 'Enter' && handleAddCustomAmenity(e)}
-                   />
-                   <button 
-                     type="button" 
-                     onClick={handleAddCustomAmenity}
-                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-1"
-                   >
-                     <FaPlus size={12} /> Add
-                   </button>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{amenity}</span>
                 </div>
-                
-                {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
-                   <div className="mt-3 flex flex-wrap gap-2">
-                      {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
-                         <span key={idx} className="bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
-                            {custom}
-                            <FaTimes 
-                              className="cursor-pointer hover:text-red-500 transition" 
-                              onClick={() => handleAmenityToggle(custom)} 
-                            />
-                         </span>
-                      ))}
-                   </div>
-                )}
-             </div>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Add Custom Feature (e.g., Jacuzzi, Solar Heating)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customAmenityInput}
+                  onChange={(e) => setCustomAmenityInput(e.target.value)}
+                  placeholder="Type and click Add"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddCustomAmenity(e)}
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomAmenity}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition flex items-center gap-1"
+                >
+                  <FaPlus size={12} /> Add
+                </button>
+              </div>
+
+              {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {formData.amenities.filter(a => !AMENITIES_LIST.includes(a)).map((custom, idx) => (
+                    <span key={idx} className="bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:border-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-2 shadow-sm">
+                      {custom}
+                      <FaTimes
+                        className="cursor-pointer hover:text-red-500 transition"
+                        onClick={() => handleAmenityToggle(custom)}
+                      />
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ✅ NEW: NAIROBI LIVING ESSENTIALS SECTION */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
-             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
-             </h2>
-             <p className="text-sm text-gray-600 dark:text-gray-400">Help tenants calculate their real monthly costs.</p>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField 
-                   label="Nearest Matatu Route/Stage" 
-                   name="matatuRoute" 
-                   value={formData.matatuRoute} 
-                   onChange={handleChange} 
-                   placeholder="e.g., Route 105 or Super Metro Stage" 
-                   required={false}
-                   icon={<FaBus />}
-                />
-                <InputField 
-                   label="Approx. Fare to CBD (Ksh)" 
-                   name="matatuFare" 
-                   type="number"
-                   value={formData.matatuFare} 
-                   onChange={handleChange} 
-                   placeholder="e.g., 80" 
-                   required={false}
-                />
-             </div>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField 
-                   label="Distance to Market (Mama Mboga)" 
-                   name="mamaMbogaDistance" 
-                   value={formData.mamaMbogaDistance} 
-                   onChange={handleChange} 
-                   placeholder="e.g., 5 min walk" 
-                   required={false}
-                   icon={<FaShoppingBasket />}
-                />
-                
-                {/* Internet Section */}
-                <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                    <div className="flex items-center justify-between mb-3">
-                       <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                          <FaWifi /> Internet Ready?
-                       </label>
-                       <input 
-                          type="checkbox" 
-                          name="internetReady" 
-                          checked={formData.internetReady} 
-                          onChange={handleChange}
-                          className="h-5 w-5 text-blue-600 rounded"
-                       />
-                    </div>
-                    
-                    {formData.internetReady && (
-                       <div className="mt-2">
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Select available providers:</p>
-                          <div className="flex flex-wrap gap-2">
-                             {ISP_LIST.map(isp => (
-                                <span 
-                                   key={isp}
-                                   onClick={() => handleISPToggle(isp)}
-                                   className={`text-xs px-3 py-1 rounded-full border cursor-pointer select-none transition ${
-                                      formData.internetProviders.includes(isp)
-                                      ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-100'
-                                      : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-300'
-                                   }`}
-                                >
-                                   {formData.internetProviders.includes(isp) ? '✓ ' : '+ '} {isp}
-                                </span>
-                             ))}
-                          </div>
-                       </div>
-                    )}
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Help tenants calculate their real monthly costs.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField
+                label="Nearest Matatu Route/Stage"
+                name="matatuRoute"
+                value={formData.matatuRoute}
+                onChange={handleChange}
+                placeholder="e.g., Route 105 or Super Metro Stage"
+                required={false}
+                icon={<FaBus />}
+              />
+              <InputField
+                label="Approx. Fare to CBD (Ksh)"
+                name="matatuFare"
+                type="number"
+                value={formData.matatuFare}
+                onChange={handleChange}
+                placeholder="e.g., 80"
+                required={false}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputField
+                label="Distance to Market (Mama Mboga)"
+                name="mamaMbogaDistance"
+                value={formData.mamaMbogaDistance}
+                onChange={handleChange}
+                placeholder="e.g., 5 min walk"
+                required={false}
+                icon={<FaShoppingBasket />}
+              />
+
+              {/* Internet Section */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <FaWifi /> Internet Ready?
+                  </label>
+                  <input
+                    type="checkbox"
+                    name="internetReady"
+                    checked={formData.internetReady}
+                    onChange={handleChange}
+                    className="h-5 w-5 text-blue-600 rounded"
+                  />
                 </div>
-             </div>
+
+                {formData.internetReady && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Select available providers:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ISP_LIST.map(isp => (
+                        <span
+                          key={isp}
+                          onClick={() => handleISPToggle(isp)}
+                          className={`text-xs px-3 py-1 rounded-full border cursor-pointer select-none transition ${formData.internetProviders.includes(isp)
+                            ? 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-100'
+                            : 'bg-white text-gray-600 border-gray-300 dark:bg-gray-800 dark:text-gray-300'
+                            }`}
+                        >
+                          {formData.internetProviders.includes(isp) ? '✓ ' : '+ '} {isp}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <SmartPricingWidget 
+          <SmartPricingWidget
             location={formData.location}
             type={formData.type}
             bedrooms={formData.bedrooms}
@@ -812,64 +829,64 @@ const EditProperty = () => {
           {/* ✅ UPDATED: PREMIUM VIDEO TOUR SECTION */}
           {/* Visible to all, but locked for unsubscribed users */}
           <div className="space-y-4 pt-6 border-t dark:border-gray-700 relative">
-             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <FaGem className="text-purple-500" /> Premium Video Tour
-             </h2>
-             
-             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
-                
-                {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
-                {!isPremium && (
-                    <div 
-                        onClick={handlePremiumInteraction}
-                        className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
-                    >
-                         <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
-                             <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
-                                <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
-                             </div>
-                             <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
-                             <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
-                         </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FaGem className="text-purple-500" /> Premium Video Tour
+            </h2>
+
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
+
+              {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
+              {!isPremium && (
+                <div
+                  onClick={handlePremiumInteraction}
+                  className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
+                >
+                  <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
+                      <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
                     </div>
-                )}
-
-                {/* Actual Input Section (Blurred if not premium) */}
-                <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
-                    <div className="space-y-4">
-                        {/* Option 1: File Upload */}
-                        <div>
-                            {/* ✅ FIXED: Removed 'block' class which conflicted with 'flex' */}
-                            <label className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
-                              <FaCloudUploadAlt /> Upload New Video File (Max 2 mins)
-                            </label>
-                            <input 
-                              type="file" 
-                              accept="video/mp4,video/webm" 
-                              onChange={handleVideoFileChange}
-                              className="w-full text-sm text-purple-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"
-                            />
-                            {videoFile && <p className="text-xs text-green-600 mt-1 font-bold">New video selected: {videoFile.name}</p>}
-                            {!videoFile && formData.video && !formData.video.includes('youtu') && (
-                                <p className="text-xs text-gray-500 mt-1">Currently using uploaded video.</p>
-                            )}
-                        </div>
-
-                        <div className="text-center text-xs text-gray-400 font-bold">- OR -</div>
-
-                        {/* Option 2: URL Link */}
-                        <InputField 
-                            label="Paste YouTube/Vimeo Link" 
-                            name="video" 
-                            value={formData.video} 
-                            onChange={handleChange} 
-                            placeholder="https://youtu.be/..." 
-                            required={false}
-                            icon={<FaVideo />}
-                        />
-                    </div>
+                    <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
+                  </div>
                 </div>
-             </div>
+              )}
+
+              {/* Actual Input Section (Blurred if not premium) */}
+              <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
+                <div className="space-y-4">
+                  {/* Option 1: File Upload */}
+                  <div>
+                    {/* ✅ FIXED: Removed 'block' class which conflicted with 'flex' */}
+                    <label className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                      <FaCloudUploadAlt /> Upload New Video File (Max 2 mins)
+                    </label>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm"
+                      onChange={handleVideoFileChange}
+                      className="w-full text-sm text-purple-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer"
+                    />
+                    {videoFile && <p className="text-xs text-green-600 mt-1 font-bold">New video selected: {videoFile.name}</p>}
+                    {!videoFile && formData.video && !formData.video.includes('youtu') && (
+                      <p className="text-xs text-gray-500 mt-1">Currently using uploaded video.</p>
+                    )}
+                  </div>
+
+                  <div className="text-center text-xs text-gray-400 font-bold">- OR -</div>
+
+                  {/* Option 2: URL Link */}
+                  <InputField
+                    label="Paste YouTube/Vimeo Link"
+                    name="video"
+                    value={formData.video}
+                    onChange={handleChange}
+                    placeholder="https://youtu.be/..."
+                    required={false}
+                    icon={<FaVideo />}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -884,25 +901,25 @@ const EditProperty = () => {
               <option value="full">Full/Rented</option>
             </select>
           </div>
-          
+
           {existingImages.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Edit Existing Images</h3>
               {existingImages.map((img, index) => (
                 <div key={img.url} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm">
                   <div className="md:col-span-1 relative">
-                    <img 
-                        src={img.url} 
-                        alt={img.altText || "Existing property image"} 
-                        className="w-full h-24 object-cover rounded-lg"
+                    <img
+                      src={img.url}
+                      alt={img.altText || "Existing property image"}
+                      className="w-full h-24 object-cover rounded-lg"
                     />
                     <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        type="button" 
-                        onClick={() => handleRemoveExistingImage(img.url)}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none shadow-md transition"
+                      whileTap={{ scale: 0.9 }}
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(img.url)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none shadow-md transition"
                     >
-                        <FaTimes size={12} />
+                      <FaTimes size={12} />
                     </motion.button>
                   </div>
                   <div className="md:col-span-4">
@@ -916,16 +933,16 @@ const EditProperty = () => {
               ))}
             </div>
           )}
-          
+
           <div>
             <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="new-images">
-                  Add New Images
-                </label>
-                {/* Visual indicator of the limit */}
-                <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                   Limit: {MAX_IMAGES} Total Images
-                </span>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="new-images">
+                Add New Images
+              </label>
+              {/* Visual indicator of the limit */}
+              <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                Limit: {MAX_IMAGES} Total Images
+              </span>
             </div>
 
             <input
@@ -936,22 +953,22 @@ const EditProperty = () => {
               multiple
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
             />
-            
+
             <div className="flex justify-between mt-1 items-start">
-                <p className={`text-xs ${(existingImages.length + newImageFiles.length) > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
-                   Total: {existingImages.length + newImageFiles.length} / {MAX_IMAGES} (Existing + New)
-                </p>
-                {!isPremium && (
-                   <div className="flex flex-col items-end">
-                      <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
-                      <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
-                         <FaGem size={10} /> Upgrade for 10 Images
-                      </button>
-                   </div>
-                )}
+              <p className={`text-xs ${(existingImages.length + newImageFiles.length) > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
+                Total: {existingImages.length + newImageFiles.length} / {MAX_IMAGES} (Existing + New)
+              </p>
+              {!isPremium && (
+                <div className="flex flex-col items-end">
+                  <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
+                  <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
+                    <FaGem size={10} /> Upgrade for 10 Images
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          
+
           {newImageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white">New Image Alt Text</h3>
@@ -965,7 +982,7 @@ const EditProperty = () => {
               ))}
             </div>
           )}
-          
+
           {user && user.role === 'admin' && (
             <div className="space-y-6 pt-6 border-t dark:border-gray-700">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -974,22 +991,22 @@ const EditProperty = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 (Admin Only) Search for a Shadow Profile to consolidate this property under their account.
               </p>
-              
+
               <div className="relative">
-                <InputField 
-                  label="Owner/Agent Name (Searchable)" 
-                  name="name" 
+                <InputField
+                  label="Owner/Agent Name (Searchable)"
+                  name="name"
                   value={formData.ownerDetails.name}
                   onChange={handleOwnerChange}
                   placeholder="e.g., Jane Doe"
                   required={false}
                   icon={<FaSearch />}
                 />
-                
+
                 {showSuggestions && filteredAgents.length > 0 && (
                   <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                     {filteredAgents.map((agent) => (
-                      <li 
+                      <li
                         key={agent._id}
                         onClick={() => selectShadowAgent(agent)}
                         className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition border-b dark:border-gray-700 last:border-0"
@@ -1007,35 +1024,35 @@ const EditProperty = () => {
                     ))}
                   </ul>
                 )}
-                
+
                 {formData.agentId && (
                   <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-center gap-2">
                     <FaUserCheck /> Linked to Profile: <strong>{formData.ownerDetails.name}</strong>
                   </div>
                 )}
               </div>
-              
-              <InputField 
-                label="Owner WhatsApp" 
-                name="whatsapp" 
-                value={formData.ownerDetails.whatsapp} 
-                onChange={handleOwnerChange} 
+
+              <InputField
+                label="Owner WhatsApp"
+                name="whatsapp"
+                value={formData.ownerDetails.whatsapp}
+                onChange={handleOwnerChange}
                 icon={<FaWhatsapp />}
                 required={false}
               />
-              <InputField 
-                label="Owner TikTok Handle" 
-                name="tiktok" 
-                value={formData.ownerDetails.tiktok} 
-                onChange={handleOwnerChange} 
+              <InputField
+                label="Owner TikTok Handle"
+                name="tiktok"
+                value={formData.ownerDetails.tiktok}
+                onChange={handleOwnerChange}
                 icon={<FaTiktok />}
                 required={false}
               />
-              <InputField 
-                label="Owner Instagram Handle" 
-                name="instagram" 
-                value={formData.ownerDetails.instagram} 
-                onChange={handleOwnerChange} 
+              <InputField
+                label="Owner Instagram Handle"
+                name="instagram"
+                value={formData.ownerDetails.instagram}
+                onChange={handleOwnerChange}
                 icon={<FaInstagram />}
                 required={false}
               />
@@ -1058,7 +1075,7 @@ const EditProperty = () => {
                   <p id="isFeatured-description" className="text-gray-700 dark:text-gray-300">
                     Your listing will be highlighted and shown on the homepage.
                   </p>
-                  
+
                   {formData.isFeatured && (
                     <div className="mt-4">
                       <label htmlFor="featuredDays" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -1100,11 +1117,10 @@ const EditProperty = () => {
             <button
               type="submit"
               disabled={loading || isGeocoding}
-              className={`w-full flex justify-center py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${
-                (loading || isGeocoding) 
-                ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed' 
+              className={`w-full flex justify-center py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${(loading || isGeocoding)
+                ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500'
-              }`}
+                }`}
             >
               {loading ? 'Updating...' : (isGeocoding ? 'Locating...' : 'Save Changes')}
             </button>
