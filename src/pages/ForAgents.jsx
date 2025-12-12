@@ -33,8 +33,8 @@ const bouncyCard = {
 // Animation for "slide-in" text
 const slideIn = {
   hidden: { opacity: 0, x: -50 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -48,27 +48,22 @@ const ForAgents = () => {
     'Join HouseHunt Kenya for free. We help real estate firms and property management companies in Kenya boost sales, connect with clients, and grow their business with zero fees.'
   );
 
-  // ✅ 2. UPDATED FEATURES TO SELL YOUR NEW TOOLS
+  // ✅ 2. PREMIUM FEATURES FOR PAID MODEL
   const features = [
     {
-      icon: FaBullhorn,
-      title: "Zero Fees, Maximum Exposure",
-      text: "List all your properties for free. We don't charge commissions or listing fees. Keep 100% of what you earn."
+      icon: FaChartBar,
+      title: "Advanced Analytics & Intel",
+      text: "Stop guessing. Track views, WhatsApp clicks, and conversion rates. Our Competitor Intelligence tool tells you exactly how you rank against others in your area."
+    },
+    {
+      icon: FaShieldAlt,
+      title: "Verified Agent Badge",
+      text: "Paid members get the prestigious 'Verified' badge. This builds instant trust with high-net-worth clients and boosts your profile in our 'Top Agents' directory."
     },
     {
       icon: FaUsers,
-      title: "Qualified Leads",
-      text: "Connect directly with serious buyers. Our system filters requests so you get high-quality leads sent straight to WhatsApp."
-    },
-    {
-      icon: FaShieldAlt, // Updated Icon
-      title: "Get Verified Status",
-      text: "Stand out with a specialized Verified Agent badge. Build instant trust with clients and rank higher in search results."
-    },
-    {
-      icon: FaChartBar, // Updated Icon
-      title: "Real-Time Analytics",
-      text: "Access your personal dashboard to track listing views, clicks, and performance. See exactly what buyers are looking for."
+      title: "Reputation Management",
+      text: "Collect and manage public reviews. Reply to feedback to build your brand authority. A 5-star profile attracts 3x more leads."
     }
   ];
 
@@ -78,69 +73,82 @@ const ForAgents = () => {
       <div className="bg-white dark:bg-gray-900 overflow-x-hidden">
 
         {/* --- Hero Section --- */}
-        <div className="relative bg-blue-600 dark:bg-blue-800 text-white py-24 md:py-32 px-6 text-center">
-          <div className="absolute inset-0 bg-black opacity-30"></div>
-          <motion.div 
-            className="relative z-10 max-w-4xl mx-auto"
+        <div className="relative bg-blue-900 dark:bg-gray-950 text-white py-24 md:py-32 px-6 text-center overflow-hidden">
+          {/* Abstract Background Elements */}
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-20">
+            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500 rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600 rounded-full blur-[100px]"></div>
+          </div>
+
+          <motion.div
+            className="relative z-10 max-w-5xl mx-auto"
             initial="hidden"
             animate="visible"
             variants={bouncyCard}
-            custom={0} // No delay
+            custom={0}
           >
-            <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
-              Grow Your Real Estate Business
+            <div className="inline-block px-4 py-1 mb-6 border border-blue-400/30 rounded-full bg-blue-800/30 backdrop-blur-sm text-blue-300 font-bold text-sm tracking-widest uppercase">
+              For Professional Agents & Agencies
+            </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+              Unlock the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Premium Advantage</span>
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8">
-              The smartest platform for Kenyan agents. List properties, track analytics, and build your brand—<span className="font-bold underline">completely free</span>.
+            <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+              Stop competing on luck. Upgrade to a platform that gives you <span className="text-white font-bold">Search (SEO) Supremacy</span>, <span className="text-white font-bold">Deep Data Insights</span>, and <span className="text-white font-bold">Trusted Verification</span>.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-5 justify-center">
               <Link
                 to="/register"
-                className="px-10 py-4 bg-white text-blue-700 font-bold text-lg rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-200 active:scale-95"
+                className="px-10 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-lg rounded-xl shadow-xl shadow-blue-600/30 hover:scale-105 transition-all duration-200"
               >
-                Start Listing for Free
+                Join as a Pro Agent
               </Link>
-              {/* ✅ 3. NEW "CLAIM PROFILE" LINK */}
               <Link
                 to="/agents"
-                className="px-10 py-4 bg-transparent border-2 border-white text-white font-bold text-lg rounded-lg hover:bg-white/10 transition-all duration-200"
+                className="px-10 py-4 bg-white/5 border border-white/20 text-white font-bold text-lg rounded-xl hover:bg-white/10 transition-all duration-200 backdrop-blur-sm"
               >
                 <FaSearch className="inline mr-2 mb-1" />
-                Check if I'm Listed
+                Find My Profile
               </Link>
             </div>
-            <p className="mt-4 text-sm text-blue-200">
-              Already have properties on HouseHunt? Find your name and claim your account.
+            <p className="mt-6 text-sm text-gray-400">
+              * Join over 5,000 top-performing agents in Kenya.
             </p>
           </motion.div>
         </div>
 
         {/* --- Features Section --- */}
-        <section className="py-20 px-6">
-          <div className="max-w-6xl mx-auto">
-            <motion.h2 
-              className="text-3xl md:text-4xl font-bold text-center text-gray-900 dark:text-white mb-12"
+        <section className="py-24 px-6 bg-gray-50 dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto">
+            <motion.div
+              className="text-center mb-16"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.5 }}
               variants={slideIn}
             >
-              Why Top Agents Choose <span className="text-blue-600">HouseHunt</span>
-            </motion.h2>
+              <h2 className="text-3xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                Why Go Premium?
+              </h2>
+              <p className="text-xl text-gray-500 dark:text-gray-400">Values that pay for themselves.</p>
+            </motion.div>
+
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, i) => (
                 <motion.div
                   key={feature.title}
-                  className="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl shadow-lg border dark:border-gray-700 hover:-translate-y-2 transition-transform duration-300"
-                  custom={i} // Staggered delay for each card
+                  className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 hover:-translate-y-2 transition-transform duration-300 group"
+                  custom={i}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true, amount: 0.3 }}
                   variants={bouncyCard}
                 >
-                  <feature.icon className="text-4xl text-blue-600 dark:text-blue-400 mb-4" />
+                  <div className="w-14 h-14 bg-blue-50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <feature.icon className="text-2xl text-blue-600 dark:text-blue-400 group-hover:text-white transition-colors" />
+                  </div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-300">{feature.text}</p>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">{feature.text}</p>
                 </motion.div>
               ))}
             </div>
@@ -150,7 +158,7 @@ const ForAgents = () => {
         {/* --- How It Works Section --- */}
         <section className="py-20 px-6 bg-gray-100 dark:bg-gray-950">
           <div className="max-w-4xl mx-auto text-center">
-            <motion.h2 
+            <motion.h2
               className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-12"
               initial="hidden"
               whileInView="visible"
@@ -193,9 +201,9 @@ const ForAgents = () => {
           >
             <h2 className="text-4xl font-extrabold mb-6">Ready to Dominate the Market?</h2>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto mb-8">
-              Join the community of top-tier real estate firms in Kenya. 
+              Join the community of top-tier real estate firms in Kenya.
               Build your brand, track your success, and close more deals.
-            </p> 
+            </p>
             <Link
               to="/register"
               className="px-10 py-4 bg-white text-blue-700 font-bold text-lg rounded-lg shadow-lg hover:bg-gray-100 transition-all duration-200 active:scale-95"
