@@ -265,7 +265,25 @@ const PropertySeoInjector = ({ seo, property }) => {
     return schema;
   };
 
+  const generateVideoSchema = () => {
+    if (!property.video) return null;
+
+    // Check if it's an embed URL or direct file to define contentUrl vs embedUrl
+    const isEmbed = property.video.includes('youtube') || property.video.includes('vimeo') || property.video.includes('embed');
+
+    return {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": seo.videoTitle || `Virtual Tour of ${property.title}`,
+      "description": seo.videoDescription || `Watch a video tour of ${property.title}, located in ${property.location}. ${property.description?.substring(0, 100)}`,
+      "thumbnailUrl": seo.videoThumbnail || schemaImages, // Use property images as video thumbnails fallback
+      "uploadDate": seo.videoUploadDate || property.createdAt || new Date().toISOString(),
+      ...(isEmbed ? { "embedUrl": property.video } : { "contentUrl": property.video })
+    };
+  };
+
   const schemaData = generatePropertySchema();
+  const videoSchemaData = generateVideoSchema();
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -296,6 +314,7 @@ const PropertySeoInjector = ({ seo, property }) => {
       <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
       <meta property="twitter:image" content={firstImageUrl} />
       <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
+      {videoSchemaData && <script type="application/ld+json">{JSON.stringify(videoSchemaData)}</script>}
       <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
     </Helmet>
   );

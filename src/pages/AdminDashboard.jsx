@@ -566,13 +566,15 @@ const AdminDashboard = () => {
                 <tr className="border-b dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm">
                   <th className="p-3">Agent Name</th>
                   <th className="p-3">Company</th>
+                  {/* ✅ NEW: Agent Type Column */}
+                  <th className="p-3">Type</th>
                   <th className="p-3">WhatsApp</th>
                   <th className="p-3">Listings</th>
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {shadowAgents.length === 0 && <tr><td colSpan="5" className="p-4 text-center text-gray-500">No shadow agents found.</td></tr>}
+                {shadowAgents.length === 0 && <tr><td colSpan="6" className="p-4 text-center text-gray-500">No shadow agents found.</td></tr>}
                 {shadowAgents.map(agent => (
                   <tr key={agent._id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                     <td className="p-3 font-medium dark:text-white flex items-center gap-2">
@@ -582,6 +584,29 @@ const AdminDashboard = () => {
                       {agent.name}
                     </td>
                     <td className="p-3 dark:text-gray-300">{agent.companyName || '-'}</td>
+
+                    {/* ✅ NEW: Agent Type Dropdown */}
+                    <td className="p-3">
+                      <select
+                        value={agent.agentType || 'Individual'}
+                        onChange={async (e) => {
+                          const newType = e.target.value;
+                          if (window.confirm(`Change ${agent.name} to ${newType}?`)) {
+                            try {
+                              await apiClient.put(`/users/${agent._id}`, { agentType: newType });
+                              fetchData(); // Refresh list
+                            } catch (err) {
+                              alert('Failed to update type');
+                            }
+                          }
+                        }}
+                        className="text-xs border-gray-300 rounded shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                      >
+                        <option value="Individual">Freelancer</option>
+                        <option value="Agency">Agency</option>
+                      </select>
+                    </td>
+
                     <td className="p-3 dark:text-gray-300 font-mono text-xs">{agent.whatsappNumber || 'N/A'}</td>
                     <td className="p-3 dark:text-gray-300">
                       <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">

@@ -30,26 +30,26 @@ const AgentCard = ({ agent }) => {
   };
 
   // Fallback image if profilePicture is missing
-  const displayImage = agent.profilePicture && !agent.profilePicture.includes('placehold') 
-    ? agent.profilePicture 
+  const displayImage = agent.profilePicture && !agent.profilePicture.includes('placehold')
+    ? agent.profilePicture
     : "https://ui-avatars.com/api/?name=" + encodeURIComponent(agent.name) + "&background=0D8ABC&color=fff&size=150";
 
   return (
-    <div 
-      className="relative w-full h-80 cursor-pointer group" 
-      style={{ perspective: '1000px' }} 
+    <div
+      className="relative w-full h-80 cursor-pointer group"
+      style={{ perspective: '1000px' }}
       onMouseLeave={() => setIsFlipped(false)}
     >
       <motion.div
         className="w-full h-full relative transition-all"
-        style={{ transformStyle: 'preserve-3d' }} 
+        style={{ transformStyle: 'preserve-3d' }}
         variants={variants}
         initial="front"
         animate={isFlipped ? "back" : "front"}
         transition={{ type: "spring", stiffness: 260, damping: 20, mass: 0.8 }}
       >
         {/* === FRONT SIDE (Glassy) === */}
-        <div 
+        <div
           style={{ backfaceVisibility: 'hidden' }}
           className="absolute inset-0 w-full h-full 
             bg-white/90 backdrop-blur-md border border-white/40 
@@ -59,11 +59,11 @@ const AgentCard = ({ agent }) => {
         >
           <div className="relative mb-4">
             <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                <img 
-                    src={displayImage} 
-                    alt={agent.name} 
-                    className="w-full h-full rounded-full object-cover border-2 border-white dark:border-gray-800" 
-                />
+              <img
+                src={displayImage}
+                alt={agent.name}
+                className="w-full h-full rounded-full object-cover border-2 border-white dark:border-gray-800"
+              />
             </div>
             {/* Online Indicator */}
             <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full shadow-sm" title="Verified & Active"></div>
@@ -72,24 +72,24 @@ const AgentCard = ({ agent }) => {
           <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 text-center line-clamp-1">
             {agent.name}
           </h3>
-          
+
           <div className="flex items-center gap-2 mt-1">
-             <MiniStarRating rating={agent.averageRating} />
-             <span className="text-xs text-gray-500 dark:text-gray-400 font-medium italic">
-               Trusted by {agent.numReviews || 0} clients
-             </span>
+            <MiniStarRating rating={agent.averageRating} />
+            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium italic">
+              Trusted by {agent.numReviews || 0} clients
+            </span>
           </div>
 
           <div className="mt-6 w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all
             bg-blue-50 text-blue-600 border border-blue-100 shadow-sm
             dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800/50
             group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent group-hover:shadow-md">
-             Tap to See Track Record
+            Tap to See Track Record
           </div>
         </div>
 
         {/* === BACK SIDE (Flipped & Glassy) === */}
-        <div 
+        <div
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
           className="absolute inset-0 w-full h-full 
             bg-white/90 backdrop-blur-xl border border-white/60
@@ -98,54 +98,63 @@ const AgentCard = ({ agent }) => {
         >
           {/* Dynamic Background Image with Adaptive Overlay */}
           <div className="absolute inset-0 z-0 pointer-events-none">
-             <img 
-               src={displayImage} 
-               alt="Background" 
-               className="w-full h-full object-cover opacity-40 blur-2xl scale-150"
-             />
-             <div className="absolute inset-0 bg-white/80 dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" /> 
+            <img
+              src={displayImage}
+              alt="Background"
+              className="w-full h-full object-cover opacity-40 blur-2xl scale-150"
+            />
+            <div className="absolute inset-0 bg-white/80 dark:bg-gradient-to-b dark:from-gray-900/95 dark:to-blue-950/95" />
           </div>
 
           {/* Content Container */}
           <div className="relative z-10 flex flex-col h-full p-6 items-center justify-center text-gray-900 dark:text-white">
-            
-            <button 
+
+            <button
               onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
               className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md
                 hover:bg-gray-200 text-gray-500
                 dark:hover:bg-white/10 dark:text-white/80"
               title="Close Stats"
             >
-              <FaTimes /> 
+              <FaTimes />
             </button>
 
-            <div className="mb-6 text-center w-full">
-                <h4 className="text-xs font-bold uppercase tracking-widest mb-3
+            <div className="mb-2 text-center w-full">
+              <h4 className="text-xs font-bold uppercase tracking-widest mb-3
                   text-blue-600 dark:text-blue-300 opacity-90 flex items-center justify-center gap-2">
-                    <FaHandshake /> Performance Check
-                </h4>
-                
-                <div className="flex flex-col items-center p-5 rounded-2xl shadow-inner border backdrop-blur-md
+                <FaHandshake /> Performance Check
+              </h4>
+
+              <div className="flex flex-col items-center p-3 rounded-2xl shadow-inner border backdrop-blur-md
                   bg-white/60 border-white/60
                   dark:bg-white/5 dark:border-white/10">
-                    <FaBuilding className="text-3xl mb-2 text-gray-700 dark:text-gray-300" />
-                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                        {agent.propertyPostCount || 0}
-                    </span>
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1 uppercase tracking-wide">
-                       Properties Managed
-                    </span>
-                </div>
-                
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-3 italic px-4">
-                  "{agent.name.split(' ')[0]} is actively helping families find homes in your area."
-                </p>
+                <FaBuilding className="text-2xl mb-1 text-gray-700 dark:text-gray-300" />
+                <span className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                  {agent.propertyPostCount || 0}
+                </span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-1 uppercase tracking-wide">
+                  Properties Managed
+                </span>
+              </div>
+
+              {/* ✅ AGENCY BADGE */}
+              <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide
+                  ${agent.agentType === 'Agency'
+                  ? 'bg-purple-100 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300'
+                  : 'bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-300'}`}
+              >
+                {agent.agentType === 'Agency' ? '🏢 Established Agency' : '👤 Freelance Agent'}
+              </div>
+
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-2 italic px-4">
+                "{agent.name.split(' ')[0]} is actively helping families find homes in your area."
+              </p>
             </div>
 
-            <Link 
-               to={`/agent/${agent._id}`}
-               onClick={(e) => e.stopPropagation()}
-               className="w-full py-3 flex items-center justify-center gap-2 rounded-xl font-bold shadow-lg transition transform hover:scale-105 text-sm backdrop-blur-md
+            <Link
+              to={`/agent/${agent._id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full py-3 flex items-center justify-center gap-2 rounded-xl font-bold shadow-lg transition transform hover:scale-105 text-sm backdrop-blur-md
                  bg-blue-600 text-white hover:bg-blue-700
                  dark:bg-white dark:text-blue-900 dark:hover:bg-gray-100"
             >
@@ -201,22 +210,22 @@ const TopAgents = () => {
   }
 
   if (!agents || agents.length === 0) {
-    return null; 
+    return null;
   }
 
   return (
     <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
-           <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-xs mb-2 block">Trusted Professionals</span>
-           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
-             Meet Your Local <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Property Experts</span>
-           </h2>
-           <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
-             Don't navigate the market alone. These top-rated agents have the track record and local knowledge to guide you home.
-           </p>
+          <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-xs mb-2 block">Trusted Professionals</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">
+            Meet Your Local <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Property Experts</span>
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg leading-relaxed">
+            Don't navigate the market alone. These top-rated agents have the track record and local knowledge to guide you home.
+          </p>
         </div>
-        
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {agents.slice(0, 5).map(agent => (
             <AgentCard key={agent._id} agent={agent} />

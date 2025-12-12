@@ -180,8 +180,8 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
                       onClick={() => handleToggleEmphasize(kw)}
                       disabled={isSaving === kw._id}
                       className={`p-2 rounded-full transition-colors ${kw.isEmphasized
-                          ? 'text-yellow-400 hover:text-yellow-300'
-                          : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                        ? 'text-yellow-400 hover:text-yellow-300'
+                        : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
                         }`}
                       title={kw.isEmphasized ? 'De-emphasize (Remove from Footer)' : 'Emphasize (Add to Footer)'}
                     >
@@ -196,8 +196,8 @@ const KeywordLibrary = ({ keywordLibrary, loading, error, fetchKeywords }) => {
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">{kw.path}</td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${kw.engine === 'property' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                        kw.engine === 'agent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          kw.engine === 'intel' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+                      kw.engine === 'agent' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                        kw.engine === 'intel' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                       }`}>
                       {kw.engine}
                     </span>
@@ -422,6 +422,12 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         schemaDescription: data.schemaDescription || '',
         breadCrumbTitle: data.breadCrumbTitle || '',
         faqs: data.faqs || [],
+
+        // Video Schema Fields
+        videoTitle: data.videoTitle || '',
+        videoDescription: data.videoDescription || '',
+        videoThumbnail: data.videoThumbnail || '',
+        videoUploadDate: data.videoUploadDate ? data.videoUploadDate.split('T')[0] : '',
       });
 
       // ✅ LOGIC A: If Service Provider
@@ -802,6 +808,34 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
                 placeholder="A short description for Twitter (X)."
               />
+            </div>
+          </div>
+        </section>
+
+        {/* --- VIDEO SCHEMA SECTION --- */}
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
+            <FaCheckCircle className="mr-2 text-red-500" /> Video Schema Overrides
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            If this page contains a video, you can override the automatically generated video structured data here.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="videoTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Title (Override)</label>
+              <input type="text" id="videoTitle" name="videoTitle" value={seoData.videoTitle} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="e.g. Virtual Tour of 3BR Apartment" />
+            </div>
+            <div>
+              <label htmlFor="videoDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Description (Override)</label>
+              <textarea id="videoDescription" name="videoDescription" value={seoData.videoDescription} onChange={handleInputChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="Description of the video content..." />
+            </div>
+            <div>
+              <label htmlFor="videoThumbnail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Thumbnail URL (Override)</label>
+              <input type="text" id="videoThumbnail" name="videoThumbnail" value={seoData.videoThumbnail} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="https://..." />
+            </div>
+            <div>
+              <label htmlFor="videoUploadDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Upload Date (Override)</label>
+              <input type="date" id="videoUploadDate" name="videoUploadDate" value={seoData.videoUploadDate} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" />
             </div>
           </div>
         </section>
@@ -1273,8 +1307,8 @@ const SEOManager = () => {
     <button
       onClick={() => setActiveTab(tabName)}
       className={`flex items-center space-x-2 px-4 py-3 font-semibold text-sm rounded-md transition ${activeTab === tabName
-          ? 'bg-blue-600 text-white shadow-md'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+        ? 'bg-blue-600 text-white shadow-md'
+        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
         }`}
     >
       {icon}

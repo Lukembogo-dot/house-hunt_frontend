@@ -3,9 +3,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/axios';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FaUser, FaWhatsapp, FaCamera, FaLock, FaInfoCircle, FaPhone, 
-  FaShieldAlt, FaSpinner, FaCheckCircle, FaCopy, FaExclamationTriangle, 
+import {
+  FaUser, FaWhatsapp, FaCamera, FaLock, FaInfoCircle, FaPhone,
+  FaShieldAlt, FaSpinner, FaCheckCircle, FaCopy, FaExclamationTriangle,
   FaBriefcase, FaTools, FaInstagram, FaTwitter, FaFacebook, FaTiktok, FaEnvelope // ✅ Added Icons
 } from 'react-icons/fa';
 import { FaXTwitter } from "react-icons/fa6"; // Standard X icon
@@ -68,7 +68,7 @@ const TwoFactorAuthSetup = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [backupCodes, setBackupCodes] = useState([]);
-  const [step, setStep] = useState(1); 
+  const [step, setStep] = useState(1);
 
   // Fix: Check if user is enabled locally or via prop
   const isEnabled = user?.isTwoFactorEnabled;
@@ -79,7 +79,7 @@ const TwoFactorAuthSetup = () => {
     try {
       const { data } = await apiClient.post('/auth/2fa/setup');
       setQrCode(data.qrCodeUrl);
-      setStep(2); 
+      setStep(2);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to start 2FA setup.');
     } finally {
@@ -93,13 +93,13 @@ const TwoFactorAuthSetup = () => {
     setError('');
     try {
       const { data } = await apiClient.post('/auth/2fa/verify', { token });
-      setBackupCodes(data.backupCodes); 
-      setStep(3); 
+      setBackupCodes(data.backupCodes);
+      setStep(3);
       setSuccess('2FA Verified! Now save your backup codes.');
-      
+
       // ✅ Update global auth state immediately
       const updatedUser = { ...user, isTwoFactorEnabled: true };
-      login(updatedUser); 
+      login(updatedUser);
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid 6-digit code. Please try again.');
     } finally {
@@ -108,15 +108,15 @@ const TwoFactorAuthSetup = () => {
   };
 
   const handleFinishSetup = () => {
-    setStep(1); 
+    setStep(1);
     setBackupCodes([]);
   };
-  
+
   const copyCodes = () => {
     navigator.clipboard.writeText(backupCodes.join('\n'));
     alert('Backup codes copied to clipboard!');
   };
-  
+
   // ✅ FIX: Render the active state if user.isTwoFactorEnabled is true
   if (isEnabled) {
     return (
@@ -161,9 +161,9 @@ const TwoFactorAuthSetup = () => {
         <div className="text-center space-y-6 border-t pt-6 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">Step 1: Scan QR Code</h3>
           <div className="bg-white p-4 inline-block rounded-lg shadow-md">
-             <img src={qrCode} alt="2FA QR Code" className="mx-auto w-48 h-48" />
+            <img src={qrCode} alt="2FA QR Code" className="mx-auto w-48 h-48" />
           </div>
-          
+
           <div className="max-w-xs mx-auto">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Step 2: Enter 6-Digit Code
@@ -192,13 +192,13 @@ const TwoFactorAuthSetup = () => {
       {step === 3 && (
         <div className="space-y-6 border-t pt-6 dark:border-gray-700">
           <div className="flex items-start space-x-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-             <FaExclamationTriangle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-1" />
-             <div>
-               <h3 className="font-bold text-yellow-800 dark:text-yellow-200">Save These Backup Codes!</h3>
-               <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                 Store them in a safe place.
-               </p>
-             </div>
+            <FaExclamationTriangle className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="font-bold text-yellow-800 dark:text-yellow-200">Save These Backup Codes!</h3>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                Store them in a safe place.
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4 bg-gray-100 dark:bg-gray-900 p-4 rounded-lg font-mono text-sm text-gray-800 dark:text-gray-200 text-center">
             {backupCodes.map((code, index) => (
@@ -229,9 +229,10 @@ const EditProfileSettings = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState(''); // ✅ Added Email
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [agentType, setAgentType] = useState('Individual'); // ✅ Agent Type State
   const [about, setAbout] = useState('');
   const [voiceCallNumber, setVoiceCallNumber] = useState('');
-  
+
   // ✅ Social Media States
   const [socialLinks, setSocialLinks] = useState({
     facebook: '',
@@ -242,18 +243,18 @@ const EditProfileSettings = () => {
 
   const [profilePicture, setProfilePicture] = useState(null);
   const [previewImage, setPreviewImage] = useState(user.profilePicture);
-  
+
   // --- UI States ---
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
-  
+
   // --- Password States ---
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordStatus, setPasswordStatus] = useState({ message: '', type: '' });
-  
+
   // --- Request States ---
   const [pendingRequest, setPendingRequest] = useState(null);
   const [checkingRequest, setCheckingRequest] = useState(true);
@@ -265,10 +266,11 @@ const EditProfileSettings = () => {
       setName(user.name);
       setEmail(user.email); // ✅
       setWhatsappNumber(user.whatsappNumber || '');
+      setAgentType(user.agentType || 'Individual'); // ✅
       setAbout(user.about || '');
       setVoiceCallNumber(user.pendingVoiceCallNumber || user.voiceCallNumber || '');
       setPreviewImage(user.profilePicture);
-      
+
       // ✅ Populate Socials
       if (user.socialLinks) {
         setSocialLinks({
@@ -289,7 +291,7 @@ const EditProfileSettings = () => {
         '/users/profile/my-pending-request',
         { withCredentials: true }
       );
-      setPendingRequest(data); 
+      setPendingRequest(data);
     } catch (err) {
       console.error('Could not fetch pending request', err);
     } finally {
@@ -313,7 +315,7 @@ const EditProfileSettings = () => {
     try {
       await apiClient.post('/users/apply-agent', {}, { withCredentials: true });
       setStatus({ message: 'Agent application submitted!', type: 'success' });
-      fetchPendingRequest(); 
+      fetchPendingRequest();
     } catch (err) {
       setStatus({ message: err.response?.data?.message || 'Failed.', type: 'error' });
     } finally {
@@ -328,7 +330,7 @@ const EditProfileSettings = () => {
     try {
       await apiClient.post('/users/apply-service-provider', {}, { withCredentials: true });
       setStatus({ message: 'Service Provider application submitted!', type: 'success' });
-      fetchPendingRequest(); 
+      fetchPendingRequest();
     } catch (err) {
       setStatus({ message: err.response?.data?.message || 'Failed.', type: 'error' });
     } finally {
@@ -354,10 +356,11 @@ const EditProfileSettings = () => {
     formData.append('name', name);
     formData.append('email', email); // ✅ Send Email
     formData.append('whatsappNumber', whatsappNumber);
+    formData.append('agentType', agentType); // ✅ Send Agent Type
     formData.append('about', about);
     formData.append('voiceCallNumber', voiceCallNumber);
     formData.append('socialLinks', JSON.stringify(socialLinks)); // ✅ Send Socials
-    
+
     if (profilePicture) {
       formData.append('profilePicture', profilePicture);
     }
@@ -369,7 +372,7 @@ const EditProfileSettings = () => {
       });
 
       const { data, status: httpStatus } = response;
-      login(data.user); 
+      login(data.user);
 
       if (httpStatus === 202) {
         setStatus({ message: 'Changes submitted for admin approval.', type: 'info' });
@@ -430,9 +433,8 @@ const EditProfileSettings = () => {
         {!user.isVerified && <VerifyEmailPrompt user={user} />}
 
         {status.message && (
-          <div className={`p-4 mb-4 text-sm rounded-lg ${
-              status.type === 'success' ? 'bg-green-100 text-green-700' : 
-              status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700' 
+          <div className={`p-4 mb-4 text-sm rounded-lg ${status.type === 'success' ? 'bg-green-100 text-green-700' :
+              status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
             }`}>
             {status.message}
           </div>
@@ -444,7 +446,7 @@ const EditProfileSettings = () => {
             <div>
               <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">Changes Awaiting Approval</h3>
               <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                Critical details (Name, Email, WhatsApp) are locked pending admin review.
+                Critical details (Name, Email, Agent Type, WhatsApp) are locked pending admin review.
               </p>
             </div>
           </div>
@@ -461,7 +463,7 @@ const EditProfileSettings = () => {
               </label>
             </div>
           </div>
-          
+
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
@@ -479,7 +481,7 @@ const EditProfileSettings = () => {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:opacity-60" required disabled={loading || emailLocked} />
             </div>
             {emailLocked && user.pendingEmail && (
-               <p className="text-xs text-yellow-600 mt-1">Pending approval for change to: {user.pendingEmail}</p>
+              <p className="text-xs text-yellow-600 mt-1">Pending approval for change to: {user.pendingEmail}</p>
             )}
           </div>
 
@@ -495,6 +497,54 @@ const EditProfileSettings = () => {
           {/* Agent/Provider Fields */}
           {(user.role === 'agent' || user.role === 'service_provider') && (
             <>
+              {/* ✅ Agent Type Toggle */}
+              {user.role === 'agent' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Operating As</label>
+                  <div className="flex gap-4">
+                    <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-between transition ${agentType === 'Individual'
+                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      } ${fieldsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${agentType === 'Individual' ? 'border-blue-600' : 'border-gray-400'
+                          }`}>
+                          {agentType === 'Individual' && <span className="w-2 h-2 rounded-full bg-blue-600" />}
+                        </span>
+                        <div className="text-left">
+                          <span className="block font-bold text-sm text-gray-900 dark:text-white">Freelance Agent</span>
+                          <span className="text-xs text-gray-500">I work independently.</span>
+                        </div>
+                      </div>
+                      <input type="radio" name="agentType" value="Individual" checked={agentType === 'Individual'} onChange={(e) => setAgentType(e.target.value)} disabled={fieldsLocked} className="hidden" />
+                    </label>
+
+                    <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-between transition ${agentType === 'Agency'
+                        ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 dark:bg-purple-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      } ${fieldsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${agentType === 'Agency' ? 'border-purple-600' : 'border-gray-400'
+                          }`}>
+                          {agentType === 'Agency' && <span className="w-2 h-2 rounded-full bg-purple-600" />}
+                        </span>
+                        <div className="text-left">
+                          <span className="block font-bold text-sm text-gray-900 dark:text-white">Agency</span>
+                          <span className="text-xs text-gray-500">I represent a company.</span>
+                        </div>
+                      </div>
+                      <input type="radio" name="agentType" value="Agency" checked={agentType === 'Agency'} onChange={(e) => setAgentType(e.target.value)} disabled={fieldsLocked} className="hidden" />
+                    </label>
+                  </div>
+                  {/* Show pending status if pending agent type exists (we can infer from locked + mismatch) */}
+                  {fieldsLocked && user.agentType !== agentType && (
+                    <p className="text-xs text-yellow-600 mt-2">
+                      Pending approval to change to: <strong>{agentType}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">About Me / Business Bio</label>
                 <div className="relative">
@@ -541,22 +591,22 @@ const EditProfileSettings = () => {
             </button>
           </div>
         </form>
-        
+
         {/* ✅ UPGRADE SECTION (Separated) */}
         {user.role === 'user' && (
           <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700 grid gap-6 md:grid-cols-2">
-            
+
             {/* Agent Application */}
             <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-600 text-center flex flex-col items-center">
               <FaBriefcase className="text-4xl text-purple-600 mb-3" />
               <h3 className="font-bold text-lg dark:text-white">Real Estate Agent</h3>
               <p className="text-sm text-gray-500 mb-4">List properties & track leads.</p>
-              
+
               {pendingRequest?.type === 'agent_application' ? (
-                 <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
+                <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
               ) : (
                 <button onClick={handleApplyAgent} disabled={applyingAgent || applyingProvider} className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50">
-                   {applyingAgent ? 'Applying...' : 'Apply as Agent'}
+                  {applyingAgent ? 'Applying...' : 'Apply as Agent'}
                 </button>
               )}
             </div>
@@ -566,12 +616,12 @@ const EditProfileSettings = () => {
               <FaTools className="text-4xl text-green-600 mb-3" />
               <h3 className="font-bold text-lg dark:text-white">Service Provider</h3>
               <p className="text-sm text-gray-500 mb-4">Offer moving, internet, etc.</p>
-              
+
               {pendingRequest?.type === 'service_provider_application' ? (
-                 <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
+                <span className="text-blue-600 font-bold text-sm bg-blue-100 px-3 py-1 rounded-full">Pending Approval</span>
               ) : (
                 <button onClick={handleApplyServiceProvider} disabled={applyingAgent || applyingProvider} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">
-                   {applyingProvider ? 'Applying...' : 'Apply as Provider'}
+                  {applyingProvider ? 'Applying...' : 'Apply as Provider'}
                 </button>
               )}
             </div>
@@ -582,7 +632,7 @@ const EditProfileSettings = () => {
         <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-6">
-             <div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Old Password</label>
               <input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
             </div>
