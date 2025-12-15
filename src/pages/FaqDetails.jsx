@@ -7,15 +7,25 @@ import apiClient from '../api/axios';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  FaArrowLeft, FaQuestionCircle, FaLightbulb, FaShareAlt, FaThumbsUp, FaRegThumbsUp, FaHome 
+import {
+  FaArrowLeft, FaQuestionCircle, FaLightbulb, FaShareAlt, FaThumbsUp, FaRegThumbsUp, FaHome
 } from 'react-icons/fa';
 // ✅ 1. IMPORT PROPERTY LIST
 import PropertyList from '../components/PropertyList';
 
 // --- SEO COMPONENT (Unchanged) ---
+// --- SEO COMPONENT (Updated) ---
 const FaqSeoInjector = ({ faq }) => {
   if (!faq) return null;
+
+  // Helper to decode for Schema too (So Google sees <h3> not &lt;h3&gt;)
+  const decodeHtml = (html) => {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+  };
+
+  const cleanAnswer = decodeHtml(faq.answer);
 
   const schema = {
     "@context": "https://schema.org",
@@ -25,7 +35,7 @@ const FaqSeoInjector = ({ faq }) => {
       "name": faq.question,
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": faq.answer
+        "text": cleanAnswer // ✅ Sends proper HTML (e.g. <ul><li>) to Google
       }
     }]
   };
@@ -40,10 +50,13 @@ const FaqSeoInjector = ({ faq }) => {
     ]
   };
 
+  // Strip HTML for the meta description tag (Plain text only)
+  const metaDesc = cleanAnswer.replace(/<[^>]+>/g, '').substring(0, 160) + '...';
+
   return (
     <Helmet>
       <title>{faq.question} | HouseHunt Kenya Help</title>
-      <meta name="description" content={faq.answer.replace(/<[^>]+>/g, '').substring(0, 160)} />
+      <meta name="description" content={metaDesc} />
       <meta property="og:title" content={faq.question} />
       <meta property="og:type" content="article" />
       <meta property="og:url" content={window.location.href} />
@@ -58,7 +71,7 @@ const FaqDetails = () => {
   const [faq, setFaq] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // State for interactions
   const [liked, setLiked] = useState(false);
   const [voteCount, setVoteCount] = useState(0);
@@ -180,13 +193,20 @@ const FaqDetails = () => {
     prose-li:text-gray-800 dark:prose-li:text-gray-300
   `;
 
+  // ✅ Helper to unescape HTML entities if they were double-escaped
+  const decodeHtml = (html) => {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+  };
+
   return (
     <>
       <FaqSeoInjector faq={faq} />
-      
+
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8 font-inter">
         <div className="max-w-6xl mx-auto">
-          
+
           <nav className="mb-8 flex items-center text-sm text-gray-500 dark:text-gray-400">
             <Link to="/" className="hover:text-blue-600 transition">Home</Link>
             <span className="mx-2">/</span>
@@ -196,7 +216,7 @@ const FaqDetails = () => {
           </nav>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             <div className="lg:col-span-2 space-y-10">
               <motion.article
                 initial={{ opacity: 0, y: 20 }}
@@ -206,45 +226,43 @@ const FaqDetails = () => {
               >
                 <div className="p-8 border-b border-gray-100 dark:border-gray-800 bg-gradient-to-r from-blue-50 to-white dark:from-gray-800 dark:to-gray-900">
                   <div className="flex items-center gap-3 mb-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${
-                      faq.category === 'Buying' ? 'bg-green-100 text-green-800' :
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase ${faq.category === 'Buying' ? 'bg-green-100 text-green-800' :
                       faq.category === 'Renting' ? 'bg-blue-100 text-blue-800' :
-                      'bg-orange-100 text-orange-800'
-                    }`}>
+                        'bg-orange-100 text-orange-800'
+                      }`}>
                       {faq.category || 'General'}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
                       Updated {formatDistanceToNow(new Date(faq.updatedAt), { addSuffix: true })}
                     </span>
                   </div>
-                  
+
                   <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white leading-tight">
                     {faq.question}
                   </h1>
                 </div>
 
                 <div className="p-8">
-                  <div 
+                  <div
                     className={answerContentClass}
-                    dangerouslySetInnerHTML={{ __html: faq.answer }} 
+                    dangerouslySetInnerHTML={{ __html: decodeHtml(faq.answer) }}
                   />
                 </div>
 
                 <div className="px-8 py-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
-                  <button 
+                  <button
                     onClick={handleVote}
                     disabled={liked}
-                    className={`flex items-center space-x-2 text-sm font-medium transition ${
-                      liked ? 'text-blue-600 cursor-default' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 cursor-pointer'
-                    }`}
+                    className={`flex items-center space-x-2 text-sm font-medium transition ${liked ? 'text-blue-600 cursor-default' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 cursor-pointer'
+                      }`}
                   >
                     {liked ? <FaThumbsUp /> : <FaRegThumbsUp />}
                     <span>{liked ? 'Marked Helpful' : 'Helpful'} ({voteCount})</span>
                   </button>
-                  
+
                   {/* ✅ UPDATED SHARE BUTTON */}
-                  <button 
-                    onClick={handleShare} 
+                  <button
+                    onClick={handleShare}
                     className="text-gray-500 hover:text-blue-600 transition flex items-center gap-2"
                   >
                     <FaShareAlt /> <span className="text-sm">Share</span>
@@ -264,27 +282,27 @@ const FaqDetails = () => {
                       <FaHome className="mr-2 text-blue-600" />
                       Properties mentioned above
                     </h2>
-                    <Link 
+                    <Link
                       to={`/search/${smartFilters.listingType || 'rent'}/${smartFilters.location || 'nairobi'}`}
                       className="text-blue-600 dark:text-blue-400 font-medium hover:underline text-sm"
                     >
                       View All
                     </Link>
                   </div>
-                  
-                  <PropertyList 
-                    filterOverrides={smartFilters} 
-                    showSearchBar={false} 
-                    showTitle={false} 
-                    limit={3} 
+
+                  <PropertyList
+                    filterOverrides={smartFilters}
+                    showSearchBar={false}
+                    showTitle={false}
+                    limit={3}
                   />
                 </motion.section>
               )}
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-               {faq.relatedFaqs && faq.relatedFaqs.length > 0 && (
-                <motion.div 
+              {faq.relatedFaqs && faq.relatedFaqs.length > 0 && (
+                <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.5, delay: 0.2 }}
@@ -295,8 +313,8 @@ const FaqDetails = () => {
                   </h3>
                   <div className="space-y-3">
                     {faq.relatedFaqs.map((rel) => (
-                      <Link 
-                        key={rel._id} 
+                      <Link
+                        key={rel._id}
                         to={`/faq/${rel.slug}`}
                         className="block p-3 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition border border-transparent hover:border-blue-200 dark:hover:border-blue-500 group"
                       >
@@ -309,7 +327,7 @@ const FaqDetails = () => {
                 </motion.div>
               )}
 
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
@@ -319,8 +337,8 @@ const FaqDetails = () => {
                 <p className="text-blue-100 mb-4 text-sm">
                   Can't find the answer you're looking for? Our support team is here to help.
                 </p>
-                <Link 
-                  to="/contact" 
+                <Link
+                  to="/contact"
                   className="block w-full text-center bg-white text-blue-700 font-bold py-2 rounded-lg hover:bg-blue-50 transition"
                 >
                   Contact Support

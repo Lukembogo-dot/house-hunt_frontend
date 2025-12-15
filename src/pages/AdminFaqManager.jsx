@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { 
-  FaPlus, FaEdit, FaTrash, FaSearch, FaSave, FaArrowLeft, 
-  FaSpinner, FaQuestionCircle, FaLink, FaCheck 
+import {
+  FaPlus, FaEdit, FaTrash, FaSearch, FaSave, FaArrowLeft,
+  FaSpinner, FaQuestionCircle, FaLink, FaCheck
 } from 'react-icons/fa';
 
 // --- CKEditor Imports ---
@@ -24,19 +24,19 @@ class MyUploadAdapter {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       })
-      .then(response => {
-        if (response.data.imageUrl) {
-          resolve({ default: response.data.imageUrl });
-        } else {
-          reject('Image URL not returned from server.');
-        }
-      })
-      .catch(error => {
-        reject(error.response?.data?.message || 'Image upload failed.');
-      });
+        .then(response => {
+          if (response.data.imageUrl) {
+            resolve({ default: response.data.imageUrl });
+          } else {
+            reject('Image URL not returned from server.');
+          }
+        })
+        .catch(error => {
+          reject(error.response?.data?.message || 'Image upload failed.');
+        });
     }));
   }
-  abort() {}
+  abort() { }
 }
 
 function MyCustomUploadAdapterPlugin(editor) {
@@ -54,6 +54,9 @@ const AdminFaqManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [status, setStatus] = useState({ message: '', type: '' });
   const [saving, setSaving] = useState(false);
+
+  // 'visual' or 'source'
+  const [viewMode, setViewMode] = useState('visual');
 
   // --- Form State ---
   const [editingId, setEditingId] = useState(null);
@@ -136,7 +139,7 @@ const AdminFaqManager = () => {
         await apiClient.post('/faqs', formData);
         setStatus({ message: 'New FAQ created & SEO Page registered!', type: 'success' });
       }
-      
+
       await fetchFaqs(); // Refresh list
       setTimeout(() => setView('list'), 1500); // Go back to list after success
     } catch (err) {
@@ -161,8 +164,8 @@ const AdminFaqManager = () => {
   const filteredFaqs = useMemo(() => {
     if (!searchQuery) return faqs;
     const lowerQ = searchQuery.toLowerCase();
-    return faqs.filter(f => 
-      f.question.toLowerCase().includes(lowerQ) || 
+    return faqs.filter(f =>
+      f.question.toLowerCase().includes(lowerQ) ||
       f.category.toLowerCase().includes(lowerQ)
     );
   }, [faqs, searchQuery]);
@@ -186,11 +189,11 @@ const AdminFaqManager = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-10">
       <div className="max-w-6xl mx-auto">
-        
+
         {/* --- HEADER --- */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-            <FaQuestionCircle className="mr-3 text-orange-500" /> 
+            <FaQuestionCircle className="mr-3 text-orange-500" />
             FAQ Hub Manager
           </h1>
           {view === 'list' && (
@@ -205,11 +208,10 @@ const AdminFaqManager = () => {
 
         {/* --- STATUS ALERTS --- */}
         {status.message && (
-          <div className={`mb-6 p-4 rounded-lg flex items-center ${
-            status.type === 'error' 
-              ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200 border border-red-200' 
-              : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-200 border border-green-200'
-          }`}>
+          <div className={`mb-6 p-4 rounded-lg flex items-center ${status.type === 'error'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-200 border border-red-200'
+            : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-200 border border-green-200'
+            }`}>
             {status.message}
           </div>
         )}
@@ -217,14 +219,14 @@ const AdminFaqManager = () => {
         {/* ================= VIEW: LIST ================= */}
         {view === 'list' && (
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-            
+
             {/* Search Bar */}
             <div className="p-6 border-b border-gray-100 dark:border-gray-700">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search questions or categories..." 
+                <input
+                  type="text"
+                  placeholder="Search questions or categories..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
@@ -254,12 +256,11 @@ const AdminFaqManager = () => {
                           <span className="text-xs text-gray-400 font-mono">/faq/{faq.slug}</span>
                         </td>
                         <td className="p-6">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            faq.category === 'Buying' ? 'bg-green-100 text-green-800' :
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${faq.category === 'Buying' ? 'bg-green-100 text-green-800' :
                             faq.category === 'Renting' ? 'bg-blue-100 text-blue-800' :
-                            faq.category === 'Legal' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                              faq.category === 'Legal' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                            }`}>
                             {faq.category}
                           </span>
                         </td>
@@ -268,13 +269,13 @@ const AdminFaqManager = () => {
                         </td>
                         <td className="p-6 text-right">
                           <div className="flex justify-end space-x-3">
-                            <button 
+                            <button
                               onClick={() => handleEdit(faq)}
                               className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-100 rounded-full transition"
                             >
                               <FaEdit size={18} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDelete(faq._id)}
                               className="text-red-400 hover:text-red-600 p-2 hover:bg-red-100 rounded-full transition"
                             >
@@ -300,7 +301,7 @@ const AdminFaqManager = () => {
         {/* ================= VIEW: EDITOR ================= */}
         {view === 'editor' && (
           <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Left Column: Main Content */}
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
@@ -311,7 +312,7 @@ const AdminFaqManager = () => {
                   <input
                     type="text"
                     value={formData.question}
-                    onChange={(e) => setFormData({...formData, question: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, question: e.target.value })}
                     placeholder="e.g., How much is a bedsitter in Kilimani?"
                     className="w-full px-4 py-3 text-lg rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     required
@@ -319,27 +320,46 @@ const AdminFaqManager = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Detailed Answer (Mini Blog Post)
-                  </label>
-                  <div className="ck-editor-container dark:text-black prose-lg">
-                    <CKEditor
-                      editor={ClassicEditor}
-                      config={editorConfig}
-                      data={formData.answer}
-                      onChange={(event, editor) => {
-                        const data = editor.getData();
-                        setFormData({...formData, answer: data});
-                      }}
-                    />
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                      Detailed Answer (Full Details - HTML Supported)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode(prev => prev === 'visual' ? 'source' : 'visual')}
+                      className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                    >
+                      {viewMode === 'visual' ? '</> Edit HTML Source' : '👁️ Visual Preview'}
+                    </button>
                   </div>
+
+                  {viewMode === 'visual' ? (
+                    <div className="ck-editor-container dark:text-black prose-lg">
+                      <CKEditor
+                        editor={ClassicEditor}
+                        config={editorConfig}
+                        data={formData.answer}
+                        onChange={(event, editor) => {
+                          const data = editor.getData();
+                          setFormData({ ...formData, answer: data });
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <textarea
+                      value={formData.answer}
+                      onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+                      className="w-full h-80 px-4 py-3 text-sm font-mono rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-900 text-green-400 focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="<!-- Enter raw HTML here (e.g. <h3>Header</h3><p>Content</p>) -->"
+                    />
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Right Column: Settings & Relations */}
             <div className="space-y-6">
-              
+
               {/* Actions Card */}
               <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 sticky top-6">
                 <div className="flex justify-between items-center mb-6">
@@ -357,7 +377,7 @@ const AdminFaqManager = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="General">General</option>
@@ -386,17 +406,16 @@ const AdminFaqManager = () => {
                 <p className="text-xs text-gray-500 mb-4">
                   Select other FAQs to link at the bottom of this page.
                 </p>
-                
+
                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                   {faqs.filter(f => f._id !== editingId).map(f => (
-                    <div 
-                      key={f._id} 
+                    <div
+                      key={f._id}
                       onClick={() => toggleRelatedFaq(f._id)}
-                      className={`p-3 rounded-lg cursor-pointer border transition text-sm flex justify-between items-center ${
-                        formData.relatedFaqs.includes(f._id)
-                          ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
-                          : 'bg-gray-50 border-transparent text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300'
-                      }`}
+                      className={`p-3 rounded-lg cursor-pointer border transition text-sm flex justify-between items-center ${formData.relatedFaqs.includes(f._id)
+                        ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200'
+                        : 'bg-gray-50 border-transparent text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300'
+                        }`}
                     >
                       <span className="line-clamp-2">{f.question}</span>
                       {formData.relatedFaqs.includes(f._id) && <FaCheck className="text-blue-600 flex-shrink-0 ml-2" />}
