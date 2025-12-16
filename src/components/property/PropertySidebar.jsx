@@ -232,26 +232,17 @@ const PropertySidebar = ({
     return ` / ${freq}`;
   };
 
-  // ✅ Interactive Handlers
+  // ✅ Interactive Handlers - STRICT INTERNAL MODE
   const onContactAgent = () => {
     handleRestrictedAction(() => {
-      if (hasShadowAgent) {
-        setShowExternalModal(true);
-        handleLogLead();
-      } else {
-        handleStartChat();
-      }
+      // Force Internal Chat for everyone (including Shadow Agents)
+      handleStartChat();
     });
   };
 
   const onScheduleViewing = () => {
     handleRestrictedAction(() => {
-      if (hasShadowAgent) {
-        setShowExternalModal(true);
-        handleLogLead();
-      } else {
-        handleScheduleClick();
-      }
+      handleScheduleClick();
     });
   };
 
@@ -435,11 +426,13 @@ const PropertySidebar = ({
               </div>
             )}
 
-            {/* WhatsApp CTA */}
+            {/* WhatsApp CTA - STRICT VISIBILITY */}
             {agentWhatsapp && (
               <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                 <button
-                  onClick={() => openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`)}
+                  onClick={() => {
+                    openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`);
+                  }}
                   className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group"
                 >
                   <span className="text-sm font-bold">Start WhatsApp Chat</span>

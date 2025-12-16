@@ -8,7 +8,7 @@ import {
   FaStar, FaTimes, FaRegHeart, FaHeart,
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark,
-  FaGem, FaPlay, FaMapMarkerAlt
+  FaGem, FaPlay, FaMapMarkerAlt, FaBus, FaWifi, FaImages
 } from "react-icons/fa";
 
 import { useAuth } from "../context/AuthContext";
@@ -344,6 +344,7 @@ const PropertyDetails = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [localServices, setLocalServices] = useState([]);
+  const [viewId, setViewId] = useState(null);
 
   const pagePath = `/properties/${slug}`;
   const { seo, loading: seoLoading } = useSeoData(pagePath, 'Property Listing | HouseHunt Kenya', 'View details for this property.');
@@ -362,6 +363,7 @@ const PropertyDetails = () => {
       const propertyRes = await apiClient.get(`/properties/slug/${slug}`);
       const propData = propertyRes.data;
       setProperty(propData);
+      if (propData.viewId) setViewId(propData.viewId); // ✅ Capture Session ID
 
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
@@ -488,9 +490,59 @@ const PropertyDetails = () => {
               </div>
             </motion.div>
 
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <LivingEssentialsWidget property={property} />
-            </motion.div>
+            {/* NAIROBI ESSENTIALS (Only shows if data exists) */}
+            {(property.matatuRoute || property.mamaMbogaDistance || (property.internetProviders && property.internetProviders.length > 0)) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-8 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-800 rounded-3xl shadow-sm border border-orange-100 dark:border-gray-700"
+              >
+                <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <FaBus className="text-orange-500" /> Living Essentials
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {property.matatuRoute && (
+                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                      <FaBus className="text-orange-500 text-2xl mt-1" />
+                      <div>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Matatu Route</h3>
+                        <p className="text-gray-600 dark:text-gray-300">{property.matatuRoute}</p>
+                        {property.matatuFare && (
+                          <span className="inline-block mt-1 text-xs font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-md border border-orange-200">
+                            Fare: Ksh {property.matatuFare}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {property.mamaMbogaDistance && (
+                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                      <FaShoppingCart className="text-green-500 text-2xl mt-1" />
+                      <div>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Mama Mboga</h3>
+                        <p className="text-gray-600 dark:text-gray-300">{property.mamaMbogaDistance} away</p>
+                      </div>
+                    </div>
+                  )}
+                  {property.internetProviders && property.internetProviders.length > 0 && (
+                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                      <FaWifi className="text-blue-500 text-2xl mt-1" />
+                      <div>
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Internet Providers</h3>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {property.internetProviders.map((isp, idx) => (
+                            <span key={idx} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800">
+                              {isp}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
             {property.amenities && property.amenities.length > 0 && (
               <PropertyAmenities amenities={property.amenities} />
@@ -505,14 +557,26 @@ const PropertyDetails = () => {
                   <p className="text-gray-600 dark:text-gray-300 mb-4">
                     View the exact pin location of this property on Google Maps.
                   </p>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${property.coordinates.lat},${property.coordinates.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <FaMapMarkerAlt /> View on Google Maps
-                  </a>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowMap(true);
+                        trackInteraction('mapClicks');
+                      }}
+                      className="flex-1 bg-green-100 text-green-700 py-3 rounded-xl font-bold hover:bg-green-200 transition flex items-center justify-center gap-2"
+                    >
+                      <FaMapMarkerAlt /> View on Map
+                    </button>
+                    <button
+                      onClick={() => {
+                        document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+                        trackInteraction('photoScrolls');
+                      }}
+                      className="flex-1 bg-blue-100 text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-200 transition flex items-center justify-center gap-2"
+                    >
+                      <FaImages /> Photos
+                    </button>
+                  </div>
                 </div>
               ) : property.location ? (
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
@@ -592,15 +656,28 @@ const PropertyDetails = () => {
           </div>
         </div >
 
-        {(!property.ownerDetails || !property.ownerDetails.name) && agentProperties.length > 0 && property.agent && (
+        {agentProperties.length > 0 && property.agent && (
           <section className="max-w-6xl mx-auto mt-16">
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">More from {property.agent.name}</h2>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
+              More from {property.agent.name}
+            </h2>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-              {agentProperties.map((prop) => (<PropertyCard key={prop._id} property={prop} />))}
+              {agentProperties.slice(0, 4).map((prop) => (
+                <PropertyCard key={prop._id} property={prop} />
+              ))}
             </div>
+            {agentProperties.length > 4 && (
+              <div className="mt-8 text-center">
+                <Link
+                  to={`/agent/${property.agent._id}`}
+                  className="inline-block px-6 py-3 border border-blue-600 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition"
+                >
+                  View All {agentProperties.length} Listings
+                </Link>
+              </div>
+            )}
           </section>
-        )
-        }
+        )}
       </div >
 
       <AnimatePresence>

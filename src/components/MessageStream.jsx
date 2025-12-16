@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FaPaperPlane, 
-  FaSpinner, 
+import {
+  FaPaperPlane,
+  FaSpinner,
   FaWhatsapp,
   FaUserSlash // 1. IMPORT THE 'USER SLASH' ICON
 } from 'react-icons/fa';
@@ -20,13 +20,13 @@ const MessageStream = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
-  const socket = useSocket(); 
+  const socket = useSocket();
 
   // 2. UPDATED FOR SAFETY
   // This now checks if 'p' exists (is not null) before trying
   // to access p._id, which prevents a crash if a user was deleted.
   const otherParticipant = conversation?.participants.find(p => p && p._id !== user._id);
-  
+
   // 3. NEW VARIABLE TO CONTROL CHAT STATE
   // If the other participant is not found (i.e., is null/deleted),
   // this variable will be true.
@@ -54,13 +54,13 @@ const MessageStream = () => {
     };
     fetchMessages();
   }, [conversationId]);
-  
+
   useEffect(() => {
     setTimeout(scrollToBottom, 100);
   }, [messages]);
 
   useEffect(() => {
-    if (!socket) return; 
+    if (!socket) return;
 
     socket.on('newMessage', (incomingMessage) => {
       if (incomingMessage.conversation === conversationId) {
@@ -71,7 +71,7 @@ const MessageStream = () => {
     return () => {
       socket.off('newMessage');
     };
-  }, [socket, conversationId]); 
+  }, [socket, conversationId]);
 
 
   const handleSendMessage = async (e) => {
@@ -109,7 +109,7 @@ const MessageStream = () => {
   return (
     <>
       {/* Chat Header */}
-      <motion.div 
+      <motion.div
         className="p-4 border-b dark:border-gray-700 flex items-center space-x-3"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,8 +123,8 @@ const MessageStream = () => {
             </div>
             <div>
               <p className="font-semibold dark:text-white">User Not Available</p>
-              <Link 
-                to={`/properties/${conversation.property}`} 
+              <Link
+                to={`/properties/${conversation.property}`}
                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
                 View Property
@@ -134,29 +134,17 @@ const MessageStream = () => {
         ) : (
           // Case 2: User EXISTS (Normal)
           <>
-            <img 
-              src={otherParticipant.profilePicture} 
+            <img
+              src={otherParticipant.profilePicture}
               alt={otherParticipant.name}
               className="w-10 h-10 rounded-full object-cover"
             />
             <div>
               <div className="flex items-center space-x-2">
                 <p className="font-semibold dark:text-white">{otherParticipant.name}</p>
-                {otherParticipant.whatsappNumber && (
-                  <a
-                    href={`https://wa.me/${otherParticipant.whatsappNumber.replace(/\+/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-500 hover:text-green-600 transition"
-                    aria-label="Chat on WhatsApp"
-                    title="Chat on WhatsApp"
-                  >
-                    <FaWhatsapp size={16} />
-                  </a>
-                )}
               </div>
-              <Link 
-                to={`/properties/${conversation.property}`} 
+              <Link
+                to={`/properties/${conversation.property}`}
                 className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
                 View Property
@@ -171,21 +159,20 @@ const MessageStream = () => {
       <div className="flex-1 p-4 overflow-y-auto space-y-4">
         <AnimatePresence>
           {messages.map((msg) => (
-            <motion.div 
-              key={msg._id} 
+            <motion.div
+              key={msg._id}
               className={`flex ${msg.sender === user._id ? 'justify-end' : 'justify-start'}`}
-              layout 
+              layout
               variants={messageVariants}
               initial="initial"
               animate="animate"
               exit="exit"
               transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow ${
-                msg.sender === user._id 
-                  ? 'bg-blue-600 text-white' 
+              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow ${msg.sender === user._id
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 dark:text-gray-200'
-              }`}>
+                }`}>
                 <p>{msg.content}</p>
               </div>
             </motion.div>
@@ -195,7 +182,7 @@ const MessageStream = () => {
       </div>
 
       {/* Message Input Form */}
-      <motion.div 
+      <motion.div
         className="p-4 border-t dark:border-gray-700"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -221,7 +208,7 @@ const MessageStream = () => {
             <FaPaperPlane />
           </button>
         </form>
-        
+
         {/* 7. ADD THE "NO LONGER AVAILABLE" MESSAGE */}
         {isChatDisabled && (
           <p className="pt-2 text-center text-sm text-gray-500 dark:text-gray-400 italic">

@@ -8,10 +8,19 @@ import { useAuth } from '../context/AuthContext'; // ✅ 1. Import useAuth
 
 const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // ✅ 2. Get all notification data from the AuthContext
   const { notifications, unreadCount, markNotificationsAsRead } = useAuth();
-  
+
+  // Track permission locally to force re-render when it changes
+  const [perm, setPerm] = useState(Notification.permission);
+
+  const handleEnablePush = () => {
+    Notification.requestPermission().then(permission => {
+      setPerm(permission);
+    });
+  };
+
   // ❌ All local state (notifications, unreadCount) is removed.
   // ❌ All useEffect listeners (fetchNotifications, socket.on) are removed.
 
@@ -40,12 +49,20 @@ const NotificationBell = () => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div 
+        <div
           className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50"
-          onClick={() => setIsOpen(false)} 
+          onClick={() => setIsOpen(false)}
         >
-          <div className="p-3 border-b dark:border-gray-700">
+          <div className="p-3 border-b dark:border-gray-700 flex justify-between items-center">
             <h4 className="font-semibold text-gray-800 dark:text-gray-100">Notifications</h4>
+            {Notification.permission === 'default' && (
+              <button
+                onClick={() => Notification.requestPermission()}
+                className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded hover:bg-blue-200 transition"
+              >
+                Enable Push
+              </button>
+            )}
           </div>
           {/* ✅ 5. This now reads directly from context state */}
           {notifications.length > 0 ? (

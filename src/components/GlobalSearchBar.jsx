@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaHome, FaTruck, FaComments, FaBuilding, FaMapMarkerAlt, FaFilter, FaBed, FaMoneyBillWave, FaStar, FaUserTie } from 'react-icons/fa';
+import { FaSearch, FaHome, FaTruck, FaComments, FaBuilding, FaMapMarkerAlt, FaFilter, FaBed, FaMoneyBillWave, FaStar, FaUserTie, FaGlobe } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../api/axios'; // Ensure this path is correct
 
@@ -8,7 +8,7 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
   const navigate = useNavigate();
 
   // Search Scope
-  const [category, setCategory] = useState(initialValues.category || 'rent');
+  const [category, setCategory] = useState(initialValues.category || 'all'); // Default to All
   const [location, setLocation] = useState(initialValues.location || '');
 
   // Advanced Filters
@@ -91,12 +91,33 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
 
     // 3. Routing Logic
+    // If filters are hidden, we do a BROAD search (ignore default 'apartment' type)
+    // If filters are shown, we do a NARROW search (respect selected type)
+    const useBroadSearch = !showFilters;
+
     switch (category) {
+      case 'all':
+        if (useBroadSearch) {
+          navigate((cleanLocation ? `/search/all/${cleanLocation}` : '/search/all/kenya') + queryString);
+        } else {
+          // If filters are on, user might have selected a specific type like 'apartment'
+          // So we search for 'all' listing types (rent+sale) but 'apartment' property type
+          navigate((cleanLocation ? `/search/all/${filters.type || 'apartment'}/${cleanLocation}` : '/search/all/kenya') + queryString);
+        }
+        break;
       case 'rent':
-        navigate((cleanLocation ? `/search/rent/${filters.type || 'apartment'}/${cleanLocation}` : '/search/rent/kenya') + queryString);
+        if (useBroadSearch) {
+          navigate((cleanLocation ? `/search/rent/${cleanLocation}` : '/search/rent/kenya') + queryString);
+        } else {
+          navigate((cleanLocation ? `/search/rent/${filters.type || 'apartment'}/${cleanLocation}` : '/search/rent/kenya') + queryString);
+        }
         break;
       case 'sale':
-        navigate((cleanLocation ? `/search/sale/${filters.type || 'house'}/${cleanLocation}` : '/search/sale/kenya') + queryString);
+        if (useBroadSearch) {
+          navigate((cleanLocation ? `/search/sale/${cleanLocation}` : '/search/sale/kenya') + queryString);
+        } else {
+          navigate((cleanLocation ? `/search/sale/${filters.type || 'house'}/${cleanLocation}` : '/search/sale/kenya') + queryString);
+        }
         break;
       case 'services':
         // Search for providers specifically
@@ -163,7 +184,7 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
     switch (category) {
       case 'services': return 'Search movers, plumbers, or provider names...';
       case 'community': return 'Search a location for insights...';
-      default: return 'Enter Location, Building, or Property...';
+      default: return 'Enter Location...';
     }
   };
 
@@ -172,6 +193,9 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
 
       {/* 1. Category Tabs */}
       <div className="flex justify-center md:justify-start pl-2 space-x-1">
+        <button type="button" onClick={() => setCategory('all')} className={getTabClass('all')}>
+          <FaGlobe /> All
+        </button>
         <button type="button" onClick={() => setCategory('rent')} className={getTabClass('rent')}>
           <FaHome /> Rent
         </button>
@@ -214,7 +238,7 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
           </div>
 
           {/* Filter Toggle */}
-          {(category === 'rent' || category === 'sale') && (
+          {(category === 'rent' || category === 'sale' || category === 'all') && (
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}

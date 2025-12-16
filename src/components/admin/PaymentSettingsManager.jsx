@@ -56,6 +56,23 @@ const PaymentSettingsManager = () => {
       icon: 'money',
       dataType: 'number',
       description: 'Monthly cost for lead access.'
+    },
+    // ✅ NEW: PPC SETTINGS
+    {
+      id: 'ppc_click_price',
+      possibleKeys: ['ppc_click_price', 'ppcClickPrice', 'costPerClick'],
+      label: 'PPC Cost Per Click',
+      icon: 'money',
+      dataType: 'number',
+      description: 'Cost per lead (Call/WhatsApp) for Freelancers.'
+    },
+    {
+      id: 'ppc_min_deposit',
+      possibleKeys: ['ppc_min_deposit', 'ppcMinDeposit', 'minDeposit'],
+      label: 'Min PPC Deposit',
+      icon: 'money',
+      dataType: 'number',
+      description: 'Minimum amount to deposit in wallet.'
     }
   ];
 
@@ -166,14 +183,14 @@ const PaymentSettingsManager = () => {
           <div
             key={setting.key}
             className={`p-4 rounded-lg border transition-all ${editingKey === setting.key
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
-                : 'border-gray-200 dark:border-gray-700 hover:shadow-md'
+              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-500'
+              : 'border-gray-200 dark:border-gray-700 hover:shadow-md'
               }`}
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center gap-2">
                 <div className={`p-2 rounded-full ${setting.icon === 'money' ? 'bg-green-100 text-green-600' :
-                    setting.icon === 'time' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'
+                  setting.icon === 'time' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-600'
                   }`}>
                   {setting.icon === 'money' ? <FaMoneyBillWave /> : setting.icon === 'time' ? <FaClock /> : <FaCogs />}
                 </div>

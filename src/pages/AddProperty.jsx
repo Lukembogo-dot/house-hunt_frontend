@@ -28,7 +28,7 @@ const AMENITIES_LIST = [
 
 const ISP_LIST = ["Safaricom Home Fibre", "Zuku", "JTL Faiba", "Starlink", "Liquid Home", "Telkom"];
 
-const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null }) => (
+const InputField = ({ label, name, value, onChange, type = 'text', placeholder, min = 0, required = true, icon = null, list = null }) => (
   <div className="relative mb-4">
     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor={name}>
       {label}
@@ -42,6 +42,7 @@ const InputField = ({ label, name, value, onChange, type = 'text', placeholder, 
       type={type}
       id={name}
       name={name}
+      list={list}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
@@ -110,6 +111,12 @@ const AddProperty = () => {
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
 
+  const [essentialOptions, setEssentialOptions] = useState({
+    matatuRoutes: [],
+    mamaMbogaDistances: [],
+    internetProviders: ["Safaricom Home Fibre", "Zuku", "JTL Faiba"] // Fallback
+  });
+
   useEffect(() => {
     const getInitialLocation = async () => {
       try {
@@ -124,6 +131,17 @@ const AddProperty = () => {
       }
     };
     getInitialLocation();
+
+    // ✅ FETCH AUTOCOMPLETE OPTIONS
+    const fetchOptions = async () => {
+      try {
+        const { data } = await apiClient.get('/properties/essentials-options');
+        setEssentialOptions(data);
+      } catch (error) {
+        console.error("Failed to fetch essentials options", error);
+      }
+    };
+    fetchOptions();
 
     const fetchAgents = async () => {
       if (user && user.role === 'admin') {
@@ -692,20 +710,27 @@ const AddProperty = () => {
 
           <div className="space-y-4 pt-6 border-t dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <FaBus /> Nairobi Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
+              <FaBus /> Living Essentials <span className="text-sm font-normal text-gray-500">(Optional)</span>
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">Help tenants calculate their real monthly costs.</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
-                label="Nearest Matatu Route/Stage"
-                name="matatuRoute"
-                value={formData.matatuRoute}
-                onChange={handleChange}
-                placeholder="e.g., Route 105 or Super Metro Stage"
-                required={false}
-                icon={<FaBus />}
-              />
+              <div>
+                <InputField
+                  label="Nearest Matatu Route/Stage"
+                  name="matatuRoute"
+                  value={formData.matatuRoute}
+                  onChange={handleChange}
+                  placeholder="e.g., Route 105 or Super Metro Stage"
+                  required={false}
+                  icon={<FaBus />}
+                  list="matatuRoutesList"
+                />
+                <datalist id="matatuRoutesList">
+                  {essentialOptions.matatuRoutes.map((opt, i) => <option key={i} value={opt} />)}
+                </datalist>
+              </div>
+
               <InputField
                 label="Approx. Fare to CBD (Ksh)"
                 name="matatuFare"
@@ -718,15 +743,21 @@ const AddProperty = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField
-                label="Distance to Market (Mama Mboga)"
-                name="mamaMbogaDistance"
-                value={formData.mamaMbogaDistance}
-                onChange={handleChange}
-                placeholder="e.g., 5 min walk"
-                required={false}
-                icon={<FaShoppingBasket />}
-              />
+              <div>
+                <InputField
+                  label="Distance to Market (Mama Mboga)"
+                  name="mamaMbogaDistance"
+                  value={formData.mamaMbogaDistance}
+                  onChange={handleChange}
+                  placeholder="e.g., 5 min walk"
+                  required={false}
+                  icon={<FaShoppingBasket />}
+                  list="mamaMbogaList"
+                />
+                <datalist id="mamaMbogaList">
+                  {essentialOptions.mamaMbogaDistances.map((opt, i) => <option key={i} value={opt} />)}
+                </datalist>
+              </div>
 
               <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                 <div className="flex items-center justify-between mb-3">
@@ -745,8 +776,8 @@ const AddProperty = () => {
                 {formData.internetReady && (
                   <div className="mt-2">
                     <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Select available providers:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {ISP_LIST.map(isp => (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {essentialOptions.internetProviders.map(isp => (
                         <span
                           key={isp}
                           onClick={() => handleISPToggle(isp)}
@@ -758,6 +789,24 @@ const AddProperty = () => {
                           {formData.internetProviders.includes(isp) ? '✓ ' : '+ '} {isp}
                         </span>
                       ))}
+                    </div>
+
+                    {/* Custom ISP Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add other provider..."
+                        className="text-xs px-2 py-1 rounded border dark:bg-gray-800 dark:text-white dark:border-gray-600 flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (e.target.value.trim()) {
+                              handleISPToggle(e.target.value.trim());
+                              e.target.value = '';
+                            }
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 )}

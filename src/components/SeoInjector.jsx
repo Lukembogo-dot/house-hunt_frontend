@@ -9,127 +9,149 @@ import { Helmet } from 'react-helmet-async';
  * Receives the 'seo' object from the useSeoData hook.
  */
 const SeoInjector = ({ seo }) => {
-  if (!seo || !seo.metaTitle) {
-    return null; // Don't render anything if seo data isn't ready
-  }
-
-  // ✅ 1. FIX: Hardcode the production domain. 
-  const siteUrl = 'https://www.househuntkenya.co.ke';
-  
-  // ✅ 2. FIX: Strict Canonical Logic
-  let canonical = '';
-  
-  if (seo.canonicalUrl) {
-      canonical = seo.canonicalUrl.startsWith('http') 
-          ? seo.canonicalUrl 
-          : `${siteUrl}${seo.canonicalUrl}`;
-  } else {
-      const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
-      const cleanPath = currentPath === '/' ? '' : currentPath;
-      canonical = `${siteUrl}${cleanPath}`;
-  }
-
-  // --- Schema Generation ---
-  const generateSchema = () => {
-    const schema = [];
-
-    // 1. FAQ Schema (if FAQs exist)
-    if (seo.faqs && seo.faqs.length > 0) {
-        schema.push({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": seo.faqs.map(faq => ({
-                "@type": "Question",
-                "name": faq.question,
-                "acceptedAnswer": {
-                    "@type": "Answer",
-                    "text": faq.answer
-                }
-            }))
-        });
+    if (!seo || !seo.metaTitle) {
+        return null; // Don't render anything if seo data isn't ready
     }
 
-    // 2. WebPage Schema
-    if (seo.schemaDescription) {
-        schema.push({
-            "@context": "https://schema.org",
-            "@type": "WebPage", 
-            "name": seo.metaTitle,
-            "description": seo.schemaDescription,
-            "url": canonical, 
-        });
+    // ✅ 1. FIX: Hardcode the production domain. 
+    const siteUrl = 'https://www.househuntkenya.co.ke';
+
+    // ✅ 2. FIX: Strict Canonical Logic
+    let canonical = '';
+
+    if (seo.canonicalUrl) {
+        canonical = seo.canonicalUrl.startsWith('http')
+            ? seo.canonicalUrl
+            : `${siteUrl}${seo.canonicalUrl}`;
+    } else {
+        const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
+        const cleanPath = currentPath === '/' ? '' : currentPath;
+        canonical = `${siteUrl}${cleanPath}`;
     }
 
-    // ✅ 3. DATASET SCHEMA (For AI/GEO Authority)
-    // Automatically detects location from path to create a data citation source
-    const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
-    
-    if (currentPath.includes('/search/') || currentPath === '/') {
-        let locationName = 'Kenya'; // Default for homepage
-        
-        // Extract location from /search/rent/kilimani
-        if (currentPath.includes('/search/')) {
-            const parts = currentPath.split('/');
-            if (parts.length >= 4) {
-                // parts[3] is location (e.g., 'kilimani')
-                locationName = parts[3].charAt(0).toUpperCase() + parts[3].slice(1);
-            }
+    // --- Schema Generation ---
+    const generateSchema = () => {
+        const schema = [];
+
+        // 1. FAQ Schema (if FAQs exist)
+        if (seo.faqs && seo.faqs.length > 0) {
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": seo.faqs.map(faq => ({
+                    "@type": "Question",
+                    "name": faq.question,
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": faq.answer
+                    }
+                }))
+            });
         }
 
-        schema.push({
-            "@context": "https://schema.org",
-            "@type": "Dataset",
-            "name": `Real Estate Market Data for ${locationName}`,
-            "description": `Current rental prices, property availability, and market trends in ${locationName}.`,
-            "creator": {
-                "@type": "Organization",
-                "name": "HouseHunt Kenya"
-            },
-            "variableMeasured": ["Average Price", "Number of Listings", "Market Trends"],
-            "url": canonical
-        });
-    }
-    
-    return schema;
-  };
+        // 2. WebPage Schema
+        if (seo.schemaDescription) {
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "name": seo.metaTitle,
+                "description": seo.schemaDescription,
+                "url": canonical,
+            });
+        }
 
-  const schemaData = generateSchema();
+        // ✅ 3. BREADCRUMB SCHEMA
+        if (seo.breadCrumbTitle) {
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Home",
+                        "item": siteUrl
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": seo.breadCrumbTitle,
+                        "item": canonical
+                    }
+                ]
+            });
+        }
 
-  return (
-    <Helmet>
-      {/* --- Primary Meta Tags --- */}
-      <title>{seo.metaTitle}</title>
-      <meta name="description" content={seo.metaDescription} />
-      <meta name="author" content="HouseHunt Kenya" />
-      
-      {/* --- ADDED FOCUS KEYWORD & CANONICAL --- */}
-      {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
-      
-      {/* ✅ Strict Canonical Link */}
-      <link rel="canonical" href={canonical} />
+        // ✅ 3. DATASET SCHEMA (For AI/GEO Authority)
+        // Automatically detects location from path to create a data citation source
+        const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
 
-      {/* --- Open Graph / Facebook --- */}
-      <meta property="og:type" content="website" />
-      <meta property="og:url" content={canonical} />
-      <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
-      <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
+        if (currentPath.includes('/search/') || currentPath === '/') {
+            let locationName = 'Kenya'; // Default for homepage
 
-      {/* --- Twitter --- */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={canonical} />
-      <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
-      <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
+            // Extract location from /search/rent/kilimani
+            if (currentPath.includes('/search/')) {
+                const parts = currentPath.split('/');
+                if (parts.length >= 4) {
+                    // parts[3] is location (e.g., 'kilimani')
+                    locationName = parts[3].charAt(0).toUpperCase() + parts[3].slice(1);
+                }
+            }
 
-      {/* Schema Structured Data */}
-      {schemaData.map((schema, index) => (
-          <script 
-              key={index}
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-          />
-      ))}
-    </Helmet>
-  );
+            schema.push({
+                "@context": "https://schema.org",
+                "@type": "Dataset",
+                "name": `Real Estate Market Data for ${locationName}`,
+                "description": `Current rental prices, property availability, and market trends in ${locationName}.`,
+                "creator": {
+                    "@type": "Organization",
+                    "name": "HouseHunt Kenya"
+                },
+                "variableMeasured": ["Average Price", "Number of Listings", "Market Trends"],
+                "url": canonical
+            });
+        }
+
+        return schema;
+    };
+
+    const schemaData = generateSchema();
+
+    return (
+        <Helmet>
+            {/* --- Primary Meta Tags --- */}
+            <title>{seo.metaTitle}</title>
+            <meta name="description" content={seo.metaDescription} />
+            <meta name="author" content="HouseHunt Kenya" />
+
+            {/* --- ADDED FOCUS KEYWORD & CANONICAL --- */}
+            {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
+
+            {/* ✅ Strict Canonical Link */}
+            <link rel="canonical" href={canonical} />
+
+            {/* --- Open Graph / Facebook --- */}
+            <meta property="og:type" content="website" />
+            <meta property="og:url" content={canonical} />
+            <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
+            <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
+
+            {/* --- Twitter --- */}
+            <meta property="twitter:card" content="summary_large_image" />
+            <meta property="twitter:url" content={canonical} />
+            <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
+            <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
+
+            {/* Schema Structured Data */}
+            {schemaData.map((schema, index) => (
+                <script
+                    key={index}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                />
+            ))}
+        </Helmet>
+    );
 };
 
 export default SeoInjector;

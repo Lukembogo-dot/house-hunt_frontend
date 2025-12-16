@@ -154,25 +154,18 @@ function MainLayout() {
 
   const { scrollY } = useScroll();
 
-  // --- SCROLL ANIMATION VALUES ---
-  // Opacity: Fades from 1 to 0 quite quickly (0 to 150px scroll)
+  // --- SCROLL ANIMATION VALUES (OPTIMIZED) ---
+  // Use mostly Opacity and Scale for GPU-only animations (no Reflows)
   const heroOpacity = useTransform(scrollY, [0, 200], [1, 0]);
-
-  // Scale: Slight shrink effect
-  const heroScale = useTransform(scrollY, [0, 200], [1, 0.9]);
-
-  // Height/Margin: Collapses the space to pull subsequent content up
-  // We animate the negative margin to pull content up as opacity fades
-  const heroMarginBottom = useTransform(scrollY, [0, 300], [0, -200]);
-  const heroDisplay = useTransform(scrollY, [0, 300], ["block", "none"]); // Hide completely eventually to remove pointer events
+  const heroScale = useTransform(scrollY, [0, 200], [1, 0.95]); // Subtle scale
+  const heroY = useTransform(scrollY, [0, 200], [0, 50]); // Parallax effect
 
   const HomePageElement = (
     <>
       <SeoInjector seo={homeSeo} />
 
       {/* --- HERO SECTION: COMPACT & ALIGNED --- */}
-      {/* Reduced padding-top to 24 (6rem) to bring it closer to navbar */}
-      <section id="home" className="pt-18 pb-8 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
+      <section id="home" className="pt-18 pb-8 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden will-change-transform">
         <div className="absolute inset-0 bg-grid-slate-200/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] [mask-image:linear-gradient(to_bottom,transparent,black)] pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto relative z-10">
@@ -180,11 +173,10 @@ function MainLayout() {
             style={{
               opacity: heroOpacity,
               scale: heroScale,
-              marginBottom: heroMarginBottom,
-              // display: heroDisplay // Optional: can cause layout thrashing, better to just rely on margin/opacity or pointerEvents
-              pointerEvents: useTransform(scrollY, [0, 150], ["auto", "none"]) // Disable clicks when faded
+              y: heroY, // Use Transform Y instead of Margin
+              pointerEvents: useTransform(scrollY, [0, 150], ["auto", "none"])
             }}
-            transition={{ ease: "easeOut" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
             <motion.div
               initial={{ opacity: 0, y: 10 }}
