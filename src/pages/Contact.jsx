@@ -1,22 +1,23 @@
 // src/pages/Contact.jsx
 // (UPDATED: Links for Email and WhatsApp with pre-filled message)
 
-import React, { useState } from "react"; 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
-import apiClient from "../api/axios"; 
+import apiClient from "../api/axios";
 
 const Contact = () => {
   const seo = useSeoData(
-    '/contact', 
-    'Contact HouseHunt Kenya - Sales, Support & Inquiries', 
+    '/contact',
+    'Contact HouseHunt Kenya - Sales, Support & Inquiries',
     'Get in touch with the HouseHunt Kenya team for sales inquiries, technical support, or partnership opportunities. We respond promptly.'
   );
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     message: ''
   });
   const [loading, setLoading] = useState(false);
@@ -38,21 +39,21 @@ const Contact = () => {
     try {
       await apiClient.post('/contact', formData);
       setSuccess('Message sent successfully! We will get back to you soon.');
-      setFormData({ name: '', email: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-  
+
   return (
     <>
       <SeoInjector seo={seo} />
-      
+
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-6 py-16">
-        
-        <motion.div 
+
+        <motion.div
           className="max-w-4xl w-full bg-white dark:bg-gray-800 shadow-lg dark:border dark:border-gray-700 rounded-2xl p-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -97,6 +98,20 @@ const Contact = () => {
               />
             </div>
 
+            {/* Phone (Optional) */}
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number (Optional)</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone || ''}
+                onChange={handleChange}
+                placeholder="+254 7..."
+                className="w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+              />
+            </div>
+
             {/* Message */}
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Message</label>
@@ -111,7 +126,7 @@ const Contact = () => {
                 required
               ></textarea>
             </div>
-            
+
             {/* Success/Error Messages */}
             {success && <p className="text-green-600 dark:text-green-400 text-center">{success}</p>}
             {error && <p className="text-red-600 dark:text-red-400 text-center">{error}</p>}
@@ -130,8 +145,8 @@ const Contact = () => {
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 text-center md:text-left">
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Email</h3>
-              <a 
-                href="mailto:support@househuntkenya.co.ke" 
+              <a
+                href="mailto:support@househuntkenya.co.ke"
                 className="text-blue-600 dark:text-blue-400 hover:underline transition"
               >
                 support@househuntkenya.co.ke
@@ -140,9 +155,9 @@ const Contact = () => {
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Phone / WhatsApp</h3>
               {/* ✅ Pre-filled message link */}
-              <a 
-                href="https://wa.me/254776929021?text=I%20wanted%20to%20enquire%20about" 
-                target="_blank" 
+              <a
+                href="https://wa.me/254776929021?text=I%20wanted%20to%20enquire%20about"
+                target="_blank"
                 rel="noreferrer"
                 className="text-blue-600 dark:text-blue-400 hover:underline transition"
               >

@@ -180,7 +180,7 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
-const PropertySeoInjector = ({ seo, property }) => {
+const PropertySeoInjector = ({ seo, property, faqs, reviews }) => {
   if (!property) return null;
 
   const safeImages = getSafeImageDetails(property.images, property.title);
@@ -259,7 +259,15 @@ const PropertySeoInjector = ({ seo, property }) => {
         "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
         "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
         "url": pageUrl,
-        "seller": getAgentSchema()
+        "seller": getAgentSchema(),
+        // ✅ AGGREGATE RATING SCHEMA
+        ...(reviews && reviews.length > 0 && {
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": (reviews.reduce((a, b) => a + (b.rating || 0), 0) / reviews.length).toFixed(1),
+            "reviewCount": reviews.length
+          }
+        })
       }
     };
     return schema;
@@ -284,6 +292,20 @@ const PropertySeoInjector = ({ seo, property }) => {
 
   const schemaData = generatePropertySchema();
   const videoSchemaData = generateVideoSchema();
+
+  // ✅ DYNAMIC FAQ SCHEMA
+  const faqSchemaData = (faqs && faqs.length > 0) ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.answer
+      }
+    }))
+  } : null;
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -316,6 +338,7 @@ const PropertySeoInjector = ({ seo, property }) => {
       <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
       {videoSchemaData && <script type="application/ld+json">{JSON.stringify(videoSchemaData)}</script>}
       <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+      {faqSchemaData && <script type="application/ld+json">{JSON.stringify(faqSchemaData)}</script>}
     </Helmet>
   );
 };
@@ -345,6 +368,7 @@ const PropertyDetails = () => {
   const [isStartingChat, setIsStartingChat] = useState(false);
   const [localServices, setLocalServices] = useState([]);
   const [viewId, setViewId] = useState(null);
+  const [schemaFaqs, setSchemaFaqs] = useState([]); // ✅ Store FAQs for SEO
 
   const pagePath = `/properties/${slug}`;
   const { seo, loading: seoLoading } = useSeoData(pagePath, 'Property Listing | HouseHunt Kenya', 'View details for this property.');
@@ -446,7 +470,7 @@ const PropertyDetails = () => {
 
   return (
     <>
-      <PropertySeoInjector seo={seo} property={property} />
+      <PropertySeoInjector seo={seo} property={property} faqs={schemaFaqs} reviews={comments} />
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
@@ -625,7 +649,7 @@ const PropertyDetails = () => {
               <PropertyLocalServices location={property.location} />
             </motion.div>
 
-            <PropertyFaqSection location={property.location.split(',')[0]} />
+            <PropertyFaqSection location={property.location.split(',')[0]} onFaqsLoaded={setSchemaFaqs} />
 
             <PropertyReviewsSection
               property={property}
