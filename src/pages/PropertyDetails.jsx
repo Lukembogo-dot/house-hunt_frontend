@@ -23,6 +23,8 @@ import PropertyFaqSection from "../components/PropertyFaqSection";
 import PropertySidebar from "../components/property/PropertySidebar";
 import PropertyReviewsSection from "../components/property/PropertyReviewsSection";
 import PropertyAmenities from "../components/property/PropertyAmenities";
+import PropertySeoInjector from '../components/SeoInjector';
+import PropertyAIInsights from '../components/PropertyAIInsights';
 import LivingEssentialsWidget from "../components/LivingEssentialsWidget";
 import PropertyLocalServices from "../components/property/PropertyLocalServices";
 
@@ -180,168 +182,7 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   );
 };
 
-const PropertySeoInjector = ({ seo, property, faqs, reviews }) => {
-  if (!property) return null;
-
-  const safeImages = getSafeImageDetails(property.images, property.title);
-  const schemaImages = safeImages.slice(0, 3).map(img => img.url);
-  const firstImageUrl = safeImages.length > 0 ? safeImages[0].url : placeholderImage;
-
-  const pageUrl = window.location.href;
-  const canonical = seo.canonicalUrl
-    ? (seo.canonicalUrl.startsWith('http') ? seo.canonicalUrl : `https://www.househuntkenya.co.ke${seo.canonicalUrl}`)
-    : pageUrl;
-
-  const getSchemaType = (type) => {
-    const mapping = {
-      'apartment': 'Apartment',
-      'house': 'House',
-      'airbnb': 'VacationRental',
-      'land': 'Landform',
-    };
-    return mapping[type] || 'Product';
-  };
-
-  const getAgentSchema = () => {
-    if (property.ownerDetails && property.ownerDetails.name) {
-      return {
-        "@type": "RealEstateAgent",
-        "name": property.ownerDetails.name,
-        "telephone": property.ownerDetails.whatsapp || property.ownerDetails.email || undefined
-      };
-    }
-    if (property.agent && property.agent.name) {
-      return {
-        "@type": "RealEstateAgent",
-        "name": property.agent.name,
-        "image": property.agent.profilePicture || undefined,
-        "telephone": property.agent.phoneNumber || property.agent.whatsappNumber || undefined
-      };
-    }
-    return { "@type": "Organization", "name": "HouseHunt Kenya" };
-  };
-
-  const generatePropertySchema = () => {
-    const schemaType = getSchemaType(property.type);
-    const schema = {
-      "@context": "https://schema.org",
-      "@type": schemaType,
-      "name": seo.metaTitle || property.title,
-      "description": seo.metaDescription || property.description?.substring(0, 160),
-      "url": pageUrl,
-      "image": schemaImages,
-      "identifier": property._id,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": property.location.split(',')[0].trim(),
-        "addressLocality": "Nairobi",
-        "addressCountry": "KE"
-      },
-      ...(property.coordinates?.lat && {
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": property.coordinates.lat,
-          "longitude": property.coordinates.lng
-        }
-      }),
-      ...(property.bedrooms && { "numberOfBedrooms": property.bedrooms }),
-      ...(property.features && property.features.length > 0 && {
-        "amenityFeature": property.features.map(feature => ({
-          "@type": "LocationFeatureSpecification",
-          "name": feature,
-          "value": "true"
-        }))
-      }),
-      "offers": {
-        "@type": "Offer",
-        "price": property.price,
-        "priceCurrency": "KES",
-        "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
-        "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/Sold",
-        "url": pageUrl,
-        "seller": getAgentSchema(),
-        // ✅ AGGREGATE RATING SCHEMA
-        ...(reviews && reviews.length > 0 && {
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": (reviews.reduce((a, b) => a + (b.rating || 0), 0) / reviews.length).toFixed(1),
-            "reviewCount": reviews.length
-          }
-        })
-      }
-    };
-    return schema;
-  };
-
-  const generateVideoSchema = () => {
-    if (!property.video) return null;
-
-    // Check if it's an embed URL or direct file to define contentUrl vs embedUrl
-    const isEmbed = property.video.includes('youtube') || property.video.includes('vimeo') || property.video.includes('embed');
-
-    return {
-      "@context": "https://schema.org",
-      "@type": "VideoObject",
-      "name": seo.videoTitle || `Virtual Tour of ${property.title}`,
-      "description": seo.videoDescription || `Watch a video tour of ${property.title}, located in ${property.location}. ${property.description?.substring(0, 100)}`,
-      "thumbnailUrl": seo.videoThumbnail || schemaImages, // Use property images as video thumbnails fallback
-      "uploadDate": seo.videoUploadDate || property.createdAt || new Date().toISOString(),
-      ...(isEmbed ? { "embedUrl": property.video } : { "contentUrl": property.video })
-    };
-  };
-
-  const schemaData = generatePropertySchema();
-  const videoSchemaData = generateVideoSchema();
-
-  // ✅ DYNAMIC FAQ SCHEMA
-  const faqSchemaData = (faqs && faqs.length > 0) ? {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": faqs.map(f => ({
-      "@type": "Question",
-      "name": f.question,
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": f.answer
-      }
-    }))
-  } : null;
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
-      { "@type": "ListItem", "position": 2, "name": property.listingType === 'rent' ? "For Rent" : "For Sale", "item": `https://www.househuntkenya.co.ke/search/${property.listingType}/nairobi` },
-      { "@type": "ListItem", "position": 3, "name": property.title, "item": pageUrl }
-    ]
-  };
-
-  return (
-    <Helmet>
-      <title>{seo.metaTitle}</title>
-      <meta name="description" content={seo.metaDescription} />
-      {seo.focusKeyword && <meta name="keywords" content={seo.focusKeyword} />}
-      <link rel="canonical" href={canonical} />
-      <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
-      <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
-      <meta property="og:url" content={pageUrl} />
-      <meta property="og:type" content="product" />
-      <meta property="og:image" content={firstImageUrl} />
-      <meta property="og:price:amount" content={property.price} />
-      <meta property="og:price:currency" content="KES" />
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={pageUrl} />
-      <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
-      <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
-      <meta property="twitter:image" content={firstImageUrl} />
-      <script type="application/ld+json">{JSON.stringify(schemaData)}</script>
-      {videoSchemaData && <script type="application/ld+json">{JSON.stringify(videoSchemaData)}</script>}
-      <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
-      {faqSchemaData && <script type="application/ld+json">{JSON.stringify(faqSchemaData)}</script>}
-    </Helmet>
-  );
-};
+// PropertySeoInjector removed (imported from component)
 
 const PropertyDetails = () => {
   const { slug } = useParams();
@@ -567,6 +408,9 @@ const PropertyDetails = () => {
                 </div>
               </motion.div>
             )}
+
+            {/* AI MARKET ANALYSIS (Using Gemma 3) */}
+            {property && <PropertyAIInsights propertyId={property._id} />}
 
             {property.amenities && property.amenities.length > 0 && (
               <PropertyAmenities amenities={property.amenities} />

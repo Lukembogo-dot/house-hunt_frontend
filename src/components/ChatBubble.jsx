@@ -2,15 +2,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // ✅ 1. Import new icons
-import { FaComments, FaTimes, FaPaperPlane, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaTimes, FaPaperPlane, FaExternalLinkAlt } from 'react-icons/fa';
+import { Sparkles, MessageSquare } from 'lucide-react'; // Better icons from Lucide
 import apiClient from '../api/axios';
-import { Link, useNavigate } from 'react-router-dom'; // ✅ 2. Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
+
+// ... (inside component)
+
+
 
 // ✅ 3. NEW: Updated link parser function
 const ParseAndLinkText = ({ text, onLinkClick }) => {
   // Regex to find markdown links [text](url) or keywords
   const regex = /(\[.*?\]\(.*?\))|(\bAbout Us\b)|(\bContact Us\b)/g;
-  
+
   // This is a complex function, so we split the text into parts
   const parts = [];
   let lastIndex = 0;
@@ -37,17 +42,35 @@ const ParseAndLinkText = ({ text, onLinkClick }) => {
       url = '/contact';
     }
 
-    parts.push(
-      <Link
-        key={match.index}
-        to={url}
-        onClick={onLinkClick} // ✅ Close chat on click
-        className="font-semibold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 inline-flex items-center space-x-1"
-      >
-        <span>{linkText}</span>
-        <FaExternalLinkAlt size={10} />
-      </Link>
-    );
+    const isExternal = url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('tel:');
+
+    if (isExternal) {
+      parts.push(
+        <a
+          key={match.index}
+          href={url}
+          target={url.startsWith('http') ? "_blank" : "_self"}
+          rel={url.startsWith('http') ? "noopener noreferrer" : ""}
+          onClick={(e) => e.stopPropagation()} // ✅ STOP PROPAGATION to prevent chat toggling
+          className="font-semibold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 inline-flex items-center space-x-1"
+        >
+          <span>{linkText}</span>
+          <FaExternalLinkAlt size={10} />
+        </a>
+      );
+    } else {
+      parts.push(
+        <Link
+          key={match.index}
+          to={url}
+          onClick={onLinkClick} // ✅ Close chat on click (Internal only)
+          className="font-semibold text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 inline-flex items-center space-x-1"
+        >
+          <span>{linkText}</span>
+          {/* Internal links generally dont need external icon, but keeping style consistent if preferred, else remove icon */}
+        </Link>
+      );
+    }
     lastIndex = match.index + match[0].length;
   }
 
@@ -91,11 +114,10 @@ const ChatMessage = ({ message, onSuggestionClick, onLinkClick }) => {
     >
       <div>
         <div
-          className={`px-4 py-3 rounded-lg max-w-xs lg:max-w-md ${
-            isUser
-              ? 'bg-blue-600 text-white rounded-br-none'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
-          }`}
+          className={`px-4 py-3 rounded-lg max-w-xs lg:max-w-md ${isUser
+            ? 'bg-blue-600 text-white rounded-br-none'
+            : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none'
+            }`}
         >
           {/* ✅ 4. Use the new parser component */}
           <ParseAndLinkText text={message.text} onLinkClick={onLinkClick} />
@@ -162,12 +184,11 @@ const ChatBubble = () => {
       const aiResponse = {
         role: 'ai',
         text: data.response,
-        suggestions: data.suggestions || [], 
+        suggestions: data.suggestions || [],
       };
-      
+
       setMessages((prev) => [...prev, aiResponse]);
-    } catch (error)
-    {
+    } catch (error) {
       console.error("Failed to fetch AI response:", error);
       const errorResponse = {
         role: 'ai',
@@ -211,9 +232,8 @@ const ChatBubble = () => {
           >
             {/* ... (Header is unchanged) ... */}
             <div
-              className={`flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0 transition-all ${
-                isLoading ? 'border-b-blue-500 shadow-blue-500/20 shadow-lg' : ''
-              }`}
+              className={`flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0 transition-all ${isLoading ? 'border-b-blue-500 shadow-blue-500/20 shadow-lg' : ''
+                }`}
             >
               <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
                 AI Assistant
@@ -277,24 +297,23 @@ const ChatBubble = () => {
         )}
       </AnimatePresence>
 
-      {/* --- The Floating Button (unchanged) --- */}
+      {/* --- The Floating Button (Updated) --- */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-4 sm:right-6 md:right-8 z-50 bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
-          isLoading && !isOpen ? 'animate-pulse' : ''
-        }`}
+        className={`fixed bottom-6 right-6 z-50 bg-blue-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${isLoading && !isOpen ? 'animate-pulse' : ''
+          }`}
         aria-label="Toggle AI Chat"
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={isOpen ? 'times' : 'comments'}
+            key={isOpen ? 'times' : 'sparkles'}
             initial={{ opacity: 0, scale: 0.5, rotate: -45 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, scale: 0.5, rotate: 45 }}
             transition={{ duration: 0.15 }}
           >
-            {isOpen ? <FaTimes size={24} /> : <FaComments size={24} />}
+            {isOpen ? <FaTimes size={20} /> : <Sparkles size={20} strokeWidth={2.5} />}
           </motion.div>
         </AnimatePresence>
       </motion.button>
