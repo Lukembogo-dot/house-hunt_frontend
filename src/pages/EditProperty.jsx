@@ -446,6 +446,26 @@ const EditProperty = () => {
     }
   };
 
+  // ✅ NEW: AI Description Polisher
+  const [isPolishing, setIsPolishing] = useState(false);
+
+  const handlePolish = async () => {
+    if (!formData.description || formData.description.length < 10) {
+      setStatus({ message: 'Write a rough description first (min 10 chars)!', type: 'error' });
+      return;
+    }
+    setIsPolishing(true);
+    try {
+      const { data } = await apiClient.post('/ai/polish', { description: formData.description });
+      setFormData(prev => ({ ...prev, description: data.polished }));
+      setStatus({ message: '✨ Description Polished!', type: 'success' });
+    } catch (error) {
+      setStatus({ message: 'AI Polisher failed. Please try again.', type: 'error' });
+    } finally {
+      setIsPolishing(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -575,6 +595,14 @@ const EditProperty = () => {
               )}
             </div>
 
+            {/* ✅ AI PRICING WIDGET */}
+            <SmartPricingWidget
+              location={formData.location}
+              type={formData.type}
+              bedrooms={formData.bedrooms}
+              currentPrice={formData.price}
+            />
+
             {formData.type === 'land' ? (
               <div className="flex gap-2">
                 <div className="flex-1">
@@ -693,7 +721,20 @@ const EditProperty = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">Description</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300" htmlFor="description">
+                Description
+              </label>
+              <button
+                type="button"
+                onClick={handlePolish}
+                disabled={isPolishing}
+                className="flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-900/50 px-3 py-1 rounded-full hover:scale-105 transition"
+              >
+                {isPolishing ? <FaSpinner className="animate-spin" /> : <FaGem />}
+                ✨ Polish with AI
+              </button>
+            </div>
             <textarea id="description" name="description" rows="4" value={formData.description} onChange={handleChange} required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
             />

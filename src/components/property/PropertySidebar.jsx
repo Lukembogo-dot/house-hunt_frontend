@@ -10,6 +10,7 @@ import {
   FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
+import InvestmentYieldWidget from './InvestmentYieldWidget';
 
 // --- EXTERNAL CONTACT MODAL (For Shadow Agents) ---
 const ExternalContactModal = ({ show, onClose, agentDetails }) => {
@@ -324,6 +325,13 @@ const PropertySidebar = ({
           </div>
         </div>
       </div>
+
+      {/* ✅ NEW: Investment Yield Widget (Only for Sales) */}
+      {property.listingType === 'sale' && (
+        <div className="mb-6">
+          <InvestmentYieldWidget property={property} user={user} />
+        </div>
+      )}
 
       {!isAgentOwner && property.status === 'available' && (
         <div className="flex flex-col space-y-3 mb-8">

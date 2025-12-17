@@ -463,37 +463,11 @@ const PropertyDetails = () => {
               ) : <p className="text-gray-500 dark:text-gray-400">Location data is not available for this property.</p>}
             </motion.div>
 
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">What's Nearby</h2>
-                {nearbyPlaces.length > 0 && <span className="text-sm text-gray-500 dark:text-gray-400">Page {amenitiesPage} of {totalPages}</span>}
-              </div>
-              {loadingPlaces ? <p className="text-gray-500 dark:text-gray-400">Loading nearby amenities...</p> : nearbyPlaces.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {currentAmenities.map(place => (
-                      <button key={place.id} onClick={() => handleAmenityClick(place)} className="flex items-center space-x-2 p-3 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 hover:shadow-md hover:border-blue-500 dark:hover:border-blue-500 transition-all text-left">
-                        <span className="flex-shrink-0">{placeIconMap[place.type]?.icon || placeIconMap.default.icon}</span>
-                        <span className="text-sm text-gray-700 dark:text-gray-300 line-clamp-1">{place.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-4 mt-6">
-                      <button onClick={() => setAmenitiesPage(p => p - 1)} disabled={amenitiesPage === 1} className="px-4 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">Previous</button>
-                      <button onClick={() => setAmenitiesPage(p => p + 1)} disabled={amenitiesPage === totalPages} className="px-4 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200">Next</button>
-                    </div>
-                  )}
-                </>
-              ) : <p className="text-gray-500 dark:text-gray-400">No popular amenities found within 1.5km.</p>}
-            </motion.div>
+            {/* What's Nearby Removed (Consolidated to AI Insights) */}
 
-            {/* ✅ ADDED: Property Local Services / Neighborhood Watch */}
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}>
-              <PropertyLocalServices location={property.location} />
-            </motion.div>
+            {/* PropertyLocalServices Removed (Consolidated to AI Insights) */}
 
-            <PropertyFaqSection location={property.location.split(',')[0]} onFaqsLoaded={setSchemaFaqs} />
+            {/* PropertyFaqSection Removed (Consolidated to AI Insights) */}
 
             <PropertyReviewsSection
               property={property}
