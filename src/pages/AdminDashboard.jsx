@@ -40,6 +40,7 @@ import ServiceManager from '../components/admin/ServiceManager';
 // ✅ FIXED: Changed '../components/Admin/...' to '../components/admin/...'
 import BattleManager from '../components/admin/BattleManager';
 import ReportManager from '../components/admin/ReportManager';
+import AdminAnalyticsWidget from '../components/AdminAnalyticsWidget';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
@@ -457,6 +458,9 @@ const AdminDashboard = () => {
             </Link>
           </div>
         </section>
+
+        {/* ✅ ANALYTICS WIDGET */}
+        <AdminAnalyticsWidget />
 
         {/* ✅ NEW: MTAA BATTLE ARENA (Admin Controls) */}
         <section className="mb-12">

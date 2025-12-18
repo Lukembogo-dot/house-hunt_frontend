@@ -147,7 +147,7 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                     <div className="p-2 bg-gradient-to-tr from-blue-500 to-purple-600 rounded-lg text-white">
                         <Sparkles size={20} />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">AI Market Analysis</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Househunt Kenya Market Research analysis</h2>
                     <span className={`ml-auto px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1 ${style.bg} ${style.text}`}>
                         {style.icon} {analysis.verdict}
                     </span>

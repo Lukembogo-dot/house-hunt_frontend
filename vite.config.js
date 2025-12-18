@@ -6,7 +6,7 @@ import { VitePWA } from 'vite-plugin-pwa' // 1. Import the plugin
 export default defineConfig({
   plugins: [
     react(),
-    
+
     // 2. Add the VitePWA plugin
     VitePWA({
       registerType: 'autoUpdate', // Automatically updates the app
@@ -51,4 +51,8 @@ export default defineConfig({
       },
     },
   },
+  // Force optimization of new dependencies
+  optimizeDeps: {
+    include: ['recharts']
+  }
 })

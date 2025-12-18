@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import InvestmentYieldWidget from './InvestmentYieldWidget';
+import useAnalytics from '../../hooks/useAnalytics';
 
 // --- EXTERNAL CONTACT MODAL (For Shadow Agents) ---
 const ExternalContactModal = ({ show, onClose, agentDetails }) => {
@@ -234,22 +235,29 @@ const PropertySidebar = ({
   };
 
   // ✅ Interactive Handlers - STRICT INTERNAL MODE
+  // ✅ Interactive Handlers - STRICT INTERNAL MODE
+  const { trackEvent } = useAnalytics();
+
   const onContactAgent = () => {
     handleRestrictedAction(() => {
-      // Force Internal Chat for everyone (including Shadow Agents)
+      trackEvent('chat_start', 'property_sidebar', displayAgent?._id, { propertyId: property._id });
+      // Force Internal Chat for everyone
       handleStartChat();
     });
   };
 
   const onScheduleViewing = () => {
     handleRestrictedAction(() => {
+      // Viewing tracking might be done in the scheduling flow, but we can track the click too
+      trackEvent('schedule_viewing_click', 'property_sidebar', displayAgent?._id, { propertyId: property._id });
       handleScheduleClick();
     });
   };
 
-  const openExternalLink = (url) => {
+  const openExternalLink = (url, type, platform) => {
     handleRestrictedAction(() => {
       handleLogLead();
+      trackEvent(type || 'external_link_click', 'property_sidebar', displayAgent?._id, { propertyId: property._id, platform });
       window.open(url, '_blank');
     });
   };
@@ -400,7 +408,7 @@ const PropertySidebar = ({
                 <div className="flex items-center gap-2">
                   {agentEmail && (
                     <button
-                      onClick={() => openExternalLink(`mailto:${agentEmail}`)}
+                      onClick={() => openExternalLink(`mailto:${agentEmail}`, 'email_click')}
                       className="flex-1 py-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-xs font-bold hover:bg-blue-200 transition flex items-center justify-center gap-1"
                     >
                       <FaEnvelope /> Email Me
@@ -412,7 +420,7 @@ const PropertySidebar = ({
                     <div className="flex gap-2">
                       {shadowTiktok && (
                         <button
-                          onClick={() => openExternalLink(`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`)}
+                          onClick={() => openExternalLink(`https://tiktok.com/${shadowTiktok.startsWith('@') ? '' : '@'}${shadowTiktok.replace('@', '')}`, 'social_click', 'tiktok')}
                           className="w-8 h-8 flex items-center justify-center bg-black text-white rounded-full hover:scale-110 transition shadow-sm"
                           title="Watch Tours on TikTok"
                         >
@@ -421,7 +429,7 @@ const PropertySidebar = ({
                       )}
                       {shadowInstagram && (
                         <button
-                          onClick={() => openExternalLink(`https://instagram.com/${shadowInstagram.replace('@', '')}`)}
+                          onClick={() => openExternalLink(`https://instagram.com/${shadowInstagram.replace('@', '')}`, 'social_click', 'instagram')}
                           className="w-8 h-8 flex items-center justify-center bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500 text-white rounded-full hover:scale-110 transition shadow-sm"
                           title="See Photos on Instagram"
                         >
@@ -439,7 +447,7 @@ const PropertySidebar = ({
               <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
                 <button
                   onClick={() => {
-                    openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`);
+                    openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`, 'whatsapp_click');
                   }}
                   className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group"
                 >
