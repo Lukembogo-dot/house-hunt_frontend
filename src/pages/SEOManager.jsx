@@ -2,7 +2,7 @@
 // (Strictly Updated: Adds Service Providers to SEO Manager logic)
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter, FaLink, FaExclamationTriangle, FaBuilding, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlus, FaSpinner, FaFacebook, FaTwitter, FaLink, FaExclamationTriangle, FaBuilding, FaInstagram, FaLinkedin, FaRobot, FaEye, FaExternalLinkAlt, FaEyeSlash } from 'react-icons/fa';
 import apiClient from '../api/axios';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -517,6 +517,38 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     setKeywordSuggestions([]);
   };
 
+  // ✅ NEW: AI Video Description Generator
+  const handleGenerateVideoSeo = async () => {
+    if (!seoData.metaTitle) return alert("Please enter a Meta Title first to give the AI context.");
+
+    // Set a loading state specifically for this button if we wanted, 
+    // but for now we'll just toggle the main saving state or use a local one.
+    // Let's use a quick alert/toast for UX or reuse 'saving' to block interaction.
+    setSaving(true);
+
+    try {
+      const { data } = await apiClient.post('/ai/video-description', {
+        title: seoData.metaTitle,
+        location: seoData.metaTitle.includes('in ') ? seoData.metaTitle.split('in ')[1] : 'Kenya', // Simple inference
+        type: 'Property',
+        listingType: 'Listing',
+        description: seoData.metaDescription || seoData.metaTitle
+      });
+
+      setSeoData(prev => ({
+        ...prev,
+        videoDescription: data.generatedDescription
+      }));
+      setSuccess("AI generated a new video description!");
+
+    } catch (err) {
+      console.error("AI Gen Failed:", err);
+      setError("Failed to generate description. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ✅ 3. UPDATED: Save Logic (Route to correct endpoint)
   const handleSave = async (e) => {
     e.preventDefault();
@@ -566,28 +598,73 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
     removePlugins: ['CKBox', 'CKFinder', 'EasyImage']
   };
 
+  const [showPreview, setShowPreview] = useState(false);
+
   const PageSelector = () => (
-    <div className="mb-6">
-      <label htmlFor="page-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Select Page to Edit
-      </label>
-      <select
-        id="page-select"
-        value={selectedPagePath || ''}
-        onChange={(e) => setSelectedPagePath(e.target.value)}
-        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5"
-        disabled={loading || saving}
-      >
-        {loading ? (
-          <option>Loading pages...</option>
-        ) : (
-          pagesList.map((page) => (
-            <option key={page.pagePath} value={page.pagePath}>
-              {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
-            </option>
-          ))
-        )}
-      </select>
+    <div className="mb-6 space-y-4">
+      <div>
+        <label htmlFor="page-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Select Page to Edit
+        </label>
+        <div className="flex gap-2">
+          <select
+            id="page-select"
+            value={selectedPagePath || ''}
+            onChange={(e) => setShowPreview(false) || setSelectedPagePath(e.target.value)}
+            className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2.5"
+            disabled={loading || saving}
+          >
+            {loading ? (
+              <option>Loading pages...</option>
+            ) : (
+              pagesList.map((page) => (
+                <option key={page.pagePath} value={page.pagePath}>
+                  {page.type ? `[${page.type}] ` : ''}{page.metaTitle || page.pagePath}
+                </option>
+              ))
+            )}
+          </select>
+
+          {/* ✅ PREVIEW BUTTONS */}
+          {selectedPagePath && (
+            <>
+              <a
+                href={selectedPagePath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200 rounded-md transition flex items-center justify-center min-w-[50px]"
+                title="Open Live Page in New Tab"
+              >
+                <FaExternalLinkAlt />
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowPreview(!showPreview)}
+                className={`p-3 rounded-md transition flex items-center justify-center min-w-[50px] ${showPreview ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 text-gray-700 dark:text-gray-200'}`}
+                title={showPreview ? "Hide Preview" : "Show Embedded Preview"}
+              >
+                {showPreview ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ✅ EMBEDDED PREVIEW IFRAME */}
+      {showPreview && selectedPagePath && (
+        <div className="rounded-xl overflow-hidden border-4 border-gray-300 dark:border-gray-700 shadow-2xl relative bg-gray-100">
+          <div className="bg-gray-800 text-white text-xs py-1 px-4 flex justify-between items-center">
+            <span>Live Preview: {selectedPagePath}</span>
+            <button onClick={() => setShowPreview(false)} className="hover:text-red-400">Close</button>
+          </div>
+          <iframe
+            src={selectedPagePath}
+            title="Page Preview"
+            className="w-full h-[500px] bg-white"
+          />
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
     </div>
   );
@@ -826,8 +903,20 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
               <input type="text" id="videoTitle" name="videoTitle" value={seoData.videoTitle} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="e.g. Virtual Tour of 3BR Apartment" />
             </div>
             <div>
-              <label htmlFor="videoDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Description (Override)</label>
-              <textarea id="videoDescription" name="videoDescription" value={seoData.videoDescription} onChange={handleInputChange} rows={2} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="Description of the video content..." />
+              <div className="flex justify-between items-center mb-1">
+                <label htmlFor="videoDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Video Description (Override)
+                </label>
+                <button
+                  type="button"
+                  onClick={handleGenerateVideoSeo}
+                  className="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-1 rounded flex items-center transition"
+                  title="Generate using Gemma 2 (27b)"
+                >
+                  <FaRobot className="mr-1" /> Auto-Generate with AI
+                </button>
+              </div>
+              <textarea id="videoDescription" name="videoDescription" value={seoData.videoDescription} onChange={handleInputChange} rows={3} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="Description of the video content..." />
             </div>
             <div>
               <label htmlFor="videoThumbnail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Video Thumbnail URL (Override)</label>

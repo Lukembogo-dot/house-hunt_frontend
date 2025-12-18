@@ -8,7 +8,7 @@ import { Helmet } from 'react-helmet-async';
  * Injects all SEO-related tags into the document head.
  * Receives the 'seo' object from the useSeoData hook.
  */
-const SeoInjector = ({ seo }) => {
+const SeoInjector = ({ seo, property }) => {
     if (!seo || !seo.metaTitle) {
         return null; // Don't render anything if seo data isn't ready
     }
@@ -110,6 +110,33 @@ const SeoInjector = ({ seo }) => {
                 "variableMeasured": ["Average Price", "Number of Listings", "Market Trends"],
                 "url": canonical
             });
+        }
+
+        // ✅ 4. VIDEO OBJECT SCHEMA (Rich Result for Video)
+        if (property && property.video) {
+            const videoSchema = {
+                "@context": "https://schema.org",
+                "@type": "VideoObject",
+                "name": seo.videoTitle || `Video Tour of ${property.title}`,
+                "description": seo.videoDescription || (property.description ? property.description.substring(0, 160) : `Watch a full tour of ${property.title}.`),
+                "thumbnailUrl": seo.videoThumbnail || ((property.images && property.images.length > 0)
+                    ? (property.images[0].url || property.images[0])
+                    : "https://www.househuntkenya.co.ke/assets/video-placeholder.jpg"),
+                "uploadDate": property.createdAt || new Date().toISOString(),
+                "contentUrl": property.video,
+                "embedUrl": property.video.includes("youtube")
+                    ? property.video.replace("watch?v=", "embed/")
+                    : property.video,
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "HouseHunt Kenya",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "https://www.househuntkenya.co.ke/assets/logo.png"
+                    }
+                }
+            };
+            schema.push(videoSchema);
         }
 
         return schema;
