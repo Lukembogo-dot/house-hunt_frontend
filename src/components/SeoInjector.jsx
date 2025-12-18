@@ -142,8 +142,15 @@ const SeoInjector = ({ seo }) => {
             <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
             <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
 
-            {/* Schema Structured Data */}
-            {schemaData.map((schema, index) => (
+            {/* ✅ AI-Generated RICH Schema (Overrides/Augments Standard Schema) */}
+            {seo.richSchema && (
+                <script type="application/ld+json">
+                    {JSON.stringify(seo.richSchema)}
+                </script>
+            )}
+
+            {/* Standard Schema Structured Data (Only if Rich Schema is missing to avoid duplicates/conflicts) */}
+            {!seo.richSchema && schemaData.map((schema, index) => (
                 <script
                     key={index}
                     type="application/ld+json"

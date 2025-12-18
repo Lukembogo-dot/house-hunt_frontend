@@ -193,40 +193,35 @@ const DynamicSearchPage = () => {
           setCommunityInsights([]);
         }
 
-        // ✅ 3. SEO GENERATION STRATEGY
-        // Step A: Generate Auto-Content (Baseline)
-        const loc = filterOverrides.location || 'Nairobi';
-        const autoContent = generateDynamicLocationContent(
-          loc,
-          listingType || 'rent',
-          statsData.count || 0,
-          statsData.avgPrice || 0
-        );
-
-        // Step B: Check for Admin Overrides from SEO Manager
-        let dbSeo = {};
+        // ✅ 3. SEO GENERATION STRATEGY (AI-POWERED)
+        // Replaces static generation with Backend AI Endpoint (Llama 3 / Gemini)
         try {
-          // Encode the full path (e.g., /search/rent/kilimani)
           const currentPath = urlLocation.pathname;
-          const { data } = await apiClient.get(`/seo/${encodeURIComponent(currentPath)}`);
-          dbSeo = data;
-        } catch (e) {
-          // No custom override found, relying on auto-gen
-        }
+          // This endpoint now checks DB first, if missing -> Generates via AI -> Saves -> Returns
+          const { data: seoData } = await apiClient.get(`/seo/generate?path=${encodeURIComponent(currentPath)}`);
 
-        // Step C: Merge (Admin DB > Auto-Gen)
-        setFinalSeoData({
-          metaTitle: dbSeo.metaTitle || autoContent.title,
-          metaDescription: dbSeo.metaDescription || autoContent.intro.substring(0, 160),
-          intro: autoContent.intro, // Usually kept dynamic
-          marketInsight: autoContent.marketInsight, // Kept dynamic based on stats
-          // Pass other SEO Manager fields if they exist
-          focusKeyword: dbSeo.focusKeyword || `${listingType} in ${loc}`,
-          canonicalUrl: dbSeo.canonicalUrl,
-          breadCrumbTitle: dbSeo.breadCrumbTitle, // ✅ Pass Breadcrumb Title
-          faqs: dbSeo.faqs || [], // If admin added custom FAQs for this page
-          pagePath: urlLocation.pathname // Required for SeoInjector to build Dataset Schema
-        });
+          setFinalSeoData({
+            metaTitle: seoData.metaTitle,
+            metaDescription: seoData.metaDescription,
+            intro: seoData.introText || `Welcome to ${filterOverrides.location || 'House Hunt Kenya'}`,
+            marketInsight: seoData.marketInsight,
+            focusKeyword: seoData.focusKeyword,
+            canonicalUrl: seoData.canonicalUrl,
+            breadCrumbTitle: seoData.breadCrumbTitle,
+            faqs: seoData.faqs || [],
+            pagePath: currentPath
+          });
+
+        } catch (seoErr) {
+          console.error("AI SEO Generation Failed:", seoErr);
+          // Fallback to basic if AI fails
+          setFinalSeoData({
+            metaTitle: `${capitalize(listingType)} in ${filterOverrides.location || 'Kenya'} | House Hunt`,
+            metaDescription: `Find the best ${listingType} properties in ${filterOverrides.location}.`,
+            intro: `Explore the best listings in ${filterOverrides.location}.`,
+            pagePath: urlLocation.pathname
+          });
+        }
 
       } catch (error) {
         console.error("Failed to fetch property stats:", error);
@@ -264,13 +259,17 @@ const DynamicSearchPage = () => {
                 {finalSeoData?.metaTitle}
               </h1>
             )}
-            <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-              {finalSeoData?.intro}
-            </p>
+            <div
+              className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-6 prose dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: finalSeoData?.intro }}
+            />
             {finalSeoData?.marketInsight && !loadingStats && hasResults && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-r">
                 <h3 className="font-bold text-blue-800 dark:text-blue-300 mb-1">Market Insight: {filterOverrides.location || 'Nairobi'}</h3>
-                <p className="text-sm text-blue-700 dark:text-blue-200">{finalSeoData.marketInsight}</p>
+                <div
+                  className="text-sm text-blue-700 dark:text-blue-200 prose-sm dark:prose-invert"
+                  dangerouslySetInnerHTML={{ __html: finalSeoData.marketInsight }}
+                />
               </div>
             )}
           </div>
