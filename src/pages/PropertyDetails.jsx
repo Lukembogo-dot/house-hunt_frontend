@@ -410,7 +410,21 @@ const PropertyDetails = () => {
             )}
 
             {/* AI MARKET ANALYSIS (Using Gemma 3) */}
-            {property && <PropertyAIInsights propertyId={property._id} />}
+            {property && (
+              <PropertyAIInsights
+                propertyId={property._id}
+                propertyTitle={property.title}
+                propertyLocation={property.location}
+                propertyDescription={property.description}
+                propertyPostedDate={property.createdAt}
+                propertyStatus={property.status}
+                propertyType={property.type}
+                propertyPrice={property.price}
+                agentName={property.ownerDetails?.name || property.agent?.name}
+                agentImage={property.agent?.profilePicture || null}
+                agentContact={property.ownerDetails?.whatsapp || property.agent?.whatsappNumber}
+              />
+            )}
 
             {property.amenities && property.amenities.length > 0 && (
               <PropertyAmenities amenities={property.amenities} />

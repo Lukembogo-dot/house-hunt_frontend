@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async';
 import { FaRobot, FaCheckCircle, FaExclamationCircle, FaInfoCircle, FaMapMarkedAlt, FaQuestionCircle } from 'react-icons/fa';
 import { Sparkles } from 'lucide-react';
 
-const PropertyAIInsights = ({ propertyId }) => {
+const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, propertyDescription, propertyPostedDate, propertyStatus, propertyType, propertyPrice, agentName, agentImage, agentContact }) => {
     const [analysis, setAnalysis] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -34,7 +34,7 @@ const PropertyAIInsights = ({ propertyId }) => {
         </div>
     );
 
-    if (!analysis) return null; // Only return null if NO data at all
+    if (!analysis) return null;
 
     // Decide Badge Color based on Verdict (Handle Unknown default)
     const getVerdictStyle = (verdict) => {
@@ -46,14 +46,36 @@ const PropertyAIInsights = ({ propertyId }) => {
         }
     };
 
+    // Helper to render Markdown links safely
+    const renderTextWithLinks = (text) => {
+        if (!text) return "";
+        // Regex to find [Link Text](URL)
+        const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
+
+        return parts.map((part, index) => {
+            const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (match) {
+                return (
+                    <a
+                        key={index}
+                        href={match[2]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
+                    >
+                        {match[1]}
+                    </a>
+                );
+            }
+            return part; // Return normal text
+        });
+    };
+
     const style = getVerdictStyle(analysis.verdict);
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-8 overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800"
+        // ... (Framer motion props)
         >
             <div className="p-6">
                 {/* 🔍 SEO Injection: Serve Data to Google */}
@@ -71,6 +93,51 @@ const PropertyAIInsights = ({ propertyId }) => {
                                         "text": faq.answer
                                     }
                                 })) || []
+                            })}
+                        </script>
+                        {/* ✅ NEW: Full RealEstateListing Schema with Agent & Original Desc */}
+                        <script type="application/ld+json">
+                            {JSON.stringify({
+                                "@context": "https://schema.org",
+                                "@type": "RealEstateListing",
+                                "name": propertyTitle || "Property Analysis",
+
+                                // GOOGLE PREFERS: Using accurate description. 
+                                "description": `${analysis.livingInsights || "AI Market Analysis provided."} \n\nOriginal Listing: ${propertyDescription ? propertyDescription.substring(0, 150) + "..." : ""}`,
+
+                                "datePosted": propertyPostedDate,
+
+                                "category": propertyType === 'land' ? 'Land' : 'Residential',
+
+                                "offers": {
+                                    "@type": "Offer",
+                                    "price": propertyPrice,
+                                    "priceCurrency": "KES",
+                                    "availability": propertyStatus === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                                    "url": typeof window !== 'undefined' ? window.location.href : ""
+                                },
+
+                                "location": {
+                                    "@type": "Place",
+                                    "name": propertyLocation,
+                                    "address": {
+                                        "@type": "PostalAddress",
+                                        "addressLocality": propertyLocation,
+                                        "addressCountry": "KE"
+                                    }
+                                },
+                                "about": {
+                                    "@type": "Thing",
+                                    "name": "Market Analysis",
+                                    "description": analysis.comparisonText
+                                },
+                                // ✅ Inject Detailed Agent Data
+                                "author": {
+                                    "@type": "RealEstateAgent",
+                                    "name": agentName || "HouseHunt Agent",
+                                    "image": agentImage || "https://househuntkenya.co.ke/default-agent.png",
+                                    "telephone": agentContact || ""
+                                }
                             })}
                         </script>
                     </Helmet>
@@ -121,7 +188,7 @@ const PropertyAIInsights = ({ propertyId }) => {
                         </div>
 
                         <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            {analysis.comparisonText}
+                            {renderTextWithLinks(analysis.comparisonText)}
                         </p>
                     </div>
 
@@ -134,7 +201,7 @@ const PropertyAIInsights = ({ propertyId }) => {
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Living Experience</h3>
                                 <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                    {analysis.livingInsights || analysis.neighborhoodVibe}
+                                    {renderTextWithLinks(analysis.livingInsights || analysis.neighborhoodVibe)}
                                 </p>
                             </div>
                         </div>
