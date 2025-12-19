@@ -3,21 +3,40 @@ import {
   FaBuilding, FaWater, FaWifi, FaBus, FaLightbulb,
   FaStar, FaCheck, FaMoneyBillWave, FaBed, FaTag,
   FaRoad, FaShoppingBasket, FaCloudRain, FaShieldAlt, FaVolumeUp,
-  FaUserSecret, FaUserTie, FaCalendarAlt
+  FaUserSecret, FaUserTie, FaCalendarAlt, FaRobot, FaSearchLocation, FaMagic
 } from 'react-icons/fa';
 import apiClient from '../../utils/apiClient';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
-const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null }) => {
+const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null, userPassportCount = 0 }) => {
   if (!isOpen) return null;
 
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const { user, realUser } = useAuth();
+
+  const isCreatingNew = !initialData;
+
+  // DEBUG LOG - PLEASE CHECK CONSOLE IF ISSUES PERSIST
+  console.log("ADD RESIDENCY DEBUG:", {
+    userRole: user?.role,
+    realUserRole: realUser?.role,
+    userPassportCount,
+    isCreatingNew
+  });
+
+
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // AI Scout State
+  const [isScouting, setIsScouting] = useState(false);
+  const [isFilling, setIsFilling] = useState(false);
+  const [scoutLocation, setScoutLocation] = useState('');
+  const [scoutType, setScoutType] = useState('1 Bedroom');
+  const [scoutedBuildings, setScoutedBuildings] = useState([]);
 
   const commonProviders = ['Safaricom Home', 'Zuku', 'JTL Faiba', 'Liquid', 'Mawingu', 'Starlink'];
   const [isCustomInternet, setIsCustomInternet] = useState(false);
@@ -125,6 +144,72 @@ const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null }) => 
       }
     }
   }, [initialData]);
+
+  // AI SCOUT HANDLER
+  const handleAiScout = async () => {
+    if (!scoutLocation) return toast.error("Enter a location to scout!");
+    setIsScouting(true);
+    setScoutedBuildings([]);
+    try {
+      const { data } = await apiClient.post('/ai/scout-buildings', {
+        location: scoutLocation,
+        unitType: scoutType
+      });
+      setScoutedBuildings(data);
+      if (data.length === 0) toast("No specific buildings found, try broader location.");
+    } catch (error) {
+      console.error(error);
+      toast.error("AI Scout failed. Try manual entry.");
+    } finally {
+      setIsScouting(false);
+    }
+  };
+
+  // AI AUTO-FILL HANDLER
+  const handleAiFill = async (buildingName, rentRange) => {
+    setIsFilling(true);
+    try {
+      // 1. Fill Basic Data immediately to feel fast
+      const avgRent = rentRange ? parseInt(rentRange.replace(/\D/g, '').substring(0, 5)) : '';
+      setFormData(prev => ({
+        ...prev,
+        buildingName: buildingName,
+        neighborhood: scoutLocation,
+        unitType: scoutType,
+        monthlyRent: avgRent || prev.monthlyRent
+      }));
+
+      // 2. Call Deep Fill for the rest
+      const { data } = await apiClient.post('/ai/generate-passport', {
+        buildingName,
+        location: scoutLocation,
+        unitType: scoutType
+      });
+
+      // 3. Merge AI Data
+      setFormData(prev => ({
+        ...prev,
+        rating: data.rating,
+        reviewContent: data.reviewContent,
+        rentOpinion: data.rentOpinion,
+        monthlyRent: data.monthlyRent || prev.monthlyRent // Keep AI's if specific
+      }));
+      setMtaaData(prev => ({
+        ...prev,
+        ...data // Auto-merge matching fields from JSON schema
+      }));
+
+      toast.success(`Generated Passport for ${buildingName}!`);
+      setStep(1); // Review it
+      setScoutedBuildings([]); // Clear list
+
+    } catch (error) {
+      console.error(error);
+      toast.error("AI Generation failed.");
+    } finally {
+      setIsFilling(false);
+    }
+  };
 
   const handleBuildingChange = async (e) => {
     const value = e.target.value;
@@ -253,7 +338,37 @@ const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null }) => 
     if (step === 3) return { title: 'Lifestyle & Environment', icon: <FaCheck className="text-green-500" /> };
   };
 
+  // ✅ ADMIN BYPASS: Specific Account IDs
+  const ADMIN_IDS = ['691034583a6023409b3aaec8']; // HouseHunt Kenya Admin ID
+
+  const checkAdmin = (role) => role && role.toLowerCase() === 'admin';
+  const isAdmin = checkAdmin(user?.role) || checkAdmin(realUser?.role) || ADMIN_IDS.includes(realUser?._id);
+
+  // Limits Logic: Limit 2. Strict for Normal Users.
+  const MAX_LIMIT = 2;
+  const isLimitStrict = !isAdmin && userPassportCount >= MAX_LIMIT;
+
   const SECURITY_OPTIONS = ['CCTV', '24h Guard', 'Night Guard', 'Biometric', 'Electric Fence', 'Perimeter Wall', 'Locked Gate'];
+
+
+
+  // BLOCKING VIEW IF LIMIT REACHED & NEW
+  if (isCreatingNew && isLimitStrict) {
+    return (
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60]">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 text-center shadow-2xl">
+          <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaShieldAlt size={30} />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Maximum Passports Reached</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            You have reached the limit of <strong>{MAX_LIMIT} Homes</strong>. To add a new one, you must first mark an old home as "Moving Out" or delete one.
+          </p>
+          <button onClick={onClose} className="w-full bg-gray-200 dark:bg-gray-700 dark:text-white py-3 rounded-lg font-bold">Okay, Got it</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60]">
@@ -275,7 +390,60 @@ const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null }) => 
           <button onClick={onClose} className="text-gray-500 hover:text-red-500 ml-4">✕</button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 space-y-6">
+
+          {/* ADMIN AI SCOUT UI */}
+          {isAdmin && step === 1 && (
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
+              <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase mb-3 flex items-center gap-2">
+                <FaRobot /> AI Scout & Auto-Fill (Admin)
+              </h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Area (e.g. Ruaka, Kilimani)"
+                  className="flex-1 p-2 text-sm border rounded bg-white dark:bg-gray-800 dark:text-white"
+                  value={scoutLocation}
+                  onChange={(e) => setScoutLocation(e.target.value)}
+                />
+                <select
+                  className="w-32 p-2 text-sm border rounded bg-white dark:bg-gray-800 dark:text-white"
+                  value={scoutType}
+                  onChange={(e) => setScoutType(e.target.value)}
+                >
+                  <option>Bedsitter</option><option>1 Bedroom</option><option>2 Bedroom</option><option>3 Bedroom</option>
+                </select>
+                <button
+                  onClick={handleAiScout}
+                  disabled={isScouting}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2 hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {isScouting ? 'Scanning...' : <><FaSearchLocation /> Scout</>}
+                </button>
+              </div>
+
+              {/* SCOUT RESULTS */}
+              {scoutedBuildings.length > 0 && (
+                <div className="mt-4 animate-in slide-in-from-top-2">
+                  <p className="text-xs text-gray-500 mb-2">Found {scoutedBuildings.length} complexes. Select one to Auto-Fill:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {scoutedBuildings.map((b, idx) => (
+                      <button
+                        key={idx}
+                        disabled={isFilling}
+                        onClick={() => handleAiFill(b.name, b.rent)}
+                        className="text-left p-2 rounded border bg-white dark:bg-gray-800 hover:border-indigo-500 hover:shadow-md transition group"
+                      >
+                        <span className="block text-sm font-bold text-gray-800 dark:text-white group-hover:text-indigo-600">{b.name}</span>
+                        <span className="block text-xs text-gray-500">Est. Rent: {b.rent}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {isFilling && <p className="text-xs text-indigo-600 mt-2 font-bold animate-pulse">✨ AI is researching and filling details...</p>}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ADMIN OVERRIDE */}
           {isAdmin && step === 1 && (
@@ -311,9 +479,31 @@ const AddResidencyModal = ({ isOpen, onClose, refresh, initialData = null }) => 
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 dark:text-gray-300">Status</label>
-                  <select className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={formData.residencyStatus} onChange={e => setFormData({ ...formData, residencyStatus: e.target.value })}>
-                    <option>Current Tenant</option><option>Moving Out Soon</option><option>Past Tenant</option>
-                  </select>
+                  {(() => {
+                    // COOLDOWN LOGIC: Prevent 'gaming' by locking status for 30 days
+                    const daysHeld = initialData ? (new Date() - new Date(initialData.createdAt)) / (1000 * 60 * 60 * 24) : 0;
+                    const isStatusLocked = !isCreatingNew && !isAdmin && daysHeld < 30;
+                    const daysRemaining = Math.ceil(30 - daysHeld);
+
+                    return (
+                      <div className="relative">
+                        <select
+                          className={`w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white ${isStatusLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          value={formData.residencyStatus}
+                          onChange={e => setFormData({ ...formData, residencyStatus: e.target.value })}
+                          disabled={isStatusLocked}
+                        >
+                          <option>Current Tenant</option><option>Moving Out Soon</option><option>Past Tenant</option>
+                        </select>
+                        {isStatusLocked && (
+                          <div className="absolute top-full left-0 mt-1 w-full bg-yellow-100 text-yellow-800 text-[10px] p-1.5 rounded flex items-center gap-1 border border-yellow-200">
+                            <FaShieldAlt />
+                            <span>Locked for {daysRemaining} days (Fair Usage Policy)</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-600">

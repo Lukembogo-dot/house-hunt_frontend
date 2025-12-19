@@ -18,7 +18,7 @@ const MyResidencies = () => {
   const fetchResidencies = async () => {
     try {
       // Calls the 'living-community' endpoint we made earlier
-      const { data } = await apiClient.get('/living-community/my-history'); 
+      const { data } = await apiClient.get('/living-community/my-history');
       setResidencies(data);
     } catch (error) {
       console.error('Error fetching history:', error);
@@ -42,7 +42,7 @@ const MyResidencies = () => {
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">My Housing Passport</h1>
           <p className="text-gray-500 text-sm">Track your living history. Your private notes are encrypted.</p>
         </div>
-        <button 
+        <button
           onClick={() => setModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
         >
@@ -58,9 +58,9 @@ const MyResidencies = () => {
             <span className="text-sm font-medium">Private details are encrypted. Enter Vault PIN to view.</span>
           </div>
           <form onSubmit={handleUnlockVault} className="flex gap-2">
-            <input 
-              type="password" 
-              placeholder="Enter PIN" 
+            <input
+              type="password"
+              placeholder="Enter PIN"
               className="px-3 py-1 rounded border border-yellow-300 text-sm"
               value={vaultPin}
               onChange={(e) => setVaultPin(e.target.value)}
@@ -114,7 +114,7 @@ const MyResidencies = () => {
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-2">
                 <FaLock size={10} /> Private Vault (Only You)
               </h4>
-              
+
               {isVaultUnlocked ? (
                 // Try to decrypt. If 'privateData' exists, decrypt it.
                 (() => {
@@ -149,9 +149,15 @@ const MyResidencies = () => {
         ))}
       </div>
 
-      <AddResidencyModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} refresh={fetchResidencies} />
+      <AddResidencyModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        refresh={fetchResidencies}
+        userPassportCount={residencies.filter(r => r.residencyStatus === 'Current Tenant').length}
+      />
     </div>
   );
 };
 
 export default MyResidencies;
+// Force Update - Cache Busting

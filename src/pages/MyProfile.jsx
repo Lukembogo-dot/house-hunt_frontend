@@ -48,49 +48,9 @@ const MyProfile = () => {
     fetchGameData();
   }, [refreshTrigger]);
 
-  // ✅ 2. NEW: STRICT VALIDATION FOR ADDING RESIDENCY
-  const handleOpenResidencyModal = async () => {
-    setValidatingAccess(true);
-    try {
-      // Fetch user's residency history to check constraints
-      const { data: residencies } = await apiClient.get('/living-community/my-history');
-
-      // CONSTRAINT 1: Max 2 Active Passports
-      // We assume a residency is "Active" if it has no moveOutDate (or is marked current)
-      const activeResidencies = residencies.filter(r => !r.moveOutDate || r.isCurrentTenant);
-
-      if (activeResidencies.length >= 2) {
-        alert("🚫 Limit Reached: You can only have 2 active housing passports at a time. Please mark an old residence as 'Moved Out' to add a new one.");
-        setValidatingAccess(false);
-        return;
-      }
-
-      // CONSTRAINT 2: Monthly Cooldown (Anti-Spam)
-      // Sort by creation date descending to find the last one added
-      if (residencies.length > 0) {
-        const sortedByDate = [...residencies].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const lastCreated = new Date(sortedByDate[0].createdAt);
-        const now = new Date();
-        const daysSinceLast = (now - lastCreated) / (1000 * 60 * 60 * 24);
-
-        if (daysSinceLast < 30) {
-          const daysRemaining = Math.ceil(30 - daysSinceLast);
-          alert(`⏳ Cooldown Active: You can only verify a new residence once every 30 days. Please try again in ${daysRemaining} days.`);
-          setValidatingAccess(false);
-          return;
-        }
-      }
-
-      // If all checks pass, open modal
-      setIsResidencyModalOpen(true);
-
-    } catch (error) {
-      console.error("Validation error", error);
-      // Fallback: If endpoint fails (e.g. new user with no history), allow them to try
-      setIsResidencyModalOpen(true);
-    } finally {
-      setValidatingAccess(false);
-    }
+  // ✅ 2. OPEN MODAL DIRECTLY (Validation handled inside Modal)
+  const handleOpenResidencyModal = () => {
+    setIsResidencyModalOpen(true);
   };
 
   // 3. SHARE FUNCTIONALITY
