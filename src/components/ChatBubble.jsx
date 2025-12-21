@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaPaperPlane, FaExternalLinkAlt } from 'react-icons/fa';
 import { Sparkles, MessageSquare } from 'lucide-react'; // Better icons from Lucide
 import apiClient from '../api/axios';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 // ... (inside component)
 
@@ -13,6 +13,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 // ✅ 3. NEW: Updated link parser function
 const ParseAndLinkText = ({ text, onLinkClick }) => {
+  if (!text) return null;
+
   // Regex to find markdown links [text](url) or keywords
   const regex = /(\[.*?\]\(.*?\))|(\bAbout Us\b)|(\bContact Us\b)/g;
 
@@ -163,11 +165,45 @@ const ChatBubble = () => {
     },
   ]);
   const chatEndRef = useRef(null);
-  const navigate = useNavigate(); // ✅ 5. Get navigate hook
+  // ✅ 5. Get hooks (navigate + location)
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // ✅ New Context-Aware Popup State
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // ✅ Determine Context Message based on URL
+  useEffect(() => {
+    const path = location.pathname;
+    let msg = "";
+
+    if (path.includes('/properties/') && !path.includes('new')) {
+      msg = "💡 I can analyze this property's price for you. Just ask!";
+    } else if (path.includes('/neighbourhood/')) {
+      msg = "🌍 Want to know the real 'vibe' here? Ask for the Mtaa Reality.";
+    } else if (path.includes('/tools/cost-of-living')) {
+      msg = "💰 I can estimate specific bills for this area. Try me!";
+    } else if (path === '/' || path === '/home') {
+      msg = "👋 Hi! Access our Master Knowledge Ledger instantly. Ask anything!";
+    }
+
+    if (msg) {
+      setPopupMessage(msg);
+      // Show popup after 3s delay if chat is closed
+      const timer = setTimeout(() => {
+        if (!isOpen) setShowPopup(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowPopup(false);
+    }
+  }, [location.pathname, isOpen]);
+
 
   const sendMessage = async (messageText) => {
     if (isLoading) return;
@@ -220,6 +256,36 @@ const ChatBubble = () => {
 
   return (
     <>
+      {/* --- Context Popup Bubble (New) --- */}
+      <AnimatePresence>
+        {showPopup && !isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="fixed bottom-24 right-6 z-40 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-4 py-3 rounded-xl shadow-xl border border-blue-100 dark:border-blue-900 max-w-xs cursor-pointer group"
+            onClick={() => { setIsOpen(true); setShowPopup(false); }}
+          >
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white dark:bg-gray-800 border-b border-l border-blue-100 dark:border-blue-900 transform -rotate-45"></div>
+            <div className="flex items-start gap-3 relative z-10">
+              <div className="bg-blue-100 dark:bg-blue-900/50 p-1.5 rounded-full text-blue-600 dark:text-blue-400">
+                <Sparkles size={14} />
+              </div>
+              <div>
+                <p className="text-xs font-semibold leading-relaxed">{popupMessage}</p>
+                <p className="text-[10px] text-gray-400 mt-1 font-medium group-hover:text-blue-500 transition-colors">Click to ask AI</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowPopup(false); }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <FaTimes size={12} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- The Chat Window --- */}
       <AnimatePresence>
         {isOpen && (

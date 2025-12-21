@@ -2,29 +2,54 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/axios';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
+import ReactMarkdown from 'react-markdown';
 import { FaRobot, FaCheckCircle, FaExclamationCircle, FaInfoCircle, FaMapMarkedAlt, FaQuestionCircle } from 'react-icons/fa';
 import { Sparkles } from 'lucide-react';
 
 const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, propertyDescription, propertyPostedDate, propertyStatus, propertyType, propertyPrice, agentName, agentImage, agentContact }) => {
     const [analysis, setAnalysis] = useState(null);
+    const [contextStats, setContextStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchAnalysis = async () => {
+        const fetchAllData = async () => {
             try {
                 setLoading(true);
-                // Uses the cached endpoint (Backend handles the 7-day rule)
-                const { data } = await apiClient.get(`/ai/analysis/${propertyId}`);
-                setAnalysis(data);
+                // 1. Fetch Specific Property Analysis (Fallback/Base)
+                const analysisReq = apiClient.get(`/ai/analysis/${propertyId}`);
+
+                // 2. Fetch Global AI Context (Universal Data Layer)
+                const contextReq = apiClient.get('/ai/context');
+
+                const [analysisRes, contextRes] = await Promise.allSettled([analysisReq, contextReq]);
+
+                if (analysisRes.status === 'fulfilled') {
+                    setAnalysis(analysisRes.value.data);
+                }
+
+                if (contextRes.status === 'fulfilled' && contextRes.value.data && contextRes.value.data.neighborhoods) {
+                    // Fuzzy Match Location
+                    const neighborhoods = contextRes.value.data.neighborhoods;
+                    // Try exact match or partial include
+                    const locKey = Object.keys(neighborhoods).find(key =>
+                        propertyLocation.toLowerCase().includes(key.toLowerCase()) ||
+                        key.toLowerCase().includes(propertyLocation.toLowerCase())
+                    );
+
+                    if (locKey) {
+                        setContextStats(neighborhoods[locKey]);
+                    }
+                }
+
             } catch (error) {
-                console.error("Failed to load AI analysis:", error);
+                console.error("Failed to load AI data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (propertyId) fetchAnalysis();
-    }, [propertyId]);
+        if (propertyId) fetchAllData();
+    }, [propertyId, propertyLocation]);
 
     if (loading) return (
         <div className="animate-pulse flex flex-col space-y-3 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-8">
@@ -36,79 +61,57 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
 
     if (!analysis) return null;
 
-    // Decide Badge Color based on Verdict (Handle Unknown default)
+    // Decide Badge Color based on Verdict
     const getVerdictStyle = (verdict) => {
         switch (verdict) {
             case 'Good Deal': return { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', icon: <FaCheckCircle /> };
             case 'Premium': return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300', icon: <FaExclamationCircle /> };
             case 'Fair Price': return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', icon: <FaInfoCircle /> };
-            default: return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400', icon: <FaRobot /> }; // Fallback for Unknown
+            default: return { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400', icon: <FaRobot /> };
         }
     };
 
-    // Helper to render Markdown links safely
     const renderTextWithLinks = (text) => {
         if (!text) return "";
-        // Regex to find [Link Text](URL)
         const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
-
         return parts.map((part, index) => {
             const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
             if (match) {
-                return (
-                    <a
-                        key={index}
-                        href={match[2]}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                    >
-                        {match[1]}
-                    </a>
-                );
+                return <a key={index} href={match[2]} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold">{match[1]}</a>;
             }
-            return part; // Return normal text
+            return part;
         });
     };
 
     const style = getVerdictStyle(analysis.verdict);
 
     return (
-        <motion.div
-        // ... (Framer motion props)
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg overflow-hidden">
             <div className="p-6">
-                {/* 🔍 SEO Injection: Serve Data to Google */}
+                {/* SEO Injection */}
                 {analysis && (
                     <Helmet>
-                        <script type="application/ld+json">
-                            {JSON.stringify({
-                                "@context": "https://schema.org",
-                                "@type": "FAQPage",
-                                "mainEntity": analysis.faqs?.map(faq => ({
-                                    "@type": "Question",
-                                    "name": faq.question,
-                                    "acceptedAnswer": {
-                                        "@type": "Answer",
-                                        "text": faq.answer
-                                    }
-                                })) || []
-                            })}
-                        </script>
-                        {/* ✅ NEW: Full RealEstateListing Schema with Agent & Original Desc */}
+                        {/* 1. Primary Entity: Real Estate Listing */}
                         <script type="application/ld+json">
                             {JSON.stringify({
                                 "@context": "https://schema.org",
                                 "@type": "RealEstateListing",
                                 "name": propertyTitle || "Property Analysis",
-
-                                // GOOGLE PREFERS: Using accurate description. 
                                 "description": `${analysis.livingInsights || "AI Market Analysis provided."} \n\nOriginal Listing: ${propertyDescription ? propertyDescription.substring(0, 150) + "..." : ""}`,
-
                                 "datePosted": propertyPostedDate,
-
-                                "category": propertyType === 'land' ? 'Land' : 'Residential',
-
+                                "url": typeof window !== 'undefined' ? window.location.href : "",
+                                "image": Array.isArray(propertyId.images) ? propertyId.images[0] : null,
+                                "mainEntity": {
+                                    "@type": propertyType === 'land' ? 'Landform' : 'Accommodation',
+                                    "name": propertyTitle,
+                                    "description": propertyDescription,
+                                    "address": {
+                                        "@type": "PostalAddress",
+                                        "addressLocality": propertyLocation,
+                                        "addressCountry": "KE"
+                                    },
+                                    "numberOfRooms": propertyType !== 'land' ? 1 : undefined
+                                },
                                 "offers": {
                                     "@type": "Offer",
                                     "price": propertyPrice,
@@ -116,22 +119,6 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                                     "availability": propertyStatus === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
                                     "url": typeof window !== 'undefined' ? window.location.href : ""
                                 },
-
-                                "location": {
-                                    "@type": "Place",
-                                    "name": propertyLocation,
-                                    "address": {
-                                        "@type": "PostalAddress",
-                                        "addressLocality": propertyLocation,
-                                        "addressCountry": "KE"
-                                    }
-                                },
-                                "about": {
-                                    "@type": "Thing",
-                                    "name": "Market Analysis",
-                                    "description": analysis.comparisonText
-                                },
-                                // ✅ Inject Detailed Agent Data
                                 "author": {
                                     "@type": "RealEstateAgent",
                                     "name": agentName || "HouseHunt Agent",
@@ -140,6 +127,24 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                                 }
                             })}
                         </script>
+
+                        {/* 2. FAQ Schema: AI Key Insights (Rich Snippet Boost) */}
+                        {analysis.faqs && analysis.faqs.length > 0 && (
+                            <script type="application/ld+json">
+                                {JSON.stringify({
+                                    "@context": "https://schema.org",
+                                    "@type": "FAQPage",
+                                    "mainEntity": analysis.faqs.map(faq => ({
+                                        "@type": "Question",
+                                        "name": faq.question,
+                                        "acceptedAnswer": {
+                                            "@type": "Answer",
+                                            "text": faq.answer
+                                        }
+                                    }))
+                                })}
+                            </script>
+                        )}
                     </Helmet>
                 )}
 
@@ -162,21 +167,13 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                                 {analysis.verdict}
                             </span>
                         </div>
-
-                        {/* The Meter Bar */}
                         <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
                             <div className="w-1/3 h-full bg-green-400/30 border-r border-white/20"></div>
                             <div className="w-1/3 h-full bg-blue-400/30 border-r border-white/20"></div>
                             <div className="w-1/3 h-full bg-purple-400/30"></div>
-
-                            {/* Marker Indicator */}
                             <motion.div
                                 initial={{ left: '50%' }}
-                                animate={{
-                                    left: analysis.verdict === 'Good Deal' ? '16%' :
-                                        analysis.verdict === 'Fair Price' ? '50%' :
-                                            '84%'
-                                }}
+                                animate={{ left: analysis.verdict === 'Good Deal' ? '16%' : analysis.verdict === 'Fair Price' ? '50%' : '84%' }}
                                 transition={{ type: 'spring', stiffness: 100 }}
                                 className="absolute top-0 bottom-0 w-1 bg-gray-900 dark:bg-white shadow-[0_0_10px_rgba(0,0,0,0.5)] z-10"
                             />
@@ -186,23 +183,75 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                             <span>Fair Market</span>
                             <span>Premium</span>
                         </div>
-
-                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            {renderTextWithLinks(analysis.comparisonText)}
-                        </p>
+                        <div className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed prose dark:prose-invert max-w-none">
+                            <ReactMarkdown
+                                components={{
+                                    a: ({ node, ...props }) => (
+                                        <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold" />
+                                    )
+                                }}
+                            >
+                                {analysis.comparisonText}
+                            </ReactMarkdown>
+                        </div>
                     </div>
 
-                    {/* 🏙️ Living Insights */}
-                    {(analysis.livingInsights || analysis.neighborhoodVibe) && (
+                    {/* ✅ NEW: MTAA REALITY (Contextual Data) */}
+                    {contextStats && (
+                        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800">
+                            <h3 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <FaMapMarkedAlt /> Mtaa Reality (Resident Verified)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                {contextStats.vibe && (
+                                    <div className="col-span-2 space-y-1">
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Vibe</p>
+                                        <p className="font-medium text-gray-800 dark:text-gray-200">{contextStats.vibe}</p>
+                                    </div>
+                                )}
+                                {contextStats.internet && (
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Internet</p>
+                                        <div className="flex flex-wrap gap-1">
+                                            {contextStats.internet.map((p, i) => (
+                                                <span key={i} className="px-1.5 py-0.5 bg-white dark:bg-gray-800 rounded text-xs border border-gray-200 dark:border-gray-700">
+                                                    {p.provider}: {p.price}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                                {contextStats.commuterRoutes && (
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Commute</p>
+                                        <ul className="list-disc list-inside text-xs text-gray-800 dark:text-gray-200">
+                                            {contextStats.commuterRoutes.slice(0, 2).map((r, i) => <li key={i}>{r}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 🏙️ Living Insights (Standard) */}
+                    {(analysis.livingInsights || analysis.neighborhoodVibe) && !contextStats && (
                         <div className="flex gap-4 items-start">
                             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400">
                                 <FaMapMarkedAlt size={16} />
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Living Experience</h3>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                    {renderTextWithLinks(analysis.livingInsights || analysis.neighborhoodVibe)}
-                                </p>
+                                <div className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed prose dark:prose-invert max-w-none">
+                                    <ReactMarkdown
+                                        components={{
+                                            a: ({ node, ...props }) => (
+                                                <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold" />
+                                            )
+                                        }}
+                                    >
+                                        {analysis.livingInsights || analysis.neighborhoodVibe}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -225,9 +274,6 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                         </div>
                     )}
                 </div>
-
-                {/* Footer Removed */}
-
             </div>
         </motion.div>
     );
