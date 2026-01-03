@@ -3,19 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../api/axios';
-import { 
-  FaBuilding, 
-  FaMapMarkerAlt, 
-  FaPhone, 
-  FaWhatsapp, 
-  FaEnvelope, 
-  FaGlobe, 
-  FaImage, 
-  FaSave, 
+import {
+  FaBuilding,
+  FaMapMarkerAlt,
+  FaPhone,
+  FaWhatsapp,
+  FaEnvelope,
+  FaGlobe,
+  FaImage,
+  FaSave,
   FaArrowLeft,
   FaSpinner,
   FaCheckCircle,
-  FaSearchPlus, 
+  FaSearchPlus,
   // ✅ New Icons for Packages
   FaBoxOpen,
   FaPlus,
@@ -24,15 +24,15 @@ import {
 } from 'react-icons/fa';
 
 const SERVICE_TYPES = [
-  'Movers', 
-  'Internet', 
-  'Cleaning', 
-  'Interior Design', 
-  'Security', 
-  'Plumbing', 
-  'Solar', 
-  'Pest Control', 
-  'Painting', 
+  'Movers',
+  'Internet',
+  'Cleaning',
+  'Interior Design',
+  'Security',
+  'Plumbing',
+  'Solar',
+  'Pest Control',
+  'Painting',
   'Gardening',
   'Other'
 ];
@@ -65,15 +65,15 @@ const EditServiceProvider = () => {
     // serviceAreas handled by areaGroups state
     phoneNumber: '',
     whatsappNumber: '',
-    email: '', 
+    email: '',
     website: '',
-    description: '', 
-    content: '', 
+    description: '',
+    content: '',
     // ✅ NEW SEO FIELDS
     metaTitle: '',
     metaDescription: '',
     imageAltText: '', // ✅ ADDED: State for Image Alt Text
-    image: null 
+    image: null
   });
 
   useEffect(() => {
@@ -81,60 +81,60 @@ const EditServiceProvider = () => {
       try {
         let providerData;
         try {
-             // Try fetching by ID first
-             const res = await apiClient.get(`/service-providers/${id}`); 
-             providerData = res.data;
-        } catch(e) {
-             throw new Error("Could not fetch provider.");
+          // Try fetching by ID first
+          const res = await apiClient.get(`/service-providers/${id}`);
+          providerData = res.data;
+        } catch (e) {
+          throw new Error("Could not fetch provider.");
         }
 
         // If successful:
         setFormData({
-            companyName: providerData.title || '',
-            serviceType: providerData.serviceType || '',
-            location: providerData.location || '',
-            phoneNumber: providerData.phoneNumber || '',
-            whatsappNumber: providerData.whatsappNumber || '',
-            email: providerData.email || '',
-            website: providerData.website || '',
-            description: providerData.description || '',
-            content: providerData.content || '',
-            // ✅ POPULATE SEO DATA
-            metaTitle: providerData.metaTitle || '',
-            metaDescription: providerData.metaDescription || '',
-            imageAltText: providerData.image?.altText || '', // ✅ POPULATE ALT TEXT
-            image: null
+          companyName: providerData.title || '',
+          serviceType: providerData.serviceType || '',
+          location: providerData.location || '',
+          phoneNumber: providerData.phoneNumber || '',
+          whatsappNumber: providerData.whatsappNumber || '',
+          email: providerData.email || '',
+          website: providerData.website || '',
+          description: providerData.description || '',
+          content: providerData.content || '',
+          // ✅ POPULATE SEO DATA
+          metaTitle: providerData.metaTitle || '',
+          metaDescription: providerData.metaDescription || '',
+          imageAltText: providerData.image?.altText || '', // ✅ POPULATE ALT TEXT
+          image: null
         });
 
         // ✅ POPULATE PACKAGES
         if (providerData.packages && Array.isArray(providerData.packages)) {
-           setPackages(providerData.packages);
+          setPackages(providerData.packages);
         } else {
-           setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
+          setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
         }
 
         // ✅ POPULATE SERVICE AREAS
         if (providerData.serviceAreas && Array.isArray(providerData.serviceAreas) && providerData.serviceAreas.length > 0) {
-            // Check if it's the new structure (objects)
-            if (typeof providerData.serviceAreas[0] === 'object') {
-                const uiAreas = providerData.serviceAreas.map(area => ({
-                    county: area.county || '',
-                    subLocations: Array.isArray(area.subLocations) ? area.subLocations.join(', ') : ''
-                }));
-                setAreaGroups(uiAreas);
-            } else {
-                // Legacy: Array of strings
-                setAreaGroups([{ county: 'General', subLocations: providerData.serviceAreas.join(', ') }]);
-            }
+          // Check if it's the new structure (objects)
+          if (typeof providerData.serviceAreas[0] === 'object') {
+            const uiAreas = providerData.serviceAreas.map(area => ({
+              county: area.county || '',
+              subLocations: Array.isArray(area.subLocations) ? area.subLocations.join(', ') : ''
+            }));
+            setAreaGroups(uiAreas);
+          } else {
+            // Legacy: Array of strings
+            setAreaGroups([{ county: 'General', subLocations: providerData.serviceAreas.join(', ') }]);
+          }
         } else {
-            setAreaGroups([{ county: '', subLocations: '' }]);
+          setAreaGroups([{ county: '', subLocations: '' }]);
         }
 
         // Handle Custom Type
         if (!SERVICE_TYPES.includes(providerData.serviceType)) {
-            setIsCustomType(true);
-            setCustomTypeValue(providerData.serviceType);
-            setFormData(prev => ({ ...prev, serviceType: 'Other' }));
+          setIsCustomType(true);
+          setCustomTypeValue(providerData.serviceType);
+          setFormData(prev => ({ ...prev, serviceType: 'Other' }));
         }
 
         setImagePreview(providerData.imageUrl);
@@ -143,59 +143,59 @@ const EditServiceProvider = () => {
       } catch (err) {
         // Fallback fetch via list
         try {
-            const { data } = await apiClient.get('/service-providers?limit=1000');
-            const found = (data.providers || data).find(p => p._id === id);
-            if (found) {
-                setFormData({
-                    companyName: found.title || '',
-                    serviceType: found.serviceType || '',
-                    location: found.location || '',
-                    phoneNumber: found.phoneNumber || '',
-                    whatsappNumber: found.whatsappNumber || '',
-                    email: found.email || '',
-                    website: found.website || '',
-                    description: found.description || '',
-                    content: found.content || '',
-                    // ✅ POPULATE SEO DATA
-                    metaTitle: found.metaTitle || '',
-                    metaDescription: found.metaDescription || '',
-                    imageAltText: found.image?.altText || '', // ✅ POPULATE ALT TEXT
-                    image: null
-                });
-                
-                // ✅ POPULATE PACKAGES (Fallback)
-                if (found.packages && Array.isArray(found.packages)) {
-                  setPackages(found.packages);
-                } else {
-                  setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
-                }
+          const { data } = await apiClient.get('/service-providers?limit=1000');
+          const found = (data.providers || data).find(p => p._id === id);
+          if (found) {
+            setFormData({
+              companyName: found.title || '',
+              serviceType: found.serviceType || '',
+              location: found.location || '',
+              phoneNumber: found.phoneNumber || '',
+              whatsappNumber: found.whatsappNumber || '',
+              email: found.email || '',
+              website: found.website || '',
+              description: found.description || '',
+              content: found.content || '',
+              // ✅ POPULATE SEO DATA
+              metaTitle: found.metaTitle || '',
+              metaDescription: found.metaDescription || '',
+              imageAltText: found.image?.altText || '', // ✅ POPULATE ALT TEXT
+              image: null
+            });
 
-                // ✅ POPULATE SERVICE AREAS (Fallback)
-                if (found.serviceAreas && Array.isArray(found.serviceAreas) && found.serviceAreas.length > 0) {
-                    if (typeof found.serviceAreas[0] === 'object') {
-                        const uiAreas = found.serviceAreas.map(area => ({
-                            county: area.county || '',
-                            subLocations: Array.isArray(area.subLocations) ? area.subLocations.join(', ') : ''
-                        }));
-                        setAreaGroups(uiAreas);
-                    } else {
-                        setAreaGroups([{ county: 'General', subLocations: found.serviceAreas.join(', ') }]);
-                    }
-                } else {
-                    setAreaGroups([{ county: '', subLocations: '' }]);
-                }
-
-                if (!SERVICE_TYPES.includes(found.serviceType)) {
-                    setIsCustomType(true);
-                    setCustomTypeValue(found.serviceType);
-                    setFormData(prev => ({ ...prev, serviceType: 'Other' }));
-                }
-                setImagePreview(found.imageUrl);
-                setIsLoading(false);
-                return;
+            // ✅ POPULATE PACKAGES (Fallback)
+            if (found.packages && Array.isArray(found.packages)) {
+              setPackages(found.packages);
+            } else {
+              setPackages([{ name: '', type: 'Standard', description: '', price: '' }]);
             }
+
+            // ✅ POPULATE SERVICE AREAS (Fallback)
+            if (found.serviceAreas && Array.isArray(found.serviceAreas) && found.serviceAreas.length > 0) {
+              if (typeof found.serviceAreas[0] === 'object') {
+                const uiAreas = found.serviceAreas.map(area => ({
+                  county: area.county || '',
+                  subLocations: Array.isArray(area.subLocations) ? area.subLocations.join(', ') : ''
+                }));
+                setAreaGroups(uiAreas);
+              } else {
+                setAreaGroups([{ county: 'General', subLocations: found.serviceAreas.join(', ') }]);
+              }
+            } else {
+              setAreaGroups([{ county: '', subLocations: '' }]);
+            }
+
+            if (!SERVICE_TYPES.includes(found.serviceType)) {
+              setIsCustomType(true);
+              setCustomTypeValue(found.serviceType);
+              setFormData(prev => ({ ...prev, serviceType: 'Other' }));
+            }
+            setImagePreview(found.imageUrl);
+            setIsLoading(false);
+            return;
+          }
         } catch (e2) {
-            console.error(e2);
+          console.error(e2);
         }
         setError('Failed to load provider details.');
         setIsLoading(false);
@@ -268,11 +268,11 @@ const EditServiceProvider = () => {
     try {
       const data = new FormData();
       const finalServiceType = isCustomType ? customTypeValue : formData.serviceType;
-      
+
       data.append('title', formData.companyName);
       data.append('serviceType', finalServiceType);
       data.append('location', formData.location);
-      
+
       // ✅ PREPARE SERVICE AREAS (Structured)
       const formattedAreas = areaGroups
         .filter(g => g.county.trim() !== '') // Remove empty counties
@@ -281,7 +281,7 @@ const EditServiceProvider = () => {
           // Split string to array
           subLocations: g.subLocations.split(',').map(s => s.trim()).filter(s => s !== '')
         }));
-      
+
       if (formattedAreas.length > 0) {
         data.append('serviceAreas', JSON.stringify(formattedAreas));
       }
@@ -292,7 +292,7 @@ const EditServiceProvider = () => {
       data.append('website', formData.website);
       data.append('description', formData.description);
       data.append('content', formData.content);
-      
+
       // ✅ SEND PACKAGES (Filter out empty ones)
       const validPackages = packages.filter(p => p.name && p.price);
       data.append('packages', JSON.stringify(validPackages));
@@ -300,7 +300,7 @@ const EditServiceProvider = () => {
       // ✅ SEND SEO DATA
       data.append('metaTitle', formData.metaTitle);
       data.append('metaDescription', formData.metaDescription);
-      
+
       if (formData.image) {
         data.append('image', formData.image);
       }
@@ -313,17 +313,25 @@ const EditServiceProvider = () => {
         withCredentials: true
       });
 
-      setSuccess('Service Provider Updated Successfully!');
-      
-      // Redirect to the dynamic service page using the slug from the response
-      setTimeout(() => {
-        if (response.data && response.data.slug) {
-          navigate(`/services/${response.data.slug}`);
-        } else {
-          // Fallback if slug isn't returned for some reason
+      // ✅ MODIFIED: Check for pending approval
+      if (response.data.isPending) {
+        setSuccess('Update submitted for Master Admin approval.');
+        setTimeout(() => {
           navigate('/admin');
-        }
-      }, 1500); 
+        }, 2000);
+      } else {
+        setSuccess('Service Provider Updated Successfully!');
+
+        // Redirect to the dynamic service page using the slug from the response
+        setTimeout(() => {
+          if (response.data && response.data.slug) {
+            navigate(`/services/${response.data.slug}`);
+          } else {
+            // Fallback if slug isn't returned for some reason
+            navigate('/admin');
+          }
+        }, 1500);
+      }
 
     } catch (error) {
       console.error('Error updating provider:', error);
@@ -345,7 +353,7 @@ const EditServiceProvider = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6 md:p-12">
       <div className="max-w-4xl mx-auto">
-        
+
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -355,8 +363,8 @@ const EditServiceProvider = () => {
               Update details for {formData.companyName}.
             </p>
           </div>
-          <button 
-            onClick={() => navigate('/admin')} 
+          <button
+            onClick={() => navigate('/admin')}
             className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 transition"
           >
             <FaArrowLeft /> Back to Dashboard
@@ -364,7 +372,7 @@ const EditServiceProvider = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
-          
+
           {error && <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
           {success && <div className="mb-6 p-4 bg-green-100 text-green-700 rounded-lg flex items-center gap-2"><FaCheckCircle /> {success}</div>}
 
@@ -372,14 +380,14 @@ const EditServiceProvider = () => {
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2">
             Business Identity
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Company Name</label>
-              <input 
-                type="text" 
-                name="companyName" 
-                required 
+              <input
+                type="text"
+                name="companyName"
+                required
                 value={formData.companyName}
                 onChange={handleChange}
                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -388,9 +396,9 @@ const EditServiceProvider = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service Category</label>
-              <select 
-                name="serviceType" 
-                required 
+              <select
+                name="serviceType"
+                required
                 value={formData.serviceType}
                 onChange={handleChange}
                 className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -399,17 +407,17 @@ const EditServiceProvider = () => {
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
-              
+
               {isCustomType && (
                 <div className="mt-3">
-                   <label className="block text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">Custom Category Name</label>
-                   <input 
-                     type="text" 
-                     value={customTypeValue}
-                     onChange={(e) => setCustomTypeValue(e.target.value)}
-                     className="w-full p-3 rounded-lg border border-blue-300 bg-blue-50 dark:bg-gray-700 dark:border-blue-500 dark:text-white focus:ring-2 focus:ring-blue-500"
-                     required={isCustomType}
-                   />
+                  <label className="block text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">Custom Category Name</label>
+                  <input
+                    type="text"
+                    value={customTypeValue}
+                    onChange={(e) => setCustomTypeValue(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-blue-300 bg-blue-50 dark:bg-gray-700 dark:border-blue-500 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    required={isCustomType}
+                  />
                 </div>
               )}
             </div>
@@ -420,61 +428,61 @@ const EditServiceProvider = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">HQ Location</label>
               <div className="relative">
                 <FaMapMarkerAlt className="absolute left-3 top-3.5 text-gray-400" />
-                <input 
-                  type="text" 
-                  name="location" 
-                  required 
+                <input
+                  type="text"
+                  name="location"
+                  required
                   value={formData.location}
                   onChange={handleChange}
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-            
+
             {/* ✅ NEW SERVICE AREAS UI */}
             <div className="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Service Areas (Grouped by County)</label>
-                
-                {areaGroups.map((group, index) => (
-                  <div key={index} className="flex flex-col md:flex-row gap-3 mb-3 items-start">
-                    <div className="w-full md:w-1/3">
-                      <input 
-                        type="text" 
-                        placeholder="County (e.g. Nairobi)" 
-                        value={group.county}
-                        onChange={(e) => handleAreaChange(index, 'county', e.target.value)}
-                        className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div className="w-full md:w-2/3 relative">
-                      <input 
-                        type="text" 
-                        placeholder="Locations (comma separated: Kilimani, Westlands...)" 
-                        value={group.subLocations}
-                        onChange={(e) => handleAreaChange(index, 'subLocations', e.target.value)}
-                        className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
-                      />
-                      {areaGroups.length > 1 && (
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveCounty(index)}
-                          className="absolute right-[-30px] top-3.5 text-red-500 hover:text-red-700"
-                          title="Remove County Group"
-                        >
-                          <FaTrashAlt />
-                        </button>
-                      )}
-                    </div>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Service Areas (Grouped by County)</label>
+
+              {areaGroups.map((group, index) => (
+                <div key={index} className="flex flex-col md:flex-row gap-3 mb-3 items-start">
+                  <div className="w-full md:w-1/3">
+                    <input
+                      type="text"
+                      placeholder="County (e.g. Nairobi)"
+                      value={group.county}
+                      onChange={(e) => handleAreaChange(index, 'county', e.target.value)}
+                      className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                ))}
-                
-                <button 
-                  type="button" 
-                  onClick={handleAddCounty}
-                  className="text-sm text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 mt-2 hover:underline"
-                >
-                  <FaPlus /> Add Another County
-                </button>
+                  <div className="w-full md:w-2/3 relative">
+                    <input
+                      type="text"
+                      placeholder="Locations (comma separated: Kilimani, Westlands...)"
+                      value={group.subLocations}
+                      onChange={(e) => handleAreaChange(index, 'subLocations', e.target.value)}
+                      className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    />
+                    {areaGroups.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveCounty(index)}
+                        className="absolute right-[-30px] top-3.5 text-red-500 hover:text-red-700"
+                        title="Remove County Group"
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddCounty}
+                className="text-sm text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1 mt-2 hover:underline"
+              >
+                <FaPlus /> Add Another County
+              </button>
             </div>
           </div>
 
@@ -488,9 +496,9 @@ const EditServiceProvider = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
               <div className="relative">
                 <FaPhone className="absolute left-3 top-3.5 text-gray-400" />
-                <input 
-                  type="text" 
-                  name="phoneNumber" 
+                <input
+                  type="text"
+                  name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -502,9 +510,9 @@ const EditServiceProvider = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">WhatsApp Number</label>
               <div className="relative">
                 <FaWhatsapp className="absolute left-3 top-3.5 text-green-500" />
-                <input 
-                  type="text" 
-                  name="whatsappNumber" 
+                <input
+                  type="text"
+                  name="whatsappNumber"
                   value={formData.whatsappNumber}
                   onChange={handleChange}
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -514,26 +522,26 @@ const EditServiceProvider = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-             <div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Real Email</label>
               <div className="relative">
                 <FaEnvelope className="absolute left-3 top-3.5 text-gray-400" />
-                <input 
-                  type="email" 
-                  name="email" 
+                <input
+                  type="email"
+                  name="email"
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
-             <div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Website</label>
               <div className="relative">
                 <FaGlobe className="absolute left-3 top-3.5 text-gray-400" />
-                <input 
-                  type="url" 
-                  name="website" 
+                <input
+                  type="url"
+                  name="website"
                   value={formData.website}
                   onChange={handleChange}
                   className="w-full pl-10 p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -546,61 +554,61 @@ const EditServiceProvider = () => {
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 border-b border-gray-200 dark:border-gray-700 pb-2 mt-8 flex items-center gap-2">
             <FaBoxOpen className="text-orange-500" /> Service Packages
           </h2>
-          
+
           <div className="mb-6 space-y-4">
-             {packages.map((pkg, index) => (
-                <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 relative">
-                   <button 
-                     type="button" 
-                     onClick={() => handleRemovePackage(index)}
-                     className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-2"
-                     title="Remove Package"
-                   >
-                     <FaTrash size={14} />
-                   </button>
-                   
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Package Name</label>
-                         <input 
-                           type="text" 
-                           placeholder="e.g. Studio Move" 
-                           value={pkg.name}
-                           onChange={(e) => handlePackageChange(index, 'name', e.target.value)}
-                           className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                         />
-                      </div>
-                      <div>
-                         <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Price (e.g. KES 5,000)</label>
-                         <input 
-                           type="text" 
-                           placeholder="Price" 
-                           value={pkg.price}
-                           onChange={(e) => handlePackageChange(index, 'price', e.target.value)}
-                           className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                         />
-                      </div>
-                   </div>
-                   <div>
-                       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
-                       <textarea 
-                         rows="2"
-                         placeholder="What's included?"
-                         value={pkg.description}
-                         onChange={(e) => handlePackageChange(index, 'description', e.target.value)}
-                         className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                       />
-                   </div>
+            {packages.map((pkg, index) => (
+              <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 relative">
+                <button
+                  type="button"
+                  onClick={() => handleRemovePackage(index)}
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-2"
+                  title="Remove Package"
+                >
+                  <FaTrash size={14} />
+                </button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Package Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Studio Move"
+                      value={pkg.name}
+                      onChange={(e) => handlePackageChange(index, 'name', e.target.value)}
+                      className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Price (e.g. KES 5,000)</label>
+                    <input
+                      type="text"
+                      placeholder="Price"
+                      value={pkg.price}
+                      onChange={(e) => handlePackageChange(index, 'price', e.target.value)}
+                      className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
                 </div>
-             ))}
-             
-             <button 
-               type="button" 
-               onClick={handleAddPackage}
-               className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
-             >
-               <FaPlus /> Add Another Package
-             </button>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Description</label>
+                  <textarea
+                    rows="2"
+                    placeholder="What's included?"
+                    value={pkg.description}
+                    onChange={(e) => handlePackageChange(index, 'description', e.target.value)}
+                    className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  />
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleAddPackage}
+              className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-bold hover:underline"
+            >
+              <FaPlus /> Add Another Package
+            </button>
           </div>
 
           {/* Content */}
@@ -610,8 +618,8 @@ const EditServiceProvider = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Short Description</label>
-            <textarea 
-              name="description" 
+            <textarea
+              name="description"
               rows="3"
               value={formData.description}
               onChange={handleChange}
@@ -621,8 +629,8 @@ const EditServiceProvider = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Details (HTML Supported)</label>
-            <textarea 
-              name="content" 
+            <textarea
+              name="content"
               rows="6"
               value={formData.content}
               onChange={handleChange}
@@ -637,9 +645,9 @@ const EditServiceProvider = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Title (SEO Title)</label>
-            <input 
-              type="text" 
-              name="metaTitle" 
+            <input
+              type="text"
+              name="metaTitle"
               value={formData.metaTitle}
               onChange={handleChange}
               placeholder="e.g. Best Movers in Kilimani | Swift Movers Ltd"
@@ -650,8 +658,8 @@ const EditServiceProvider = () => {
 
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Meta Description (SEO Summary)</label>
-            <textarea 
-              name="metaDescription" 
+            <textarea
+              name="metaDescription"
               rows="2"
               value={formData.metaDescription}
               onChange={handleChange}
@@ -665,41 +673,41 @@ const EditServiceProvider = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image / Logo</label>
             <div className="flex items-center gap-4">
               <div className="relative w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border border-dashed border-gray-400 flex items-center justify-center group">
-                 {imagePreview ? (
-                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                 ) : (
-                   <FaImage className="text-gray-400 text-2xl" />
-                 )}
-                 <input 
-                   type="file" 
-                   accept="image/*"
-                   onChange={handleImageChange}
-                   className="absolute inset-0 opacity-0 cursor-pointer"
-                 />
+                {imagePreview ? (
+                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <FaImage className="text-gray-400 text-2xl" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
               </div>
               <div className="text-sm text-gray-500">
                 <p>Click to upload new logo.</p>
               </div>
             </div>
-            
+
             {/* ✅ ADDED: Image Alt Text Input */}
             <div className="mt-3">
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Image Alt Text (SEO Description)</label>
-                <input 
-                  type="text" 
-                  name="imageAltText" 
-                  value={formData.imageAltText}
-                  onChange={handleChange}
-                  placeholder="e.g. Swift Movers company logo with blue truck"
-                  className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                />
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Image Alt Text (SEO Description)</label>
+              <input
+                type="text"
+                name="imageAltText"
+                value={formData.imageAltText}
+                onChange={handleChange}
+                placeholder="e.g. Swift Movers company logo with blue truck"
+                className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
             </div>
           </div>
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isSaving}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-bold text-lg transition shadow-lg disabled:opacity-50"
             >

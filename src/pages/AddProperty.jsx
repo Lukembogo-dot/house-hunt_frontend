@@ -104,8 +104,8 @@ const AddProperty = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // ✅ Dynamic Limits: Admin/Subscribed = 10 images + Video. Others = 5 images + No Video.
-  const isPremium = user?.role === 'admin' || user?.isLeadSubscribed;
+  // ✅ Dynamic Limits: Admin/Moderator/Subscribed = 10 images + Video. Others = 5 images + No Video.
+  const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
   const MAX_IMAGES = isPremium ? 10 : 5;
 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');

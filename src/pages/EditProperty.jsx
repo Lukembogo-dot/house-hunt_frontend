@@ -75,7 +75,7 @@ const EditProperty = () => {
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
 
   // ✅ Dynamic Limits
-  const isPremium = user?.role === 'admin' || user?.isLeadSubscribed;
+  const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
   const MAX_IMAGES = isPremium ? 10 : 5;
 
   const [formData, setFormData] = useState({

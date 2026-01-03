@@ -6,30 +6,14 @@ import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import {
-  FaEdit,
-  FaTrash,
-  FaUserShield,
-  FaSitemap,
-  FaUserPlus,
-  FaTimes,
-  FaSpinner,
-  FaFlag,
-  FaMoneyBillWave,
-  FaClock,
-  FaLink,
-  FaImage,
-  FaQuestionCircle,
-  FaUserCheck,
-  FaPlusCircle,
-  FaSearch,
-  FaUserSecret,
-  FaListAlt,
-  FaCommentDots,
-  FaIdCard,
-  FaFistRaised
+  FaSpinner, FaMoneyBillWave, FaClock, FaSitemap, FaQuestionCircle, FaFlag,
+  FaUserCheck, FaUserShield, FaTrash, FaEdit, FaLink, FaGavel,
+  FaFistRaised, FaIdCard, FaUserSecret, FaListAlt, FaCommentDots, FaSearch, FaUserPlus, FaTimes, FaPlusCircle, FaImage
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import FailedQueries from '../components/FailedQueries';
 import PendingApprovals from '../components/PendingApprovals';
+import ModeratorRequests from '../components/admin/ModeratorRequests'; // ✅ IMPORTED
 
 import LeadManager from '../components/admin/LeadManager';
 import AssignAgentModal from '../components/admin/AssignAgentModal';
@@ -253,6 +237,14 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && user.role === 'moderator') {
+      navigate('/moderator/dashboard');
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -263,7 +255,11 @@ const AdminDashboard = () => {
     (u.isAccountClaimed === false || (u.email && u.email.includes('@househuntkenya.shadow')))
   );
 
-  const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin');
+  const adminProperties = properties.filter(p => !p.agent || (p.agent._id === user._id) || p.agent.role === 'admin' || p.agent.role === 'moderator');
+
+  // ✅ ROLE CHECK HELPER
+  const isMasterAdmin = user.role === 'admin';
+  const isModerator = user.role === 'moderator';
 
   // --- ACTION HANDLERS ---
 
@@ -434,6 +430,7 @@ const AdminDashboard = () => {
               <h3 className="text-xl font-semibold dark:text-gray-100">Pending Orders</h3>
               <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{pendingOrders}</p>
             </div>
+
             <div className="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
               <h3 className="text-xl font-semibold dark:text-gray-100">Total Properties</h3>
               <p className="text-3xl font-bold text-gray-800 dark:text-white mt-1">{properties.length}</p>
@@ -459,7 +456,7 @@ const AdminDashboard = () => {
           </div>
         </section>
 
-        {/* ✅ ANALYTICS WIDGET */}
+        {/* ✅ ANALYTICS WIDGET (Master Only) */}
         <AdminAnalyticsWidget />
 
         {/* ✅ NEW: MTAA BATTLE ARENA (Admin Controls) */}
@@ -646,6 +643,8 @@ const AdminDashboard = () => {
           </div>
         </section>
 
+        <ModeratorRequests /> {/* ✅ RENDERED */}
+
         <PendingApprovals />
 
         <section className="mb-12">
@@ -746,6 +745,8 @@ const AdminDashboard = () => {
                         <button onClick={() => openClaimModal(u)} className="text-green-600 dark:text-green-400 hover:text-green-800" title="Approve & Merge Claim"><FaUserCheck size={18} /></button>
                       )}
                       {u.role === 'user' && <button onClick={() => updateUserRole(u._id, 'agent')} className="text-purple-600 dark:text-purple-400 hover:text-purple-800" title="Promote to Agent"><FaUserShield /></button>}
+                      {u.role !== 'admin' && u.role !== 'moderator' && <button onClick={() => updateUserRole(u._id, 'moderator')} className="text-blue-600 dark:text-blue-400 hover:text-blue-800" title="Promote to HouseHunt Admin"><FaGavel /></button>}
+                      {u.role === 'moderator' && <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">(demote)</button>}
                       {u.role === 'agent' && <button onClick={() => updateUserRole(u._id, 'user')} className="text-gray-500 hover:text-gray-700" title="Demote to User">(demote)</button>}
                       {u._id !== user._id && <button onClick={() => deleteUser(u._id)} className="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400" title="Delete"><FaTrash /></button>}
                     </td>

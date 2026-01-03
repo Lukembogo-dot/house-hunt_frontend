@@ -153,8 +153,8 @@ const MyProfile = () => {
         </div>
       </div>
 
-      {/* --- SPECIAL: DASHBOARD ACCESS (ADMIN & AGENTS ONLY) --- */}
-      {(user.role === 'admin' || user.role === 'agent') && (
+      {/* --- SPECIAL: DASHBOARD ACCESS (ADMIN, AGENTS & MODERATORS ONLY) --- */}
+      {(user.role === 'admin' || user.role === 'agent' || user.role === 'moderator') && (
         <div className="bg-gradient-to-r from-blue-900 to-blue-700 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md p-6 mb-8 text-white relative overflow-hidden">
           {/* Decorative Overlay */}
           <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white opacity-5 rounded-full blur-xl"></div>
@@ -163,16 +163,16 @@ const MyProfile = () => {
             <div>
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <FaTachometerAlt className="text-yellow-400" />
-                {user.role === 'admin' ? 'Administrative Dashboard' : 'Agent Command Center'}
+                {user.role === 'admin' || user.role === 'moderator' ? 'Administrative Dashboard' : 'Agent Command Center'}
               </h3>
               <p className="text-blue-100 text-sm mt-1 max-w-lg">
-                {user.role === 'admin'
+                {user.role === 'admin' || user.role === 'moderator'
                   ? 'Access platform metrics, manage users, verify listings, and oversee system settings.'
                   : 'Manage your property listings, view leads, track performance metrics, and update your profile.'}
               </p>
             </div>
             <Link
-              to={user.role === 'admin' ? '/admin/dashboard' : '/agent/dashboard'}
+              to={user.role === 'admin' ? '/admin/dashboard' : user.role === 'moderator' ? '/moderator/dashboard' : '/agent/dashboard'}
               className="bg-white text-blue-900 font-bold px-6 py-3 rounded-lg hover:bg-gray-100 transition shadow-lg transform hover:scale-105 active:scale-95 whitespace-nowrap"
             >
               Access Dashboard

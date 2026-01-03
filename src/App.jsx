@@ -41,6 +41,7 @@ import AddServiceProvider from './pages/admin/AddServiceProvider';
 import EditServiceProvider from './pages/admin/EditServiceProvider';
 import Contact from './pages/Contact';
 import OurPlatform from './pages/OurPlatform';
+import ModeratorDashboard from './pages/ModeratorDashboard';
 import RatedPropertiesPage from './pages/RatedPropertiesPage';
 import DynamicSearchPage from './pages/DynamicSearchPage';
 import DynamicServiceSearch from './pages/DynamicServiceSearch';
@@ -355,6 +356,7 @@ function MainLayout() {
             <Route path="/services/local/:slug" element={<ServicePostDetails />} />
             <Route path="/admin/add-service-provider" element={<AddServiceProvider />} />
             <Route path="/admin/edit-service-provider/:id" element={<EditServiceProvider />} />
+            <Route path="/moderator/dashboard" element={<ModeratorDashboard />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/our-platform" element={<OurPlatform />} />
             <Route path="/living-feed" element={<LivingCommunityFeed />} />
