@@ -18,8 +18,16 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
     twitterDescription: '',
     canonicalUrl: '',
     focusKeyword: '',
+    videoTitle: '',
+    videoDescription: '',
+    videoThumbnail: '',
+    videoUploadDate: '',
+    breadCrumbTitle: '',
+    schemaDescription: '',
+    faqs: [],
+    richSchema: null,
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,7 +41,7 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
       try {
         setLoading(true);
         const encodedPath = encodeURIComponent(pagePath);
-        
+
         // ✅ FIX: Removed '/api' prefix because apiClient base URL already includes it
         // Request is now: [BaseURL]/seo/[path]
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
@@ -49,6 +57,16 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
           twitterDescription: data.twitterDescription || data.metaDescription || defaultDescription,
           canonicalUrl: data.canonicalUrl || '', // Get canonical from DB
           focusKeyword: data.focusKeyword || '', // Get focus keyword from DB
+
+          // ✅ Added Missing Schema Fields
+          videoTitle: data.videoTitle || '',
+          videoDescription: data.videoDescription || '',
+          videoThumbnail: data.videoThumbnail || '',
+          videoUploadDate: data.videoUploadDate || '',
+          breadCrumbTitle: data.breadCrumbTitle || '',
+          schemaDescription: data.schemaDescription || '',
+          faqs: data.faqs || [],
+          richSchema: data.richSchema || null, // Allow overriding rich schema directly
         });
 
       } catch (err) {
@@ -64,6 +82,14 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
           twitterDescription: defaultDescription,
           canonicalUrl: '',
           focusKeyword: '',
+          videoTitle: '',
+          videoDescription: '',
+          videoThumbnail: '',
+          videoUploadDate: '',
+          breadCrumbTitle: '',
+          schemaDescription: '',
+          faqs: [],
+          richSchema: null,
         });
       } finally {
         setLoading(false);
