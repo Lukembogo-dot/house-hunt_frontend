@@ -23,7 +23,10 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
     videoThumbnail: '',
     videoUploadDate: '',
     breadCrumbTitle: '',
+    breadCrumbTitle: '',
     schemaDescription: '',
+    schemaHeadline: '',
+    serpModifications: { featuredSnippet: '', keyTakeaways: [], qaPairs: [] }, // ✅ Added SERP Mods
     faqs: [],
     richSchema: null,
   });
@@ -64,7 +67,10 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
           videoThumbnail: data.videoThumbnail || '',
           videoUploadDate: data.videoUploadDate || '',
           breadCrumbTitle: data.breadCrumbTitle || '',
+          breadCrumbTitle: data.breadCrumbTitle || '',
           schemaDescription: data.schemaDescription || '',
+          schemaHeadline: data.schemaHeadline || '',
+          serpModifications: data.serpModifications || { featuredSnippet: '', keyTakeaways: [], qaPairs: [] }, // ✅ Added SERP Mods
           faqs: data.faqs || [],
           richSchema: data.richSchema || null, // Allow overriding rich schema directly
         });
@@ -87,7 +93,10 @@ const useSeoData = (pagePath, defaultTitle = 'HouseHunt Kenya', defaultDescripti
           videoThumbnail: '',
           videoUploadDate: '',
           breadCrumbTitle: '',
+          breadCrumbTitle: '',
           schemaDescription: '',
+          schemaHeadline: '',
+          serpModifications: { featuredSnippet: '', keyTakeaways: [], qaPairs: [] }, // ✅ Added SERP Mods
           faqs: [],
           richSchema: null,
         });

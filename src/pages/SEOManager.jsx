@@ -419,6 +419,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         focusKeyword: data.focusKeyword || '',
         canonicalUrl: data.canonicalUrl || '',
         schemaFocusKeyword: data.schemaFocusKeyword || '',
+        schemaHeadline: data.schemaHeadline || '', // ✅ Added Schema Headline
         schemaDescription: data.schemaDescription || '',
         breadCrumbTitle: data.breadCrumbTitle || '',
         faqs: data.faqs || [],
@@ -515,6 +516,82 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
   const handleSuggestionClick = (keywordName) => {
     setSeoData(prev => ({ ...prev, focusKeyword: keywordName }));
     setKeywordSuggestions([]);
+  };
+
+  // ✅ NEW: SERP Feature Handlers
+  const handleSerpChange = (e) => {
+    const { name, value } = e.target;
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        [name]: value
+      }
+    }));
+  };
+
+  const handleAddKeyTakeaway = () => {
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        keyTakeaways: [...(prev.serpModifications?.keyTakeaways || []), '']
+      }
+    }));
+  };
+
+  const handleRemoveKeyTakeaway = (index) => {
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        keyTakeaways: prev.serpModifications.keyTakeaways.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const handleKeyTakeawayChange = (index, value) => {
+    const newTakeaways = [...(seoData.serpModifications?.keyTakeaways || [])];
+    newTakeaways[index] = value;
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        keyTakeaways: newTakeaways
+      }
+    }));
+  };
+
+  const handleAddQa = () => {
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        qaPairs: [...(prev.serpModifications?.qaPairs || []), { question: '', answer: '' }]
+      }
+    }));
+  };
+
+  const handleRemoveQa = (index) => {
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        qaPairs: prev.serpModifications.qaPairs.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const handleQaChange = (index, field, value) => {
+    const newQa = [...(seoData.serpModifications?.qaPairs || [])];
+    newQa[index] = { ...newQa[index], [field]: value };
+    setSeoData(prev => ({
+      ...prev,
+      serpModifications: {
+        ...prev.serpModifications,
+        qaPairs: newQa
+      }
+    }));
   };
 
   // ✅ NEW: AI Video Description Generator
@@ -931,6 +1008,95 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
 
         <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
+            <FaStar className="mr-2 text-yellow-500" /> SERP Feature Optimizer (GEO)
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            Optimize for Google's **Featured Snippets** and **AI Overviews**. Content entered here is prioritized for direct answers.
+          </p>
+
+          {/* 1. Featured Snippet (Direct Answer) */}
+          <div className="mb-6">
+            <label htmlFor="featuredSnippet" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Featured Snippet Text (Definition / Direct Answer)
+            </label>
+            <textarea
+              id="featuredSnippet"
+              name="featuredSnippet"
+              value={seoData.serpModifications?.featuredSnippet || ''}
+              onChange={handleSerpChange}
+              rows={3}
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+              placeholder="A concise, direct answer to the user's query (40-60 words). E.g., 'To determine rental yield in Nairobi, calculate...'"
+            />
+          </div>
+
+          {/* 2. Key Takeaways (Listicle) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Key Takeaways (Listicle Format)
+            </label>
+            {seoData.serpModifications?.keyTakeaways?.map((item, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(e) => handleKeyTakeawayChange(index, e.target.value)}
+                  className="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-2"
+                  placeholder={`Takeaway #${index + 1}`}
+                />
+                <button type="button" onClick={() => handleRemoveKeyTakeaway(index)} className="text-red-500 hover:text-red-700 px-2">
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddKeyTakeaway}
+              className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-2"
+            >
+              <FaPlus className="mr-1" /> Add Key Takeaway
+            </button>
+          </div>
+
+          {/* 3. Q&A Pairs (AI Overview / FAQ) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Structured Q&A (For AI Overviews)
+            </label>
+            {seoData.serpModifications?.qaPairs?.map((qa, index) => (
+              <div key={index} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg mb-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between mb-2">
+                  <h4 className="text-xs font-bold uppercase text-gray-500">Q&A #{index + 1}</h4>
+                  <button type="button" onClick={() => handleRemoveQa(index)} className="text-red-500 hover:text-red-700 text-xs">Remove</button>
+                </div>
+                <input
+                  type="text"
+                  value={qa.question}
+                  onChange={(e) => handleQaChange(index, 'question', e.target.value)}
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm p-2 mb-2"
+                  placeholder="Question (e.g., Is Kilimani safe?)"
+                />
+                <textarea
+                  value={qa.answer}
+                  onChange={(e) => handleQaChange(index, 'answer', e.target.value)}
+                  rows={2}
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm p-2"
+                  placeholder="Direct Answer..."
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddQa}
+              className="text-sm text-blue-600 hover:text-blue-800 flex items-center mt-2"
+            >
+              <FaPlus className="mr-1" /> Add Q&A Pair
+            </button>
+          </div>
+        </section>
+
+        <section className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold mb-4 dark:text-gray-100 flex items-center">
             <FaSitemap className="mr-2 text-green-500" /> Schema (Structured Data)
           </h2>
           <div className="space-y-4">
@@ -946,6 +1112,21 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
                 placeholder="e.g., 'Bedsitter Rent Kilimani'"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="schemaHeadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Schema Headline (For Article/WebPage Schema)
+              </label>
+              <input
+                type="text"
+                id="schemaHeadline"
+                name="schemaHeadline"
+                value={seoData.schemaHeadline || ''}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="A compelling headline for structured data (Defaults to Meta Title)"
               />
             </div>
 

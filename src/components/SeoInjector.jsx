@@ -33,12 +33,17 @@ const SeoInjector = ({ seo, property }) => {
     const generateSchema = () => {
         const schema = [];
 
-        // 1. FAQ Schema (if FAQs exist)
-        if (seo.faqs && seo.faqs.length > 0) {
+        // 1. FAQ Schema (if FAQs exist OR SERP Q&A exist)
+        const allFaqs = [
+            ...(seo.faqs || []),
+            ...(seo.serpModifications?.qaPairs || [])
+        ];
+
+        if (allFaqs.length > 0) {
             schema.push({
                 "@context": "https://schema.org",
                 "@type": "FAQPage",
-                "mainEntity": seo.faqs.map(faq => ({
+                "mainEntity": allFaqs.filter(f => f.question && f.answer).map(faq => ({
                     "@type": "Question",
                     "name": faq.question,
                     "acceptedAnswer": {
@@ -54,9 +59,32 @@ const SeoInjector = ({ seo, property }) => {
             schema.push({
                 "@context": "https://schema.org",
                 "@type": "WebPage",
-                "name": seo.metaTitle,
+                "@type": "WebPage",
+                "name": seo.schemaHeadline || seo.metaTitle, // ✅ Use Schema Headline if available
+                "headline": seo.schemaHeadline || seo.metaTitle, // ✅ Added Explicit Headline
                 "description": seo.schemaDescription,
                 "url": canonical,
+                // ✅ SERP Feature: Key Takeaways or Snippet (using 'about' or 'text' property is risky for WebPage, using 'mainEntity' if Article? No, keep simple)
+                // We'll stick to 'about' for the snippet if present.
+                ...(seo.serpModifications?.featuredSnippet ? {
+                    "about": {
+                        "@type": "Thing",
+                        "name": seo.serpModifications.featuredSnippet
+                    }
+                } : {}),
+                // ✅ AUTHOR AUTHORITY (E-E-A-T)
+                ...(property?.agent ? {
+                    "author": {
+                        "@type": "Person",
+                        "name": property.agent.name,
+                        "url": `${siteUrl}/agent/${property.agent._id}`,
+                        "image": property.agent.profilePicture
+                    },
+                    "creator": {  // Redundant but helpful signal
+                        "@type": "Person",
+                        "name": property.agent.name
+                    }
+                } : {})
             });
         }
 

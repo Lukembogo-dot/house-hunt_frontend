@@ -66,7 +66,15 @@ const AgentSeoInjector = ({ seo, agent }) => {
       "addressCountry": "KE"
     },
     "sameAs": socialUrls.length > 0 ? socialUrls : undefined,
-    "priceRange": "$$-$$$$"
+    "priceRange": "$$-$$$$",
+    // ✅ E-E-A-T ENHANCEMENTS
+    "jobTitle": "Real Estate Agent",
+    "knowsAbout": ["Real Estate", "Property Management", "Nairobi Real Estate", "Kenya Housing Market"],
+    "email": agent.email,
+    "mainEntityOfPage": {
+      "@type": "ProfilePage",
+      "@id": window.location.href
+    }
   };
 
   return (
