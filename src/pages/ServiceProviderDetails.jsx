@@ -10,6 +10,7 @@ import {
   FaBoxOpen, FaGlobe, // ✅ Added FaGlobe
   FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 import { Helmet } from 'react-helmet-async';
 import useSeoData from '../hooks/useSeoData';
@@ -62,8 +63,21 @@ const ServiceProviderDetails = () => {
 
   const handleRestrictedAction = (url, target = '_blank', trackType, trackMetadata = {}) => {
     if (!user) {
-      // Redirect to login, pass current path to return after
-      navigate('/login', { state: { from: location.pathname } });
+      toast((t) => (
+        <div className="flex flex-col gap-2 items-start">
+          <span className="font-semibold text-gray-800">Login Required</span>
+          <span className="text-sm text-gray-600">You must be logged in to contact this provider.</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate('/login', { state: { from: location.pathname } });
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold w-full hover:bg-blue-700 transition"
+          >
+            Log In to Continue
+          </button>
+        </div>
+      ), { duration: 5000, icon: '🔒' });
       return;
     }
 

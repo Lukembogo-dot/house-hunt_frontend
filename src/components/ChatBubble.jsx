@@ -152,6 +152,10 @@ const ChatMessage = ({ message, onSuggestionClick, onLinkClick }) => {
 };
 
 
+import { useAuth } from '../context/AuthContext'; // ✅ Import Auth Hook
+
+// ... (existing imports)
+
 // --- Main ChatBubble Component ---
 const ChatBubble = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -160,14 +164,15 @@ const ChatBubble = () => {
   const [messages, setMessages] = useState([
     {
       role: 'ai',
-      text: "Hello! I'm your AI assistant. Ask me anything about our properties or locations, like 'Find me a house in Kilimani under 100k'.",
-      suggestions: ["Find properties for rent", "Find properties for sale", "About Us"]
+      text: "Jambo! I'm HouseHunt AI, your dedicated guide. Tell me what you're looking for, or ask for advice on neighborhoods and prices.",
+      suggestions: ["Help me find a rental", "Check land prices", "Neighborhood guides"]
     },
   ]);
   const chatEndRef = useRef(null);
-  // ✅ 5. Get hooks (navigate + location)
+
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth(); // ✅ Get User Context
 
   // ✅ New Context-Aware Popup State
   const [showPopup, setShowPopup] = useState(false);
@@ -177,13 +182,37 @@ const ChatBubble = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ✅ Determine Context Message based on URL
+  // ✅ Determine Context Message based on URL + Visual Proactive Logic
   useEffect(() => {
     const path = location.pathname;
     let msg = "";
 
+    const fetchVisualProactive = async () => {
+      const mainImage = document.querySelector('img[alt*="property"], .property-image') || document.querySelector('main img');
+      const imageUrl = mainImage?.src;
+      const title = document.querySelector('h1')?.innerText || "this property";
+      const locText = document.querySelector('p')?.innerText || "Nairobi";
+
+      if (imageUrl) {
+        try {
+          const { data } = await apiClient.post('/ai/visual-proactive', {
+            imageUrl,
+            title,
+            location: locText
+          });
+          if (data.message) {
+            setPopupMessage(data.message);
+            setTimeout(() => { if (!isOpen) setShowPopup(true); }, 2500);
+          }
+        } catch (e) {
+          console.warn("Visual Proactive Failed:", e);
+        }
+      }
+    };
+
     if (path.includes('/properties/') && !path.includes('new')) {
-      msg = "💡 I can analyze this property's price for you. Just ask!";
+      fetchVisualProactive();
+      msg = "👁️ Taking a look at this property for you...";
     } else if (path.includes('/neighbourhood/')) {
       msg = "🌍 Want to know the real 'vibe' here? Ask for the Mtaa Reality.";
     } else if (path.includes('/tools/cost-of-living')) {
@@ -192,21 +221,53 @@ const ChatBubble = () => {
       msg = "👋 Hi! Access our Master Knowledge Ledger instantly. Ask anything!";
     }
 
-    if (msg) {
+    if (msg && !path.includes('/properties/')) {
       setPopupMessage(msg);
-      // Show popup after 3s delay if chat is closed
       const timer = setTimeout(() => {
         if (!isOpen) setShowPopup(true);
       }, 3000);
       return () => clearTimeout(timer);
-    } else {
-      setShowPopup(false);
     }
   }, [location.pathname, isOpen]);
 
 
   const sendMessage = async (messageText) => {
     if (isLoading) return;
+
+    // --- RATE LIMIT CHECK ---
+    const RATE_LIMIT_KEY = `chat_limit_${user?._id}`;
+    const MAX_REQUESTS = 5;
+    const TIME_WINDOW = 8 * 60 * 60 * 1000; // 8 Hours
+
+    let isMasterAdmin = user?.role === 'admin';
+    // If specific "Master Admin" email is needed, add check here: user?.email === 'master@admin.com'
+
+    if (user && !isMasterAdmin) {
+      const storedData = JSON.parse(localStorage.getItem(RATE_LIMIT_KEY) || '{}');
+      const now = Date.now();
+
+      // Initialize or Reset if expired
+      if (!storedData.startTime || (now - storedData.startTime > TIME_WINDOW)) {
+        storedData.startTime = now;
+        storedData.count = 0;
+      }
+
+      if (storedData.count >= MAX_REQUESTS) {
+        setMessages(prev => [...prev, { role: 'user', text: messageText }]);
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            role: 'ai',
+            text: "🔒 You have reached your daily message limit (5 requests / 8 hrs). Please try again later or contact an agent directly.",
+            suggestions: ["Contact Agent", "Browse Listings"]
+          }]);
+        }, 500);
+        return; // 🛑 BLOCK REQUEST
+      }
+
+      // Increment Count
+      storedData.count += 1;
+      localStorage.setItem(RATE_LIMIT_KEY, JSON.stringify(storedData));
+    }
 
     const userMessage = { role: 'user', text: messageText };
     setMessages((prev) => [...prev, userMessage]);
@@ -248,15 +309,19 @@ const ChatBubble = () => {
     sendMessage(suggestionText);
   };
 
-  // ✅ 6. New handler to close chat when a link is clicked
   const handleLinkClick = () => {
     setIsOpen(false);
-    // Note: The <Link> component will handle the navigation
+  };
+
+  // ✅ AUTH REDIRECT HANDLER
+  const handleLoginRedirect = () => {
+    setIsOpen(false);
+    navigate('/login', { state: { from: location } });
   };
 
   return (
     <>
-      {/* --- Context Popup Bubble (New) --- */}
+      {/* --- Context Popup Bubble --- */}
       <AnimatePresence>
         {showPopup && !isOpen && (
           <motion.div
@@ -296,13 +361,14 @@ const ChatBubble = () => {
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="fixed bottom-24 right-4 sm:right-6 md:right-8 w-[calc(100%-2rem)] sm:w-96 h-[60vh] sm:h-[70vh] bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col z-50 overflow-hidden"
           >
-            {/* ... (Header is unchanged) ... */}
+            {/* Header */}
             <div
               className={`flex justify-between items-center p-4 border-b dark:border-gray-700 flex-shrink-0 transition-all ${isLoading ? 'border-b-blue-500 shadow-blue-500/20 shadow-lg' : ''
                 }`}
             >
-              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">
-                AI Assistant
+              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Sparkles className="text-blue-500" size={18} />
+                HouseHunt AI Guide
               </h3>
               <button
                 onClick={() => setIsOpen(false)}
@@ -312,58 +378,82 @@ const ChatBubble = () => {
               </button>
             </div>
 
-            {/* Messages Area */}
-            <div className="flex-grow p-4 overflow-y-auto">
-              {messages.map((msg, index) => (
-                <ChatMessage
-                  key={index}
-                  message={msg}
-                  onSuggestionClick={handleSuggestionClick}
-                  onLinkClick={handleLinkClick} // ✅ 7. Pass handler down
-                />
-              ))}
-              {isLoading && (
-                <div className="flex justify-start mb-3">
-                  <div className="px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-150"></div>
-                      <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-300"></div>
-                    </div>
-                  </div>
+            {/* ✅ AUTH LOCK SCREEN */}
+            {!user ? (
+              <div className="flex-grow flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-800/50">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
+                  <Sparkles size={32} />
                 </div>
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            {/* Input Form */}
-            <form
-              onSubmit={handleSubmit}
-              className="p-4 border-t dark:border-gray-700 flex-shrink-0"
-            >
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me about properties..."
-                  className="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                  disabled={isLoading}
-                />
+                <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Unlock AI Search
+                </h4>
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-8 leading-relaxed">
+                  Log in to search for properties using natural language, such as <span className="italic font-medium text-gray-800 dark:text-gray-200">"I want a one bedroom apartment under 15,000 KES"</span>.
+                </p>
                 <button
-                  type="submit"
-                  className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition active:scale-95 disabled:opacity-50"
-                  disabled={isLoading}
+                  onClick={handleLoginRedirect}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow-lg shadow-blue-500/30"
                 >
-                  <FaPaperPlane />
+                  Log In to Chat
                 </button>
+                <p className="mt-4 text-xs text-gray-500">
+                  Checking specific bills? Asking about safety? It's all here.
+                </p>
               </div>
-            </form>
+            ) : (
+              /* ✅ LOGGED IN: SHOW CHAT INTERFACE */
+              <>
+                <div className="flex-grow p-4 overflow-y-auto">
+                  {messages.map((msg, index) => (
+                    <ChatMessage
+                      key={index}
+                      message={msg}
+                      onSuggestionClick={handleSuggestionClick}
+                      onLinkClick={handleLinkClick}
+                    />
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start mb-3">
+                      <div className="px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-bl-none">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-150"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-300"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="p-4 border-t dark:border-gray-700 flex-shrink-0"
+                >
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Describe your dream home or ask a question..."
+                      className="w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="submit"
+                      className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition active:scale-95 disabled:opacity-50"
+                      disabled={isLoading}
+                    >
+                      <FaPaperPlane />
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* --- The Floating Button (Updated) --- */}
       <motion.button
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}

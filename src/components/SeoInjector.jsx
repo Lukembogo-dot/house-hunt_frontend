@@ -59,7 +59,6 @@ const SeoInjector = ({ seo, property }) => {
             schema.push({
                 "@context": "https://schema.org",
                 "@type": "WebPage",
-                "@type": "WebPage",
                 "name": seo.schemaHeadline || seo.metaTitle, // ✅ Use Schema Headline if available
                 "headline": seo.schemaHeadline || seo.metaTitle, // ✅ Added Explicit Headline
                 "description": seo.schemaDescription,

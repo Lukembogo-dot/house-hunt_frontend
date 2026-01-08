@@ -166,7 +166,7 @@ function MainLayout() {
       <SeoInjector seo={homeSeo} />
 
       {/* --- HERO SECTION: COMPACT & ALIGNED --- */}
-      <section id="home" className="pt-18 pb-8 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden will-change-transform">
+      <section id="home" className="pt-12 pb-4 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden will-change-transform">
         <div className="absolute inset-0 bg-grid-slate-200/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] [mask-image:linear-gradient(to_bottom,transparent,black)] pointer-events-none"></div>
 
         <div className="max-w-5xl mx-auto relative z-10">
@@ -192,7 +192,7 @@ function MainLayout() {
 
       <main id="properties" className="flex-grow bg-gray-50 dark:bg-gray-900 relative z-20">
         {/* Compact Search Bar Spacing */}
-        <section className="px-6 pb-6">
+        <section className="px-6 pb-2">
           <GlobalSearchBar />
         </section>
 
@@ -206,26 +206,26 @@ function MainLayout() {
         ) : (
           <>
             {/* Reduced vertical padding between components */}
-            <div className="py-4">
+            <div className="py-2">
               <TopAgents />
             </div>
 
-            <div className="py-4">
+            <div className="py-2">
               <TrendingMtaaScores />
             </div>
 
-            <div className="py-4">
+            <div className="py-2">
               <FeaturedProperties />
             </div>
 
             {/* --- HOUSE HUNT REQUEST (COMPACT) --- */}
-            <section className="py-12 px-6 bg-white dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
+            <section className="py-6 px-6 bg-white dark:bg-gray-800 border-y border-gray-100 dark:border-gray-700">
               <div className="max-w-7xl mx-auto flex flex-col items-center">
-                <div className="text-center mb-8 max-w-3xl">
-                  <div className="inline-block p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full mb-4 text-3xl shadow-sm">
+                <div className="text-center mb-4 max-w-3xl">
+                  <div className="inline-block p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full mb-2 text-3xl shadow-sm">
                     <FaSearchLocation />
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-black mb-3 tracking-tight text-gray-900 dark:text-white">
+                  <h2 className="text-3xl md:text-4xl font-black mb-1 tracking-tight text-gray-900 dark:text-white">
                     Hit a Wall? Let Technology Do the Heavy Lifting.
                   </h2>
                   <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
@@ -242,16 +242,16 @@ function MainLayout() {
 
             {/* --- DECISION TOOLS (COMPACT) --- */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
-              <section className="py-12 px-6">
+              <section className="py-6 px-6">
                 <div className="max-w-6xl mx-auto">
-                  <div className="text-center mb-8">
+                  <div className="text-center mb-4">
                     <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-xs mb-2 block">Data-Driven Moves</span>
                     <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white">Make Smarter Decisions</h2>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 gap-4">
                     {isQuizEnabled && (
-                      <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.01] transition duration-300 group">
+                      <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 text-center hover:scale-[1.01] transition duration-300 group">
                         <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl group-hover:rotate-12 transition-transform">
                           <FaLightbulb />
                         </div>
@@ -285,9 +285,9 @@ function MainLayout() {
             )}
 
             {/* --- NEIGHBOURHOOD WATCH (COMPACT) --- */}
-            <section className="py-12 px-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+            <section className="py-6 px-6 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
               <div className="max-w-6xl mx-auto">
-                <div className="flex flex-col md:flex-row items-end justify-between mb-8 gap-6">
+                <div className="flex flex-col md:flex-row items-end justify-between mb-4 gap-6">
                   <div className="max-w-2xl">
                     <span className="text-red-500 dark:text-red-400 font-bold uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Live Updates
@@ -311,8 +311,8 @@ function MainLayout() {
             </section>
 
             {/* --- FAQ SECTION (COMPACT) --- */}
-            <div className="py-12 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-              <div className="text-center mb-8">
+            <div className="py-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+              <div className="text-center mb-4">
                 <FaQuestionCircle className="text-3xl text-gray-300 mx-auto mb-3" />
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Curious Minds Ask...</h2>
               </div>

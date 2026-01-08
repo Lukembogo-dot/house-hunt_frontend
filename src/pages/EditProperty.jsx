@@ -639,7 +639,7 @@ const EditProperty = () => {
                 value={formData.bedrooms}
                 onChange={handleChange}
                 min={0}
-                placeholder="e.g., 3"
+                placeholder="e.g., 3 (0 for Bedsitter)"
                 required={false}
               />
             )}

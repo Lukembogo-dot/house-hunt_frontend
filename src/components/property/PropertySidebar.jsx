@@ -11,7 +11,9 @@ import {
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import InvestmentYieldWidget from './InvestmentYieldWidget';
+import RentalMoveInWidget from './RentalMoveInWidget';
 import useAnalytics from '../../hooks/useAnalytics';
+import toast from 'react-hot-toast';
 
 // --- EXTERNAL CONTACT MODAL (For Shadow Agents) ---
 const ExternalContactModal = ({ show, onClose, agentDetails }) => {
@@ -198,7 +200,21 @@ const PropertySidebar = ({
   // --- Auth Guard Helper ---
   const handleRestrictedAction = (actionCallback) => {
     if (!user) {
-      navigate('/login', { state: { from: location } });
+      toast((t) => (
+        <div className="flex flex-col gap-2 items-start">
+          <span className="font-semibold text-gray-800">Login Required</span>
+          <span className="text-sm text-gray-600">You must be logged in to contact agents or view details.</span>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              navigate('/login', { state: { from: location } });
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold w-full hover:bg-blue-700 transition"
+          >
+            Log In to Continue
+          </button>
+        </div>
+      ), { duration: 5000, icon: '🔒' });
       return;
     }
     if (actionCallback) actionCallback();
@@ -304,7 +320,12 @@ const PropertySidebar = ({
 
       <div className="text-gray-600 dark:text-gray-300 space-y-4 mb-6 text-sm leading-relaxed">
         <p>
-          This <strong>{property.status}</strong> unit is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>.
+          {property.status === 'available' ? (
+            <span className="text-green-600 font-bold">This unit is available</span>
+          ) : (
+            <span className="text-red-600 font-bold">Full/Sold</span>
+          )}
+          {' '}and is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>.
           It was posted <strong>{formatDistanceToNow(new Date(property.createdAt))} ago</strong>.
         </p>
 
@@ -322,7 +343,7 @@ const PropertySidebar = ({
           ) : (
             <div className="flex items-center gap-2">
               <FaBed className="text-blue-500" />
-              <span>Features <strong className="text-gray-900 dark:text-white">{property.bedrooms} Bedroom(s)</strong></span>
+              <span>Features <strong className="text-gray-900 dark:text-white">{Number(property.bedrooms) === 0 ? "Bedsitter Unit" : `${property.bedrooms} Bedroom(s)`}</strong></span>
             </div>
           )}
 
@@ -338,6 +359,13 @@ const PropertySidebar = ({
       {property.listingType === 'sale' && (
         <div className="mb-6">
           <InvestmentYieldWidget property={property} user={user} />
+        </div>
+      )}
+
+      {/* ✅ NEW: Move-In Estimator (Only for Rentals) */}
+      {property.listingType === 'rent' && (
+        <div className="mb-6">
+          <RentalMoveInWidget property={property} />
         </div>
       )}
 

@@ -208,7 +208,7 @@ export default function PropertyCard({ property }) {
             {/* Beds Badge */}
             {property.type !== 'land' && (
               <span className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-3 py-1 rounded-full font-semibold z-20 border border-white/20">
-                {property.bedrooms} Bed{property.bedrooms !== 1 ? 's' : ''}
+                {Number(property.bedrooms) === 0 ? "Bedsitter" : `${property.bedrooms} Bed${property.bedrooms !== 1 ? 's' : ''}`}
               </span>
             )}
 
