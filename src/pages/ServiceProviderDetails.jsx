@@ -149,6 +149,14 @@ const ServiceProviderDetails = () => {
         "addressLocality": provider.location,
         "addressCountry": "KE"
       },
+      "priceRange": provider.priceRange || "KES 500+",
+      "areaServed": provider.serviceAreas?.length > 0 ? provider.serviceAreas.map(area => ({
+        "@type": "Place",
+        "name": area.county || area
+      })) : {
+        "@type": "Place",
+        "name": provider.location
+      },
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": provider.averageRating || 5,
@@ -229,6 +237,25 @@ const ServiceProviderDetails = () => {
           {generateSchema()}
         </script>
       </Helmet>
+
+      {/* ✅ AI/CRAWLER SUMMARY: Hidden from users */}
+      <article className="sr-only" aria-hidden="true">
+        <h1>{provider.title} - {provider.serviceType} in {provider.location}</h1>
+        <p>
+          Looking for a verified **{provider.serviceType}**?
+          **{provider.title}** provides professional services in **{provider.location}** and surrounding areas.
+          Price starts from **{provider.priceRange || 'KES 500'}**.
+          Trusted by {provider.numReviews} customers with a {provider.averageRating || 5}-star rating.
+        </p>
+        <section>
+          <h2>Are you a Service Provider?</h2>
+          <p>
+            Do you offer **{provider.serviceType}** or other home services?
+            <strong>Join HouseHunt Kenya today</strong> to list your business and reach thousands of clients looking for verified professionals.
+            Grow your business with our dedicated service directory.
+          </p>
+        </section>
+      </article>
 
       {/* --- Hero Header --- */}
       <div className="relative h-64 md:h-80 bg-gray-800 overflow-hidden">

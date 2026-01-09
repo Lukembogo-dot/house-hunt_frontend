@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+
+# Host
+Host: https://www.househuntkenya.co.ke
+
+# Sitemaps
+Sitemap: https://www.househuntkenya.co.ke/sitemap.xml
