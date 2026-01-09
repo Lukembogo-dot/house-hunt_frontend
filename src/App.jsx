@@ -165,6 +165,47 @@ function MainLayout() {
     <>
       <SeoInjector seo={homeSeo} />
 
+      {/* ✅ LANDING PAGE SEO: WebSite Schema (Sitelinks Search Box) */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "HouseHunt Kenya",
+            "url": "https://www.househuntkenya.co.ke",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.househuntkenya.co.ke/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          })}
+        </script>
+      </Helmet>
+
+      {/* ✅ AI/CRAWLER SUMMARY: Hidden from users, visible to bots */}
+      <article className="sr-only" aria-hidden="true">
+        <h1>HouseHunt Kenya: Rentals, Sales, and Neighborhood Reviews</h1>
+        <p>
+          Welcome to **HouseHunt Kenya**, the most comprehensive real estate platform in Nairobi and beyond.
+          We connect you with **rental properties**, **houses for sale**, and **land** while providing authentic **Mtaa Scores** (neighborhood reviews) from the people who live there.
+        </p>
+        <section>
+          <h2>For Agents & Agencies</h2>
+          <p>
+            <strong>Real estate agencies, property management firms, and independent real estate agents are free to list with us and join our community.</strong>
+            Create your profile today to reach thousands of verified house hunters.
+          </p>
+        </section>
+        <section>
+          <h2>What We Offer</h2>
+          <ul>
+            <li><strong>Rentals:</strong> Find apartments, bedsitters, and single rooms in areas like Kilimani, Westlands, Roysambu, and Ruiru.</li>
+            <li><strong>Sales:</strong> Explore prime land, plots, and family homes for sale.</li>
+            <li><strong>Living Community:</strong> Read real reviews about water consistency, security, and transport fares in every Mtaa.</li>
+          </ul>
+        </section>
+      </article>
+
       {/* --- HERO SECTION: COMPACT & ALIGNED --- */}
       <section id="home" className="pt-12 pb-4 px-6 text-center bg-gray-50 dark:bg-gray-900 relative overflow-hidden will-change-transform">
         <div className="absolute inset-0 bg-grid-slate-200/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] [mask-image:linear-gradient(to_bottom,transparent,black)] pointer-events-none"></div>

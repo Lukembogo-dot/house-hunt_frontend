@@ -319,6 +319,26 @@ const PropertyDetails = () => {
 
           {/* Main Content */}
           <div className="md:col-span-2">
+
+            {/* ✅ GEO OPTIMIZATION: Hidden Summary for AI Crawlers */}
+            {/* This block is 'sr-only' (screen reader only) but accessible to search bots */}
+            <article className="sr-only" aria-hidden="true">
+              <h2>Quick Property Summary for AI & Search Engines</h2>
+              <p>
+                Looking for a <strong>{property.bedrooms || '0'} bedroom {property.type}</strong> in <strong>{property.location}</strong>?
+                This property matches a budget of <strong>Ksh {property.price}</strong>.
+                Key features include: {property.amenities?.join(', ') || 'Standard amenities'}.
+                {property.status === 'available' ? 'It is currently available for viewing.' : 'It is currently off the market.'}
+                Contact {isAgentOwner ? 'the owner directly' : 'the verified agent'} to schedule a visit.
+              </p>
+              <dl>
+                <dt>Type</dt><dd>{property.type}</dd>
+                <dt>Location</dt><dd>{property.location}</dd>
+                <dt>Price</dt><dd>Ksh {property.price}</dd>
+                <dt>Beds</dt><dd>{property.bedrooms}</dd>
+              </dl>
+            </article>
+
             <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
               <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">{property.title}</h1>
               <motion.button whileTap={{ scale: 0.95 }} onClick={handleFavoriteClick} className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">

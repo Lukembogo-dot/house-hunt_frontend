@@ -164,6 +164,61 @@ const SeoInjector = ({ seo, property }) => {
                 }
             };
             schema.push(videoSchema);
+            schema.push(videoSchema);
+        }
+
+        // ✅ 5. REAL ESTATE LISTING SCHEMA (The "Gold Standard" for Property SEO)
+        if (property) {
+            const listingSchema = {
+                "@context": "https://schema.org",
+                "@type": ["RealEstateListing", "Product"], // Dual typing for maximum visibility
+                "name": property.title,
+                "description": property.description,
+                "image": (property.images && property.images.length > 0)
+                    ? property.images.map(img => typeof img === 'string' ? img : img.url)
+                    : ["https://www.househuntkenya.co.ke/assets/logo.png"],
+                "url": canonical,
+                "datePosted": property.createdAt,
+                "offers": {
+                    "@type": "Offer",
+                    "price": property.price,
+                    "priceCurrency": "KES",
+                    "priceSpecification": {
+                        "@type": "UnitPriceSpecification",
+                        "price": property.price,
+                        "priceCurrency": "KES",
+                        "unitCode": property.listingType === 'rent' ? "MON" : "C62" // MON=Month, C62=One time
+                    },
+                    "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                    "validFrom": property.createdAt,
+                    "url": canonical
+                },
+                "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": property.location,
+                    "addressCountry": "KE"
+                },
+                // Specific Real Estate Fields
+                ...(property.bedrooms ? { "numberOfRooms": property.bedrooms } : {}),
+                ...(property.bedrooms ? { "numberOfBedrooms": property.bedrooms } : {}),
+                // Geo Coordinates for Map Pack
+                ...(property.coordinates && property.coordinates.lat ? {
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": property.coordinates.lat,
+                        "longitude": property.coordinates.lng
+                    }
+                } : {}),
+                // Amenities as text features
+                ...(property.amenities && property.amenities.length > 0 ? {
+                    "amenityFeature": property.amenities.map(amenity => ({
+                        "@type": "LocationFeatureSpecification",
+                        "name": amenity,
+                        "value": true
+                    }))
+                } : {})
+            };
+            schema.push(listingSchema);
         }
 
         return schema;

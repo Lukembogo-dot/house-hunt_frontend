@@ -6,63 +6,103 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
+import { Helmet } from 'react-helmet-async';
 
 // Define a re-usable animation for cards
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: (i) => ({ 
-    opacity: 1, 
+  visible: (i) => ({
+    opacity: 1,
     y: 0,
-    transition: { 
-      duration: 0.5, 
-      delay: i * 0.1, 
-      ease: "easeOut" 
+    transition: {
+      duration: 0.5,
+      delay: i * 0.1,
+      ease: "easeOut"
     }
   })
 };
 
 const Rent = () => {
   const seo = useSeoData(
-    '/rent', 
-    'Affordable Rental Homes & Apartments in Kenya | HouseHunt', 
-    'Browse thousands of verified listings for rental properties across Nairobi, Mombasa, and other major Kenyan towns. Find your next apartment or house for rent today.' 
+    '/rent',
+    'Affordable Rental Homes & Apartments in Kenya | HouseHunt',
+    'Browse thousands of verified listings for rental properties across Nairobi, Mombasa, and other major Kenyan towns. Find your next apartment or house for rent today.'
   );
 
   // ✅ State to track IDs shown in Trending to avoid duplicates
   const [trendingIds, setTrendingIds] = useState([]);
-  
+
   return (
     <>
       <SeoInjector seo={seo} />
-      
+
+      {/* ✅ RENT PAGE SPECIFIC SCHEMA */}
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "Properties for Rent in Kenya",
+            "description": "Browse thousands of verified rental listings including apartments, bungalows, and bedsitters.",
+            "url": "https://www.househuntkenya.co.ke/rent",
+            "about": {
+              "@type": "Thing",
+              "name": "Rental Properties",
+              "description": "Residential and commercial properties available for lease."
+            },
+            "audience": [
+              { "@type": "Audience", "audienceType": "Tenants" },
+              { "@type": "Audience", "audienceType": "Property Agents" }
+            ]
+          })}
+        </script>
+      </Helmet>
+
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col font-inter">
-        
+
+        {/* ✅ AI/CRAWLER SUMMARY: Hidden from users */}
+        <article className="sr-only" aria-hidden="true">
+          <h1>Rent Verified Properties in Kenya</h1>
+          <p>
+            Looking for a house to rent? HouseHunt Kenya offers the widest selection of **apartments**, **bedsits**, and **family homes** in Nairobi, Kiambu, and Mombasa.
+            Our verified listings ensure you find a home that fits your budget.
+          </p>
+          <section>
+            <h2>List Your Property</h2>
+            <p>
+              Are you a **landlord**, **property manager**, or **real estate agent**?
+              <strong>List your rental property with us for free</strong> to reach thousands of tenants.
+              We provide the best tools to manage inquiries and fill vacancies quickly.
+            </p>
+          </section>
+        </article>
+
         {/* HERO / TITLE SECTION */}
         <section className="pt-20 pb-10 px-6 text-center">
-           <motion.h2 
-              className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Properties for Rent in Kenya
-            </motion.h2>
-            <motion.p 
-              className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Find your next home from our verified list of apartments, bungalows, and shared spaces.
-            </motion.p>
+          <motion.h1
+            className="text-4xl font-bold text-gray-800 dark:text-gray-100 mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            Properties for Rent in Kenya
+          </motion.h1>
+          <motion.p
+            className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            Find your next home from our verified list of apartments, bungalows, and shared spaces.
+          </motion.p>
         </section>
 
         {/* ✅ 1. TRENDING RENTALS (Top 12) */}
         <div className="mb-10">
-           <TrendingProperties 
-             listingType="rent" 
-             onLoad={(ids) => setTrendingIds(ids)} 
-           />
+          <TrendingProperties
+            listingType="rent"
+            onLoad={(ids) => setTrendingIds(ids)}
+          />
         </div>
 
         {/* DIVIDER */}
@@ -77,8 +117,8 @@ const Rent = () => {
         {/* ✅ 2. EXPLORE MORE LISTINGS (Excludes Trending) */}
         <section className="pb-16 px-6 bg-gray-100 dark:bg-gray-900 pt-10">
           <div className="max-w-6xl mx-auto">
-            <PropertyList 
-              defaultFilter={{ listingType: 'rent' }} 
+            <PropertyList
+              defaultFilter={{ listingType: 'rent' }}
               excludedIds={trendingIds} // Prevents duplicates
               showTitle={false}
             />
@@ -97,9 +137,9 @@ const Rent = () => {
               retreat, we connect you to trusted landlords and secure listings.
             </p>
             <div className="grid md:grid-cols-3 gap-8">
-              <motion.div 
+              <motion.div
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={1} 
+                custom={1}
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -113,9 +153,9 @@ const Rent = () => {
                   confidence and avoid scams.
                 </p>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={2} 
+                custom={2}
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
@@ -129,9 +169,9 @@ const Rent = () => {
                   major towns and cities.
                 </p>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="p-6 border dark:border-gray-700 rounded-xl shadow-md dark:shadow-none hover:shadow-lg transition"
-                custom={3} 
+                custom={3}
                 variants={cardVariants}
                 initial="hidden"
                 whileInView="visible"
