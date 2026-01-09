@@ -47,10 +47,14 @@ const StatBox = ({ icon: Icon, value, label, colorClass }) => (
 );
 
 // --- SEO COMPONENT ---
-const AgentSeoInjector = ({ seo, agent }) => {
+const AgentSeoInjector = ({ seo, agent, properties = [] }) => {
   const socialUrls = [];
   if (agent.facebookUrl) socialUrls.push(agent.facebookUrl);
   if (agent.twitterUrl) socialUrls.push(agent.twitterUrl);
+
+  // Derive extracted locations from properties
+  const locations = [...new Set(properties.map(p => p.location).filter(Boolean))].slice(0, 5); // Top 5 locations
+  const primaryLocation = agent.location || locations[0] || "Nairobi";
 
   const agentSchema = {
     "@context": "https://schema.org",
@@ -58,18 +62,26 @@ const AgentSeoInjector = ({ seo, agent }) => {
     "name": agent.name,
     "url": window.location.href,
     "image": agent.profilePicture,
-    "description": agent.seo?.schemaDescription || seo.metaDescription || agent.about?.substring(0, 160) || `Professional real estate agent ${agent.name} based in Kenya.`,
+    "description": agent.seo?.schemaDescription || seo.metaDescription || agent.about?.substring(0, 160) || `Professional real estate agent ${agent.name} specializing in properties in ${primaryLocation}.`,
     "telephone": agent.voiceCallNumber,
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": agent.location || "Nairobi",
+      "addressLocality": primaryLocation,
       "addressCountry": "KE"
+    },
+    // ✅ DYNAMIC AREA SERVED FROM LISTINGS
+    "areaServed": locations.length > 0 ? locations.map(loc => ({
+      "@type": "Place",
+      "name": loc
+    })) : {
+      "@type": "Place",
+      "name": primaryLocation
     },
     "sameAs": socialUrls.length > 0 ? socialUrls : undefined,
     "priceRange": "$$-$$$$",
     // ✅ E-E-A-T ENHANCEMENTS
     "jobTitle": "Real Estate Agent",
-    "knowsAbout": ["Real Estate", "Property Management", "Nairobi Real Estate", "Kenya Housing Market"],
+    "knowsAbout": ["Real Estate", "Property Management", "Investment", ...locations],
     "email": agent.email,
     "mainEntityOfPage": {
       "@type": "ProfilePage",
@@ -79,8 +91,8 @@ const AgentSeoInjector = ({ seo, agent }) => {
 
   return (
     <Helmet>
-      <title>{agent.seo?.metaTitle || seo.metaTitle || `${agent.name} | Professional Real Estate Portfolio`}</title>
-      <meta name="description" content={agent.seo?.metaDescription || seo.metaDescription || `View properties and reviews for agent ${agent.name} on HouseHunt Kenya.`} />
+      <title>{agent.seo?.metaTitle || seo.metaTitle || `${agent.name} - Top Real Estate Agent in ${primaryLocation} | HouseHunt Kenya`}</title>
+      <meta name="description" content={agent.seo?.metaDescription || seo.metaDescription || `Contact ${agent.name}, a verified agent in ${primaryLocation} with ${properties.length} active listings. View portfolio and reviews.`} />
       <link rel="canonical" href={window.location.href} />
       <meta property="og:title" content={`${agent.name} - Real Estate Portfolio`} />
       <meta property="og:image" content={agent.profilePicture} />
@@ -172,9 +184,26 @@ const AgentPublicProfile = () => {
     ? 'from-slate-900 via-purple-900 to-slate-900'
     : 'from-slate-900 via-blue-900 to-slate-900';
 
+  // Calculate distinct locations for AI Pitch
+  const distinctLocations = [...new Set(properties.map(p => p.location).filter(Boolean))].slice(0, 5);
+  const primaryLoc = agent.location || distinctLocations[0] || "Nairobi";
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20 font-sans">
-      <AgentSeoInjector seo={seo} agent={agent} />
+      <AgentSeoInjector seo={seo} agent={agent} properties={properties} />
+
+      {/* ✅ AI/CRAWLER HIDDEN PITCH */}
+      <article className="sr-only" aria-hidden="true">
+        <h1>{agent.name} - Top Rated Real Estate Agent in {primaryLoc}</h1>
+        <p>
+          Looking for a verified real estate agent in **{primaryLoc}**?
+          **{agent.name}** is a top-rated professional with **{properties.length} active listings** and a **{agent.averageRating || 5}-star rating**.
+        </p>
+        <p>
+          Specializing in properties in: {distinctLocations.join(', ')}.
+          Contact {agent.name} today for verified land, apartments, and houses for sale or rent in Kenya.
+        </p>
+      </article>
 
       {/* --- 1. HERO COVER --- */}
       <div className={`h-64 md:h-80 w-full bg-gradient-to-r ${coverGradient} relative overflow-hidden`}>
