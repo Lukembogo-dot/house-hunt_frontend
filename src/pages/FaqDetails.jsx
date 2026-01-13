@@ -13,10 +13,12 @@ import {
 // ✅ 1. IMPORT PROPERTY LIST
 import PropertyList from '../components/PropertyList';
 
-// --- SEO COMPONENT (Unchanged) ---
-// --- SEO COMPONENT (Updated) ---
+// --- SEO COMPONENT (Updated to QAPage for Single Q&A Pages) ---
 const FaqSeoInjector = ({ faq }) => {
   if (!faq) return null;
+
+  // ✅ Generate canonical URL
+  const canonicalUrl = `https://www.househuntkenya.co.ke/faq/${faq.slug}`;
 
   // Helper to decode for Schema too (So Google sees <h3> not &lt;h3&gt;)
   const decodeHtml = (html) => {
@@ -26,42 +28,70 @@ const FaqSeoInjector = ({ faq }) => {
   };
 
   const cleanAnswer = decodeHtml(faq.answer);
+  const plainTextAnswer = cleanAnswer.replace(/<[^>]+>/g, ''); // Strip HTML for schema
 
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [{
+  // ✅ QAPAGE SCHEMA (Correct for single question-answer pages)
+  const qaPageSchema = {
+    "@type": "QAPage",
+    "@id": `${canonicalUrl}#qapage`,
+    "mainEntity": {
       "@type": "Question",
       "name": faq.question,
+      "text": faq.question,
+      "answerCount": 1,
+      "dateCreated": faq.createdAt,
+      "author": {
+        "@type": "Organization",
+        "name": "HouseHunt Kenya"
+      },
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": cleanAnswer // ✅ Sends proper HTML (e.g. <ul><li>) to Google
+        "text": cleanAnswer, // ✅ Can include HTML formatting
+        "dateCreated": faq.createdAt,
+        "upvoteCount": faq.helpfulVotes || 0, // ✅ Shows vote count in rich results
+        "url": canonicalUrl,
+        "author": {
+          "@type": "Organization",
+          "name": "HouseHunt Kenya"
+        }
       }
-    }]
+    }
   };
 
   const breadcrumbSchema = {
-    "@context": "https://schema.org",
     "@type": "BreadcrumbList",
+    "@id": `${canonicalUrl}#breadcrumb`,
     "itemListElement": [
       { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
       { "@type": "ListItem", "position": 2, "name": "FAQs", "item": "https://www.househuntkenya.co.ke/faqs" },
-      { "@type": "ListItem", "position": 3, "name": faq.question, "item": window.location.href }
+      { "@type": "ListItem", "position": 3, "name": faq.question, "item": canonicalUrl }
     ]
   };
 
+  // ✅ Combine schemas in @graph
+  const combinedSchema = {
+    "@context": "https://schema.org",
+    "@graph": [qaPageSchema, breadcrumbSchema]
+  };
+
   // Strip HTML for the meta description tag (Plain text only)
-  const metaDesc = cleanAnswer.replace(/<[^>]+>/g, '').substring(0, 160) + '...';
+  const metaDesc = plainTextAnswer.substring(0, 160) + '...';
 
   return (
     <Helmet>
       <title>{faq.question} | HouseHunt Kenya Help</title>
       <meta name="description" content={metaDesc} />
+
+      {/* ✅ ADDED: Canonical URL for proper indexing */}
+      <link rel="canonical" href={canonicalUrl} />
+
       <meta property="og:title" content={faq.question} />
       <meta property="og:type" content="article" />
-      <meta property="og:url" content={window.location.href} />
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
+      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:description" content={metaDesc} />
+
+      {/* ✅ SINGLE COMBINED SCHEMA with QAPage */}
+      <script type="application/ld+json">{JSON.stringify(combinedSchema)}</script>
     </Helmet>
   );
 };

@@ -10,18 +10,30 @@ const Breadcrumbs = () => {
   if (pathnames.length === 0) return null;
 
   // Generate structured data (JSON-LD) for Google
+  const siteUrl = 'https://www.househuntkenya.co.ke'; // ✅ Standardized domain
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": pathnames.map((name, index) => {
-      const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
-      return {
+    "itemListElement": [
+      // ✅ Add Home as first item
+      {
         "@type": "ListItem",
-        "position": index + 1,
-        "name": name.charAt(0).toUpperCase() + name.slice(1),
-        "item": `https://househuntkenya.co.ke${routeTo}`
-      };
-    })
+        "position": 1,
+        "name": "Home",
+        "item": siteUrl
+      },
+      // ✅ Add remaining path segments
+      ...pathnames.map((name, index) => {
+        const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
+        return {
+          "@type": "ListItem",
+          "position": index + 2, // Start at position 2 since Home is position 1
+          "name": name.charAt(0).toUpperCase() + name.slice(1),
+          "item": `${siteUrl}${routeTo}`
+        };
+      })
+    ]
   };
 
   return (
@@ -51,8 +63,8 @@ const Breadcrumbs = () => {
                 </span>
               ) : (
                 <>
-                  <Link 
-                    to={routeTo} 
+                  <Link
+                    to={routeTo}
                     className="hover:text-blue-600 dark:hover:text-blue-400 transition"
                   >
                     {displayName}

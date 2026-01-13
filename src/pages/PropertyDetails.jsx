@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import apiClient from "../api/axios";
+import { extractVideoThumbnail } from "../utils/videoUtils";
 import {
   FaStar, FaTimes, FaRegHeart, FaHeart,
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
@@ -233,9 +234,13 @@ const PropertyDetails = () => {
       const imagesList = getSafeImageDetails(propData.images, propData.title);
       const urlsList = imagesList.map(img => img.url);
 
-      // LOGIC: Only set image if actual images exist. No fallback to video thumbnail here.
+      // ✅ LOGIC: Use video thumbnail as fallback if no images exist
       if (urlsList.length > 0) {
         setActiveImage(urlsList[0]);
+      } else if (propData.video) {
+        // Extract video thumbnail for display when no property images
+        const videoThumb = extractVideoThumbnail(propData.video);
+        setActiveImage(videoThumb || placeholderImage);
       } else {
         setActiveImage(placeholderImage);
       }

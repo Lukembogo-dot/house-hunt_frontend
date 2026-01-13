@@ -414,8 +414,10 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
         metaDescription: data.metaDescription || '',
         ogTitle: data.ogTitle || '',
         ogDescription: data.ogDescription || '',
+        ogImage: data.ogImage || '', // ✅ Added
         twitterTitle: data.twitterTitle || '',
         twitterDescription: data.twitterDescription || '',
+        twitterImage: data.twitterImage || '', // ✅ Added
         focusKeyword: data.focusKeyword || '',
         canonicalUrl: data.canonicalUrl || '',
         schemaFocusKeyword: data.schemaFocusKeyword || '',
@@ -932,6 +934,24 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
                 placeholder="A short description for Facebook and LinkedIn."
               />
+            </div>
+            {/* ✅ OPENGRAPH IMAGE FIELD */}
+            <div>
+              <label htmlFor="ogImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Open Graph Image URL (Critical for Social Sharing)
+              </label>
+              <input
+                type="text"
+                id="ogImage"
+                name="ogImage"
+                value={seoData.ogImage || ''}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
+                placeholder="https://www.househuntkenya.co.ke/images/property-preview.jpg"
+              />
+              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                📏 Recommended size: 1200x630px. This image appears when sharing on Facebook, LinkedIn, WhatsApp.
+              </p>
             </div>
             <div>
               <label htmlFor="twitterTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300">

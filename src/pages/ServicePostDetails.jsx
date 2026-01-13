@@ -25,13 +25,15 @@ const StarRating = ({ rating }) => {
   );
 };
 
-// ✅ 1. REBUILT SEO INJECTOR (FIXES GOOGLE CONSOLE ISSUES + ADDS LOCAL BUSINESS)
+// ✅ 1. REBUILT SEO INJECTOR (FIXES FAQ + CANONICAL URL ISSUES)
 const ServiceSeoInjector = ({ service }) => {
+  // ✅ Generate canonical URL
+  const canonicalUrl = `https://www.househuntkenya.co.ke/services/${service.slug}`;
 
-  // Define individual schema objects WITHOUT @context (since they will be in a @graph)
+  // ✅ FIXED: Embed FAQs inside BlogPosting instead of separate FAQPage
   const blogSchema = {
     "@type": "BlogPosting",
-    "@id": `${window.location.href}#article`,
+    "@id": `${canonicalUrl}#article`,
     "headline": service.metaTitle || service.title,
     "description": service.metaDescription || service.content?.substring(0, 160),
     "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png",
@@ -48,12 +50,23 @@ const ServiceSeoInjector = ({ service }) => {
         "@type": "ImageObject",
         "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png"
       }
-    }
+    },
+    // ✅ EMBED FAQs HERE (Google's preferred method for mixed content)
+    ...(service.faqs && service.faqs.length > 0 ? {
+      "mainEntity": service.faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    } : {})
   };
 
   const localBusinessSchema = {
     "@type": "LocalBusiness",
-    "@id": `${window.location.href}#business`,
+    "@id": `${canonicalUrl}#business`,
     "name": service.title,
     "image": service.imageUrl,
     "telephone": service.phoneNumber,
@@ -72,33 +85,23 @@ const ServiceSeoInjector = ({ service }) => {
     })
   };
 
+  // ✅ REMOVED: Standalone FAQPage to avoid schema conflicts
+  // FAQs are now embedded in BlogPosting above
   const schemaGraph = [blogSchema, localBusinessSchema];
-
-  if (service.faqs && service.faqs.length > 0) {
-    schemaGraph.push({
-      "@type": "FAQPage",
-      "@id": `${window.location.href}#faq`,
-      "mainEntity": service.faqs.map(faq => ({
-        "@type": "Question",
-        "name": faq.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": faq.answer
-        }
-      }))
-    });
-  }
 
   return (
     <Helmet>
       <title>{service.metaTitle || service.title}</title>
       <meta name="description" content={service.metaDescription || service.content?.substring(0, 160)} />
 
+      {/* ✅ ADDED: Canonical URL for proper indexing */}
+      <link rel="canonical" href={canonicalUrl} />
+
       <meta property="og:title" content={service.metaTitle || service.title} />
       <meta property="og:description" content={service.metaDescription || service.content?.substring(0, 160)} />
       <meta property="og:image" content={service.imageUrl} />
       <meta property="og:type" content="business.business" />
-      <meta property="og:url" content={window.location.href} />
+      <meta property="og:url" content={canonicalUrl} />
 
       {/* We inject the graph with a SINGLE top-level @context */}
       <script
