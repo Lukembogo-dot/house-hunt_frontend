@@ -52,6 +52,44 @@ const DynamicServiceSearch = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
       <SeoInjector seo={seo || { metaTitle: pageTitle, metaDescription: pageDesc }} />
 
+      {/* ✅ P0 ENHANCEMENT: ItemList Schema for Service Provider Results */}
+      {providers.length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": pageTitle,
+              "description": pageDesc,
+              "numberOfItems": providers.length,
+              "itemListElement": providers.map((provider, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
+                  "@type": "LocalBusiness",
+                  "name": provider.businessName || provider.name,
+                  "url": typeof window !== 'undefined' ? `${window.location.origin}/service/${provider._id}` : '',
+                  "image": provider.logo || provider.image,
+                  "telephone": provider.phone || provider.phoneNumber,
+                  "address": {
+                    "@type": "PostalAddress",
+                    "addressLocality": provider.location || searchTerm,
+                    "addressCountry": "KE"
+                  },
+                  ...(provider.averageRating && provider.reviewCount ? {
+                    "aggregateRating": {
+                      "@type": "AggregateRating",
+                      "ratingValue": provider.averageRating,
+                      "reviewCount": provider.reviewCount
+                    }
+                  } : {})
+                }
+              }))
+            })}
+          </script>
+        </Helmet>
+      )}
+
       {/* Hero / Header */}
       <div className="bg-blue-600 text-white py-12 px-6 text-center">
         <h1 className="text-3xl md:text-4xl font-extrabold mb-2 capitalize">

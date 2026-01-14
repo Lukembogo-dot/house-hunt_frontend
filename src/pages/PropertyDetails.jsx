@@ -308,8 +308,93 @@ const PropertyDetails = () => {
     } catch (error) { console.error('Failed to start chat:', error); alert('Could not start chat.'); } finally { setIsStartingChat(false); }
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen dark:bg-gray-950"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
-  if (!property) return <div className="text-center mt-20 text-gray-500 dark:text-gray-400"><p>Property not found.</p></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
+        {/* ✅ CRITICAL FIX: Prevent Soft 404 during loading by providing SEO content */}
+        <Helmet>
+          <title>Property Details | House Hunt Kenya</title>
+          <meta name="description" content="Browse verified property listings in Kenya. Find homes for rent and sale in Nairobi, Mombasa, Kisumu and more." />
+          <meta name="robots" content="index, follow" />
+        </Helmet>
+
+        {/* Hidden content for search engines to prevent Soft 404 if page loads slowly */}
+        <div className="sr-only" aria-hidden="true">
+          <h1>Property Listings in Kenya</h1>
+          <p>Find your perfect home. Browse thousands of verified properties for rent and sale across Kenya.</p>
+          <ul>
+            <li>Houses and Apartments for Rent</li>
+            <li>Land and Homes for Sale</li>
+            <li>Verified Agents</li>
+            <li>Detailed Property Information</li>
+          </ul>
+        </div>
+
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-4">
+        {/* ✅ CRITICAL SEO FIX: Prevent Google from indexing 404 pages */}
+        <Helmet>
+          <title>Property Not Found | House Hunt Kenya</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+
+        <div className="max-w-2xl w-full text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 border border-gray-200 dark:border-gray-700"
+          >
+            <div className="mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 dark:text-orange-400 mb-4">
+                <FaMapMarkerAlt className="text-4xl" />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                Property Not Found
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
+                This property may have been sold, rented, or is no longer available.
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Don't worry though - we have thousands of other great properties!
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+              <Link
+                to="/search/rent/all/all"
+                className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md"
+              >
+                <FaHome /> Browse Rentals
+              </Link>
+              <Link
+                to="/search/sale/all/all"
+                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 dark:hover:bg-gray-600 transition"
+              >
+                <FaStar /> View Properties for Sale
+              </Link>
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Need help finding something specific?</p>
+              <Link
+                to="/contact"
+                className="text-blue-600 dark:text-blue-400 font-medium hover:underline text-sm"
+              >
+                Contact our team →
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   const avgRating = comments.length > 0 ? (comments.reduce((acc, c) => acc + (c.rating || 0), 0) / comments.length).toFixed(1) : 0;
   const isAgentOwner = user && property.agent && user._id === property.agent._id;
@@ -321,6 +406,48 @@ const PropertyDetails = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           <div className="md:col-span-3"><Breadcrumbs /></div>
+
+          {/* ✅ SEO STRATEGY: Show sold/unavailable properties with clear status for indexing */}
+          {property.status !== 'available' && (
+            <div className="md:col-span-3">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-2xl p-6 shadow-lg"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-full flex items-center justify-center">
+                    <FaMapMarkerAlt className="text-white text-xl" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                      {property.status === 'sold' && 'Property Sold'}
+                      {property.status === 'rented' && 'Property Rented'}
+                      {property.status === 'archived' && 'Property No Longer Available'}
+                      {!['sold', 'rented', 'archived', 'available'].includes(property.status) && 'Property Status Updated'}
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      This property is no longer available. Browse similar properties in <strong>{property.location}</strong> below or search our active listings.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Link
+                        to={`/search/${property.listingType || 'rent'}/${property.type || 'all'}/${property.location?.toLowerCase().replace(/\s+/g, '-') || 'all'}`}
+                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+                      >
+                        <FaHome /> Browse Similar in {property.location}
+                      </Link>
+                      <Link
+                        to="/search/rent/all/all"
+                        className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+                      >
+                        View All Properties
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
 
           {/* Main Content */}
           <div className="md:col-span-2">

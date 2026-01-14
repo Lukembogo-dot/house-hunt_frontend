@@ -190,11 +190,31 @@ const ServiceProviderDetails = () => {
     return JSON.stringify(schema);
   };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
-      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
+        <Helmet>
+          <title>Service Provider | House Hunt Kenya</title>
+          <meta name="description" content="Find verified service providers for all your property needs in Kenya. Trusted professionals for plumbing, electrical, moving, and more." />
+          <meta name="robots" content="index, follow" />
+        </Helmet>
+
+        <div className="sr-only" aria-hidden="true">
+          <h1>Service Providers in Kenya</h1>
+          <p>Browse verified professionals for property services including plumbing, electrical work, moving services, cleaning, and property maintenance.</p>
+          <ul>
+            <li>Verified and trusted professionals</li>
+            <li>Customer reviews and ratings</li>
+            <li>Transparent pricing</li>
+            <li>Service areas across Kenya</li>
+          </ul>
+        </div>
+
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (error || !provider) return (
     <div className="min-h-screen flex flex-col items-center justify-center dark:bg-gray-900 dark:text-white">

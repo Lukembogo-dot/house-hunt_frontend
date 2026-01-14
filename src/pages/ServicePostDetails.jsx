@@ -177,7 +177,32 @@ const ServicePostDetails = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center items-center min-h-screen dark:bg-gray-950"><div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
+        <Helmet>
+          <title>Service Guide | House Hunt Kenya</title>
+          <meta name="description" content="Expert guides and tips for property-related services in Kenya. Find trusted service providers and helpful advice." />
+          <meta name="robots" content="index, follow" />
+        </Helmet>
+
+        <div className="sr-only" aria-hidden="true">
+          <h1>Service Guides</h1>
+          <p>Comprehensive guides for property-related services in Kenya. Learn how to find and work with service providers for your property needs.</p>
+          <ul>
+            <li>Finding reliable service providers</li>
+            <li>Service pricing guides</li>
+            <li>Quality assurance tips</li>
+            <li>Property maintenance advice</li>
+          </ul>
+        </div>
+
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   if (error) return <div className="text-center mt-20 text-red-500 dark:text-red-400"><p className="text-lg">{error}</p><Link to="/" className="text-blue-600 hover:underline mt-4 inline-block">Back to Home</Link></div>;
   if (!service) return null;
 

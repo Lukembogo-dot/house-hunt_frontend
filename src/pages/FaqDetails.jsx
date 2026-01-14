@@ -186,10 +186,28 @@ const FaqDetails = () => {
     }
   };
 
+  // ✅ CRITICAL FIX: Add loading state with SEO content
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh] bg-gray-50 dark:bg-gray-950">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Helmet>
+          <title>FAQ | House Hunt Kenya Help Center</title>
+          <meta name="description" content="Find answers to frequently asked questions about renting, buying, and property hunting in Kenya. Expert advice for house hunters." />
+          <meta name="robots" content="index, follow" />
+        </Helmet>
+
+        <div className="sr-only" aria-hidden="true">
+          <h1>Frequently Asked Questions</h1>
+          <p>Browse our comprehensive FAQ library for property hunting, renting, and buying advice in Kenya.</p>
+          <ul>
+            <li>How to find affordable housing in Kenya</li>
+            <li>Understanding rental agreements</li>
+            <li>Property viewing tips</li>
+            <li>Moving and relocation advice</li>
+          </ul>
+        </div>
+
+        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

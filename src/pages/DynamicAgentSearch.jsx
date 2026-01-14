@@ -123,6 +123,33 @@ const DynamicAgentSearch = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
       <SeoInjector seo={seo || { metaTitle: pageTitle, metaDescription: pageDesc }} />
 
+      {/* ✅ P0 ENHANCEMENT: ItemList Schema for Agent Results */}
+      {agents.length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": pageTitle,
+              "description": pageDesc,
+              "numberOfItems": agents.length,
+              "itemListElement": agents.map((agent, index) => ({
+                "@type": "ListItem",
+                "position": index + 1,
+                "item": {
+                  "@type": "Person",
+                  "name": agent.name,
+                  "jobTitle": "Real Estate Agent",
+                  "url": typeof window !== 'undefined' ? `${window.location.origin}/agent/${agent._id}` : '',
+                  "image": agent.profilePicture,
+                  "telephone": agent.phoneNumber
+                }
+              }))
+            })}
+          </script>
+        </Helmet>
+      )}
+
       {/* Hero Section */}
       <div className="bg-gray-900 text-white py-16 px-6 text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-blue-900/20 z-0"></div>

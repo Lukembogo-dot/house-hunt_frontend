@@ -243,6 +243,58 @@ const DynamicSearchPage = () => {
       {/* ✅ 4. SEO INJECTOR (Replaces Manual Helmet) */}
       {finalSeoData && <SeoInjector seo={finalSeoData} />}
 
+      {/* ✅ P0 ENHANCEMENT: ItemList Schema for Property Results */}
+      {hasResults && stats && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "ItemList",
+              "name": finalSeoData?.metaTitle || `${capitalize(listingType)} in ${filterOverrides.location || 'Kenya'}`,
+              "description": finalSeoData?.metaDescription,
+              "numberOfItems": stats.count,
+              "url": typeof window !== 'undefined' ? window.location.href : ''
+            })}
+          </script>
+        </Helmet>
+      )}
+
+      {/* ✅ P0 ENHANCEMENT: AggregateOffer Schema for Price Stats */}
+      {hasResults && stats && stats.avgPrice && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "AggregateOffer",
+              "priceCurrency": "KES",
+              "lowPrice": stats.minPrice || 0,
+              "highPrice": stats.maxPrice || 0,
+              "offerCount": stats.count
+            })}
+          </script>
+        </Helmet>
+      )}
+
+      {/* ✅ P0 ENHANCEMENT: FAQPage Schema for Location FAQs */}
+      {locationFaqs.length > 0 && (
+        <Helmet>
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": locationFaqs.map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": faq.answer || "Find the answer in our FAQ section."
+                }
+              }))
+            })}
+          </script>
+        </Helmet>
+      )}
+
       <div className="container mx-auto max-w-6xl px-4 py-8">
 
         <div className="mb-6">
