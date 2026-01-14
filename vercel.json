@@ -10,6 +10,17 @@
     },
     {
       "source": "/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*?(googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|slackbot|ia_archiver|whatsapp|pinterest).*?"
+        }
+      ],
+      "destination": "https://service.prerender.io/https://www.househuntkenya.co.ke/$1"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
