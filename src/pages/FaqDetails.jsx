@@ -215,12 +215,24 @@ const FaqDetails = () => {
   if (error || !faq) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 bg-gray-50 dark:bg-gray-950">
+        {/* ✅ CRITICAL FIX: Prevent Soft 404 for missing FAQs */}
+        <Helmet>
+          <title>FAQ Not Found | House Hunt Kenya</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+
         <FaQuestionCircle className="text-6xl text-gray-300 mb-4" />
         <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-2">Question Not Found</h2>
         <p className="text-gray-500 mb-6">We couldn't find the answer you were looking for.</p>
-        <Link to="/" className="text-blue-600 hover:underline flex items-center">
-          <FaArrowLeft className="mr-2" /> Back Home
-        </Link>
+
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          <Link to="/faqs" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+            Browse All FAQs
+          </Link>
+          <Link to="/" className="text-blue-600 hover:underline flex items-center justify-center border-2 border-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-gray-800 transition">
+            <FaArrowLeft className="mr-2" /> Back Home
+          </Link>
+        </div>
       </div>
     );
   }

@@ -6,8 +6,39 @@
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
     "build": "vite build",
+    "postbuild": "react-snap",
     "lint": "eslint .",
     "preview": "vite preview"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "minifyHtml": {
+      "collapseWhitespace": false,
+      "removeComments": false
+    },
+    "puppeteerArgs": [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ],
+    "crawl": true,
+    "include": [
+      "/",
+      "/buy",
+      "/rent",
+      "/about",
+      "/contact",
+      "/our-platform",
+      "/faqs",
+      "/services",
+      "/community",
+      "/living-feed",
+      "/rated-properties",
+      "/share-insight",
+      "/for-agents"
+    ],
+    "skipThirdPartyRequests": true,
+    "cacheAjaxRequests": false,
+    "preloadResources": true
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.4.2",

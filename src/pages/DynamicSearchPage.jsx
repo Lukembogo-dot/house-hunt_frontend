@@ -243,6 +243,39 @@ const DynamicSearchPage = () => {
       {/* ✅ 4. SEO INJECTOR (Replaces Manual Helmet) */}
       {finalSeoData && <SeoInjector seo={finalSeoData} />}
 
+      {/* ✅ GEO OPTIMIZATION: AI Summary for Search Engines */}
+      <article className="sr-only" aria-hidden="true">
+        <h1>Find {listingType === 'rent' ? 'Rentals' : 'Property for Sale'} in {location !== 'all' ? location : 'Kenya'}</h1>
+        <p>
+          Browse {propertyType !== 'all' ? propertyType : 'all types of'} properties for {listingType} in {location !== 'all' ? location : 'Kenya'}.
+          {bedrooms && bedrooms !== 'all' && ` ${bedrooms} bedroom options available.`}
+          Verified listings with transparent pricing from trusted agents and direct property owners.
+        </p>
+        {stats && stats.count > 0 && (
+          <>
+            <h2>Search Results Summary</h2>
+            <ul>
+              <li>{stats.count} properties matching your search criteria</li>
+              {stats.minPrice && stats.maxPrice && (
+                <li>Price range: Ksh {stats.minPrice?.toLocaleString()} - Ksh {stats.maxPrice?.toLocaleString()}</li>
+              )}
+              {stats.avgPrice && <li>Average price: Ksh {stats.avgPrice?.toLocaleString()}</li>}
+              <li>Verified agents and direct property listings</li>
+              <li>Detailed property information with photos and videos</li>
+            </ul>
+          </>
+        )}
+        <h2>Why Use HouseHunt Kenya?</h2>
+        <ul>
+          <li>100% free for property seekers</li>
+          <li>Verified property listings and agents</li>
+          <li>Direct communication with property owners</li>
+          <li>Comprehensive neighborhood insights</li>
+          <li>Market data and price trends</li>
+        </ul>
+      </article>
+
+
       {/* ✅ P0 ENHANCEMENT: ItemList Schema for Property Results */}
       {hasResults && stats && (
         <Helmet>
