@@ -86,6 +86,18 @@ export const extractVideoThumbnail = (videoUrl) => {
         return `https://vumbnail.com/${videoId}.jpg`;
     }
 
+    // ✅ NEW: For Cloudinary videos, convert video URL to thumbnail
+    if (videoUrl.includes('cloudinary.com') && videoUrl.includes('/video/upload/')) {
+        // Convert: /video/upload/v123/file.mp4 -> /video/upload/so_0/v123/file.jpg
+        //  'so_0' gets first frame, replace extension with .jpg
+        return videoUrl
+            .replace('/video/upload/', '/video/upload/so_0/')  // Get first frame
+            .replace('.mp4', '.jpg')
+            .replace('.mov', '.jpg')
+            .replace('.avi', '.jpg')
+            .replace('.webm', '.jpg');
+    }
+
     // For custom videos or if extraction fails, return null
     return null;
 };
