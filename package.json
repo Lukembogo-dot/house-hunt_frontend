@@ -37,8 +37,7 @@
       "/for-agents"
     ],
     "skipThirdPartyRequests": true,
-    "cacheAjaxRequests": false,
-    "preloadResources": true
+    "cacheAjaxRequests": false
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^41.4.2",
