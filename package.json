@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
     "build": "vite build",
-    "postbuild": "react-snap",
+    "postbuild": "node -e \"process.env.VERCEL ? console.log('Skipping react-snap on Vercel') : require('child_process').execSync('react-snap', {stdio: 'inherit'})\"",
     "lint": "eslint .",
     "preview": "vite preview"
   },
