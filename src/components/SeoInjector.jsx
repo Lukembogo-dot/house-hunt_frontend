@@ -376,10 +376,18 @@ const SeoInjector = ({ seo, property }) => {
                         "name": property.agent.name,
                         "url": `${siteUrl}/agent/${property.agent._id}`,
                         "telephone": property.agent.phone || property.agent.telephone,
-                        "address": {
+                        "address": property.agent.address ? {
                             "@type": "PostalAddress",
-                            "addressLocality": property.location?.suburb || property.location?.city || "Nairobi",
-                            "addressRegion": property.location?.city || "Nairobi",
+                            "streetAddress": property.agent.address.street || "Not specified",
+                            "addressLocality": property.agent.address.city || property.agent.address.suburb || "Nairobi",
+                            "addressRegion": property.agent.address.region || "Nairobi County",
+                            "postalCode": property.agent.address.postalCode || "",
+                            "addressCountry": "KE"
+                        } : {
+                            // Default address for shadow agents
+                            "@type": "PostalAddress",
+                            "addressLocality": "Nairobi",
+                            "addressRegion": "Nairobi County",
                             "addressCountry": "KE"
                         }
                     }
