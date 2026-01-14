@@ -374,7 +374,14 @@ const SeoInjector = ({ seo, property }) => {
                     "seller": {
                         "@type": "RealEstateAgent",
                         "name": property.agent.name,
-                        "url": `${siteUrl}/agent/${property.agent._id}`
+                        "url": `${siteUrl}/agent/${property.agent._id}`,
+                        "telephone": property.agent.phone || property.agent.telephone,
+                        "address": {
+                            "@type": "PostalAddress",
+                            "addressLocality": property.location?.suburb || property.location?.city || "Nairobi",
+                            "addressRegion": property.location?.city || "Nairobi",
+                            "addressCountry": "KE"
+                        }
                     }
                 } : {}),
                 // ✅ NEST VIDEO OBJECT INSIDE LISTING (Google's preferred structure)
