@@ -434,7 +434,8 @@ const SeoInjector = ({ seo, property }) => {
 
             {/* --- Primary Meta Tags --- */}
             <title>{seo.metaTitle}</title>
-            <meta name="description" content={seo.metaDescription} />
+            {/* ✅ AI-OPTIMIZED META DESCRIPTION (If available) */}
+            <meta name="description" content={property?.aiMetaDescription || seo.metaDescription} />
             <meta name="author" content="HouseHunt Kenya" />
             <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
@@ -450,10 +451,10 @@ const SeoInjector = ({ seo, property }) => {
             <link rel="canonical" href={canonical} />
 
             {/* --- Open Graph / Facebook --- */}
-            <meta property="og:type" content="website" />
+            <meta property="og:type" content={property ? "product" : "website"} />
             <meta property="og:url" content={canonical} />
             <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
-            <meta property="og:description" content={seo.ogDescription || seo.metaDescription} />
+            <meta property="og:description" content={property?.aiMetaDescription || seo.ogDescription || seo.metaDescription} />
             {/* ✅ OPENGRAPH IMAGES (Critical for Social Sharing) */}
             <meta property="og:image" content={ogImage} />
             <meta property="og:image:secure_url" content={ogImage} />
@@ -462,12 +463,32 @@ const SeoInjector = ({ seo, property }) => {
             <meta property="og:image:alt" content={seo.metaTitle} />
             <meta property="og:site_name" content="HouseHunt Kenya" />
 
+            {/* ✅ AI SEARCH: OpenGraph Product Tags */}
+            {property && (
+                <>
+                    <meta property="product:price:amount" content={property.price} />
+                    <meta property="product:price:currency" content="KES" />
+                    <meta property="product:availability" content={property.status === 'available' ? 'in stock' : 'out of stock'} />
+                    <meta property="product:condition" content="new" />
+                </>
+            )}
+
             {/* --- Twitter --- */}
             <meta property="twitter:card" content="summary_large_image" />
             <meta property="twitter:url" content={canonical} />
             <meta property="twitter:title" content={seo.twitterTitle || seo.metaTitle} />
             <meta property="twitter:image" content={seo.twitterImage || ogImage} />
-            <meta property="twitter:description" content={seo.twitterDescription || seo.metaDescription} />
+            <meta property="twitter:description" content={property?.aiMetaDescription || seo.twitterDescription || seo.metaDescription} />
+
+            {/* ✅ AI SEARCH: Twitter Card Labels */}
+            {property && (
+                <>
+                    <meta name="twitter:label1" content="Price" />
+                    <meta name="twitter:data1" content={`KSh ${property.price.toLocaleString()}/${property.listingType === 'rent' ? 'month' : 'sale'}`} />
+                    <meta name="twitter:label2" content="Location" />
+                    <meta name="twitter:data2" content={property.location} />
+                </>
+            )}
 
             {/* ✅ AI-Generated RICH Schema (Overrides/Augments Standard Schema) */}
             {seo.richSchema && (
