@@ -321,19 +321,35 @@ const SeoInjector = ({ seo, property }) => {
                     : ["https://www.househuntkenya.co.ke/assets/logo.png"],
                 "url": canonical,
                 "datePosted": property.createdAt,
+                // ✅ AI-OPTIMIZED OFFER SCHEMA
                 "offers": {
                     "@type": "Offer",
-                    "price": property.price,
+                    "price": property.price.toString(),
                     "priceCurrency": "KES",
                     "priceSpecification": {
                         "@type": "UnitPriceSpecification",
-                        "price": property.price,
+                        "price": property.price.toString(),
                         "priceCurrency": "KES",
-                        "unitCode": property.listingType === 'rent' ? "MON" : "C62" // MON=Month, C62=One time
+                        "unitCode": property.listingType === 'rent' ? "MON" : "C62", // AI-readable: Monthly or One-time
+                        "unitText": property.listingType === 'rent' ? "per month" : "one-time"
                     },
-                    "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                    // ✅ AI CRITICAL: Availability status
+                    "availability": property.status === 'available'
+                        ? "https://schema.org/InStock"
+                        : property.status === 'sold' || property.status === 'rented'
+                            ? "https://schema.org/SoldOut"
+                            : "https://schema.org/OutOfStock",
+                    // ✅ AI CRITICAL: Price validity (helps AI determine if listing is current)
+                    "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+                    // ✅ AI CRITICAL: Item condition
+                    "itemCondition": "https://schema.org/NewCondition",
                     "validFrom": property.createdAt,
-                    "url": canonical
+                    "url": canonical,
+                    // ✅ AI HELPFUL: Seller organization info
+                    "seller": {
+                        "@type": "Organization",
+                        "name": "HouseHunt Kenya"
+                    }
                 },
                 "address": {
                     "@type": "PostalAddress",
