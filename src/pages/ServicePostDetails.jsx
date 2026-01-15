@@ -30,7 +30,7 @@ const ServiceSeoInjector = ({ service }) => {
   // ✅ Generate canonical URL
   const canonicalUrl = `https://www.househuntkenya.co.ke/services/${service.slug}`;
 
-  // ✅ FIXED: Embed FAQs inside BlogPosting instead of separate FAQPage
+  // ✅ BlogPosting schema for article rich results (FAQs removed)
   const blogSchema = {
     "@type": "BlogPosting",
     "@id": `${canonicalUrl}#article`,
@@ -50,18 +50,7 @@ const ServiceSeoInjector = ({ service }) => {
         "@type": "ImageObject",
         "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png"
       }
-    },
-    // ✅ EMBED FAQs HERE (Google's preferred method for mixed content)
-    ...(service.faqs && service.faqs.length > 0 ? {
-      "mainEntity": service.faqs.map(faq => ({
-        "@type": "Question",
-        "name": faq.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": faq.answer
-        }
-      }))
-    } : {})
+    }
   };
 
   const localBusinessSchema = {
@@ -85,9 +74,26 @@ const ServiceSeoInjector = ({ service }) => {
     })
   };
 
-  // ✅ REMOVED: Standalone FAQPage to avoid schema conflicts
-  // FAQs are now embedded in BlogPosting above
-  const schemaGraph = [blogSchema, localBusinessSchema];
+  // ✅ NEW: Separate FAQPage schema for Google FAQ enhancements
+  const faqSchema = service.faqs && service.faqs.length > 0 ? {
+    "@type": "FAQPage",
+    "@id": `${canonicalUrl}#faq`,
+    "mainEntity": service.faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  } : null;
+
+  // ✅ Include all schemas: BlogPosting + LocalBusiness + FAQPage
+  const schemaGraph = [
+    blogSchema,
+    localBusinessSchema,
+    ...(faqSchema ? [faqSchema] : [])  // Add FAQPage if FAQs exist
+  ];
 
   return (
     <Helmet>
