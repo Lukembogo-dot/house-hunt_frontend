@@ -310,27 +310,51 @@ const PropertyDetails = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen dark:bg-gray-950">
-        {/* ✅ CRITICAL FIX: Prevent Soft 404 during loading by providing SEO content */}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
+        {/* ✅ SEO content for crawlers */}
         <Helmet>
           <title>Property Details | House Hunt Kenya</title>
           <meta name="description" content="Browse verified property listings in Kenya. Find homes for rent and sale in Nairobi, Mombasa, Kisumu and more." />
           <meta name="robots" content="index, follow" />
         </Helmet>
 
-        {/* Hidden content for search engines to prevent Soft 404 if page loads slowly */}
         <div className="sr-only" aria-hidden="true">
           <h1>Property Listings in Kenya</h1>
           <p>Find your perfect home. Browse thousands of verified properties for rent and sale across Kenya.</p>
-          <ul>
-            <li>Houses and Apartments for Rent</li>
-            <li>Land and Homes for Sale</li>
-            <li>Verified Agents</li>
-            <li>Detailed Property Information</li>
-          </ul>
         </div>
 
-        <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        {/* Skeleton Loading UI */}
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 animate-pulse">
+          {/* Breadcrumb skeleton */}
+          <div className="md:col-span-3 h-6 bg-gray-200 dark:bg-gray-800 rounded w-64"></div>
+
+          {/* Main content skeleton */}
+          <div className="md:col-span-2 space-y-6">
+            {/* Title skeleton */}
+            <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-48"></div>
+
+            {/* Image skeleton */}
+            <div className="w-full h-96 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
+
+            {/* Description skeleton */}
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 space-y-3">
+              <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-32"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/6"></div>
+            </div>
+          </div>
+
+          {/* Sidebar skeleton */}
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 space-y-4">
+              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
+              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
+              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

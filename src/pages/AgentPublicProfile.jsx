@@ -205,35 +205,55 @@ const AgentPublicProfile = () => {
         </p>
       </article>
 
-      {/* --- 1. HERO COVER --- */}
-      <div className={`h-64 md:h-80 w-full bg-gradient-to-r ${coverGradient} relative overflow-hidden`}>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div className="absolute top-6 right-6 flex gap-3 z-10">
-          <button onClick={handleShare} className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition border border-white/10">
-            <FaShareAlt /> Share Profile
-          </button>
+      {/* --- 1. HERO SECTION WITH BLUR BACKGROUND --- */}
+      <div className="relative h-48 md:h-56 w-full overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500"></div>
+
+        {/* Blur Overlay with Pattern */}
+        <div className="absolute inset-0 backdrop-blur-3xl bg-white/10 dark:bg-black/20"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+
+        {/* Content */}
+        <div className="relative h-full container mx-auto px-4 sm:px-6 max-w-6xl flex flex-col justify-center">
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30 mb-3">
+              <FaBuilding className="text-white" />
+              <span className="text-white font-semibold text-sm">Professional Real Estate Portfolio</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Discover Quality Properties</h2>
+            <p className="text-white/90 text-sm md:text-base max-w-2xl mx-auto">Browse verified listings from trusted real estate professionals in Kenya</p>
+          </div>
         </div>
       </div>
 
       {/* --- 2. PROFILE HEADER --- */}
-      <div className="container mx-auto px-4 sm:px-6 max-w-6xl -mt-24 md:-mt-32 relative z-20">
-        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 max-w-6xl -mt-20 relative z-20">
+        <div className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
 
-          <div className="flex flex-col md:flex-row p-6 md:p-10 gap-8 items-center md:items-start text-center md:text-left">
-            {/* Avatar */}
+          <div className="flex flex-col md:flex-row p-8 md:p-12 gap-8 items-center md:items-start text-center md:text-left">
+            {/* Avatar with Share Button */}
             <div className="relative group shrink-0">
-              <div className="w-40 h-40 md:w-48 md:h-48 rounded-2xl p-1 bg-white dark:bg-gray-800 shadow-xl rotate-3 hover:rotate-0 transition-transform duration-300 ease-out">
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden ring-4 ring-blue-500 ring-offset-4 ring-offset-white dark:ring-offset-gray-900 shadow-xl">
                 <img
                   src={agent.profilePicture}
                   alt={agent.name}
-                  className="w-full h-full object-cover rounded-xl"
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                 />
               </div>
               {agent.isVerified && (
-                <div className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg border-4 border-white dark:border-gray-900" title="Verified Agent">
-                  <FaCheckCircle className="text-xl" />
+                <div className="absolute bottom-0 right-0 bg-blue-500 text-white p-2.5 rounded-full shadow-lg border-4 border-white dark:border-gray-900" title="Verified Agent">
+                  <FaCheckCircle className="text-lg" />
                 </div>
               )}
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                className="absolute -top-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg border-4 border-white dark:border-gray-900 transition-all hover:scale-110"
+                title="Share Profile"
+              >
+                <FaShareAlt className="text-sm" />
+              </button>
             </div>
 
             {/* Identity & Actions */}
@@ -277,47 +297,44 @@ const AgentPublicProfile = () => {
               </div>
 
               {/* Stats Strip */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-                <div className="text-center md:text-left border-r dark:border-gray-700 last:border-0 px-2">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{properties.length}</div>
-                  <div className="text-xs text-gray-500 uppercase font-semibold">Listed Properties</div>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{properties.length}</div>
+                  <div className="text-xs text-gray-500 uppercase font-medium mt-1">Properties</div>
                 </div>
-                <div className="text-center md:text-left border-r dark:border-gray-700 last:border-0 px-2">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{agent.numReviews}</div>
-                  <div className="text-xs text-gray-500 uppercase font-semibold">Total Reviews</div>
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent">{agent.numReviews}</div>
+                  <div className="text-xs text-gray-500 uppercase font-medium mt-1">Reviews</div>
                 </div>
-                <div className="text-center md:text-left border-r dark:border-gray-700 last:border-0 px-2">
-                  <div className="flex items-center justify-center md:justify-start gap-1 font-bold text-2xl text-yellow-500">
-                    {agent.averageRating?.toFixed(1) || '0.0'} <FaStar className="text-lg" />
+                <div className="text-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-center gap-1 font-bold text-3xl">
+                    <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">{agent.averageRating?.toFixed(1) || '0.0'}</span>
+                    <FaStar className="text-lg text-yellow-500" />
                   </div>
-                  <div className="text-xs text-gray-500 uppercase font-semibold">Avg. Rating</div>
+                  <div className="text-xs text-gray-500 uppercase font-medium mt-1">Rating</div>
                 </div>
-
               </div>
 
               {/* Action Bar */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => handleRestrictedAction(() => navigate('/chat', { state: { recipient: agent } }))}
-                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3.5 px-6 rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
                 >
-                  <FaComments /> Message Agent
+                  <FaComments /> Message
                 </button>
                 {agent.voiceCallNumber && (
                   <button
                     onClick={() => handleRestrictedAction(() => window.location.href = `tel:${agent.voiceCallNumber}`)}
-                    className="flex-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-white border-2 border-gray-200 dark:border-gray-700 py-3 px-6 rounded-xl font-bold hover:border-green-500 hover:text-green-600 transition flex items-center justify-center gap-2"
+                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 px-6 rounded-xl font-bold hover:from-green-600 hover:to-green-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30"
                   >
-                    <FaPhone /> Call Now
+                    <FaPhone /> Call
                   </button>
                 )}
               </div>
 
             </div>
           </div>
-
-          {/* Divider */}
-          <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-20"></div>
         </div>
       </div>
 
@@ -331,20 +348,19 @@ const AgentPublicProfile = () => {
             {/* About Section */}
             {agent.about ? (
               <div className="mb-12">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  Getting to Know {agent.name.split(' ')[0]}
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                  About {agent.name.split(' ')[0]}
                 </h3>
-                <div className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 leading-relaxed relative">
-                  <FaQuoteLeft className="absolute top-4 left-4 text-4xl text-gray-100 dark:text-gray-800 -z-0" />
-                  <div className="relative z-10 whitespace-pre-wrap">{agent.about}</div>
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 leading-relaxed">
+                  <div className="whitespace-pre-wrap">{agent.about}</div>
                 </div>
               </div>
             ) : (
               // Default generic bio if none provided to keep portfolio looking full
-              <div className="mb-12 opacity-60">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">About Me</h3>
-                <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-dashed border-gray-300 dark:border-gray-700">
-                  <p className="text-gray-500 italic">This professional hasn't added a bio yet, but they are an active member of the HouseHunt Kenya ecosystem.</p>
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">About</h3>
+                <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <p className="text-gray-500 italic">This professional hasn't added a bio yet.</p>
                 </div>
               </div>
             )}
@@ -352,9 +368,9 @@ const AgentPublicProfile = () => {
             {/* Listings Section */}
             <div id="listings">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <FaHome className="text-blue-500" /> Public Portfolio
-                  <span className="text-sm font-normal text-gray-500 ml-2 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">{properties.length} Items</span>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                  Portfolio
+                  <span className="text-sm font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">{properties.length}</span>
                 </h3>
               </div>
 
@@ -379,17 +395,17 @@ const AgentPublicProfile = () => {
           <div className="lg:w-[380px] shrink-0 space-y-8">
 
             {/* Contact Card (Sticky) */}
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 relative overflow-hidden">
-              <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Connect with {agent.name.split(' ')[0]}</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">Reach out directly via your preferred channel.</p>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Get in Touch</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">Connect with {agent.name.split(' ')[0]}</p>
 
-              <div className="space-y-3 relative z-10">
+              <div className="space-y-3">
                 {/* 1. Internal Chat */}
                 <button
                   onClick={() => handleRestrictedAction(() => navigate('/chat', { state: { recipient: agent } }))}
-                  className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold py-3.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2"
                 >
-                  <FaComments /> Send Message
+                  <FaComments /> Message
                 </button>
 
                 {/* 2. WhatsApp */}
@@ -398,7 +414,7 @@ const AgentPublicProfile = () => {
                     href={`https://wa.me/${agent.whatsappNumber.replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-green-500 text-white font-bold py-4 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3.5 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-md shadow-green-500/20 flex items-center justify-center gap-2"
                   >
                     <FaWhatsapp className="text-xl" /> WhatsApp
                   </a>
@@ -408,9 +424,9 @@ const AgentPublicProfile = () => {
                 {agent.voiceCallNumber && (
                   <a
                     href={`tel:${agent.voiceCallNumber}`}
-                    className="block w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-bold py-4 rounded-xl transition flex items-center justify-center gap-2"
+                    className="block w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold py-3.5 rounded-lg transition flex items-center justify-center gap-2"
                   >
-                    <FaPhone /> Call {agent.voiceCallNumber}
+                    <FaPhone /> {agent.voiceCallNumber}
                   </a>
                 )}
 
@@ -418,9 +434,9 @@ const AgentPublicProfile = () => {
                 {agent.email && (
                   <a
                     href={`mailto:${agent.email}`}
-                    className="block w-full text-center border-2 border-gray-100 dark:border-gray-700 hover:border-blue-500 text-gray-600 dark:text-gray-300 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
+                    className="block w-full text-center border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 text-gray-700 dark:text-gray-300 font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2"
                   >
-                    <FaEnvelope /> Send Email
+                    <FaEnvelope /> Email
                   </a>
                 )}
               </div>
@@ -451,9 +467,9 @@ const AgentPublicProfile = () => {
             </div>
 
             {/* Reviews Widget */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white flex items-center gap-2">
-                <FaStar className="text-yellow-400" /> Client Reviews
+            <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="font-bold text-xl mb-4 text-gray-900 dark:text-white flex items-center gap-2">
+                <FaStar className="text-yellow-400" /> Reviews
               </h3>
               <AgentReviews agentId={agentId} agentName={agent.name} />
             </div>

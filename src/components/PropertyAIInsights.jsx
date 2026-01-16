@@ -6,16 +6,43 @@ import ReactMarkdown from 'react-markdown';
 import { FaRobot, FaCheckCircle, FaExclamationCircle, FaInfoCircle, FaMapMarkedAlt, FaQuestionCircle } from 'react-icons/fa';
 import { Sparkles } from 'lucide-react';
 
-const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, propertyDescription, propertyPostedDate, propertyStatus, propertyType, propertyPrice, agentName, agentImage, agentContact }) => {
-    const [analysis, setAnalysis] = useState(null);
+const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, propertyDescription, propertyPostedDate, propertyStatus, propertyType, propertyPrice, agentName, agentImage, agentContact, cachedAiAnalysis = null }) => {
+    const [analysis, setAnalysis] = useState(cachedAiAnalysis); // ✅ Use cached data immediately
     const [contextStats, setContextStats] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!cachedAiAnalysis); // ✅ Only show loading if no cached data
 
     useEffect(() => {
         const fetchAllData = async () => {
             try {
+                // ✅ OPTIMIZATION: Skip API call if we have fresh cached data
+                if (cachedAiAnalysis && cachedAiAnalysis.lastAnalysisDate) {
+                    const cacheAge = Date.now() - new Date(cachedAiAnalysis.lastAnalysisDate).getTime();
+                    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+
+                    // If cache is less than 1 week old, skip fetching AI analysis
+                    if (cacheAge < ONE_WEEK) {
+                        console.log('✅ Using cached AI analysis (fresh)');
+                        // Still fetch context data
+                        try {
+                            const contextRes = await apiClient.get('/ai/context');
+                            if (contextRes.data && contextRes.data.neighborhoods) {
+                                const neighborhoods = contextRes.data.neighborhoods;
+                                const locKey = Object.keys(neighborhoods).find(key =>
+                                    propertyLocation.toLowerCase().includes(key.toLowerCase()) ||
+                                    key.toLowerCase().includes(propertyLocation.toLowerCase())
+                                );
+                                if (locKey) setContextStats(neighborhoods[locKey]);
+                            }
+                        } catch (err) {
+                            console.error('Failed to fetch context:', err);
+                        }
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 setLoading(true);
-                // 1. Fetch Specific Property Analysis (Fallback/Base)
+                // 1. Fetch Specific Property Analysis (Only if cache is old/missing)
                 const analysisReq = apiClient.get(`/ai/analysis/${propertyId}`);
 
                 // 2. Fetch Global AI Context (Universal Data Layer)
@@ -28,9 +55,7 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                 }
 
                 if (contextRes.status === 'fulfilled' && contextRes.value.data && contextRes.value.data.neighborhoods) {
-                    // Fuzzy Match Location
                     const neighborhoods = contextRes.value.data.neighborhoods;
-                    // Try exact match or partial include
                     const locKey = Object.keys(neighborhoods).find(key =>
                         propertyLocation.toLowerCase().includes(key.toLowerCase()) ||
                         key.toLowerCase().includes(propertyLocation.toLowerCase())
@@ -49,7 +74,7 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
         };
 
         if (propertyId) fetchAllData();
-    }, [propertyId, propertyLocation]);
+    }, [propertyId, propertyLocation, cachedAiAnalysis]);
 
     if (loading) return (
         <div className="animate-pulse flex flex-col space-y-3 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-8">

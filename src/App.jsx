@@ -238,6 +238,91 @@ function MainLayout() {
           <GlobalSearchBar />
         </section>
 
+        {/* --- HOUSE HUNT REQUEST (COMPACT GLASSMORPHISM) - MOVED TO TOP --- */}
+        {!submittedHomeFilters && (
+          <section className="relative py-6 px-6">
+            {/* Subtle Gradient Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-blue-950/30 dark:via-purple-950/30 dark:to-pink-950/30"></div>
+
+            <div className="max-w-6xl mx-auto relative z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4 }}
+                className="text-center mb-4"
+              >
+                {/* Compact Icon & Headline */}
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <motion.div
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="p-2.5 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl text-2xl shadow-lg"
+                  >
+                    <FaSearchLocation />
+                  </motion.div>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">
+                    🎯 Your Personal Property Scout.
+                  </h2>
+                </div>
+
+                <p className="text-sm md:text-base text-gray-600 dark:text-gray-300 mb-4 max-w-2xl mx-auto">
+                  We verify listings, negotiate prices and deliver only the ones that fit your budget and style <span className="text-purple-600 dark:text-purple-400 font-bold">exactly</span> what you need
+                </p>
+
+                {/* Compact Benefits - Horizontal Pills */}
+                <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+                  <div className="flex items-center gap-1.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
+                    <span className="text-lg">⚡</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Instant Alerts</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-sm">
+                    <span className="text-lg">🎯</span>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Perfect Matches</span>
+                  </div>
+
+                  <motion.div
+                    animate={{ scale: [1, 1.03, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-orange-400 px-3 py-1.5 rounded-full shadow-md"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-gray-900">1,000+ Active Users</span>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Compact Form Container with Glassmorphism */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-4 md:p-6 rounded-2xl shadow-xl border border-gray-200/50 dark:border-gray-700/50"
+              >
+                <HouseHuntRequest />
+
+                {/* Compact Trust Indicators */}
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-green-500">✓</span>
+                    <span>Verified Agents</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-green-500">✓</span>
+                    <span>No Spam</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-green-500">✓</span>
+                    <span>24h Response</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
+
         {submittedHomeFilters ? (
           <section className="py-6 px-6">
             <div className="max-w-6xl mx-auto">
@@ -260,28 +345,6 @@ function MainLayout() {
             <div className="py-1">
               <FeaturedProperties />
             </div>
-
-            {/* --- HOUSE HUNT REQUEST (ULTRA COMPACT) --- */}
-            <section className="py-4 px-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-y border-gray-100 dark:border-gray-700">
-              <div className="max-w-7xl mx-auto flex flex-col items-center">
-                <div className="text-center mb-3 max-w-3xl">
-                  <div className="inline-block p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-600 dark:text-blue-400 rounded-full mb-2 text-2xl shadow-sm">
-                    <FaSearchLocation />
-                  </div>
-                  <h2 className="text-2xl md:text-3xl font-black mb-1 tracking-tight text-gray-900 dark:text-white">
-                    Hit a Wall? Let Technology Do the Heavy Lifting.
-                  </h2>
-                  <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
-                    Stop scrolling endlessly. Tell our intelligent network exactly what you need.
-                  </p>
-                </div>
-
-                {/* Full Width Container */}
-                <div className="w-full bg-gray-50 dark:bg-gray-900 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm">
-                  <HouseHuntRequest />
-                </div>
-              </div>
-            </section>
 
             {/* --- DECISION TOOLS (COMPACT) --- */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
