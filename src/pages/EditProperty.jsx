@@ -84,6 +84,7 @@ const EditProperty = () => {
     location: '',
     price: '',
     bedrooms: '',
+    bathrooms: '',
 
     landSize: '',
     priceFrequency: 'month',
@@ -179,6 +180,7 @@ const EditProperty = () => {
           location: data.location,
           price: data.price,
           bedrooms: data.bedrooms || '',
+          bathrooms: data.bathrooms || '',
 
           landSize: data.landSize || '',
           pricePer: data.pricePer || 'total', // ✅ Load pricePer
@@ -477,8 +479,12 @@ const EditProperty = () => {
       if (key === 'video' && videoFile) return;
 
       // JSON Fields
-      if (key === 'ownerDetails' && user && user.role === 'admin' && formData.ownerDetails.name) {
-        dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
+      if (key === 'ownerDetails') {
+        // Only append ownerDetails if user is admin AND has name filled
+        if (user && user.role === 'admin' && formData.ownerDetails.name) {
+          dataToSend.append('ownerDetails', JSON.stringify(formData.ownerDetails));
+        }
+        // Skip entirely if not admin or no name - don't append it at all
       } else if (key === 'amenities') {
         dataToSend.append('amenities', JSON.stringify(formData.amenities));
       } else if (key === 'internetProviders') { // ✅ NEW: Serialize Providers
@@ -632,16 +638,28 @@ const EditProperty = () => {
                 </div>
               </div>
             ) : (
-              <InputField
-                label="Bedrooms"
-                name="bedrooms"
-                type="number"
-                value={formData.bedrooms}
-                onChange={handleChange}
-                min={0}
-                placeholder="e.g., 3 (0 for Bedsitter)"
-                required={false}
-              />
+              <>
+                <InputField
+                  label="Bedrooms"
+                  name="bedrooms"
+                  type="number"
+                  value={formData.bedrooms}
+                  onChange={handleChange}
+                  min={0}
+                  placeholder="e.g., 3 (0 for Bedsitter)"
+                  required={false}
+                />
+                <InputField
+                  label="Bathrooms"
+                  name="bathrooms"
+                  type="number"
+                  value={formData.bathrooms}
+                  onChange={handleChange}
+                  min={0}
+                  placeholder="e.g., 2"
+                  required={false}
+                />
+              </>
             )}
           </div>
 
