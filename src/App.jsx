@@ -22,6 +22,9 @@ import TrendingMtaaScores from "./components/TrendingMtaaScores";
 import FeaturedProperties from "./components/FeaturedProperties";
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 
+// --- NEW: Visual Enhancement Components ---
+import { HeroImageSlider, AnimatedStats } from "./components/home";
+
 // --- New Layout Components ---
 import AppHeader from "./components/layout/AppHeader";
 import AppFooter from "./components/layout/AppFooter";
@@ -206,37 +209,20 @@ function MainLayout() {
         </section>
       </article>
 
-      {/* --- HERO SECTION: ULTRA COMPACT & MODERN --- */}
-      <section id="home" className="pt-8 pb-2 px-6 text-center bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 relative overflow-hidden will-change-transform">
-        <div className="absolute inset-0 bg-grid-slate-200/[0.04] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] [mask-image:linear-gradient(to_bottom,transparent,black)] pointer-events-none"></div>
-
-        <div className="max-w-5xl mx-auto relative z-10">
-          <motion.div
-            style={{
-              opacity: heroOpacity,
-              scale: heroScale,
-              y: heroY,
-              pointerEvents: useTransform(scrollY, [0, 150], ["auto", "none"])
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 35 }}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 text-blue-700 dark:text-blue-300 font-bold text-xs uppercase tracking-widest mb-3 shadow-sm"
-            >
-              <FaRocket className="text-sm" /> The Next Gen Real Estate Tech
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+      {/* --- ✨ NEW: HERO IMAGE SLIDER WITH VISUAL EFFECTS --- */}
+      <HeroImageSlider showText={true} autoPlayInterval={6000}>
+        {/* Search Bar Inside Hero */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="w-full max-w-4xl mx-auto mt-6"
+        >
+          <GlobalSearchBar />
+        </motion.div>
+      </HeroImageSlider>
 
       <main id="properties" className="flex-grow bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-950 dark:to-gray-900/50 relative z-20">
-        {/* Minimal Search Bar Spacing */}
-        <section className="px-6 pb-1">
-          <GlobalSearchBar />
-        </section>
 
         {/* --- HOUSE HUNT REQUEST (COMPACT GLASSMORPHISM) - MOVED TO TOP --- */}
         {!submittedHomeFilters && (
@@ -345,6 +331,9 @@ function MainLayout() {
             <div className="py-1">
               <FeaturedProperties />
             </div>
+
+            {/* ✨ NEW: Animated Stats Section */}
+            <AnimatedStats />
 
             {/* --- DECISION TOOLS (COMPACT) --- */}
             {(isQuizEnabled || isCostCalculatorEnabled) && (
