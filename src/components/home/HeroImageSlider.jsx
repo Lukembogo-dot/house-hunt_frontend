@@ -95,7 +95,6 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 60
 
             {/* Gradient Overlays - GPU Accelerated */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 will-change-auto" />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-purple-900/20 will-change-auto" />
 
             {/* ✅ PERFORMANCE: CSS-animated floating elements instead of JS */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -176,8 +176,8 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
   // Helper for Tab Styling
   const getTabClass = (activeType) =>
     `px-4 py-2 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all ${category === activeType
-      ? 'bg-white text-blue-600 shadow-sm translate-y-1 z-10 border-t border-x border-gray-100'
-      : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700'
+      ? 'bg-white/20 backdrop-blur-md text-white shadow-sm translate-y-1 z-10 border-t border-x border-white/20'
+      : 'bg-black/20 text-white/70 hover:bg-black/30'
     }`;
 
   const getPlaceholder = () => {
@@ -214,17 +214,17 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 relative z-20"
+        className="bg-white/10 backdrop-blur-xl p-3 rounded-xl shadow-2xl border border-white/20 relative z-20"
       >
         <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
           {/* Location Input */}
           <div className="relative flex-grow group">
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/80 group-focus-within:text-white transition-colors">
               <FaMapMarkerAlt className="text-lg" />
             </div>
             <input
               type="text"
-              className="w-full pl-12 pr-4 py-4 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white border border-transparent focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-lg placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-4 rounded-lg bg-white/20 text-white placeholder-white/70 border border-white/10 focus:bg-white/30 focus:ring-2 focus:ring-white/50 outline-none transition-all font-medium text-lg shadow-inner"
               placeholder={getPlaceholder()}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
@@ -243,8 +243,8 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
               type="button"
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center justify-center gap-2 px-4 py-4 rounded-lg font-bold transition-all border ${showFilters
-                ? 'bg-blue-50 text-blue-600 border-blue-200'
-                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                ? 'bg-white/30 text-white border-white/30'
+                : 'bg-white/10 text-white border-white/10 hover:bg-white/20'
                 }`}
               title="Advanced Filters"
             >
@@ -255,7 +255,7 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
           {/* Search Button */}
           <button
             type="submit"
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-lg transition-all shadow-lg hover:shadow-blue-500/30 flex items-center justify-center gap-2 text-lg"
+            className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-10 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-lg border border-white/20"
           >
             <FaSearch />
             <span className="hidden md:inline">Search</span>
@@ -273,49 +273,49 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
             >
               <div className="pt-4 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 dark:border-gray-700 mt-2">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Property Type</label>
+                  <label className="block text-xs font-bold text-white/70 uppercase mb-1">Property Type</label>
                   <select
                     value={filters.type}
                     onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-                    className="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 rounded bg-white/20 border border-white/10 text-white text-sm focus:ring-2 focus:ring-white/50 outline-none hover:bg-white/30 transition-colors"
                   >
-                    <option value="apartment">Apartment</option>
-                    <option value="house">House</option>
-                    <option value="office">Office</option>
-                    <option value="land">Land</option>
+                    <option value="apartment" className="text-gray-900">Apartment</option>
+                    <option value="house" className="text-gray-900">House</option>
+                    <option value="office" className="text-gray-900">Office</option>
+                    <option value="land" className="text-gray-900">Land</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Price Range (Ksh)</label>
+                  <label className="block text-xs font-bold text-white/70 uppercase mb-1">Price Range (Ksh)</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       placeholder="Min"
                       value={filters.minPrice}
                       onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                      className="w-1/2 p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-1/2 p-2 rounded bg-white/20 border border-white/10 text-white placeholder-white/50 text-sm focus:ring-2 focus:ring-white/50 outline-none"
                     />
                     <input
                       type="number"
                       placeholder="Max"
                       value={filters.maxPrice}
                       onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                      className="w-1/2 p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      className="w-1/2 p-2 rounded bg-white/20 border border-white/10 text-white placeholder-white/50 text-sm focus:ring-2 focus:ring-white/50 outline-none"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bedrooms</label>
+                  <label className="block text-xs font-bold text-white/70 uppercase mb-1">Bedroom Count</label>
                   <select
                     value={filters.bedrooms}
                     onChange={(e) => setFilters({ ...filters, bedrooms: e.target.value })}
-                    className="w-full p-2 rounded bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full p-2 rounded bg-white/20 border border-white/10 text-white text-sm focus:ring-2 focus:ring-white/50 outline-none hover:bg-white/30 transition-colors"
                   >
-                    <option value="">Any</option>
-                    <option value="1">1 Bedroom</option>
-                    <option value="2">2 Bedrooms</option>
-                    <option value="3">3 Bedrooms</option>
-                    <option value="4+">4+ Bedrooms</option>
+                    <option value="" className="text-gray-900">Any</option>
+                    <option value="1" className="text-gray-900">1 Bedroom</option>
+                    <option value="2" className="text-gray-900">2 Bedrooms</option>
+                    <option value="3" className="text-gray-900">3 Bedrooms</option>
+                    <option value="4+" className="text-gray-900">4+ Bedrooms</option>
                   </select>
                 </div>
               </div>
