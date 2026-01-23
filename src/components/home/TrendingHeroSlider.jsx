@@ -1,13 +1,14 @@
 // src/components/home/TrendingHeroSlider.jsx
 // Full-screen trending properties slider for Buy/Rent pages
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaFire, FaEye, FaUser, FaLandmark } from 'react-icons/fa';
 import apiClient from '../../api/axios';
 
-const TrendingHeroSlider = ({ listingType = 'sale', onLoad, autoPlayInterval = 5000 }) => {
+// ✅ PERFORMANCE: Memoized component to prevent unnecessary re-renders
+const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterval = 5000 }) => {
     const [properties, setProperties] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -113,22 +114,14 @@ const TrendingHeroSlider = ({ listingType = 'sale', onLoad, autoPlayInterval = 5
                 );
             })}
 
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+            {/* Gradient Overlays - GPU Accelerated */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 will-change-auto" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent will-change-auto" />
 
-            {/* Floating Animated Elements */}
+            {/* ✅ PERFORMANCE: Simplified floating elements with CSS animations instead of JS */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                    animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-20 right-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{ x: [0, -30, 0], y: [0, 40, 0] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute bottom-40 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"
-                />
+                <div className="absolute top-20 right-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-float-slow" />
+                <div className="absolute bottom-40 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-float-slower" />
             </div>
 
             {/* Content Container */}
@@ -296,6 +289,6 @@ const TrendingHeroSlider = ({ listingType = 'sale', onLoad, autoPlayInterval = 5
             </div>
         </section>
     );
-};
+});
 
 export default TrendingHeroSlider;

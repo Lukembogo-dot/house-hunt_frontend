@@ -107,8 +107,8 @@ function Buy() {
                 whileHover={{ y: -5, scale: 1.02 }}
                 onClick={() => setSelectedType(selectedType === type.type ? null : type.type)}
                 className={`relative group p-8 rounded-2xl border-2 transition-all ${selectedType === type.type
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
                   }`}
               >
                 <div className={`w-16 h-16 bg-gradient-to-br ${type.color} rounded-2xl flex items-center justify-center text-white text-3xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
@@ -125,25 +125,6 @@ function Buy() {
         </div>
       </section>
 
-      {/* ✨ TRUST INDICATORS */}
-      <section className="py-8 px-6 bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-8 text-white">
-          <div className="flex items-center gap-3">
-            <FaShieldAlt className="text-2xl text-yellow-400" />
-            <span className="font-bold">Verified Listings</span>
-          </div>
-          <div className="w-px h-8 bg-white/30 hidden md:block" />
-          <div className="flex items-center gap-3">
-            <FaHandshake className="text-2xl text-green-400" />
-            <span className="font-bold">Trusted Agents</span>
-          </div>
-          <div className="w-px h-8 bg-white/30 hidden md:block" />
-          <div className="flex items-center gap-3">
-            <FaSearch className="text-2xl text-pink-400" />
-            <span className="font-bold">Property Scouts Available</span>
-          </div>
-        </div>
-      </section>
 
       {/* ✨ EXPLORE MORE SECTION */}
       <section className="py-16 px-6 bg-gray-50 dark:bg-gray-950 relative overflow-hidden">

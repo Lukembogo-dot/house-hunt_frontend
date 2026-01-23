@@ -9,3 +9,43 @@
     @apply transition-colors duration-300;
   }
 }
+
+/* ✅ PERFORMANCE: GPU-Accelerated CSS Animations for Floating Elements */
+@keyframes float-slow {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(20px, -15px, 0); }
+}
+
+@keyframes float-slower {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-15px, 20px, 0); }
+}
+
+@keyframes float-fastest {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(10px, -10px, 0); }
+}
+
+.animate-float-slow {
+  animation: float-slow 15s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-slower {
+  animation: float-slower 20s ease-in-out infinite;
+  will-change: transform;
+}
+
+.animate-float-fastest {
+  animation: float-fastest 10s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ✅ Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-slow,
+  .animate-float-slower,
+  .animate-float-fastest {
+    animation: none;
+  }
+}

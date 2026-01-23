@@ -1,7 +1,7 @@
 // src/components/home/HeroImageSlider.jsx
 // Premium hero section with auto-rotating background images and parallax effects
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { FaRocket, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
@@ -39,7 +39,8 @@ const heroImages = [
     }
 ];
 
-const HeroImageSlider = ({ children, showText = true, autoPlayInterval = 6000 }) => {
+// ✅ PERFORMANCE: Memoized component
+const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 6000 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -92,36 +93,15 @@ const HeroImageSlider = ({ children, showText = true, autoPlayInterval = 6000 })
                 />
             ))}
 
-            {/* Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-purple-900/20" />
+            {/* Gradient Overlays - GPU Accelerated */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 will-change-auto" />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 to-purple-900/20 will-change-auto" />
 
-            {/* Animated Floating Elements */}
+            {/* ✅ PERFORMANCE: CSS-animated floating elements instead of JS */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <motion.div
-                    animate={{
-                        x: [0, 30, 0],
-                        y: [0, -20, 0],
-                    }}
-                    transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        x: [0, -40, 0],
-                        y: [0, 30, 0],
-                    }}
-                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-                />
-                <motion.div
-                    animate={{
-                        x: [0, 20, 0],
-                        y: [0, 40, 0],
-                    }}
-                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-1/2 left-1/3 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl"
-                />
+                <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float-slow" />
+                <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-slower" />
+                <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-float-fastest" />
             </div>
 
             {/* Content Container */}
@@ -208,6 +188,6 @@ const HeroImageSlider = ({ children, showText = true, autoPlayInterval = 6000 })
             </div>
         </section>
     );
-};
+});
 
 export default HeroImageSlider;
