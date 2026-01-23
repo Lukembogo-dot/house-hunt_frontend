@@ -81,24 +81,16 @@ const HeroImageSlider = ({ children, showText = true, autoPlayInterval = 6000 })
     const currentImage = heroImages[currentIndex];
 
     return (
-        <section className="relative h-[70vh] md:h-[80vh] overflow-hidden">
-            {/* Background Images with Cross-fade */}
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentIndex}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1.2, ease: 'easeInOut' }}
-                    className="absolute inset-0"
-                    style={{ scale: heroScale }}
-                >
-                    <div
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${currentImage.url})` }}
-                    />
-                </motion.div>
-            </AnimatePresence>
+        <section className="relative h-[70vh] md:h-[80vh] overflow-hidden bg-gray-900">
+            {/* Background Images with Simple CSS Crossfade - NO SCALE to prevent glitching */}
+            {heroImages.map((image, index) => (
+                <div
+                    key={index}
+                    className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
+                        }`}
+                    style={{ backgroundImage: `url(${image.url})` }}
+                />
+            ))}
 
             {/* Gradient Overlays */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
@@ -196,8 +188,8 @@ const HeroImageSlider = ({ children, showText = true, autoPlayInterval = 6000 })
                         key={index}
                         onClick={() => goToSlide(index)}
                         className={`transition-all duration-300 rounded-full ${index === currentIndex
-                                ? 'w-8 h-3 bg-white'
-                                : 'w-3 h-3 bg-white/40 hover:bg-white/60'
+                            ? 'w-8 h-3 bg-white'
+                            : 'w-3 h-3 bg-white/40 hover:bg-white/60'
                             }`}
                         aria-label={`Go to slide ${index + 1}`}
                     />
