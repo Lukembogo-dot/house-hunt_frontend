@@ -224,6 +224,13 @@ function MainLayout() {
 
       <main id="properties" className="flex-grow bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-950 dark:to-gray-900/50 relative z-20">
 
+        {/* --- TOP AGENTS (MOVED) --- */}
+        {!submittedHomeFilters && (
+          <div className="py-1">
+            <TopAgents />
+          </div>
+        )}
+
         {/* --- HOUSE HUNT REQUEST (COMPACT GLASSMORPHISM) - MOVED TO TOP --- */}
         {!submittedHomeFilters && (
           <section className="relative py-6 px-6">
@@ -318,10 +325,7 @@ function MainLayout() {
           </section>
         ) : (
           <>
-            {/* Ultra Compact Component Spacing */}
-            <div className="py-1">
-              <TopAgents />
-            </div>
+
 
             <div className="py-1">
               <TrendingMtaaScores />
