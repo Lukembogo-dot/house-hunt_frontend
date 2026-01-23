@@ -7,6 +7,7 @@ const Buy = lazy(() => import("../../pages/Buy"));
 const Rent = lazy(() => import("../../pages/Rent"));
 const Contact = lazy(() => import("../../pages/Contact"));
 const PropertyDetails = lazy(() => import("../../pages/PropertyDetails"));
+const PropertyVideoWatch = lazy(() => import("../../pages/PropertyVideoWatch"));
 const Login = lazy(() => import("../../pages/Login"));
 const Register = lazy(() => import("../../pages/Register"));
 const AdminDashboard = lazy(() => import('../../pages/AdminDashboard'));
@@ -39,11 +40,11 @@ const CostOfLivingCalculator = lazy(() => import('../../pages/CostOfLivingCalcul
 const CreateIntelPost = lazy(() => import('../../pages/CreateIntelPost'));
 const AgentDashboard = lazy(() => import('../../pages/AgentDashboard'));
 const NotFound = lazy(() => import('../../pages/NotFound'));
-const AgentWallet = lazy(() => import('../../pages/AgentWallet')); 
-const SoldPropertiesPage = lazy(() => import('../../pages/SoldPropertiesPage')); 
+const AgentWallet = lazy(() => import('../../pages/AgentWallet'));
+const SoldPropertiesPage = lazy(() => import('../../pages/SoldPropertiesPage'));
 const AdminFaqManager = lazy(() => import('../../pages/AdminFaqManager'));
 const FaqDetails = lazy(() => import('../../pages/FaqDetails'));
-const FaqIndex = lazy(() => import('../../pages/FaqIndex')); 
+const FaqIndex = lazy(() => import('../../pages/FaqIndex'));
 const PaymentSuccess = lazy(() => import('../../pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('../../pages/PaymentCancel'));
 
@@ -59,6 +60,7 @@ const AppRoutesConfig = ({ homeElement }) => {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/properties/:slug" element={<PropertyDetails />} />
+      <Route path="/properties/:slug/video" element={<PropertyVideoWatch />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/agent/:agentId" element={<AgentPublicProfile />} />
@@ -89,8 +91,8 @@ const AppRoutesConfig = ({ homeElement }) => {
         <Route path="/profile/edit" element={<EditProfileSettings />} />
         <Route path="/create-intel-post" element={<CreateIntelPost />} />
         <Route path="/chat" element={<ChatPage />}>
-            <Route index element={<ChatPlaceholder />} />
-            <Route path=":id" element={<MessageStream />} />
+          <Route index element={<ChatPlaceholder />} />
+          <Route path=":id" element={<MessageStream />} />
         </Route>
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />

@@ -182,53 +182,20 @@ const ChatBubble = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ✅ Determine Context Message based on URL + Visual Proactive Logic
+  // ✅ SIMPLIFIED: Static greeting message (AI visual proactive disabled)
+  // Removed Gemini model calls for page-based summaries
   useEffect(() => {
-    const path = location.pathname;
-    let msg = "";
+    // Static greeting message - no AI generation based on user activity
+    const staticGreeting = "👋 Hello, I am HouseHunt Kenya assistant ready to guide you through!";
 
-    const fetchVisualProactive = async () => {
-      const mainImage = document.querySelector('img[alt*="property"], .property-image') || document.querySelector('main img');
-      const imageUrl = mainImage?.src;
-      const title = document.querySelector('h1')?.innerText || "this property";
-      const locText = document.querySelector('p')?.innerText || "Nairobi";
+    setPopupMessage(staticGreeting);
 
-      if (imageUrl) {
-        try {
-          const { data } = await apiClient.post('/ai/visual-proactive', {
-            imageUrl,
-            title,
-            location: locText
-          });
-          if (data.message) {
-            setPopupMessage(data.message);
-            setTimeout(() => { if (!isOpen) setShowPopup(true); }, 2500);
-          }
-        } catch (e) {
-          console.warn("Visual Proactive Failed:", e);
-        }
-      }
-    };
+    const timer = setTimeout(() => {
+      if (!isOpen) setShowPopup(true);
+    }, 3000);
 
-    if (path.includes('/properties/') && !path.includes('new')) {
-      fetchVisualProactive();
-      msg = "👁️ Taking a look at this property for you...";
-    } else if (path.includes('/neighbourhood/')) {
-      msg = "🌍 Want to know the real 'vibe' here? Ask for the Mtaa Reality.";
-    } else if (path.includes('/tools/cost-of-living')) {
-      msg = "💰 I can estimate specific bills for this area. Try me!";
-    } else if (path === '/' || path === '/home') {
-      msg = "👋 Hi! Access our Master Knowledge Ledger instantly. Ask anything!";
-    }
-
-    if (msg && !path.includes('/properties/')) {
-      setPopupMessage(msg);
-      const timer = setTimeout(() => {
-        if (!isOpen) setShowPopup(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [location.pathname, isOpen]);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
 
   const sendMessage = async (messageText) => {

@@ -76,7 +76,7 @@ const getSafeImageDetails = (imagesArray, propertyTitle) => {
 
 // --- INTERNAL COMPONENTS (Modal, SEO & Video) ---
 
-const VideoPlayerSection = ({ videoUrl }) => {
+const VideoPlayerSection = ({ videoUrl, propertySlug }) => {
   if (!videoUrl) return null;
 
   const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
@@ -84,13 +84,24 @@ const VideoPlayerSection = ({ videoUrl }) => {
 
   return (
     <div className="mb-10 group">
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-          <FaPlay className="text-red-600 text-lg" /> Virtual Tour
-        </h2>
-        <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
-          <FaGem size={10} /> Premium
-        </span>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <FaPlay className="text-red-600 text-lg" /> Virtual Tour
+          </h2>
+          <span className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full font-bold border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+            <FaGem size={10} /> Premium
+          </span>
+        </div>
+        {/* ✅ LINK TO DEDICATED VIDEO WATCH PAGE - For Google Video Indexing */}
+        <Link
+          to={`/properties/${propertySlug}/video`}
+          className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition"
+          title="Watch video in full screen mode"
+        >
+          <FaPlay size={12} />
+          <span className="hidden sm:inline">Watch Full Video</span>
+        </Link>
       </div>
 
       <div className="p-1 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 shadow-xl transform transition-transform duration-300 hover:scale-[1.01]">
@@ -521,7 +532,7 @@ const PropertyDetails = () => {
             )}
 
             <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <VideoPlayerSection videoUrl={property.video} />
+              <VideoPlayerSection videoUrl={property.video} propertySlug={property.slug} />
             </motion.div>
 
             <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
