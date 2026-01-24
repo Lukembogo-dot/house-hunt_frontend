@@ -231,23 +231,44 @@ const TopAgents = () => {
     fetchTopAgents();
   }, []);
 
+  const [itemsPerPage, setItemsPerPage] = useState(3);
+
+  // Responsive Carousel Logic
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setItemsPerPage(1);
+      } else if (window.innerWidth < 1024) {
+        setItemsPerPage(2);
+      } else {
+        setItemsPerPage(3);
+      }
+    };
+
+    handleResize(); // Set initial
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const maxIndex = Math.max(0, agents.length - itemsPerPage);
+
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev === 0 ? Math.max(0, agents.length - 3) : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? maxIndex : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev >= agents.length - 3 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
   };
 
   // Auto-scroll carousel
   useEffect(() => {
-    if (agents.length > 3) {
+    if (agents.length > itemsPerPage) {
       const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev >= agents.length - 3 ? 0 : prev + 1));
+        setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
       }, 8000);
       return () => clearInterval(interval);
     }
-  }, [agents.length]);
+  }, [agents.length, itemsPerPage, maxIndex]);
 
   if (loading) {
     return (
@@ -367,13 +388,13 @@ const TopAgents = () => {
         {/* Carousel */}
         <div className="relative">
           {/* Navigation Buttons */}
-          {agents.length > 3 && (
+          {agents.length > itemsPerPage && (
             <>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handlePrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md dark:bg-gray-800/80 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
               >
                 <FaChevronLeft />
               </motion.button>
@@ -382,7 +403,7 @@ const TopAgents = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={handleNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 w-12 h-12 bg-white dark:bg-gray-800 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
+                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md dark:bg-gray-800/80 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
               >
                 <FaChevronRight />
               </motion.button>
@@ -390,14 +411,14 @@ const TopAgents = () => {
           )}
 
           {/* Carousel Container */}
-          <div className="overflow-hidden" ref={carouselRef}>
+          <div className="overflow-hidden px-1 py-4" ref={carouselRef}>
             <motion.div
-              className="flex gap-8"
-              animate={{ x: `-${currentIndex * (100 / 3)}%` }}
+              className="flex"
+              animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {agents.map((agent) => (
-                <div key={agent._id} className="min-w-[calc(100%-2rem)] md:min-w-[calc(50%-1rem)] lg:min-w-[calc(33.333%-1.5rem)]">
+                <div key={agent._id} className="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 p-4">
                   <AgentCarouselCard agent={agent} />
                 </div>
               ))}
@@ -405,9 +426,9 @@ const TopAgents = () => {
           </div>
 
           {/* Carousel Indicators */}
-          {agents.length > 3 && (
-            <div className="flex justify-center gap-2 mt-8">
-              {Array.from({ length: Math.max(1, agents.length - 2) }).map((_, index) => (
+          {agents.length > itemsPerPage && (
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: Math.max(1, agents.length - itemsPerPage + 1) }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentIndex(index)}
