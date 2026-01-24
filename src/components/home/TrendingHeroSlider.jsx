@@ -7,8 +7,21 @@ import { Link } from 'react-router-dom';
 import { FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaFire, FaEye, FaUser, FaLandmark } from 'react-icons/fa';
 import apiClient from '../../api/axios';
 
+// Helper to extract video thumbnail
+const getVideoThumbnail = (url) => {
+    if (!url) return null;
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    }
+    if (url.includes('cloudinary')) {
+        return url.replace(/\.[^/.]+$/, ".jpg");
+    }
+    return null;
+};
+
 // ✅ PERFORMANCE: Memoized component to prevent unnecessary re-renders
-const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterval = 5000 }) => {
+const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterval = 5000, showBanner = true }) => {
     const [properties, setProperties] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -38,7 +51,7 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
                     );
                 }
 
-                const limited = filtered.slice(0, 5); // Show top 5 in slider
+                const limited = filtered.slice(0, 6); // ✅ Show top 6
                 setProperties(limited);
                 hasFetched.current = true;
 
@@ -97,13 +110,13 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
     if (properties.length === 0) return null;
 
     const currentProperty = properties[currentIndex];
-    const mainImage = currentProperty?.images?.[0]?.url || currentProperty?.images?.[0] || '/placeholder.jpg';
+    const mainImage = currentProperty?.images?.[0]?.url || currentProperty?.images?.[0] || getVideoThumbnail(currentProperty?.video) || '/placeholder.jpg';
 
     return (
         <section className="relative h-[75vh] md:h-[80vh] overflow-hidden bg-gray-900">
             {/* Background Images with Simple Crossfade - NO SCALE to prevent glitching */}
             {properties.map((prop, index) => {
-                const imgUrl = prop.images?.[0]?.url || prop.images?.[0] || '/placeholder.jpg';
+                const imgUrl = prop.images?.[0]?.url || prop.images?.[0] || getVideoThumbnail(prop.video) || '/placeholder.jpg';
                 return (
                     <div
                         key={prop._id}
@@ -124,23 +137,24 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
                 <div className="absolute bottom-40 left-10 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-float-slower" />
             </div>
 
+            {/* ✅ FIXED: Trending Badge - Pinned to Top Left */}
+            {showBanner && (
+                <div className="absolute top-28 left-6 md:left-12 lg:left-20 z-20">
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3"
+                    >
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold text-sm rounded-full shadow-lg">
+                            <FaFire className="animate-pulse" />
+                            Trending {listingType === 'rent' ? 'Rentals' : 'Properties'}
+                        </span>
+                    </motion.div>
+                </div>
+            )}
+
             {/* Content Container */}
-            <div className="relative z-10 h-full flex flex-col justify-end pb-16 px-6 md:px-12 lg:px-20">
-                {/* Trending Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-3 mb-6"
-                >
-                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold text-sm rounded-full shadow-lg">
-                        <FaFire className="animate-pulse" />
-                        Trending {listingType === 'rent' ? 'Rentals' : 'Properties'}
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white text-xs font-medium rounded-full border border-white/20">
-                        <FaEye className="text-blue-400" />
-                        {currentProperty?.views || 0} views
-                    </span>
-                </motion.div>
+            <div className="relative z-10 h-full flex flex-col justify-end pb-16 px-6 md:px-12 lg:px-20 pt-20">
 
                 {/* Property Info Card */}
                 <AnimatePresence mode="wait">
@@ -157,10 +171,19 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
                             {currentProperty?.title}
                         </h1>
 
-                        {/* Location */}
-                        <div className="flex items-center gap-2 text-gray-300 mb-6">
-                            <FaMapMarkerAlt className="text-blue-400" />
-                            <span className="text-lg">{currentProperty?.location}</span>
+                        {/* Location & View Count */}
+                        <div className="flex flex-wrap items-center gap-4 lg:gap-6 mb-6">
+                            <div className="flex items-center gap-2 text-gray-300">
+                                <FaMapMarkerAlt className="text-blue-400" />
+                                <span className="text-lg">{currentProperty?.location}</span>
+                            </div>
+
+                            <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+
+                            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full border border-white/10 text-xs font-medium text-white/90">
+                                <FaEye className="text-blue-400" />
+                                {currentProperty?.views || 0} views
+                            </div>
                         </div>
 
                         {/* Features Grid - Conditional based on property type */}
@@ -246,7 +269,7 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
             {/* Thumbnail Navigation */}
             <div className="absolute bottom-8 right-8 z-20 hidden lg:flex items-center gap-3">
                 {properties.map((prop, index) => {
-                    const thumbImg = prop.images?.[0]?.url || prop.images?.[0] || '/placeholder.jpg';
+                    const thumbImg = prop.images?.[0]?.url || prop.images?.[0] || getVideoThumbnail(prop.video) || '/placeholder.jpg';
                     return (
                         <button
                             key={prop._id}

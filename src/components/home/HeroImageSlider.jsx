@@ -88,11 +88,14 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 60
             <div className="absolute inset-0 overflow-hidden">
                 {/* Background Images */}
                 {heroImages.map((image, index) => (
-                    <div
+                    <img
                         key={index}
-                        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
+                        src={image.url}
+                        alt={image.alt}
+                        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
                             }`}
-                        style={{ backgroundImage: `url(${image.url})` }}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        fetchpriority={index === 0 ? "high" : "auto"}
                     />
                 ))}
 

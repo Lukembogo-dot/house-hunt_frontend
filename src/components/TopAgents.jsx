@@ -12,24 +12,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 // --- AGENT CAROUSEL CARD ---
 const AgentCarouselCard = ({ agent }) => {
   const [currentPropertyIndex, setCurrentPropertyIndex] = useState(0);
-  const [properties, setProperties] = useState([]);
-  const [loadingProperties, setLoadingProperties] = useState(true);
-
-  useEffect(() => {
-    const fetchAgentProperties = async () => {
-      try {
-        setLoadingProperties(true);
-        const { data } = await apiClient.get(`/properties/by-agent/${agent._id}`);
-        setProperties(Array.isArray(data) ? data.slice(0, 3) : []); // Top 3 properties
-      } catch (error) {
-        console.error('Failed to fetch agent properties', error);
-        setProperties([]);
-      } finally {
-        setLoadingProperties(false);
-      }
-    };
-    fetchAgentProperties();
-  }, [agent._id]);
+  const properties = agent.properties || []; // ✅ Use pre-fetched properties
+  // No secondary loading state needed!
 
   // Auto-rotate properties
   useEffect(() => {

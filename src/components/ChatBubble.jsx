@@ -182,19 +182,27 @@ const ChatBubble = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // ✅ SIMPLIFIED: Static greeting message (AI visual proactive disabled)
-  // Removed Gemini model calls for page-based summaries
+  // ✅ AUTO-HIDE LOGIC: Delay 4s -> Show -> Stay 4s -> Hide
   useEffect(() => {
-    // Static greeting message - no AI generation based on user activity
+    // Static greeting message
     const staticGreeting = "👋 Hello, I am HouseHunt Kenya assistant ready to guide you through!";
-
     setPopupMessage(staticGreeting);
 
-    const timer = setTimeout(() => {
-      if (!isOpen) setShowPopup(true);
-    }, 3000);
+    // Timer 1: Delay appearance by 4 seconds
+    const startTimer = setTimeout(() => {
+      if (!isOpen) {
+        setShowPopup(true);
 
-    return () => clearTimeout(timer);
+        // Timer 2: Hide after 4 seconds of visibility
+        const hideTimer = setTimeout(() => {
+          setShowPopup(false);
+        }, 4000);
+
+        return () => clearTimeout(hideTimer);
+      }
+    }, 4000);
+
+    return () => clearTimeout(startTimer);
   }, [isOpen]);
 
 

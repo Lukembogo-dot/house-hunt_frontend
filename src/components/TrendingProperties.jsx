@@ -14,20 +14,20 @@ const TrendingProperties = ({ listingType, onLoad }) => {
         setLoading(true);
         // Fetch all trending (assuming backend returns mixed types)
         const { data } = await apiClient.get('/properties/trending');
-        
+
         // 1. Filter by Type (Rent or Sale) if provided
         let filtered = data;
         if (listingType) {
           // Normalize to match backend values (usually 'rent'/'sale' or 'Rental'/'For Sale')
           // Adjust logic based on your actual property data structure (e.g., prop.listingType)
-          filtered = data.filter(p => 
+          filtered = data.filter(p =>
             p.listingType && p.listingType.toLowerCase() === listingType.toLowerCase()
           );
         }
 
         // 2. Limit to 12 items (4 cols * 3 rows)
         const limited = filtered.slice(0, 12);
-        
+
         setProperties(limited);
 
         // 3. Pass IDs back to parent to avoid duplicates in the main list
@@ -50,7 +50,7 @@ const TrendingProperties = ({ listingType, onLoad }) => {
   if (properties.length === 0) return null;
 
   return (
-    <motion.section 
+    <motion.section
       className="py-10 px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -67,7 +67,7 @@ const TrendingProperties = ({ listingType, onLoad }) => {
         </div>
 
         {/* ✅ UPDATED GRID: 4 Columns on Large Screens */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
           {properties.map((prop) => (
             <PropertyCard key={prop._id} property={prop} />
           ))}

@@ -7,7 +7,7 @@ import {
   FaWhatsapp, FaCalendarAlt, FaCommentDots,
   FaUserCircle, FaTiktok, FaInstagram, FaUserSlash,
   FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy, FaEnvelope, FaTimes,
-  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag
+  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag, FaPhone
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import InvestmentYieldWidget from './InvestmentYieldWidget';
@@ -477,10 +477,21 @@ const PropertySidebar = ({
                   onClick={() => {
                     openExternalLink(`https://wa.me/${agentWhatsapp.replace(/\+/g, '')}?text=${generateWhatsAppMessage(agentName)}`, 'whatsapp_click');
                   }}
-                  className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group"
+                  className="w-full flex items-center justify-between px-4 py-2 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/40 transition group mb-2"
                 >
                   <span className="text-sm font-bold">Start WhatsApp Chat</span>
                   <FaWhatsapp className="text-xl group-hover:scale-110 transition-transform" />
+                </button>
+
+                {/* Call Button */}
+                <button
+                  onClick={() => {
+                    openExternalLink(`tel:${agentWhatsapp}`, 'call_click');
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition group"
+                >
+                  <span className="text-sm font-bold">Call Agent {agentWhatsapp}</span>
+                  <FaPhone className="text-lg group-hover:rotate-12 transition-transform" />
                 </button>
               </div>
             )}

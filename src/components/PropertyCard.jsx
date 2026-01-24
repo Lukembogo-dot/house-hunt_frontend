@@ -1,6 +1,6 @@
 // src/components/PropertyCard.jsx
 // Glassmorphic design matching TopAgents carousel style
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../utils/formatPrice";
@@ -109,7 +109,7 @@ const generatePropertyCardSchema = (property, images) => {
   };
 };
 
-export default function PropertyCard({ property }) {
+function PropertyCard({ property }) {
   const navigate = useNavigate();
 
   const [isFlipped, setIsFlipped] = useState(false);
@@ -199,7 +199,7 @@ export default function PropertyCard({ property }) {
       </Helmet>
 
       <motion.div
-        className="relative w-full h-[420px] cursor-pointer group"
+        className="relative w-full h-[400px] cursor-pointer group"
         style={{ perspective: '1200px' }}
         itemScope
         itemType={property.listingType === 'rent' ? "https://schema.org/Accommodation" : "https://schema.org/Product"}
@@ -304,6 +304,9 @@ export default function PropertyCard({ property }) {
                         <FaStar size={10} /> Featured
                       </span>
                     )}
+                    <span className="bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg border border-white/10 flex items-center gap-1.5">
+                      <FaEye size={12} className="text-blue-400" /> {property.views || 0}
+                    </span>
                   </div>
 
                   {/* Favorite Button */}
@@ -527,3 +530,5 @@ export default function PropertyCard({ property }) {
     </>
   );
 }
+
+export default memo(PropertyCard);

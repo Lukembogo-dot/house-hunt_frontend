@@ -21,6 +21,7 @@ import PreviewBanner from './components/PreviewBanner';
 import TrendingMtaaScores from "./components/TrendingMtaaScores";
 import FeaturedProperties from "./components/FeaturedProperties";
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
+import useVisitorTracking from "./hooks/useVisitorTracking";
 
 // --- NEW: Visual Enhancement Components ---
 import { HeroImageSlider, AnimatedStats } from "./components/home";
@@ -135,6 +136,8 @@ function MainLayout() {
   const isQuizEnabled = useFeatureFlag('neighbourhood-quiz');
   const isCostCalculatorEnabled = useFeatureFlag('cost-of-living-calculator');
   const location = useLocation();
+
+  useVisitorTracking(); // ✅ Track Visits
 
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: location.pathname + location.search, title: document.title });

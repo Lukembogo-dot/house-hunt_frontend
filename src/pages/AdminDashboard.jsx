@@ -593,7 +593,7 @@ const AdminDashboard = () => {
               isCollapsed={collapsedSections.analytics}
               onToggle={() => toggleSection('analytics')}
             >
-              <AdminAnalyticsWidget />
+              <AdminAnalyticsWidget properties={properties} />
             </CollapsibleSection>
 
             {/* Quick Navigation Links */}

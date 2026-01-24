@@ -11,12 +11,7 @@ import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
 import { Helmet } from 'react-helmet-async';
 
-// Property type categories
-const propertyTypes = [
-  { icon: FaHome, label: 'Houses', type: 'house', color: 'from-blue-500 to-cyan-500' },
-  { icon: FaBuilding, label: 'Apartments', type: 'apartment', color: 'from-purple-500 to-pink-500' },
-  { icon: FaLandmark, label: 'Land', type: 'land', color: 'from-green-500 to-emerald-500' },
-];
+// Property type categories removed
 
 function Buy() {
   const seo = useSeoData(
@@ -26,7 +21,6 @@ function Buy() {
   );
 
   const [trendingIds, setTrendingIds] = useState([]);
-  const [selectedType, setSelectedType] = useState(null);
 
   return (
     <>
@@ -69,62 +63,8 @@ function Buy() {
         listingType="sale"
         onLoad={(ids) => setTrendingIds(ids)}
         autoPlayInterval={5000}
+        showBanner={false}
       />
-
-      {/* ✨ QUICK CATEGORY FILTERS */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-900 relative overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950" />
-        <motion.div
-          animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
-          transition={{ duration: 15, repeat: Infinity }}
-          className="absolute top-10 right-10 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"
-        />
-
-        <div className="max-w-6xl mx-auto relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <span className="inline-block px-4 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
-              Browse by Category
-            </span>
-            <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">
-              What Are You Looking For?
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {propertyTypes.map((type, index) => (
-              <motion.button
-                key={type.type}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                onClick={() => setSelectedType(selectedType === type.type ? null : type.type)}
-                className={`relative group p-8 rounded-2xl border-2 transition-all ${selectedType === type.type
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300'
-                  }`}
-              >
-                <div className={`w-16 h-16 bg-gradient-to-br ${type.color} rounded-2xl flex items-center justify-center text-white text-3xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
-                  <type.icon />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{type.label}</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  Explore {type.label.toLowerCase()} for sale across Kenya
-                </p>
-                <FaArrowRight className="absolute top-8 right-8 text-gray-300 dark:text-gray-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      </section>
-
 
       {/* ✨ EXPLORE MORE SECTION */}
       <section className="py-16 px-6 bg-gray-50 dark:bg-gray-950 relative overflow-hidden">
@@ -171,11 +111,11 @@ function Buy() {
           >
             <PropertyList
               defaultFilter={{
-                listingType: 'sale',
-                ...(selectedType && { type: selectedType })
+                listingType: 'sale'
               }}
               excludedIds={trendingIds}
               showTitle={false}
+              limit={12}
             />
           </motion.div>
 

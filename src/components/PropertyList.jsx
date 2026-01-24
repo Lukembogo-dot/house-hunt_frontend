@@ -12,12 +12,12 @@ import ServiceCard from "./services/ServiceCard";
 const EMPTY_OBJECT = {};
 
 // --- REUSABLE MODERN PROMO FLIP CARD ---
-const PromoFlipCard = ({ frontContent, backContent, accentColor }) => {
+const PromoFlipCard = ({ frontContent, backContent, accentColor, backgroundImage }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
     <div
-      className="relative w-full h-[450px] cursor-pointer group"
+      className="relative w-full h-[400px] cursor-pointer group" // Matched height to PropertyCard (400px)
       style={{ perspective: '1000px' }}
       onMouseLeave={() => setIsFlipped(false)}
     >
@@ -28,55 +28,50 @@ const PromoFlipCard = ({ frontContent, backContent, accentColor }) => {
         animate={{ rotateY: isFlipped ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, mass: 0.8 }}
       >
-        {/* FRONT SIDE (Frosted Glass) */}
+        {/* FRONT SIDE */}
         <div
           onClick={() => setIsFlipped(true)}
-          className={`absolute inset-0 backface-hidden w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col items-center justify-center p-8 text-center 
-          text-gray-900 dark:text-white 
-          bg-white/80 backdrop-blur-xl border border-white/50
-          dark:bg-slate-900/50 dark:border-white/20`}
+          className="absolute inset-0 backface-hidden w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col items-center justify-center p-8 text-center border border-white/20 dark:border-white/10"
           style={{ backfaceVisibility: 'hidden' }}
         >
+          {/* Background Image */}
+          {backgroundImage && (
+            <div className="absolute inset-0">
+              <img src={backgroundImage} alt="Promo" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+              <div className={`absolute inset-0 bg-${accentColor}-900/40 mix-blend-overlay`}></div>
+            </div>
+          )}
 
-          {/* Reflective Light Sheen */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/5 pointer-events-none"></div>
-
-          {/* Dynamic Glow Background */}
-          <div className={`absolute -top-20 -right-20 w-60 h-60 bg-${accentColor}-500/20 rounded-full blur-[80px] pointer-events-none`}></div>
-          <div className={`absolute -bottom-20 -left-20 w-60 h-60 bg-${accentColor}-500/20 rounded-full blur-[80px] pointer-events-none`}></div>
-
-          <div className="relative z-10 flex flex-col items-center drop-shadow-sm">
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center drop-shadow-sm text-white">
             {frontContent}
           </div>
 
-          <div className="absolute bottom-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-white/80 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+          <div className="absolute bottom-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/70 group-hover:text-white transition-colors z-10">
             <span className={`w-2 h-2 rounded-full bg-${accentColor}-500 animate-pulse`}></span>
             Tap to View Details
           </div>
         </div>
 
-        {/* BACK SIDE (Matched Glass Style) */}
+        {/* BACK SIDE */}
         <div
           className={`absolute inset-0 backface-hidden w-full h-full rounded-2xl shadow-xl overflow-hidden flex flex-col items-center justify-center p-8 text-center 
             text-gray-900 dark:text-white 
-            bg-white/90 backdrop-blur-xl border border-white/50
-            dark:bg-slate-900/60 dark:border-white/20`}
+            bg-white/95 backdrop-blur-xl border border-white/50
+            dark:bg-slate-900/95 dark:border-white/20`}
           style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
         >
           {/* Close Button */}
           <button
             onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
             className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md
-                bg-white/30 hover:bg-white/60 text-gray-600
+                bg-gray-100 hover:bg-gray-200 text-gray-600
                 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/80 z-20"
           >
             <FaTimes />
           </button>
 
-          {/* Reflective Light Sheen (Same as Front) */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/5 pointer-events-none"></div>
-
-          {/* Dynamic Glow Background (Same as Front but slightly tinted) */}
           <div className={`absolute inset-0 bg-${accentColor}-500/5 pointer-events-none`}></div>
 
           <div className="relative z-10 flex flex-col items-center w-full drop-shadow-sm">
@@ -188,127 +183,134 @@ export default function PropertyList({
         </div>
       )}
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-8">
         {properties.map((property, index) => {
 
-          // --- 1. COMMUNITY PROMO (Index 1) ---
-          if (index === 1) {
-            return (
-              <div key={`promo-community-${index}`} style={{ display: 'contents' }}>
-                <PromoFlipCard
-                  accentColor="purple"
-                  // onClick removed, navigation moved to button below
-                  frontContent={
-                    <>
-                      <div className="w-20 h-20 bg-purple-100 dark:bg-purple-500/20 rounded-full flex items-center justify-center mb-6 border border-purple-200 dark:border-purple-500/40 animate-pulse shadow-sm">
-                        <FaQuestionCircle className="text-4xl text-purple-600 dark:text-purple-200" />
-                      </div>
-                      <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight text-gray-900 dark:text-white drop-shadow-sm">
-                        What's the <span className="text-purple-600 dark:text-purple-300">True Vibe</span> of {locationName}?
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-white/90 font-medium">Water? Security? Noise? Don't just guess.</p>
-                    </>
-                  }
-                  backContent={
-                    <>
-                      <FaComments className="text-5xl text-purple-500 dark:text-purple-400 mb-5 drop-shadow-lg" />
-                      <h3 className="text-xl font-bold mb-3 drop-shadow-md text-gray-900 dark:text-white">Speak to a Local</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
-                        Skip the sales pitch. Connect directly with residents who live here right now and get the unfiltered truth.
-                      </p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate('/share-insight', { state: { location: activeFilters.location, type: 'question' } }); }}
-                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-purple-400/50"
-                      >
-                        Start the Conversation <FaArrowRight />
-                      </button>
-                    </>
-                  }
-                />
-                <PropertyCard key={property._id} property={property} />
-              </div>
-            );
-          }
-
-          // --- 2. PASSPORT PROMO (Index 3) ---
+          // Insert PROMO at index 3 (4th slot)
           if (index === 3) {
-            return (
-              <div key={`promo-passport-${index}`} style={{ display: 'contents' }}>
-                <PromoFlipCard
-                  accentColor="yellow"
-                  // onClick removed
-                  frontContent={
-                    <>
-                      <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-500/20 rounded-full flex items-center justify-center mb-6 border border-yellow-200 dark:border-yellow-500/40 shadow-sm">
-                        <FaIdCard className="text-4xl text-yellow-600 dark:text-yellow-300" />
-                      </div>
-                      <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight text-gray-900 dark:text-white drop-shadow-sm">
-                        Your Rental History is a <span className="text-yellow-600 dark:text-yellow-300">Goldmine.</span>
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-white/90 font-medium">Claim your Housing Passport today.</p>
-                    </>
-                  }
-                  backContent={
-                    <>
-                      <FaStar className="text-5xl text-yellow-500 dark:text-yellow-400 mb-5 drop-shadow-lg" />
-                      <h3 className="text-xl font-bold mb-3 drop-shadow-md text-gray-900 dark:text-white">Review, Earn, & Shine</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
-                        Review your current building anonymously to earn XP, gain credibility as a tenant, and unlock hidden price trends.
-                      </p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate('/profile'); }}
-                        className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-yellow-400/50"
-                      >
-                        Unlock Your Badge <FaArrowRight />
-                      </button>
-                    </>
-                  }
-                />
-                <PropertyCard key={property._id} property={property} />
-              </div>
-            );
-          }
+            let PromoContent = null;
 
-          // --- 3. AGENT PROMO (Index 5) ---
-          if (index === 5) {
-            return (
-              <div key={`promo-agent-${index}`} style={{ display: 'contents' }}>
-                <PromoFlipCard
-                  accentColor="blue"
-                  // onClick removed
-                  frontContent={
-                    <>
-                      <div className="w-20 h-20 bg-blue-100 dark:bg-blue-500/20 rounded-full flex items-center justify-center mb-6 border border-blue-200 dark:border-blue-500/40 shadow-sm">
-                        <FaUserTie className="text-4xl text-blue-600 dark:text-blue-200" />
-                      </div>
-                      <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight text-gray-900 dark:text-white drop-shadow-sm">
-                        Are You Managing Properties?
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-white/90 font-medium">We have an exclusive offer for pros.</p>
-                    </>
-                  }
-                  backContent={
-                    <>
-                      <FaRocket className="text-5xl text-blue-500 dark:text-blue-400 mb-5 drop-shadow-lg" />
-                      <h3 className="text-xl font-bold mb-2 drop-shadow-md text-gray-900 dark:text-white">Join the Revolution</h3>
-                      <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wide shadow-sm">
-                        Limited Time Offer
-                      </span>
-                      <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
-                        Be seen by thousands of serious renters. Post unlimited listings for FREE before we switch to paid plans.
-                      </p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); navigate('/login'); }}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-blue-400/50"
-                      >
-                        Claim Free Account <FaArrowRight />
-                      </button>
-                    </>
-                  }
-                />
-                <PropertyCard key={property._id} property={property} />
-              </div>
-            );
+            // PAGE 1: AGENT PROMO
+            if (page === 1) {
+              PromoContent = (
+                <div key={`promo-agent-${index}`} style={{ display: 'contents' }}>
+                  <PromoFlipCard
+                    accentColor="blue"
+                    backgroundImage="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=80"
+                    frontContent={
+                      <>
+                        <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 border border-blue-400/30 backdrop-blur-md shadow-lg">
+                          <FaUserTie className="text-4xl text-blue-200" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight drop-shadow-md">
+                          Are You Managing Properties?
+                        </h3>
+                        <p className="text-sm text-blue-100 font-medium">We have an exclusive offer for pros.</p>
+                      </>
+                    }
+                    backContent={
+                      <>
+                        <FaRocket className="text-5xl text-blue-500 dark:text-blue-400 mb-5 drop-shadow-lg" />
+                        <h3 className="text-xl font-bold mb-2 drop-shadow-md text-gray-900 dark:text-white">Join the Revolution</h3>
+                        <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wide shadow-sm">
+                          Limited Time Offer
+                        </span>
+                        <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
+                          Be seen by thousands of serious renters. Post unlimited listings for FREE before we switch to paid plans.
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate('/login'); }}
+                          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-blue-400/50"
+                        >
+                          Claim Free Account <FaArrowRight />
+                        </button>
+                      </>
+                    }
+                  />
+                  <PropertyCard key={property._id} property={property} />
+                </div>
+              );
+            }
+
+            // PAGE 2: COMMUNITY PROMO
+            else if (page === 2) {
+              PromoContent = (
+                <div key={`promo-community-${index}`} style={{ display: 'contents' }}>
+                  <PromoFlipCard
+                    accentColor="purple"
+                    backgroundImage="https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=1000&q=80"
+                    frontContent={
+                      <>
+                        <div className="w-20 h-20 bg-purple-500/20 rounded-full flex items-center justify-center mb-6 border border-purple-400/30 backdrop-blur-md shadow-lg animate-pulse">
+                          <FaQuestionCircle className="text-4xl text-purple-200" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight drop-shadow-md">
+                          True Vibe of {locationName}?
+                        </h3>
+                        <p className="text-sm text-purple-100 font-medium">Water? Security? Noise? Don't just guess.</p>
+                      </>
+                    }
+                    backContent={
+                      <>
+                        <FaComments className="text-5xl text-purple-500 dark:text-purple-400 mb-5 drop-shadow-lg" />
+                        <h3 className="text-xl font-bold mb-3 drop-shadow-md text-gray-900 dark:text-white">Speak to a Local</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
+                          Skip the sales pitch. Connect directly with residents who live here right now and get the unfiltered truth.
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate('/share-insight', { state: { location: activeFilters.location, type: 'question' } }); }}
+                          className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-purple-400/50"
+                        >
+                          Start the Conversation <FaArrowRight />
+                        </button>
+                      </>
+                    }
+                  />
+                  <PropertyCard key={property._id} property={property} />
+                </div>
+              );
+            }
+
+            // PAGE 3: PASSPORT PROMO
+            else if (page === 3) {
+              PromoContent = (
+                <div key={`promo-passport-${index}`} style={{ display: 'contents' }}>
+                  <PromoFlipCard
+                    accentColor="yellow"
+                    backgroundImage="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1000&q=80"
+                    frontContent={
+                      <>
+                        <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mb-6 border border-yellow-400/30 backdrop-blur-md shadow-lg">
+                          <FaIdCard className="text-4xl text-yellow-200" />
+                        </div>
+                        <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight drop-shadow-md">
+                          Your Rental History is <span className="text-yellow-300">Gold.</span>
+                        </h3>
+                        <p className="text-sm text-yellow-100 font-medium">Claim your Housing Passport today.</p>
+                      </>
+                    }
+                    backContent={
+                      <>
+                        <FaStar className="text-5xl text-yellow-500 dark:text-yellow-400 mb-5 drop-shadow-lg" />
+                        <h3 className="text-xl font-bold mb-3 drop-shadow-md text-gray-900 dark:text-white">Review, Earn, & Shine</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
+                          Review your current building anonymously to earn XP, gain credibility as a tenant, and unlock hidden price trends.
+                        </p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate('/profile'); }}
+                          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3.5 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-2 border border-yellow-400/50"
+                        >
+                          Unlock Your Badge <FaArrowRight />
+                        </button>
+                      </>
+                    }
+                  />
+                  <PropertyCard key={property._id} property={property} />
+                </div>
+              );
+            }
+
+            if (PromoContent) return PromoContent;
           }
 
           return <PropertyCard key={property._id} property={property} />;

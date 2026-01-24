@@ -89,6 +89,7 @@ const Rent = () => {
         listingType="rent"
         onLoad={(ids) => setTrendingIds(ids)}
         autoPlayInterval={5000}
+        showBanner={false}
       />
 
 
@@ -142,6 +143,7 @@ const Rent = () => {
               }}
               excludedIds={trendingIds}
               showTitle={false}
+              limit={12}
             />
           </motion.div>
         </div>
