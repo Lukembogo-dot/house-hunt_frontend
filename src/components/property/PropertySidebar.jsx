@@ -486,11 +486,15 @@ const PropertySidebar = ({
                 {/* Call Button */}
                 <button
                   onClick={() => {
-                    openExternalLink(`tel:${agentWhatsapp}`, 'call_click');
+                    handleRestrictedAction(() => {
+                      trackEvent('call_btn_click', 'property_sidebar', displayAgent?._id, { propertyId: property._id });
+                      handleLogLead();
+                      window.location.href = `tel:${agentWhatsapp}`;
+                    });
                   }}
                   className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition group"
                 >
-                  <span className="text-sm font-bold">Call Agent {agentWhatsapp}</span>
+                  <span className="text-sm font-bold">Call Agent</span>
                   <FaPhone className="text-lg group-hover:rotate-12 transition-transform" />
                 </button>
               </div>
