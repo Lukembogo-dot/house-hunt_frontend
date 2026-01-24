@@ -1,5 +1,5 @@
 // src/components/PropertyCard.jsx
-// Ultra-modern, professional design with enhanced UX
+// Glassmorphic design matching TopAgents carousel style
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -8,19 +8,17 @@ import {
   FaHeart, FaRegHeart, FaStar, FaCheckCircle,
   FaInfoCircle, FaArrowRight, FaTimes, FaPlayCircle,
   FaHandshake, FaBed, FaMapMarkerAlt, FaBath,
-  FaRulerCombined, FaEye, FaShareAlt
+  FaRulerCombined, FaEye
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 
 const placeholderImage = "https://placehold.co/400x300/e2e8f0/64748b?text=No+Image";
 
-// ✅ UTILITY FUNCTION FOR BACKWARD COMPATIBILITY
 const getSafeImageDetails = (imagesArray, propertyTitle) => {
   if (!Array.isArray(imagesArray) || imagesArray.length === 0) {
     return [];
   }
-
   return imagesArray.map((img, index) => {
     if (typeof img === 'string') {
       return { url: img, altText: `${propertyTitle} image ${index + 1}` };
@@ -29,7 +27,6 @@ const getSafeImageDetails = (imagesArray, propertyTitle) => {
   });
 };
 
-// ✅ HELPER: Get Thumbnail from Video URL
 const getVideoThumbnail = (url) => {
   if (!url) return null;
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -42,7 +39,6 @@ const getVideoThumbnail = (url) => {
   return null;
 };
 
-// ✅ Generate Property-Specific Schema
 const generatePropertyCardSchema = (property, images) => {
   const baseUrl = 'https://www.househuntkenya.co.ke';
   const propertyUrl = `${baseUrl}/properties/${property.slug}`;
@@ -59,9 +55,7 @@ const generatePropertyCardSchema = (property, images) => {
       "@type": "Offer",
       "price": property.price.toString(),
       "priceCurrency": "KES",
-      "availability": property.status === 'available'
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      "availability": property.status === 'available' ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       "url": propertyUrl,
       "seller": {
@@ -111,26 +105,21 @@ const generatePropertyCardSchema = (property, images) => {
         "uploadDate": property.createdAt || new Date().toISOString()
       }
     }),
-    ...(property.isFeatured && {
-      "award": "Featured Listing"
-    })
+    ...(property.isFeatured && { "award": "Featured Listing" })
   };
 };
 
 export default function PropertyCard({ property }) {
   const navigate = useNavigate();
 
-  // --- STATE MANAGEMENT ---
   const [isFlipped, setIsFlipped] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
-  const [showQuickView, setShowQuickView] = useState(false);
 
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
 
   const safeImageDetails = getSafeImageDetails(property.images, property.title);
 
-  // ✅ Image Source Logic
   let images = [];
   let isVideoPreview = false;
 
@@ -148,22 +137,25 @@ export default function PropertyCard({ property }) {
     images = [property.imageUrl || placeholderImage];
   }
 
-  // Auto-slider Logic
+  // Auto-slider Logic - Always active
   useEffect(() => {
-    if (isHovering && images.length > 1 && !isFlipped) {
+    if (images.length > 1 && !isFlipped) {
       const interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-      }, 2000);
+      }, 3000);
       return () => clearInterval(interval);
     }
-  }, [isHovering, images.length, isFlipped]);
+  }, [images.length, isFlipped]);
 
   const handleViewDetails = (e) => {
     if (e) e.stopPropagation();
     navigate(`/properties/${property.slug}`);
   };
 
-  const handleFlip = () => setIsFlipped(!isFlipped);
+  const handleFlip = (e) => {
+    e.stopPropagation();
+    setIsFlipped(!isFlipped);
+  };
 
   const isFavorited = user && Array.isArray(user.favorites) && user.favorites.includes(property._id);
 
@@ -183,21 +175,16 @@ export default function PropertyCard({ property }) {
 
   const isSoldOrRented = property.status === 'sold' || property.status === 'rented';
 
-  // --- Agent/Owner Logic ---
   const agentName = property.agent?.name || property.ownerDetails?.name || "Verified Agent";
   const agentImage = property.agent?.profilePicture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(agentName) + "&background=0D8ABC&color=fff";
 
-  // --- 3D Variants ---
   const variants = {
     front: { rotateY: 0 },
     back: { rotateY: 180 },
   };
 
-  // ✅ SEO: Enhanced alt text
   const generateAltText = (index) => {
-    const bedroomText = property.type !== 'land'
-      ? `${property.bedrooms || 0} bedroom `
-      : '';
+    const bedroomText = property.type !== 'land' ? `${property.bedrooms || 0} bedroom ` : '';
     return `${bedroomText}${property.type} for ${property.listingType} in ${property.location}, Kenya - Ksh ${formatPrice(property.price)}${property.listingType === 'rent' ? '/month' : ''} - Image ${index + 1}`;
   };
 
@@ -205,7 +192,6 @@ export default function PropertyCard({ property }) {
 
   return (
     <>
-      {/* ✅ SEO Schema Injection */}
       <Helmet>
         <script type="application/ld+json">
           {JSON.stringify(propertySchema)}
@@ -213,16 +199,13 @@ export default function PropertyCard({ property }) {
       </Helmet>
 
       <motion.div
-        className="relative w-full h-full cursor-pointer group"
+        className="relative w-full h-[420px] cursor-pointer group"
         style={{ perspective: '1200px' }}
         itemScope
-        itemType={property.listingType === 'rent'
-          ? "https://schema.org/Accommodation"
-          : "https://schema.org/Product"}
+        itemType={property.listingType === 'rent' ? "https://schema.org/Accommodation" : "https://schema.org/Product"}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => {
           setIsHovering(false);
-          setCurrentImageIndex(0);
           setIsFlipped(false);
         }}
         initial={{ opacity: 0, y: 30 }}
@@ -230,7 +213,7 @@ export default function PropertyCard({ property }) {
         viewport={{ once: true, amount: 0.15 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        {/* ✅ SEO: Hidden Microdata */}
+        {/* SEO Microdata */}
         <meta itemProp="name" content={property.title} />
         <meta itemProp="description" content={`${property.bedrooms || 0} bedroom ${property.type} for ${property.listingType} in ${property.location}`} />
         <link itemProp="url" href={`https://www.househuntkenya.co.ke/properties/${property.slug}`} />
@@ -254,90 +237,15 @@ export default function PropertyCard({ property }) {
           animate={isFlipped ? "back" : "front"}
           transition={{ type: "spring", stiffness: 280, damping: 22, mass: 0.8 }}
         >
-          {/* ============================== */}
-          {/* FRONT SIDE - MODERN DESIGN     */}
-          {/* ============================== */}
-          <div
+          {/* ======================== */}
+          {/* FRONT SIDE - GLASSMORPHIC */}
+          {/* ======================== */}
+          <motion.div
             style={{ backfaceVisibility: 'hidden' }}
-            className="relative w-full h-full min-h-[480px] 
-              bg-white dark:bg-gray-900
-              rounded-3xl shadow-2xl overflow-hidden flex flex-col
-              border border-gray-100 dark:border-gray-800
-              hover:shadow-3xl transition-shadow duration-300"
-            onClick={handleFlip}
+            className="absolute inset-0 w-full h-full rounded-3xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-700"
           >
-            {/* Sold/Rented Overlay */}
-            {isSoldOrRented && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900/60 to-gray-900/40 z-20 backdrop-blur-[2px]">
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", duration: 0.6 }}
-                    className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/20"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FaCheckCircle size={24} />
-                      <div>
-                        <p className="font-black text-lg uppercase tracking-wide">
-                          {property.status === 'sold' ? 'SOLD' : 'RENTED'}
-                        </p>
-                        <p className="text-xs text-white/80 font-medium">No longer available</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              </div>
-            )}
-
-            {/* Image Gallery Section */}
-            <div className="relative h-[280px] w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-              {/* Action Buttons - Top Bar */}
-              <div className="absolute top-0 left-0 right-0 z-30 p-4 flex items-center justify-between">
-                {/* Left: Listing Type Badge */}
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  className="flex gap-2"
-                >
-                  <span className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs px-4 py-2 rounded-full uppercase font-bold shadow-lg backdrop-blur-md border border-white/20">
-                    For {property.listingType}
-                  </span>
-                  {property.isFeatured && property.status === 'available' && (
-                    <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 text-xs px-4 py-2 rounded-full uppercase font-bold shadow-lg flex items-center gap-1.5">
-                      <FaStar size={12} /> Featured
-                    </span>
-                  )}
-                </motion.div>
-
-                {/* Right: Favorite Button */}
-                {user && !isSoldOrRented && (
-                  <motion.button
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    whileTap={{ scale: 0.9 }}
-                    whileHover={{ scale: 1.1 }}
-                    onClick={handleFavoriteClick}
-                    className="p-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-full shadow-lg hover:shadow-xl transition-all border border-gray-200 dark:border-gray-700"
-                    aria-label={isFavorited
-                      ? `Remove ${property.title} from favorites`
-                      : `Add ${property.title} to favorites`}
-                  >
-                    <motion.div
-                      animate={{ scale: isFavorited ? [1, 1.3, 1] : 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {isFavorited ? (
-                        <FaHeart className="text-red-500" size={18} />
-                      ) : (
-                        <FaRegHeart className="text-gray-700 dark:text-gray-300" size={18} />
-                      )}
-                    </motion.div>
-                  </motion.button>
-                )}
-              </div>
-
-              {/* Main Image */}
+            {/* Background Image with Overlays */}
+            <div className="absolute inset-0">
               <AnimatePresence mode="wait">
                 <motion.img
                   key={currentImageIndex}
@@ -349,149 +257,200 @@ export default function PropertyCard({ property }) {
                   initial={{ opacity: 0, scale: 1.1 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.6 }}
                 />
               </AnimatePresence>
 
-              {/* Video Indicator */}
-              {isVideoPreview && !isSoldOrRented && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10"
-                >
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="bg-white/20 backdrop-blur-md p-5 rounded-full border-4 border-white/40"
-                  >
-                    <FaPlayCircle className="text-white" size={40} />
-                  </motion.div>
-                </motion.div>
-              )}
-
-              {/* Image Counter & Dots */}
-              {images.length > 1 && (
-                <div className="absolute bottom-4 left-0 right-0 z-30">
-                  {/* Image Counter */}
-                  <div className="flex justify-center mb-2">
-                    <div className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-semibold">
-                      {currentImageIndex + 1} / {images.length}
-                    </div>
-                  </div>
-
-                  {/* Navigation Dots */}
-                  <div className="flex justify-center gap-1.5">
-                    {images.map((_, index) => (
-                      <motion.div
-                        key={index}
-                        className={`h-1.5 rounded-full transition-all ${index === currentImageIndex
-                          ? 'bg-white w-8'
-                          : 'bg-white/50 w-1.5'
-                          }`}
-                        layoutId={`dot-${index}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Bottom Gradient Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+              {/* Gradient Overlays - Matching TopAgents */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
             </div>
 
-            {/* Property Details Section */}
-            <div className="flex-grow p-6 flex flex-col justify-between bg-white dark:bg-gray-900">
-              <div>
-                {/* Title with Frosted Background */}
-                <div className="relative -mx-6 -mt-6 mb-4 p-4 px-6 
-                  bg-gradient-to-br from-blue-50/80 via-white/60 to-purple-50/80 
-                  dark:from-blue-950/40 dark:via-gray-900/60 dark:to-purple-950/40 
-                  backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50
-                  shadow-sm">
-                  <h2
-                    className="text-lg font-black text-gray-900 dark:text-white leading-tight tracking-tight"
-                    itemProp="name"
-                  >
-                    {property.title}
-                  </h2>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
-                  <FaMapMarkerAlt className="text-blue-600 dark:text-blue-400 flex-shrink-0" size={14} />
-                  <span className="text-sm font-medium line-clamp-1">{property.location}</span>
-                </div>
-
-                {/* Property Stats */}
-                {property.type !== 'land' && (
-                  <div className="flex items-center gap-4 mb-4 text-sm">
-                    <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                      <FaBed className="text-blue-600 dark:text-blue-400" size={16} />
-                      <span className="font-semibold">
-                        {Number(property.bedrooms) === 0 ? "Studio" : `${property.bedrooms} Bed${property.bedrooms !== 1 ? 's' : ''}`}
-                      </span>
+            {/* Sold/Rented Overlay */}
+            {isSoldOrRented && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900/70 to-gray-900/50 z-20 backdrop-blur-sm flex items-center justify-center">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", duration: 0.6 }}
+                  className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/20"
+                >
+                  <div className="flex items-center gap-3">
+                    <FaCheckCircle size={24} />
+                    <div>
+                      <p className="font-black text-lg uppercase tracking-wide">
+                        {property.status === 'sold' ? 'SOLD' : 'RENTED'}
+                      </p>
+                      <p className="text-xs text-white/80 font-medium">No longer available</p>
                     </div>
-                    {property.bathrooms && (
-                      <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                        <FaBath className="text-blue-600 dark:text-blue-400" size={16} />
-                        <span className="font-semibold">{property.bathrooms} Bath</span>
-                      </div>
-                    )}
-                    {property.size && (
-                      <div className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
-                        <FaRulerCombined className="text-blue-600 dark:text-blue-400" size={16} />
-                        <span className="font-semibold">{property.size}m²</span>
-                      </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
+            {/* Content Overlay */}
+            <div className="relative z-10 h-full flex flex-col justify-between p-5">
+
+              {/* Top Section - Badges & Actions */}
+              <div className="space-y-2">
+                <div className="flex items-start justify-between">
+                  {/* Badges */}
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="bg-blue-500/90 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold uppercase shadow-lg border border-white/20">
+                      For {property.listingType}
+                    </span>
+                    {property.isFeatured && property.status === 'available' && (
+                      <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 text-xs px-3 py-1.5 rounded-full font-bold uppercase shadow-lg flex items-center gap-1.5">
+                        <FaStar size={10} /> Featured
+                      </span>
                     )}
                   </div>
+
+                  {/* Favorite Button */}
+                  {user && !isSoldOrRented && (
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      whileHover={{ scale: 1.1 }}
+                      onClick={handleFavoriteClick}
+                      className="p-2.5 bg-white/10 backdrop-blur-xl rounded-full shadow-lg hover:bg-white/20 transition-all border border-white/20"
+                      aria-label={isFavorited ? `Remove ${property.title} from favorites` : `Add ${property.title} to favorites`}
+                    >
+                      <motion.div animate={{ scale: isFavorited ? [1, 1.3, 1] : 1 }} transition={{ duration: 0.3 }}>
+                        {isFavorited ? <FaHeart className="text-red-500" size={16} /> : <FaRegHeart className="text-white" size={16} />}
+                      </motion.div>
+                    </motion.button>
+                  )}
+                </div>
+
+                {/* Video Indicator */}
+                {isVideoPreview && !isSoldOrRented && (
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-xl px-3 py-2 rounded-full border border-white/20"
+                  >
+                    <FaPlayCircle className="text-white" size={14} />
+                    <span className="text-white text-xs font-bold">Video Tour Available</span>
+                  </motion.div>
                 )}
 
-                {/* Price */}
-                <div className="mb-4">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                {/* Image Counter */}
+                {images.length > 1 && (
+                  <div className="flex items-center justify-between">
+                    <div className="bg-black/60 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-semibold border border-white/10">
+                      {currentImageIndex + 1} / {images.length}
+                    </div>
+
+                    {/* Navigation Dots */}
+                    <div className="flex gap-1.5">
+                      {images.map((_, index) => (
+                        <div
+                          key={index}
+                          className={`h-1.5 rounded-full transition-all ${index === currentImageIndex ? 'bg-white w-6' : 'bg-white/40 w-1.5'
+                            }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom Section - Property Info */}
+              <div className="space-y-3">
+                {/* Property Details Card */}
+                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                  <h2 className="text-white font-bold text-lg line-clamp-2 mb-2 leading-tight" itemProp="name">
+                    {property.title}
+                  </h2>
+
+                  <div className="flex items-center gap-2 text-white/80 text-sm mb-3">
+                    <FaMapMarkerAlt size={12} />
+                    <span className="line-clamp-1">{property.location}</span>
+                  </div>
+
+                  {/* Stats */}
+                  {property.type !== 'land' && (
+                    <div className="flex items-center gap-3 mb-3 text-white/90 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <FaBed size={14} />
+                        <span className="font-semibold">
+                          {Number(property.bedrooms) === 0 ? "Studio" : `${property.bedrooms} Bed${property.bedrooms !== 1 ? 's' : ''}`}
+                        </span>
+                      </div>
+                      {property.bathrooms && (
+                        <div className="flex items-center gap-1.5">
+                          <FaBath size={14} />
+                          <span className="font-semibold">{property.bathrooms} Bath</span>
+                        </div>
+                      )}
+                      {property.size && (
+                        <div className="flex items-center gap-1.5">
+                          <FaRulerCombined size={14} />
+                          <span className="font-semibold">{property.size}m²</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Price - Highlighted on hover */}
+                  <motion.div
+                    className="flex items-baseline gap-2"
+                    animate={{
+                      scale: isHovering ? 1.1 : 1,
+                      y: isHovering ? -5 : 0
+                    }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span className="text-white font-black text-3xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]
+                      group-hover:text-yellow-400 transition-colors duration-300">
                       Ksh {formatPrice(property.price)}
                     </span>
                     {property.listingType === 'rent' && (
-                      <span className="text-base text-gray-500 dark:text-gray-400 font-medium">/month</span>
+                      <span className="text-white/70 text-base group-hover:text-yellow-300/80 transition-colors duration-300">/month</span>
                     )}
-                  </div>
+                  </motion.div>
                   {property.type === 'land' && property.pricePer && property.pricePer !== 'total' && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span className="text-white/60 text-xs group-hover:text-yellow-300/60 transition-colors duration-300">
                       per {property.pricePer === 'sqm' ? 'Sq Meter' : property.pricePer}
                     </span>
                   )}
                 </div>
-              </div>
 
-              {/* CTA Footer */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
-                <motion.span
-                  whileHover={{ x: 5 }}
-                  className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2 cursor-pointer"
-                >
-                  Meet the Agent <FaHandshake />
-                </motion.span>
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={handleViewDetails}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-2 text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                  >
+                    View Details <FaArrowRight size={14} />
+                  </button>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <FaEye size={12} />
-                  <span className="font-medium">Click to flip</span>
+                  <button
+                    onClick={handleFlip}
+                    className="bg-white/10 backdrop-blur-xl hover:bg-white/20 text-white font-bold py-2 text-sm rounded-xl flex items-center justify-center gap-2 transition-all border border-white/20"
+                  >
+                    Meet Agent <FaHandshake size={14} />
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* ============================== */}
-          {/* BACK SIDE - AGENT INFO         */}
-          {/* ============================== */}
+            {/* Hover Depth Effect - Removed purple glow */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+              <div className="absolute inset-0 bg-black/20"></div>
+            </div>
+          </motion.div>
+
+          {/* ===================== */}
+          {/* BACK SIDE - AGENT INFO */}
+          {/* ===================== */}
           <div
             style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
             className="absolute inset-0 w-full h-full rounded-3xl shadow-2xl overflow-hidden
               bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700
               dark:from-blue-900 dark:via-blue-950 dark:to-purple-950"
           >
-            {/* Decorative Background Pattern */}
+            {/* Decorative Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 left-0 w-full h-full"
                 style={{
@@ -514,7 +473,7 @@ export default function PropertyCard({ property }) {
                 <FaTimes size={18} />
               </motion.button>
 
-              {/* Agent Section */}
+              {/* Agent Info */}
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -525,7 +484,6 @@ export default function PropertyCard({ property }) {
                   <FaHandshake /> Your Property Expert
                 </h4>
 
-                {/* Agent Avatar */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   className="w-24 h-24 mx-auto mb-4 rounded-full p-1 bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md shadow-2xl"
@@ -542,17 +500,13 @@ export default function PropertyCard({ property }) {
                   {property.agent ? '"Helping you find your dream home"' : '"Direct owner - No agent fees"'}
                 </p>
 
-                {/* Status Badge */}
                 <div className={`inline-block px-6 py-2.5 rounded-full text-sm font-bold mb-6 ${property.status === 'available'
                   ? 'bg-green-400/20 text-green-100 border-2 border-green-300/30'
                   : 'bg-red-400/20 text-red-100 border-2 border-red-300/30'
                   }`}>
-                  {property.status === 'available'
-                    ? '✓ Available for Viewing'
-                    : `✗ Currently ${property.status}`}
+                  {property.status === 'available' ? '✓ Available for Viewing' : `✗ Currently ${property.status}`}
                 </div>
 
-                {/* CTA Button */}
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -561,15 +515,9 @@ export default function PropertyCard({ property }) {
                     ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
                     : 'bg-white text-blue-700 hover:bg-blue-50'
                     }`}
-                  aria-label={isSoldOrRented
-                    ? `Browse properties similar to ${property.title}`
-                    : `View full details for ${property.title}`}
+                  aria-label={isSoldOrRented ? `Browse properties similar to ${property.title}` : `View full details for ${property.title}`}
                 >
-                  {isSoldOrRented ? (
-                    <>See Similar Properties <FaArrowRight /></>
-                  ) : (
-                    <>View Full Details <FaArrowRight /></>
-                  )}
+                  {isSoldOrRented ? <>See Similar Properties <FaArrowRight /></> : <>View Full Details <FaArrowRight /></>}
                 </motion.button>
               </motion.div>
             </div>

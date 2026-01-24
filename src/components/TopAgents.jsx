@@ -199,13 +199,12 @@ const AgentCarouselCard = ({ agent }) => {
                 Properties
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20 text-center">
-              <div className="text-white font-black text-2xl flex items-center justify-center gap-1">
-                {agent.numReviews || 0}
-                <FaAward className="text-yellow-400 text-sm" />
+            <div className="bg-white/10 backdrop-blur-xl rounded-xl p-3 border border-white/20 text-center flex flex-col items-center justify-center">
+              <div className="text-blue-500 font-black text-2xl flex items-center justify-center gap-1 mb-1">
+                <FaCheckCircle className="bg-white rounded-full text-blue-500" />
               </div>
-              <div className="text-white/70 text-xs font-medium uppercase">
-                Reviews
+              <div className="text-white text-xs font-bold uppercase tracking-wider">
+                Verified
               </div>
             </div>
           </div>

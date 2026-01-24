@@ -12,50 +12,18 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
     const [loading, setLoading] = useState(!cachedAiAnalysis); // ✅ Only show loading if no cached data
 
     useEffect(() => {
-        const fetchAllData = async () => {
+        if (cachedAiAnalysis) {
+            setAnalysis(cachedAiAnalysis);
+        }
+    }, [cachedAiAnalysis]);
+
+    useEffect(() => {
+        const fetchContextData = async () => {
             try {
-                // ✅ OPTIMIZATION: Skip API call if we have fresh cached data
-                if (cachedAiAnalysis && cachedAiAnalysis.lastAnalysisDate) {
-                    const cacheAge = Date.now() - new Date(cachedAiAnalysis.lastAnalysisDate).getTime();
-                    const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+                const contextRes = await apiClient.get('/ai/context');
 
-                    // If cache is less than 1 week old, skip fetching AI analysis
-                    if (cacheAge < ONE_WEEK) {
-                        console.log('✅ Using cached AI analysis (fresh)');
-                        // Still fetch context data
-                        try {
-                            const contextRes = await apiClient.get('/ai/context');
-                            if (contextRes.data && contextRes.data.neighborhoods) {
-                                const neighborhoods = contextRes.data.neighborhoods;
-                                const locKey = Object.keys(neighborhoods).find(key =>
-                                    propertyLocation.toLowerCase().includes(key.toLowerCase()) ||
-                                    key.toLowerCase().includes(propertyLocation.toLowerCase())
-                                );
-                                if (locKey) setContextStats(neighborhoods[locKey]);
-                            }
-                        } catch (err) {
-                            console.error('Failed to fetch context:', err);
-                        }
-                        setLoading(false);
-                        return;
-                    }
-                }
-
-                setLoading(true);
-                // 1. Fetch Specific Property Analysis (Only if cache is old/missing)
-                const analysisReq = apiClient.get(`/ai/analysis/${propertyId}`);
-
-                // 2. Fetch Global AI Context (Universal Data Layer)
-                const contextReq = apiClient.get('/ai/context');
-
-                const [analysisRes, contextRes] = await Promise.allSettled([analysisReq, contextReq]);
-
-                if (analysisRes.status === 'fulfilled') {
-                    setAnalysis(analysisRes.value.data);
-                }
-
-                if (contextRes.status === 'fulfilled' && contextRes.value.data && contextRes.value.data.neighborhoods) {
-                    const neighborhoods = contextRes.value.data.neighborhoods;
+                if (contextRes.data && contextRes.data.neighborhoods) {
+                    const neighborhoods = contextRes.data.neighborhoods;
                     const locKey = Object.keys(neighborhoods).find(key =>
                         propertyLocation.toLowerCase().includes(key.toLowerCase()) ||
                         key.toLowerCase().includes(propertyLocation.toLowerCase())
@@ -67,14 +35,14 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                 }
 
             } catch (error) {
-                console.error("Failed to load AI data:", error);
+                console.error("Failed to load AI context:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (propertyId) fetchAllData();
-    }, [propertyId, propertyLocation, cachedAiAnalysis]);
+        if (propertyId) fetchContextData();
+    }, [propertyId, propertyLocation]);
 
     if (loading) return (
         <div className="animate-pulse flex flex-col space-y-3 p-6 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm mb-8">

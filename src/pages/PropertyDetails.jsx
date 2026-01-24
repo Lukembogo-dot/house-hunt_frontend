@@ -610,6 +610,7 @@ const PropertyDetails = () => {
                 agentName={property.ownerDetails?.name || property.agent?.name}
                 agentImage={property.agent?.profilePicture || null}
                 agentContact={property.ownerDetails?.whatsapp || property.agent?.whatsappNumber}
+                cachedAiAnalysis={property.aiAnalysis}
               />
             )}
 
