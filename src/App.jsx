@@ -228,10 +228,15 @@ function MainLayout() {
         {!submittedHomeFilters && (
           <div className="py-1">
             <TopAgents />
+            {/* Handpicked Section (Moved here) */}
+            <FeaturedProperties />
           </div>
         )}
 
-        {/* --- HOUSE HUNT REQUEST (COMPACT GLASSMORPHISM) - MOVED TO TOP --- */}
+        {/* --- HOUSE HUNT REQUEST (COMPACT GLASSMORPHISM) - MOVED TO TOP --- */},
+        <div className="py-1">
+          <TrendingMtaaScores />
+        </div>
         {!submittedHomeFilters && (
           <section className="relative py-6 px-6">
             {/* Subtle Gradient Background */}
@@ -326,15 +331,6 @@ function MainLayout() {
         ) : (
           <>
 
-
-            <div className="py-1">
-              <TrendingMtaaScores />
-            </div>
-
-
-            <div className="py-1">
-              <FeaturedProperties />
-            </div>
 
             {/* ✨ NEW: Animated Stats Section */}
             <AnimatedStats />

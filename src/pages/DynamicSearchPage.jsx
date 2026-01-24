@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-// ❌ Removed manual Helmet import
+import { Helmet } from 'react-helmet-async';
 import apiClient from '../api/axios';
 import PropertyList from '../components/PropertyList';
 import { motion } from 'framer-motion';
@@ -18,6 +18,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import PropertyAlertForm from '../components/PropertyAlertForm';
 import { useAuth } from '../context/AuthContext';
 import SeoInjector from '../components/SeoInjector'; // ✅ 1. Import Injector
+import HouseHuntRequest from '../components/HouseHuntRequest';
 
 // Helper function
 const capitalize = (s) => {
@@ -407,6 +408,11 @@ const DynamicSearchPage = () => {
             nearbyLocations={nearbyDefaults}
           />
         )}
+
+        {/* --- HOUSE HUNT REQUEST (COMPACT) --- */}
+        <div className="my-8">
+          <HouseHuntRequest compact={true} />
+        </div>
 
         {/* --- "START A BUZZ" CTA --- */}
         <div className="my-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white text-center relative overflow-hidden">

@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Truck, CheckCircle, Clock, ArrowRight } from 'lucide-react';
+import { Home, Truck, CheckCircle, Clock, ArrowRight, Sparkles, Users, TrendingUp, Star } from 'lucide-react';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 
-// ✅ FIX: Use relative path '/api'.
-// Ensure your vite.config.js or package.json has a proxy set up for development:
-// "proxy": { "/api": "http://localhost:5000" }
 const apiClient = axios.create({
-  baseURL: '/api', 
+  baseURL: '/api',
   withCredentials: true
 });
 
-const HouseHuntRequest = () => {
-  const [activeTab, setActiveTab] = useState('property'); // property | service
-  const [recentLeads, setRecentLeads] = useState([]); // Initialize as empty array
+const HouseHuntRequest = ({ compact = false }) => {
+  const [activeTab, setActiveTab] = useState('property');
+  const [recentLeads, setRecentLeads] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -26,31 +23,28 @@ const HouseHuntRequest = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Fetch Recent Requests for Ticker
   useEffect(() => {
+    // Only fetch ticker data if NOT compact mode (optimization)
+    if (compact) return;
+
     const fetchRecent = async () => {
       try {
         const response = await apiClient.get('/leads/recent');
-        
-        // ✅ DEFENSIVE CHECK: Ensure data is actually an array before setting state
         if (Array.isArray(response.data)) {
           setRecentLeads(response.data);
         } else {
-          console.warn("API /leads/recent did not return an array. Response:", response.data);
-          setRecentLeads([]); 
+          setRecentLeads([]);
         }
       } catch (err) {
         console.error("Failed to fetch recent leads.", err);
-        setRecentLeads([]); 
+        setRecentLeads([]);
       }
     };
 
     fetchRecent();
-    
-    // Poll every 30 seconds to update ticker
     const interval = setInterval(fetchRecent, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [compact]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,21 +57,23 @@ const HouseHuntRequest = () => {
         ...formData,
         category: activeTab === 'property' ? 'Property' : formData.category
       });
-      setSuccessMsg('Request Sent! An agent will contact you shortly.');
+      setSuccessMsg('🎉 Request Sent! An agent will contact you shortly.');
       setFormData({ name: '', phone: '', email: '', category: 'Property', details: '' });
-      
-      // Refresh ticker immediately to show self (optimistic UI update)
-      const newLead = { 
-        name: formData.name, 
-        category: activeTab === 'property' ? 'Property' : formData.category,
-        createdAt: new Date().toISOString(),
-        _id: Date.now() 
-      };
-      
-      setRecentLeads(prev => {
-        const safePrev = Array.isArray(prev) ? prev : [];
-        return [newLead, ...safePrev].slice(0, 10);
-      });
+
+      // No need to update ticker if compact
+      if (!compact) {
+        const newLead = {
+          name: formData.name,
+          category: activeTab === 'property' ? 'Property' : formData.category,
+          createdAt: new Date().toISOString(),
+          _id: Date.now()
+        };
+
+        setRecentLeads(prev => {
+          const safePrev = Array.isArray(prev) ? prev : [];
+          return [newLead, ...safePrev].slice(0, 10);
+        });
+      }
 
     } catch (err) {
       setErrorMsg(err.response?.data?.message || 'Failed to send request.');
@@ -86,213 +82,383 @@ const HouseHuntRequest = () => {
     }
   };
 
+  const stats = [
+    { value: '2,500+', label: 'Requests Fulfilled', icon: CheckCircle, color: 'text-green-500' },
+    { value: '98%', label: 'Success Rate', icon: TrendingUp, color: 'text-blue-500' },
+    { value: '<24h', label: 'Avg Response Time', icon: Clock, color: 'text-purple-500' },
+  ];
+
   return (
-    <section className="py-12 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 relative overflow-hidden">
-      <div className="container mx-auto px-6 md:px-10">
-        
-        <div className="flex flex-col lg:flex-row gap-10 items-start">
-          
-          {/* --- LEFT: THE FORM --- */}
-          <div className="w-full lg:w-1/2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 md:p-8 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Tell us what you need
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                Can't find what you're looking for? Request it here and we'll do the legwork.
-              </p>
-            </div>
+    <section className={`relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 ${compact ? 'py-8 rounded-2xl border border-blue-100 dark:border-blue-900' : 'py-20'}`}>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0]
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            rotate: [0, -90, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+        />
+      </div>
 
-            {/* Tabs */}
-            <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-lg mb-6">
-              <button
-                onClick={() => { setActiveTab('property'); setFormData({...formData, category: 'Property'}); }}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  activeTab === 'property' 
-                    ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-white shadow-sm' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
+      <div className="container mx-auto px-4 md:px-10 relative z-10 w-full">
+
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className={`text-center ${compact ? 'mb-8' : 'mb-16'}`}
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            whileInView={{ scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl px-6 py-3 rounded-full border border-blue-200 dark:border-blue-800 mb-6 shadow-lg"
+          >
+            <Sparkles className="text-yellow-500" size={20} />
+            <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-sm">
+              Let Us Find It For You
+            </span>
+          </motion.div>
+
+          <h2 className={`${compact ? 'text-3xl' : 'text-4xl md:text-5xl'} font-black text-gray-900 dark:text-white mb-6 leading-tight`}>
+            Can't Find What You're{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
+              Looking For?
+            </span>
+          </h2>
+
+          <p className={`${compact ? 'text-base' : 'text-xl'} text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed`}>
+            Our expert scouts will do the legwork. Just tell us what you need, and we'll find the perfect match.
+          </p>
+        </motion.div>
+
+        {/* Stats Bar (Hidden in Compact Mode) */}
+        {!compact && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto"
+          >
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl p-6 border border-white/50 dark:border-gray-700/50 shadow-xl text-center"
               >
-                <Home size={18} /> Find Property
-              </button>
-              <button
-                onClick={() => { setActiveTab('service'); setFormData({...formData, category: 'Movers'}); }}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  activeTab === 'service' 
-                    ? 'bg-white dark:bg-gray-600 text-green-600 dark:text-white shadow-sm' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
-              >
-                <Truck size={18} /> Local Services
-              </button>
-            </div>
+                <stat.icon className={`mx-auto mb-3 ${stat.color}`} size={32} />
+                <p className="text-3xl font-black text-gray-900 dark:text-white mb-1">{stat.value}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{stat.label}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {activeTab === 'service' && (
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Service Type</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                  >
-                    <option value="Movers">Movers & Relocation</option>
-                    <option value="Cleaning">Cleaning Services</option>
-                    <option value="Internet">Internet / WiFi Installation</option>
-                    <option value="Interior Design">Interior Design</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              )}
+        <div className={`grid ${compact ? 'grid-cols-1 justify-center' : 'lg:grid-cols-2'} gap-8 items-start`}>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                  />
-                </div>
-                <div>
-                  <input
-                    type="tel"
-                    placeholder="Phone Number"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                  />
-                </div>
+          {/* LEFT: THE FORM with Enhanced Glassmorphism */}
+          <motion.div
+            initial={{ opacity: 0, x: compact ? 0 : -30, y: compact ? 20 : 0 }}
+            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            viewport={{ once: true }}
+            className={`relative ${compact ? 'max-w-2xl mx-auto w-full' : ''}`}
+          >
+            {/* Glow Effect */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
+
+            <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/60 dark:border-gray-700/50">
+              {/* Header */}
+              <div className="mb-8">
+                <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-3 flex items-center gap-3">
+                  <span className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white">
+                    <Home size={20} />
+                  </span>
+                  Submit Your Request
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Fill in the details below and our team will get back to you within 24 hours.
+                </p>
               </div>
 
-              <div>
-                <input
-                  type="email"
-                  placeholder="Email Address"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
-                />
-              </div>
-
-              <div>
-                <textarea
-                  placeholder={activeTab === 'property' 
-                    ? "Describe the property (e.g. 2 Bedroom in Kilimani, Budget 50k...)" 
-                    : "Describe what you need (e.g. Moving from Westlands to Kileleshwa on Saturday...)"
-                  }
-                  required
-                  rows="3"
-                  value={formData.details}
-                  onChange={(e) => setFormData({...formData, details: e.target.value})}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 outline-none dark:text-white resize-none"
-                ></textarea>
-              </div>
-
-              {successMsg && (
-                <div className="p-3 bg-green-100 text-green-700 text-sm rounded-lg flex items-center gap-2">
-                  <CheckCircle size={18} /> {successMsg}
-                </div>
-              )}
-              
-              {errorMsg && (
-                <div className="p-3 bg-red-100 text-red-700 text-sm rounded-lg">
-                  {errorMsg}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full py-3 rounded-lg text-white font-bold transition-all shadow-md ${
-                  loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-1'
-                }`}
-              >
-                {loading ? 'Sending...' : 'Submit Request'}
-              </button>
-            </form>
-          </div>
-
-          {/* --- RIGHT: RECENT ACTIVITY TICKER --- */}
-          <div className="w-full lg:w-1/2 lg:pt-8">
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                Live Requests
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                See what others are looking for right now.
-              </p>
-            </div>
-
-            <div className="space-y-4 max-h-[400px] overflow-y-hidden relative">
-              {/* Gradient Mask for scroll effect */}
-              <div className="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-white dark:from-gray-900 to-transparent z-10"></div>
-              <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-white dark:from-gray-900 to-transparent z-10"></div>
-
-              {(!Array.isArray(recentLeads) || recentLeads.length === 0) ? (
-                <div className="text-gray-400 text-center italic py-10">
-                  {loading ? 'Loading recent activity...' : 'No recent activity yet. Be the first!'}
-                </div>
-              ) : (
-                <motion.div 
-                  // Simple vertical ticker animation
-                  animate={{ y: [0, -20 * recentLeads.length] }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: Math.max(10, recentLeads.length * 4), 
-                    ease: "linear",
-                    repeatType: "reverse" 
-                  }}
-                  className="space-y-4"
+              {/* Tabs with Glassmorphism */}
+              <div className="flex p-1.5 bg-gray-100/50 dark:bg-gray-700/50 backdrop-blur-md rounded-2xl mb-8 border border-gray-200/50 dark:border-gray-600/50">
+                <button
+                  onClick={() => { setActiveTab('property'); setFormData({ ...formData, category: 'Property' }); }}
+                  className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'property'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30 scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
                 >
-                   {recentLeads.map((lead, index) => (
-                    <motion.div
-                      key={`${lead._id || index}`}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0 ${
-                        ['Property'].includes(lead.category) ? 'bg-blue-500' : 'bg-orange-500'
-                      }`}>
-                        {lead.name && lead.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-gray-900 dark:text-white font-medium text-sm">
-                          <span className="font-bold">{lead.name}</span> requested {lead.category === 'Property' ? 'a Property' : 'a Service'}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                            {lead.category === 'Property' ? <Home size={12} /> : <Truck size={12} />} {lead.category}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} /> 
-                            {lead.createdAt && !isNaN(new Date(lead.createdAt)) 
-                              ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true }) 
-                              : 'Just now'}
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              )}
-            </div>
-            
-            {/* CTA Text */}
-            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
-                <ArrowRight size={16} /> Join <strong>{(Array.isArray(recentLeads) && recentLeads.length > 0) ? recentLeads.length + 120 : '120+'}</strong> Kenyans who found help this week.
-              </p>
-            </div>
+                  <Home size={18} /> Find Property
+                </button>
+                <button
+                  onClick={() => { setActiveTab('service'); setFormData({ ...formData, category: 'Movers' }); }}
+                  className={`flex-1 py-3 px-6 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'service'
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg shadow-green-500/30 scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                >
+                  <Truck size={18} /> Local Services
+                </button>
+              </div>
 
-          </div>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {activeTab === 'service' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Service Type</label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                    >
+                      <option value="Movers">🚚 Movers & Relocation</option>
+                      <option value="Cleaning">🧹 Cleaning Services</option>
+                      <option value="Internet">📡 Internet / WiFi Installation</option>
+                      <option value="Interior Design">🎨 Interior Design</option>
+                      <option value="Other">✨ Other</option>
+                    </select>
+                  </motion.div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Your Name</label>
+                    <input
+                      type="text"
+                      placeholder="John Doe"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      placeholder="0712 345 678"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="john@example.com"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Tell Us What You Need</label>
+                  <textarea
+                    placeholder={activeTab === 'property'
+                      ? "E.g., 2 Bedroom apartment in Kilimani, Budget 50k/month, near school..."
+                      : "E.g., Moving from Westlands to Kileleshwa this Saturday, need a 3-ton truck..."
+                    }
+                    required
+                    rows="4"
+                    value={formData.details}
+                    onChange={(e) => setFormData({ ...formData, details: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white resize-none transition-all"
+                  ></textarea>
+                </div>
+
+                <AnimatePresence>
+                  {successMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-700 text-green-700 dark:text-green-300 text-sm rounded-xl flex items-center gap-3 backdrop-blur-md"
+                    >
+                      <CheckCircle size={20} className="flex-shrink-0" />
+                      <span className="font-semibold">{successMsg}</span>
+                    </motion.div>
+                  )}
+
+                  {errorMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 text-sm rounded-xl backdrop-blur-md"
+                    >
+                      {errorMsg}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <motion.button
+                  type="submit"
+                  disabled={loading}
+                  whileHover={{ scale: loading ? 1 : 1.02 }}
+                  whileTap={{ scale: loading ? 1 : 0.98 }}
+                  className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all shadow-xl flex items-center justify-center gap-3 ${loading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-500/50'
+                    }`}
+                >
+                  {loading ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-5 h-5 border-3 border-white border-t-transparent rounded-full"
+                      />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Submit Request <ArrowRight size={20} />
+                    </>
+                  )}
+                </motion.button>
+              </form>
+
+              {/* Trust Badge */}
+              <div className="mt-6 p-4 bg-blue-50/50 dark:bg-blue-900/10 backdrop-blur-md rounded-xl border border-blue-100 dark:border-blue-800/30">
+                <p className="text-xs text-blue-800 dark:text-blue-300 text-center flex items-center justify-center gap-2">
+                  <Star className="text-yellow-500" size={14} fill="currentColor" />
+                  <span>Trusted by <strong>2,500+</strong> Kenyans this month</span>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* RIGHT: LIVE ACTIVITY with Enhanced Design */}
+          {!compact && (
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="lg:sticky lg:top-24"
+            >
+              {/* Header */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <motion.span
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-4 h-4 bg-green-500 rounded-full shadow-lg shadow-green-500/50"
+                  />
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">
+                    Live Activity Feed
+                  </h3>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                  <Users size={16} />
+                  See what others are requesting right now
+                </p>
+              </div>
+
+              {/* Activity Feed */}
+              <div className="relative bg-white/70 dark:bg-gray-800/70 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-white/60 dark:border-gray-700/50 max-h-[500px] overflow-hidden">
+                {/* Gradient Masks */}
+                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-white/90 dark:from-gray-800/90 to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/90 dark:from-gray-800/90 to-transparent z-10 pointer-events-none"></div>
+
+                <div className="space-y-3 max-h-[450px] overflow-y-auto scrollbar-hide">
+                  {(!Array.isArray(recentLeads) || recentLeads.length === 0) ? (
+                    <div className="text-center py-12">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"
+                      />
+                      <p className="text-gray-400 dark:text-gray-500 italic">
+                        Loading recent activity...
+                      </p>
+                    </div>
+                  ) : (
+                    recentLeads.map((lead, index) => (
+                      <motion.div
+                        key={`${lead._id || index}`}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group relative"
+                      >
+                        {/* Glow on hover */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity"></div>
+
+                        <div className="relative flex items-start gap-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-md hover:shadow-xl transition-all">
+                          {/* Avatar */}
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-lg ${['Property'].includes(lead.category)
+                            ? 'bg-gradient-to-br from-blue-600 to-blue-700'
+                            : 'bg-gradient-to-br from-orange-500 to-red-500'
+                            }`}>
+                            {lead.name && lead.name.charAt(0).toUpperCase()}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-900 dark:text-white font-semibold text-sm mb-2">
+                              <span className="font-black">{lead.name}</span> requested {lead.category === 'Property' ? 'a Property' : 'a Service'}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300">
+                                {lead.category === 'Property' ? <Home size={12} /> : <Truck size={12} />}
+                                {lead.category}
+                              </span>
+                              <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                <Clock size={12} />
+                                {lead.createdAt && !isNaN(new Date(lead.createdAt))
+                                  ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true })
+                                  : 'Just now'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* CTA Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="mt-6 p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl text-white"
+              >
+                <p className="text-lg font-bold mb-2 flex items-center gap-2">
+                  <TrendingUp size={20} />
+                  Join the Community
+                </p>
+                <p className="text-blue-100 text-sm">
+                  Over <strong>{(Array.isArray(recentLeads) && recentLeads.length > 0) ? recentLeads.length + 2400 : '2,500+'}</strong> Kenyans found their perfect match through our request system this month!
+                </p>
+              </motion.div>
+
+            </motion.div>
+          )}
         </div>
       </div>
     </section>

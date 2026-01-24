@@ -82,25 +82,29 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 60
     const currentImage = heroImages[currentIndex];
 
     return (
-        <section className="relative h-[70vh] md:h-[80vh] overflow-hidden bg-gray-900">
-            {/* Background Images with Simple CSS Crossfade - NO SCALE to prevent glitching */}
-            {heroImages.map((image, index) => (
-                <div
-                    key={index}
-                    className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
-                        }`}
-                    style={{ backgroundImage: `url(${image.url})` }}
-                />
-            ))}
+        <section className="relative h-[70vh] md:h-[80vh] bg-gray-900 group">
+            {/* ✅ BACKGROUND CLIPPING CONTAINER */}
+            {/* This ensures images don't spill out, but allows search dropdown (in children) to overflow visible */}
+            <div className="absolute inset-0 overflow-hidden">
+                {/* Background Images */}
+                {heroImages.map((image, index) => (
+                    <div
+                        key={index}
+                        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentIndex ? 'opacity-100' : 'opacity-0'
+                            }`}
+                        style={{ backgroundImage: `url(${image.url})` }}
+                    />
+                ))}
 
-            {/* Gradient Overlays - GPU Accelerated */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 will-change-auto" />
+                {/* Gradient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 will-change-auto" />
 
-            {/* ✅ PERFORMANCE: CSS-animated floating elements instead of JS */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float-slow" />
-                <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-slower" />
-                <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-float-fastest" />
+                {/* Floating Elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-float-slow" />
+                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float-slower" />
+                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-float-fastest" />
+                </div>
             </div>
 
             {/* Content Container */}
