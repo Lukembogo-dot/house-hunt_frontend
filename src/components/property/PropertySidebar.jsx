@@ -346,12 +346,6 @@ const PropertySidebar = ({
               <span>Features <strong className="text-gray-900 dark:text-white">{Number(property.bedrooms) === 0 ? "Bedsitter Unit" : `${property.bedrooms} Bedroom(s)`}</strong></span>
             </div>
           )}
-
-          <div className="flex items-center gap-2 pt-2 border-t border-blue-200 dark:border-blue-800 mt-2">
-            <span className="text-lg font-black text-blue-700 dark:text-blue-400">
-              Ksh {formatPrice(property.price)}{getPriceSuffix()}
-            </span>
-          </div>
         </div>
       </div>
 

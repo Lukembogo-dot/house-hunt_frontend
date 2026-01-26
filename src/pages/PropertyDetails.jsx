@@ -9,7 +9,8 @@ import {
   FaStar, FaTimes, FaRegHeart, FaHeart,
   FaSchool, FaHospital, FaShoppingCart, FaUtensils,
   FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark,
-  FaGem, FaPlay, FaMapMarkerAlt, FaBus, FaWifi, FaImages
+  FaGem, FaPlay, FaMapMarkerAlt, FaBus, FaWifi, FaImages,
+  FaHome, FaBuilding, FaArrowRight
 } from "react-icons/fa";
 
 import { useAuth } from "../context/AuthContext";
@@ -28,6 +29,7 @@ import PropertySeoInjector from '../components/SeoInjector';
 import PropertyAIInsights from '../components/PropertyAIInsights';
 import LivingEssentialsWidget from "../components/LivingEssentialsWidget";
 import PropertyLocalServices from "../components/property/PropertyLocalServices";
+import PropertyImageCarousel from "../components/property/PropertyImageCarousel";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -168,25 +170,62 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
   if (!show) return null;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} transition={{ duration: 0.2, ease: "easeOut" }} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition" disabled={submitting}><FaTimes size={20} /></button>
-        <h3 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Schedule a Viewing</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-1">For: {propertyTitle}</p>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" onClick={onClose}>
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+        animate={{ scale: 1, opacity: 1, y: 0 }} 
+        exit={{ scale: 0.9, opacity: 0, y: 20 }} 
+        transition={{ duration: 0.3, ease: "easeOut" }} 
+        className="bg-white/10 dark:bg-gray-900/20 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-8 relative border border-white/20 dark:border-white/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center" 
+          disabled={submitting}
+        >
+          <FaTimes size={20} />
+        </button>
+
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Schedule a Viewing</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-1 text-sm">For: <span className="font-semibold text-gray-900 dark:text-gray-100">{propertyTitle}</span></p>
+        
         {success ? (
-          <div className="text-center p-4"><p className="text-lg font-semibold text-green-600 dark:text-green-400">{success}</p></div>
+          <div className="text-center p-6 bg-green-500/10 dark:bg-green-900/20 rounded-2xl border border-green-200/50 dark:border-green-800/50">
+            <p className="text-lg font-semibold text-green-600 dark:text-green-400">{success}</p>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Preferred Date & Time</label>
-              <input type="datetime-local" id="scheduledDate" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="scheduledDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Preferred Date & Time</label>
+              <input 
+                type="datetime-local" 
+                id="scheduledDate" 
+                value={scheduledDate} 
+                onChange={(e) => setScheduledDate(e.target.value)} 
+                className="w-full px-4 py-3 bg-white/30 dark:bg-white/5 border border-white/30 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition" 
+                required 
+              />
             </div>
-            <div className="mb-4">
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message (Optional)</label>
-              <textarea id="message" rows="3" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Any questions or specific requests for the agent?" className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+            <div>
+              <label htmlFor="message" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Message (Optional)</label>
+              <textarea 
+                id="message" 
+                rows="3" 
+                value={message} 
+                onChange={(e) => setMessage(e.target.value)} 
+                placeholder="Any questions or specific requests for the agent?" 
+                className="w-full px-4 py-3 bg-white/30 dark:bg-white/5 border border-white/30 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none transition"
+              />
             </div>
-            {error && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{error}</p>}
-            <button type="submit" disabled={submitting} className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">{submitting ? "Sending..." : "Send Request"}</button>
+            {error && <p className="text-sm text-red-500 dark:text-red-400 bg-red-500/10 dark:bg-red-900/20 p-3 rounded-lg border border-red-200/50 dark:border-red-800/50">{error}</p>}
+            <button 
+              type="submit" 
+              disabled={submitting} 
+              className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            >
+              {submitting ? "Sending..." : "Send Request"}
+            </button>
           </form>
         )}
       </motion.div>
@@ -321,7 +360,27 @@ const PropertyDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 py-10 px-6 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity }}
+            className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              rotate: [0, -90, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity }}
+            className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+          />
+        </div>
+
         {/* ✅ SEO content for crawlers */}
         <Helmet>
           <title>Property Details | House Hunt Kenya</title>
@@ -335,34 +394,36 @@ const PropertyDetails = () => {
         </div>
 
         {/* Skeleton Loading UI */}
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 animate-pulse">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 relative z-10">
           {/* Breadcrumb skeleton */}
-          <div className="md:col-span-3 h-6 bg-gray-200 dark:bg-gray-800 rounded w-64"></div>
+          <div className="md:col-span-3 h-6 bg-white/20 dark:bg-white/10 rounded-full w-64 animate-pulse backdrop-blur-md"></div>
 
           {/* Main content skeleton */}
           <div className="md:col-span-2 space-y-6">
             {/* Title skeleton */}
-            <div className="h-12 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
-            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-48"></div>
+            <div className="space-y-3">
+              <div className="h-12 bg-white/20 dark:bg-white/10 rounded-xl w-3/4 animate-pulse backdrop-blur-md"></div>
+              <div className="h-6 bg-white/20 dark:bg-white/10 rounded-full w-48 animate-pulse backdrop-blur-md"></div>
+            </div>
 
             {/* Image skeleton */}
-            <div className="w-full h-96 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
+            <div className="w-full h-96 bg-white/20 dark:bg-white/10 rounded-3xl animate-pulse backdrop-blur-md"></div>
 
             {/* Description skeleton */}
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 space-y-3">
-              <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-32"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/6"></div>
+            <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 space-y-3 border border-white/30 dark:border-white/20 animate-pulse">
+              <div className="h-6 bg-white/30 dark:bg-white/20 rounded-xl w-32"></div>
+              <div className="h-4 bg-white/30 dark:bg-white/20 rounded-lg w-full"></div>
+              <div className="h-4 bg-white/30 dark:bg-white/20 rounded-lg w-5/6"></div>
+              <div className="h-4 bg-white/30 dark:bg-white/20 rounded-lg w-4/6"></div>
             </div>
           </div>
 
           {/* Sidebar skeleton */}
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-900 rounded-xl p-6 space-y-4">
-              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
-              <div className="h-12 bg-gray-300 dark:bg-gray-700 rounded"></div>
+            <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 space-y-4 border border-white/30 dark:border-white/20 animate-pulse">
+              <div className="h-12 bg-white/30 dark:bg-white/20 rounded-xl"></div>
+              <div className="h-12 bg-white/30 dark:bg-white/20 rounded-xl"></div>
+              <div className="h-12 bg-white/30 dark:bg-white/20 rounded-xl"></div>
             </div>
           </div>
         </div>
@@ -372,55 +433,79 @@ const PropertyDetails = () => {
 
   if (!property) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 flex items-center justify-center px-4 relative overflow-hidden py-10">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity }}
+            className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              rotate: [0, -90, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity }}
+            className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+          />
+        </div>
+
         {/* ✅ CRITICAL SEO FIX: Prevent Google from indexing 404 pages */}
         <Helmet>
           <title>Property Not Found | House Hunt Kenya</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
 
-        <div className="max-w-2xl w-full text-center">
+        <div className="max-w-2xl w-full text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 border border-gray-200 dark:border-gray-700"
+            transition={{ duration: 0.6 }}
+            className="bg-white/20 dark:bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 md:p-12 border border-white/30 dark:border-white/20"
           >
-            <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 dark:text-orange-400 mb-4">
-                <FaMapMarkerAlt className="text-4xl" />
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                Property Not Found
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-2">
-                This property may have been sold, rented, or is no longer available.
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Don't worry though - we have thousands of other great properties!
-              </p>
-            </div>
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500/20 to-red-500/20 dark:from-orange-600/30 dark:to-red-600/30 rounded-full text-orange-600 dark:text-orange-400 mb-6 border border-orange-200/50 dark:border-orange-600/50"
+            >
+              <FaMapMarkerAlt className="text-5xl" />
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
+              Property Not Found
+            </h1>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-3 font-medium">
+              This property may have been sold, rented, or is no longer available.
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
+              Don't worry though - we have thousands of other great properties!
+            </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/search/rent/all/all"
-                className="inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition shadow-md"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
                 <FaHome /> Browse Rentals
               </Link>
               <Link
                 to="/search/sale/all/all"
-                className="inline-flex items-center justify-center gap-2 bg-white dark:bg-gray-700 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 dark:hover:bg-gray-600 transition"
+                className="inline-flex items-center justify-center gap-2 bg-white/30 dark:bg-white/10 backdrop-blur-md border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-8 py-4 rounded-xl font-bold hover:bg-white/50 dark:hover:bg-white/20 transition-all"
               >
-                <FaStar /> View Properties for Sale
+                <FaStar /> View for Sale
               </Link>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Need help finding something specific?</p>
+            <div className="mt-10 pt-8 border-t border-white/30 dark:border-white/20">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 font-medium">Need help finding something specific?</p>
               <Link
                 to="/contact"
-                className="text-blue-600 dark:text-blue-400 font-medium hover:underline text-sm"
+                className="text-blue-600 dark:text-blue-400 font-bold hover:text-blue-700 dark:hover:text-blue-300 text-base transition inline-flex items-center gap-2"
               >
                 Contact our team →
               </Link>
@@ -438,8 +523,37 @@ const PropertyDetails = () => {
     <>
       <PropertySeoInjector seo={seo} property={property} faqs={schemaFaqs} reviews={comments} />
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+      {/* FULL-SCREEN IMAGE CAROUSEL */}
+      <PropertyImageCarousel 
+        property={property}
+        user={user}
+        isFavorited={isFavorited}
+        onFavoriteClick={handleFavoriteClick}
+      />
+
+      {/* MAIN CONTENT AREA */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden py-10 px-6">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity }}
+            className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.3, 1],
+              rotate: [0, -90, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity }}
+            className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
+          />
+        </div>
+
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8 relative z-10">
           <div className="md:col-span-3"><Breadcrumbs /></div>
 
           {/* ✅ SEO STRATEGY: Show sold/unavailable properties with clear status for indexing */}
@@ -448,10 +562,10 @@ const PropertyDetails = () => {
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border-2 border-orange-300 dark:border-orange-700 rounded-2xl p-6 shadow-lg"
+                className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-orange-200/50 dark:border-orange-500/30"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-orange-500 dark:bg-orange-600 rounded-full flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
                     <FaMapMarkerAlt className="text-white text-xl" />
                   </div>
                   <div className="flex-1">
@@ -461,19 +575,19 @@ const PropertyDetails = () => {
                       {property.status === 'archived' && 'Property No Longer Available'}
                       {!['sold', 'rented', 'archived', 'available'].includes(property.status) && 'Property Status Updated'}
                     </h3>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                    <p className="text-gray-700 dark:text-gray-300 mb-4 text-sm leading-relaxed">
                       This property is no longer available. Browse similar properties in <strong>{property.location}</strong> below or search our active listings.
                     </p>
                     <div className="flex flex-wrap gap-3">
                       <Link
                         to={`/search/${property.listingType || 'rent'}/${property.type || 'all'}/${property.location?.toLowerCase().replace(/\s+/g, '-') || 'all'}`}
-                        className="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
+                        className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl"
                       >
                         <FaHome /> Browse Similar in {property.location}
                       </Link>
                       <Link
                         to="/search/rent/all/all"
-                        className="inline-flex items-center gap-2 bg-white dark:bg-gray-800 border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-5 py-2.5 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+                        className="inline-flex items-center gap-2 bg-white/30 dark:bg-white/10 backdrop-blur-md border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-6 py-3 rounded-xl font-bold hover:bg-white/50 dark:hover:bg-white/20 transition-all"
                       >
                         View All Properties
                       </Link>
@@ -506,39 +620,23 @@ const PropertyDetails = () => {
               </dl>
             </article>
 
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-2">
-              <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">{property.title}</h1>
-              <motion.button whileTap={{ scale: 0.95 }} onClick={handleFavoriteClick} className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800">
-                {isFavorited ? <><FaHeart className="text-red-500" /><span className="dark:text-gray-200">Saved</span></> : <><FaRegHeart className="text-gray-600 dark:text-gray-400" /><span className="text-gray-700 dark:text-gray-200">Save Property</span></>}
-              </motion.button>
-            </div>
-            <p className="text-xl text-blue-600 dark:text-blue-400 font-semibold mb-4">
-              Ksh {property.price?.toLocaleString()} {property.listingType === 'rent' && <span className="text-sm font-normal text-gray-500 dark:text-gray-400">/month</span>}
-            </p>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">{property.location}</p>
-
-            {/* ✅ LOGIC: Conditionally Render Image Section */}
-            {(hasImages || !hasVideo) && (
-              <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-                <img src={activeImage} alt={safeImageDetails?.[0]?.altText || property.title} className="rounded-lg w-full h-96 object-cover mb-4 shadow-md" />
-                {allImageUrls.length > 1 && (
-                  <div className="grid grid-cols-5 gap-2">
-                    {allImageUrls.map((imgUrl, index) => (
-                      <img key={imgUrl} src={imgUrl} alt={safeImageDetails?.[index]?.altText || `Thumbnail ${index + 1}`} onClick={() => setActiveImage(imgUrl)} className={`rounded-lg w-full h-20 object-cover cursor-pointer transition ${activeImage === imgUrl ? 'ring-2 ring-blue-500' : 'opacity-70 hover:opacity-100'} active:scale-95`} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
             <motion.div variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
               <VideoPlayerSection videoUrl={property.video} propertySlug={property.slug} />
             </motion.div>
 
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-800">
-                <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4 border-b dark:border-gray-800 pb-2">Description</h2>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">{property.description}</p>
+            <motion.div 
+              className="mb-8" 
+              variants={sectionVariants} 
+              initial="hidden" 
+              whileInView="visible" 
+              viewport={{ once: true, amount: 0.2 }}
+            >
+              <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/30 dark:border-white/20">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 pb-4 border-b border-white/20 dark:border-white/10 flex items-center gap-2">
+                  <FaBuilding className="text-blue-600 dark:text-blue-400" />
+                  Description
+                </h2>
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line text-base lg">{property.description}</p>
               </div>
             </motion.div>
 
@@ -548,49 +646,76 @@ const PropertyDetails = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-8 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-gray-800 dark:to-gray-800 rounded-3xl shadow-sm border border-orange-100 dark:border-gray-700"
+                className="mb-8 bg-gradient-to-br from-orange-100/50 to-amber-100/50 dark:from-orange-900/20 dark:to-amber-900/20 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-orange-200/50 dark:border-orange-500/30"
               >
-                <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-                  <FaBus className="text-orange-500" /> Living Essentials
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
+                  <div className="p-2 bg-orange-500/20 dark:bg-orange-600/30 rounded-xl">
+                    <FaBus className="text-orange-600 dark:text-orange-400 text-xl" />
+                  </div>
+                  Living Essentials
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {property.matatuRoute && (
-                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                      <FaBus className="text-orange-500 text-2xl mt-1" />
-                      <div>
-                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Matatu Route</h3>
-                        <p className="text-gray-600 dark:text-gray-300">{property.matatuRoute}</p>
-                        {property.matatuFare && (
-                          <span className="inline-block mt-1 text-xs font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-md border border-orange-200">
-                            Fare: Ksh {property.matatuFare}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  {property.mamaMbogaDistance && (
-                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                      <FaShoppingCart className="text-green-500 text-2xl mt-1" />
-                      <div>
-                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Mama Mboga</h3>
-                        <p className="text-gray-600 dark:text-gray-300">{property.mamaMbogaDistance} away</p>
-                      </div>
-                    </div>
-                  )}
-                  {property.internetProviders && property.internetProviders.length > 0 && (
-                    <div className="flex items-start space-x-3 p-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                      <FaWifi className="text-blue-500 text-2xl mt-1" />
-                      <div>
-                        <h3 className="font-semibold text-gray-800 dark:text-gray-100">Internet Providers</h3>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {property.internetProviders.map((isp, idx) => (
-                            <span key={idx} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-1 rounded-full dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800">
-                              {isp}
+                    <motion.div 
+                      whileHover={{ y: -4 }}
+                      className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="p-3 bg-orange-500/20 dark:bg-orange-600/30 rounded-xl">
+                          <FaBus className="text-orange-600 dark:text-orange-400 text-2xl" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-900 dark:text-white text-lg">Matatu Route</h3>
+                          <p className="text-gray-700 dark:text-gray-300 mt-2">{property.matatuRoute}</p>
+                          {property.matatuFare && (
+                            <span className="inline-block mt-3 text-xs font-bold bg-orange-500/20 dark:bg-orange-600/30 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-lg border border-orange-200/50 dark:border-orange-600/50">
+                              Fare: Ksh {property.matatuFare}
                             </span>
-                          ))}
+                          )}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
+                  )}
+                  {property.mamaMbogaDistance && (
+                    <motion.div 
+                      whileHover={{ y: -4 }}
+                      className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="p-3 bg-green-500/20 dark:bg-green-600/30 rounded-xl">
+                          <FaShoppingCart className="text-green-600 dark:text-green-400 text-2xl" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-900 dark:text-white text-lg">Mama Mboga</h3>
+                          <p className="text-gray-700 dark:text-gray-300 mt-2">{property.mamaMbogaDistance} away</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  {property.internetProviders && property.internetProviders.length > 0 && (
+                    <motion.div 
+                      whileHover={{ y: -4 }}
+                      className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="p-3 bg-blue-500/20 dark:bg-blue-600/30 rounded-xl">
+                          <FaWifi className="text-blue-600 dark:text-blue-400 text-2xl" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-gray-900 dark:text-white text-lg">Internet Providers</h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {property.internetProviders.map((isp, idx) => (
+                              <span 
+                                key={idx} 
+                                className="text-xs font-semibold bg-blue-500/20 dark:bg-blue-600/30 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-600/50 px-3 py-1 rounded-full"
+                              >
+                                {isp}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   )}
                 </div>
               </motion.div>
@@ -618,51 +743,59 @@ const PropertyDetails = () => {
               <PropertyAmenities amenities={property.amenities} />
             )}
 
-            <motion.div className="mb-8" variants={sectionVariants} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}>
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Location & Nearby Amenities</h2>
+            <motion.div 
+              className="mb-8" 
+              variants={sectionVariants} 
+              initial="hidden" 
+              whileInView="visible" 
+              viewport={{ once: true, amount: 0.2 }}
+            >
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <FaMapMarkerAlt className="text-blue-600 dark:text-blue-400" />
+                Location & Nearby Amenities
+              </h2>
               {(property.coordinates?.lat &&
                 (Math.abs(property.coordinates.lat - (-1.286389)) > 0.0001 ||
                   Math.abs(property.coordinates.lng - 36.817223) > 0.0001)) ? (
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                <div className="bg-gradient-to-r from-blue-100/50 to-cyan-100/50 dark:from-blue-900/20 dark:to-cyan-900/20 backdrop-blur-xl p-8 rounded-3xl border border-blue-200/50 dark:border-blue-500/30 shadow-xl">
+                  <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg font-medium text-center">
                     View the exact pin location of this property on Google Maps.
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3 flex-col sm:flex-row">
                     <button
                       onClick={() => {
-                        setShowMap(true);
-                        trackInteraction('mapClicks');
+                        // setShowMap(true);
+                        // Map functionality to be added
                       }}
-                      className="flex-1 bg-green-100 text-green-700 py-3 rounded-xl font-bold hover:bg-green-200 transition flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
                       <FaMapMarkerAlt /> View on Map
                     </button>
                     <button
                       onClick={() => {
-                        document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
-                        trackInteraction('photoScrolls');
+                        document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' });
                       }}
-                      className="flex-1 bg-blue-100 text-blue-700 py-3 rounded-xl font-bold hover:bg-blue-200 transition flex items-center justify-center gap-2"
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
                       <FaImages /> Photos
                     </button>
                   </div>
                 </div>
               ) : property.location ? (
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                <div className="bg-gradient-to-r from-blue-100/50 to-cyan-100/50 dark:from-blue-900/20 dark:to-cyan-900/20 backdrop-blur-xl p-8 rounded-3xl border border-blue-200/50 dark:border-blue-500/30 shadow-xl text-center">
+                  <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg font-medium">
                     View the approximate location of this property on Google Maps.
                   </p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(property.location)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
                   >
                     <FaMapMarkerAlt /> View on Google Maps
                   </a>
                 </div>
-              ) : <p className="text-gray-500 dark:text-gray-400">Location data is not available for this property.</p>}
+              ) : <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/30 dark:border-white/20 text-center"><p className="text-gray-500 dark:text-gray-400">Location data is not available for this property.</p></div>}
             </motion.div>
 
             {/* What's Nearby Removed (Consolidated to AI Insights) */}
@@ -701,22 +834,31 @@ const PropertyDetails = () => {
         </div >
 
         {agentProperties.length > 0 && property.agent && (
-          <section className="max-w-6xl mx-auto mt-16">
-            <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">
-              More from {property.agent.name}
-            </h2>
+          <section className="max-w-6xl mx-auto mt-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mb-10"
+            >
+              <h2 className="text-4xl font-black text-gray-900 dark:text-white mb-2">
+                More from <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">{property.agent.name}</span>
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-lg">Explore other premium listings from this verified agent</p>
+            </motion.div>
+            
             <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
               {agentProperties.slice(0, 4).map((prop) => (
                 <PropertyCard key={prop._id} property={prop} />
               ))}
             </div>
             {agentProperties.length > 4 && (
-              <div className="mt-8 text-center">
+              <div className="mt-10 text-center">
                 <Link
                   to={`/agent/${property.agent._id}`}
-                  className="inline-block px-6 py-3 border border-blue-600 text-blue-600 font-bold rounded-full hover:bg-blue-50 transition"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
                 >
-                  View All {agentProperties.length} Listings
+                  View All {agentProperties.length} Listings <FaArrowRight />
                 </Link>
               </div>
             )}
@@ -730,16 +872,47 @@ const PropertyDetails = () => {
 
       <AnimatePresence>
         {selectedPlace && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedPlace(null)}>
-            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} transition={{ duration: 0.2, ease: "easeOut" }} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setSelectedPlace(null)} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"><FaTimes size={20} /></button>
-              <div className="flex items-center space-x-3 mb-4">
-                <span className="text-2xl">{placeIconMap[selectedPlace.type]?.icon || placeIconMap.default.icon}</span>
-                <div><h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{selectedPlace.name}</h3><p className="text-sm font-bold text-blue-600 dark:text-blue-400">{placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}</p></div>
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" 
+            onClick={() => setSelectedPlace(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }} 
+              transition={{ duration: 0.3, ease: "easeOut" }} 
+              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-full p-8 relative border border-white/30 dark:border-white/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setSelectedPlace(null)} 
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center"
+              >
+                <FaTimes size={20} />
+              </button>
+              
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="p-3 bg-white/30 dark:bg-white/20 rounded-xl">
+                  <span className="text-3xl">{placeIconMap[selectedPlace.type]?.icon || placeIconMap.default.icon}</span>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedPlace.name}</h3>
+                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">{placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-semibold">Proximity:</span> {selectedPlace.distance} km away</p>
-                <p className="text-gray-700 dark:text-gray-300"><span className="font-semibold">Address:</span> {selectedPlace.vicinity}</p>
+              
+              <div className="space-y-4 bg-white/20 dark:bg-white/10 rounded-2xl p-6 border border-white/30 dark:border-white/20">
+                <div>
+                  <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Proximity</p>
+                  <p className="text-gray-900 dark:text-white font-semibold text-lg">{selectedPlace.distance} km away</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Address</p>
+                  <p className="text-gray-900 dark:text-white font-semibold">{selectedPlace.vicinity}</p>
+                </div>
               </div>
             </motion.div>
           </motion.div>
