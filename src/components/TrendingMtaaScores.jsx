@@ -42,44 +42,49 @@ const getBuildingGradient = (name) => {
 
 // --- COMPONENT: The "Join Feed" Promo Card (Always First) ---
 const FeedPromoCard = () => (
-  <div className="relative w-full h-80 group cursor-pointer perspective-1000">
-     <div className="w-full h-full relative transition-all duration-300 transform hover:-translate-y-2">
-        <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-xl overflow-hidden text-white flex flex-col p-6">
-           
-           {/* Background Texture */}
-           <FaBullhorn className="absolute text-white opacity-10 text-[10rem] -bottom-8 -right-8 rotate-12 group-hover:rotate-6 transition-transform duration-700" />
-           
-           <div className="relative z-10 flex flex-col h-full">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/30">
-                 <FaUsers className="text-2xl text-white" />
-              </div>
-              
-              <h3 className="text-2xl font-black mb-2 leading-tight">
-                 What's happening in <span className="text-yellow-300">your mtaa?</span>
-              </h3>
-              
-              <p className="text-indigo-100 text-sm mb-4 leading-relaxed line-clamp-3">
-                 Don't just look at scores. Read real stories about security, water rationing, and neighborhood drama directly from the feed.
-              </p>
+  <motion.div 
+    initial={{ opacity: 0, scale: 0.9 }}
+    whileInView={{ opacity: 1, scale: 1 }}
+    viewport={{ once: true }}
+    className="relative w-full h-80 cursor-pointer group perspective-1000"
+  >
+    <div className="w-full h-full relative transition-all duration-300 transform hover:-translate-y-2">
+      <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl shadow-2xl overflow-hidden text-white flex flex-col p-6 border border-white/20 backdrop-blur-xl">
+        
+        {/* Background Texture */}
+        <FaBullhorn className="absolute text-white opacity-10 text-[10rem] -bottom-8 -right-8 rotate-12 group-hover:rotate-6 transition-transform duration-700" />
+        
+        <div className="relative z-10 flex flex-col h-full">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-4 shadow-inner border border-white/30">
+            <FaUsers className="text-2xl text-white" />
+          </div>
+          
+          <h3 className="text-2xl font-black mb-2 leading-tight">
+            What's happening in <span className="text-yellow-300">your mtaa?</span>
+          </h3>
+          
+          <p className="text-indigo-100 text-sm mb-4 leading-relaxed line-clamp-3">
+            Don't just look at scores. Read real stories about security, water rationing, and neighborhood drama directly from the feed.
+          </p>
 
-              <div className="mt-auto">
-                <div className="flex items-center gap-2 mb-4 text-xs font-bold text-indigo-200">
-                   <span className="flex items-center gap-1"><FaCommentDots /> Live Discussions</span>
-                   <span className="w-1 h-1 bg-white rounded-full"></span>
-                   <span>Real-time Alerts</span>
-                </div>
-                
-                <Link 
-                  to="/living-feed" 
-                  className="w-full bg-white text-indigo-700 font-bold py-3 rounded-xl text-center shadow-lg hover:bg-indigo-50 transition flex items-center justify-center gap-2"
-                >
-                  View Living Feed <FaArrowRight />
-                </Link>
-              </div>
-           </div>
+          <div className="mt-auto">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold text-indigo-200">
+              <span className="flex items-center gap-1"><FaCommentDots /> Live Discussions</span>
+              <span className="w-1 h-1 bg-white rounded-full"></span>
+              <span>Real-time Alerts</span>
+            </div>
+            
+            <Link 
+              to="/living-feed" 
+              className="w-full bg-white text-indigo-700 font-bold py-3 rounded-xl text-center shadow-lg hover:bg-indigo-50 hover:scale-105 transition-all flex items-center justify-center gap-2"
+            >
+              View Living Feed <FaArrowRight />
+            </Link>
+          </div>
         </div>
-     </div>
-  </div>
+      </div>
+    </div>
+  </motion.div>
 );
 
 // --- COMPONENT: Score Grid (Back of Card) ---
@@ -95,33 +100,33 @@ const MtaaScoreGrid = ({ score }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 mt-4">
+    <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
       {/* Water */}
-      <div className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center ${getStatusColors('water', score.water)}`}>
-        <FaWater className="text-xl mb-1" />
+      <div className={`p-4 rounded-xl border backdrop-blur-md text-center flex flex-col items-center justify-center transition-all ${getStatusColors('water', score.water)}`}>
+        <FaWater className="text-2xl mb-2" />
         <p className="text-[10px] uppercase font-bold opacity-70">Water</p>
         <p className="text-xs font-bold truncate w-full">{formatWater(score.water)}</p>
       </div>
 
       {/* Internet */}
-      <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-center flex flex-col items-center justify-center">
-        <FaWifi className="text-xl text-purple-500 mb-1" />
-        <p className="text-[10px] uppercase font-bold opacity-70">Top Net</p>
-        <p className="text-xs font-bold truncate w-full dark:text-gray-200">{score.internet || 'N/A'}</p>
+      <div className="p-4 rounded-xl border border-purple-200/50 dark:border-purple-700/50 bg-purple-50/80 dark:bg-purple-900/20 backdrop-blur-md text-center flex flex-col items-center justify-center">
+        <FaWifi className="text-2xl text-purple-600 dark:text-purple-400 mb-2" />
+        <p className="text-[10px] uppercase font-bold opacity-70">Internet</p>
+        <p className="text-xs font-bold truncate w-full dark:text-purple-300">{score.internet || 'N/A'}</p>
       </div>
 
       {/* Security */}
-      <div className={`p-3 rounded-xl border text-center flex flex-col items-center justify-center ${getStatusColors('security', score.security)}`}>
-        <FaShieldAlt className="text-xl mb-1" />
+      <div className={`p-4 rounded-xl border backdrop-blur-md text-center flex flex-col items-center justify-center transition-all ${getStatusColors('security', score.security)}`}>
+        <FaShieldAlt className="text-2xl mb-2" />
         <p className="text-[10px] uppercase font-bold opacity-70">Safety</p>
         <p className="text-xs font-bold">{score.security}/5</p>
       </div>
 
       {/* Fare */}
-      <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 text-center flex flex-col items-center justify-center">
-        <FaBus className="text-xl text-green-600 mb-1" />
-        <p className="text-[10px] uppercase font-bold opacity-70">Fare (Peak)</p>
-        <p className="text-xs font-bold dark:text-gray-200">{score.fare !== '-' ? `~${score.fare}` : 'N/A'}</p>
+      <div className="p-4 rounded-xl border border-green-200/50 dark:border-green-700/50 bg-green-50/80 dark:bg-green-900/20 backdrop-blur-md text-center flex flex-col items-center justify-center">
+        <FaBus className="text-2xl text-green-600 dark:text-green-400 mb-2" />
+        <p className="text-[10px] uppercase font-bold opacity-70">Fare</p>
+        <p className="text-xs font-bold dark:text-green-300">{score.fare !== '-' ? `~${score.fare}` : 'N/A'}</p>
       </div>
     </div>
   );
@@ -149,10 +154,12 @@ const MtaaFlipCard = ({ item }) => {
         variants={variants}
         initial="front"
         animate={isFlipped ? "back" : "front"}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
       >
-        {/* FRONT SIDE */}
-        <div className="absolute inset-0 backface-hidden w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
+        {/* === FRONT SIDE (Enhanced Glassmorphism - Matching TopAgents) === */}
+        <div className="absolute inset-0 backface-hidden w-full h-full bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col group">
           
+          {/* Background with Gradient and Image */}
           <div className={`h-48 w-full relative bg-gradient-to-br ${getBuildingGradient(item.title)} flex items-center justify-center overflow-hidden`}>
             <FaCity className="absolute text-white opacity-10 text-[10rem] -bottom-6 -right-6 rotate-12" />
             <motion.div 
@@ -161,59 +168,100 @@ const MtaaFlipCard = ({ item }) => {
               transition={{ duration: 0.5 }}
               className="z-10 text-center px-4"
             >
-               <h3 className="text-2xl font-black text-white drop-shadow-md uppercase tracking-tight leading-none">
-                 {item.title}
-               </h3>
-               <div className="w-12 h-1 bg-white/50 mx-auto mt-2 rounded-full"></div>
+              <h3 className="text-2xl font-black text-white drop-shadow-md uppercase tracking-tight leading-none">
+                {item.title}
+              </h3>
+              <div className="w-12 h-1 bg-white/50 mx-auto mt-2 rounded-full"></div>
             </motion.div>
 
-            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-white/30">
+            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg border border-white/30">
               <FaStar className="text-yellow-300 text-sm" />
               <span className="text-sm font-bold text-white">{item.rating}</span>
             </div>
 
-            <div className="absolute bottom-3 right-3 bg-black/40 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-sm flex items-center gap-1 border border-white/10 group-hover:bg-black/60 transition">
-               <FaInfoCircle /> Tap for Stats
+            <div className="absolute bottom-3 right-3 bg-black/40 text-white text-[10px] px-3 py-1.5 rounded-full backdrop-blur-md flex items-center gap-1 border border-white/10 group-hover:bg-black/60 transition">
+              <FaInfoCircle /> Tap for Stats
             </div>
           </div>
 
-          <div className="p-5 flex-1 flex flex-col justify-center">
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-bold flex items-center gap-2 mb-3 uppercase tracking-wide">
-              <FaMapMarkerAlt className="text-red-500" /> {item.location}
-            </p>
-            <div className="flex flex-wrap gap-2">
-               {item.badges.map((b, i) => (
-                 <span key={i} className="text-[10px] font-bold uppercase bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-md border border-gray-200 dark:border-gray-600">
-                   {b}
-                 </span>
-               ))}
+          {/* Content Section */}
+          <div className="p-5 flex-1 flex flex-col justify-between">
+            <div>
+              <p className="text-gray-600 dark:text-gray-300 text-sm font-bold flex items-center gap-2 mb-3 uppercase tracking-wide">
+                <FaMapMarkerAlt className="text-red-500" /> {item.location}
+              </p>
+              
+              <div className="flex flex-wrap gap-2">
+                {item.badges.map((b, i) => (
+                  <span key={i} className="text-[10px] font-bold uppercase bg-blue-100/80 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-3 py-1 rounded-full border border-blue-200/50 dark:border-blue-700/50">
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 w-full py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-all
+              bg-blue-50/60 text-blue-700 border border-blue-200/50
+              dark:bg-white/5 dark:text-blue-300 dark:border-white/10 
+              group-hover:bg-blue-600 group-hover:text-white group-hover:border-transparent">
+              View Stats & Details <FaInfoCircle className="text-xs" />
             </div>
           </div>
+
+          {/* Hover Effect Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-600/0 to-blue-600/0 group-hover:from-blue-600/10 group-hover:to-purple-600/10 transition-all duration-300 pointer-events-none" />
         </div>
 
-        {/* BACK SIDE */}
+        {/* === BACK SIDE (Enhanced Glassmorphism) === */}
         <div 
-          className="absolute inset-0 backface-hidden rotate-y-180 w-full h-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-blue-100 dark:border-blue-900 overflow-hidden p-6 flex flex-col"
+          className="absolute inset-0 backface-hidden rotate-y-180 w-full h-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col p-6"
         >
-          <div className="text-center">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Reliability Score</h4>
-            <h3 className="text-lg font-extrabold text-blue-600 dark:text-blue-400 truncate mt-1">{item.title}</h3>
+          {/* Background Image with Overlay */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <div className={`absolute inset-0 bg-gradient-to-br ${getBuildingGradient(item.title)} opacity-20`}></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-white/80 dark:from-gray-900/60 dark:to-gray-950/80"></div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center w-full">
-             <MtaaScoreGrid score={item.mtaaScore} />
-          </div>
-
-          {/* ✅ UPDATED: Link goes to Rated Properties page first */}
+          {/* Close Button */}
           <button 
-            onClick={(e) => {
-               e.stopPropagation();
-               navigate('/rated-properties');
-            }}
-            className="mt-auto w-full py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition shadow-lg"
+            onClick={(e) => { e.stopPropagation(); setIsFlipped(false); }}
+            className="absolute top-4 right-4 p-2 rounded-full transition backdrop-blur-md z-10
+              bg-white/30 hover:bg-white/60 text-gray-600 dark:text-gray-300
+              dark:bg-white/10 dark:hover:bg-white/20 border border-white/20"
           >
-            View Full Report <FaArrowRight />
+            <FaInfoCircle className="w-5 h-5" />
           </button>
+
+          {/* Content Container */}
+          <div className="relative z-10 flex flex-col h-full text-gray-900 dark:text-white">
+            
+            {/* Header */}
+            <div className="text-center mb-4 shrink-0">
+              <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">Reliability Score</h4>
+              <h3 className="text-xl font-extrabold truncate mb-1">{item.title}</h3>
+              <div className="flex items-center justify-center gap-1 text-yellow-500">
+                {[...Array(5)].map((_, i) => (
+                  <FaStar key={i} className={`text-sm ${i < Math.round(item.rating) ? 'text-yellow-400' : 'text-yellow-200 dark:text-yellow-900'}`} />
+                ))}
+              </div>
+            </div>
+
+            {/* Score Grid */}
+            <div className="flex-1 flex items-center justify-center w-full">
+              <MtaaScoreGrid score={item.mtaaScore} />
+            </div>
+
+            {/* CTA Button */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate('/rated-properties');
+              }}
+              className="mt-auto w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              View Full Report <FaArrowRight />
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>

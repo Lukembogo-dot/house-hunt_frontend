@@ -6,20 +6,49 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaChevronLeft, FaChevronRight, FaMapMarkerAlt, 
   FaBed, FaBath, FaRulerCombined, FaTag, FaHeart, FaRegHeart, FaEye
-} from 'react-icons/fa';const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick }) => {
+} from 'react-icons/fa';
+
+// Helper function to extract video thumbnail
+const getVideoThumbnail = (url) => {
+  if (!url) return null;
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    const videoId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
+    return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  }
+  if (url.includes('cloudinary')) {
+    return url.replace(/\.[^/.]+$/, ".jpg");
+  }
+  return null;
+};
+
+const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const autoPlayInterval = useRef(5000);
 
-  // Get safe image array
+  // Get safe image array with video thumbnail fallback
   const images = React.useMemo(() => {
-    if (!property?.images || !Array.isArray(property.images)) return [];
-    return property.images.map((img, index) => {
-      if (typeof img === 'string') return img;
-      if (img.url) return img.url;
-      return null;
-    }).filter(Boolean);
-  }, [property?.images]);
+    let imageArray = [];
+    
+    // First, add property images if available
+    if (property?.images && Array.isArray(property.images)) {
+      imageArray = property.images.map((img, index) => {
+        if (typeof img === 'string') return img;
+        if (img.url) return img.url;
+        return null;
+      }).filter(Boolean);
+    }
+
+    // If no images but has video, add video thumbnail
+    if (imageArray.length === 0 && property?.video) {
+      const videoThumb = getVideoThumbnail(property.video);
+      if (videoThumb) {
+        imageArray = [videoThumb];
+      }
+    }
+
+    return imageArray;
+  }, [property?.images, property?.video]);
 
   // Auto-advance slides
   useEffect(() => {

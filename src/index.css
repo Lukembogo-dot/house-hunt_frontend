@@ -3,27 +3,77 @@
 @tailwind utilities;
 
 @layer base {
+
   html,
   body {
     /* Apply a smooth transition to background and text colors */
     @apply transition-colors duration-300;
   }
+
+  /* ✅ HIDE SPIN BUTTONS for Input Number */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* ✅ UTILITIES */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .mask-linear-fade {
+    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+  }
 }
 
 /* ✅ PERFORMANCE: GPU-Accelerated CSS Animations for Floating Elements */
 @keyframes float-slow {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(20px, -15px, 0); }
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(20px, -15px, 0);
+  }
 }
 
 @keyframes float-slower {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(-15px, 20px, 0); }
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(-15px, 20px, 0);
+  }
 }
 
 @keyframes float-fastest {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(10px, -10px, 0); }
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(10px, -10px, 0);
+  }
 }
 
 .animate-float-slow {
@@ -43,6 +93,7 @@
 
 /* ✅ Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-float-slow,
   .animate-float-slower,
   .animate-float-fastest {

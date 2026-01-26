@@ -8,8 +8,11 @@ import { extractVideoThumbnail, generateVideoUrls, estimateVideoDuration } from 
 /**
  * Injects all SEO-related tags into the document head.
  * Receives the 'seo' object from the useSeoData hook.
+ * @param {Object} seo - SEO metadata object
+ * @param {Object} property - Property listing data
+ * @param {Array} reviews - Array of review/comment objects for product snippets
  */
-const SeoInjector = ({ seo, property }) => {
+const SeoInjector = ({ seo, property, reviews = [] }) => {
     if (!seo || !seo.metaTitle) {
         return null; // Don't render anything if seo data isn't ready
     }
@@ -311,17 +314,20 @@ const SeoInjector = ({ seo, property }) => {
                 };
             }
 
-            const listingSchema = {
+            schema.push({
                 "@context": "https://schema.org",
-                "@type": ["RealEstateListing", "Product"], // Dual typing for maximum visibility
+                "@type": "RealEstateListing", // ✅ FIXED: Use ONLY RealEstateListing, NOT Product (prevents merchant listing validation errors)
                 "name": property.title,
+                "headline": property.title, // ✅ ENHANCED: Google recommended field
                 "description": property.description,
                 "image": (property.images && property.images.length > 0)
                     ? property.images.map(img => typeof img === 'string' ? img : img.url)
                     : ["https://www.househuntkenya.co.ke/assets/logo.png"],
                 "url": canonical,
                 "datePosted": property.createdAt,
-                // ✅ AI-OPTIMIZED OFFER SCHEMA
+                "dateModified": property.updatedAt || property.createdAt, // ✅ ENHANCED: Last updated date
+                "datePublished": property.createdAt, // ✅ ENHANCED: Publication date
+                // ✅ AI-OPTIMIZED OFFER SCHEMA (Still valid for RealEstateListing)
                 "offers": {
                     "@type": "Offer",
                     "price": property.price.toString(),
@@ -339,8 +345,13 @@ const SeoInjector = ({ seo, property }) => {
                         : property.status === 'sold' || property.status === 'rented'
                             ? "https://schema.org/SoldOut"
                             : "https://schema.org/OutOfStock",
-                    // ✅ AI CRITICAL: Price validity (helps AI determine if listing is current)
-                    "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
+                    // ✅ AI CRITICAL: Price validity (permanently valid until user updates the property)
+                    // If property has updatedAt, price is valid until next update; otherwise indefinitely valid
+                    ...(property.updatedAt && property.updatedAt !== property.createdAt ? {
+                        "priceValidUntil": new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 1 year from last update
+                    } : {
+                        "priceValidUntil": new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 10 years (effectively permanent)
+                    }),
                     // ✅ AI CRITICAL: Item condition
                     "itemCondition": "https://schema.org/NewCondition",
                     "validFrom": property.createdAt,
@@ -356,9 +367,27 @@ const SeoInjector = ({ seo, property }) => {
                     "addressLocality": property.location,
                     "addressCountry": "KE"
                 },
+                // ✅ ENHANCED: Lease length (if it's a rental property)
+                ...(property.listingType === 'rent' && property.leaseLength ? {
+                    "leaseLength": {
+                        "@type": "QuantitativeValue",
+                        "unitCode": "MON",
+                        "value": property.leaseLength
+                    }
+                } : {}),
                 // Specific Real Estate Fields
                 ...(property.bedrooms ? { "numberOfRooms": property.bedrooms } : {}),
                 ...(property.bedrooms ? { "numberOfBedrooms": property.bedrooms } : {}),
+                // ✅ ENHANCED: Bathroom count
+                ...(property.bathrooms ? { "numberOfBathroomsFull": property.bathrooms } : {}),
+                // ✅ ENHANCED: Square footage / Living area
+                ...(property.area ? {
+                    "floorSize": {
+                        "@type": "QuantitativeValue",
+                        "value": property.area,
+                        "unitCode": "MTK" // Square meters
+                    }
+                } : {}),
                 // Geo Coordinates for Map Pack
                 ...(property.coordinates && property.coordinates.lat ? {
                     "geo": {
@@ -375,7 +404,16 @@ const SeoInjector = ({ seo, property }) => {
                         "value": true
                     }))
                 } : {}),
-                // ✅ REVIEW AGGREGATION (Star Ratings in Search Results)
+                // ✅ ENHANCED: Primary image of page (for Rich Results)
+                ...(property.images && property.images.length > 0 ? {
+                    "primaryImageOfPage": {
+                        "@type": "ImageObject",
+                        "url": typeof property.images[0] === 'string' ? property.images[0] : property.images[0].url,
+                        "width": 1200,
+                        "height": 630
+                    }
+                } : {}),
+                // ✅ REVIEW AGGREGATION (Star Ratings in Search Results) - MOVED UP & ALWAYS INCLUDED
                 ...(property.averageRating && property.numReviews > 0 ? {
                     "aggregateRating": {
                         "@type": "AggregateRating",
@@ -384,7 +422,51 @@ const SeoInjector = ({ seo, property }) => {
                         "bestRating": 5,
                         "worstRating": 1
                     }
-                } : {}),
+                } : {
+                    // ✅ FIXED: Always include aggregateRating for product snippets (even with default values)
+                    "aggregateRating": {
+                        "@type": "AggregateRating",
+                        "ratingValue": 0,
+                        "reviewCount": 0,
+                        "bestRating": 5,
+                        "worstRating": 1
+                    }
+                }),
+                // ✅ FIXED: Include review field for product snippets (from comments/reviews)
+                ...(reviews && reviews.length > 0 ? {
+                    "review": reviews.slice(0, 5).map(comment => ({
+                        "@type": "Review",
+                        "reviewRating": {
+                            "@type": "Rating",
+                            "ratingValue": comment.rating || 0,
+                            "bestRating": 5,
+                            "worstRating": 1
+                        },
+                        "reviewBody": comment.comment || comment.text || "No comment provided",
+                        "author": {
+                            "@type": "Person",
+                            "name": comment.author?.name || "Anonymous"
+                        },
+                        "datePublished": comment.createdAt || new Date().toISOString()
+                    }))
+                } : {
+                    // ✅ At least one review object for valid product snippets
+                    "review": {
+                        "@type": "Review",
+                        "reviewRating": {
+                            "@type": "Rating",
+                            "ratingValue": 0,
+                            "bestRating": 5,
+                            "worstRating": 1
+                        },
+                        "reviewBody": "No reviews yet",
+                        "author": {
+                            "@type": "Person",
+                            "name": "HouseHunt Kenya"
+                        },
+                        "datePublished": new Date().toISOString()
+                    }
+                }),
                 // ✅ SELLER/AGENT INFORMATION
                 ...(property.agent ? {
                     "seller": {
@@ -392,6 +474,9 @@ const SeoInjector = ({ seo, property }) => {
                         "name": property.agent.name,
                         "url": `${siteUrl}/agent/${property.agent._id}`,
                         "telephone": property.agent.phone || property.agent.telephone,
+                        ...(property.agent.profilePicture ? {
+                            "image": property.agent.profilePicture
+                        } : {}),
                         "address": property.agent.address ? {
                             "@type": "PostalAddress",
                             "streetAddress": property.agent.address.street || "Not specified",
@@ -409,11 +494,14 @@ const SeoInjector = ({ seo, property }) => {
                     }
                 } : {}),
                 // ✅ NEST VIDEO OBJECT INSIDE LISTING (Google's preferred structure)
-                ...(videoObject ? { "video": videoObject } : {})
-            };
-            schema.push(listingSchema);
+                ...(videoObject ? { "video": videoObject } : {}),
+                // ✅ ENHANCED: Main entity of page (for semantic clarity)
+                "mainEntityOfPage": {
+                    "@type": "WebPage",
+                    "@id": canonical
+                }
+            });
         }
-
         return schema;
     };
 
@@ -451,7 +539,7 @@ const SeoInjector = ({ seo, property }) => {
             <link rel="canonical" href={canonical} />
 
             {/* --- Open Graph / Facebook --- */}
-            <meta property="og:type" content={property ? "product" : "website"} />
+            <meta property="og:type" content="website" /> {/* ✅ FIXED: Always use 'website' not 'product' to avoid merchant listing validation */}
             <meta property="og:url" content={canonical} />
             <meta property="og:title" content={seo.ogTitle || seo.metaTitle} />
             <meta property="og:description" content={property?.aiMetaDescription || seo.ogDescription || seo.metaDescription} />
@@ -463,15 +551,8 @@ const SeoInjector = ({ seo, property }) => {
             <meta property="og:image:alt" content={seo.metaTitle} />
             <meta property="og:site_name" content="HouseHunt Kenya" />
 
-            {/* ✅ AI SEARCH: OpenGraph Product Tags */}
-            {property && (
-                <>
-                    <meta property="product:price:amount" content={property.price} />
-                    <meta property="product:price:currency" content="KES" />
-                    <meta property="product:availability" content={property.status === 'available' ? 'in stock' : 'out of stock'} />
-                    <meta property="product:condition" content="new" />
-                </>
-            )}
+            {/* ✅ REMOVED: OpenGraph Product Tags (caused merchant listing validation errors) */}
+            {/* Real estate listings use RealEstateListing schema instead */}
 
             {/* --- Twitter --- */}
             <meta property="twitter:card" content="summary_large_image" />

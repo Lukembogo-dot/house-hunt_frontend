@@ -191,22 +191,22 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
   return (
     <div className="w-full max-w-4xl mx-auto relative z-30" ref={searchRef}>
 
-      {/* 1. Category Tabs */}
-      <div className="flex justify-center md:justify-start pl-2 space-x-1">
+      {/* 1. Category Tabs - Scrollable on Mobile */}
+      <div className="flex overflow-x-auto md:justify-start pb-2 md:pb-0 pl-1 md:pl-2 space-x-2 md:space-x-1 no-scrollbar whitespace-nowrap mask-linear-fade">
         <button type="button" onClick={() => setCategory('all')} className={getTabClass('all')}>
-          <FaGlobe /> All
+          <FaGlobe /> <span className="text-sm">All</span>
         </button>
         <button type="button" onClick={() => setCategory('rent')} className={getTabClass('rent')}>
-          <FaHome /> Rent
+          <FaHome /> <span className="text-sm">Rent</span>
         </button>
         <button type="button" onClick={() => setCategory('sale')} className={getTabClass('sale')}>
-          <FaBuilding /> Buy
+          <FaBuilding /> <span className="text-sm">Buy</span>
         </button>
         <button type="button" onClick={() => setCategory('services')} className={getTabClass('services')}>
-          <FaTruck /> Services
+          <FaTruck /> <span className="text-sm">Services</span>
         </button>
         <button type="button" onClick={() => setCategory('community')} className={getTabClass('community')}>
-          <FaComments /> Intel
+          <FaComments /> <span className="text-sm">Intel</span>
         </button>
       </div>
 
