@@ -474,23 +474,18 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                         "name": property.agent.name,
                         "url": `${siteUrl}/agent/${property.agent._id}`,
                         "telephone": property.agent.phone || property.agent.telephone,
+                        // ✅ FIXED: Always include address (required field for RealEstateAgent)
+                        "address": {
+                            "@type": "PostalAddress",
+                            "streetAddress": property.agent.address?.street || "Not specified",
+                            "addressLocality": property.agent.address?.city || property.agent.address?.suburb || "Nairobi",
+                            "addressRegion": property.agent.address?.region || "Nairobi County",
+                            "postalCode": property.agent.address?.postalCode || "",
+                            "addressCountry": "KE"
+                        },
                         ...(property.agent.profilePicture ? {
                             "image": property.agent.profilePicture
-                        } : {}),
-                        "address": property.agent.address ? {
-                            "@type": "PostalAddress",
-                            "streetAddress": property.agent.address.street || "Not specified",
-                            "addressLocality": property.agent.address.city || property.agent.address.suburb || "Nairobi",
-                            "addressRegion": property.agent.address.region || "Nairobi County",
-                            "postalCode": property.agent.address.postalCode || "",
-                            "addressCountry": "KE"
-                        } : {
-                            // Default address for shadow agents
-                            "@type": "PostalAddress",
-                            "addressLocality": "Nairobi",
-                            "addressRegion": "Nairobi County",
-                            "addressCountry": "KE"
-                        }
+                        } : {})
                     }
                 } : {}),
                 // ✅ NEST VIDEO OBJECT INSIDE LISTING (Google's preferred structure)
