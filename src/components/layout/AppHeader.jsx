@@ -107,6 +107,7 @@ const AppHeader = () => {
           </div>
 
           <Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">About</Link>
+          <Link to="/contact" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">Contact</Link>
 
           {!user && (
             <Link to="/for-agents" className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 text-sm font-bold">
@@ -123,8 +124,8 @@ const AppHeader = () => {
             <button
               onClick={handleThemeToggle}
               className={`p-2 rounded-lg transition-all duration-200 ${!realUser
-                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-100 dark:bg-gray-800 text-yellow-500 dark:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 dark:bg-gray-800 text-yellow-500 dark:text-blue-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-105'
                 }`}
               title={!realUser ? 'Login to Unlock' : (isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode')}
             >
@@ -167,10 +168,9 @@ const AppHeader = () => {
                         <p className="text-xs font-bold text-gray-800 dark:text-white leading-none mb-0.5">
                           {realUser.name.split(' ')[0]}
                         </p>
-                        <div className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-md w-max">
-                          <FaShieldAlt size={7} />
-                          {realUser.contributorLevel || 'Newbie'}
-                        </div>
+                        <p className="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400">
+                          {realUser.name.split(' ').slice(1).join(' ')}
+                        </p>
                       </div>
                     </button>
                   }
@@ -178,18 +178,8 @@ const AppHeader = () => {
               </div>
             </div>
           ) : (
-            <Link to="/login" className="flex items-center gap-2 pl-2.5 border-l border-gray-200 dark:border-gray-700 group">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center text-gray-400 group-hover:from-blue-50 group-hover:to-indigo-50 dark:group-hover:from-blue-900/30 dark:group-hover:to-indigo-900/30 group-hover:text-blue-500 transition-all duration-200 ring-2 ring-transparent group-hover:ring-blue-200 dark:group-hover:ring-blue-800">
-                <FaUserSecret size={16} />
-              </div>
-              <div className="text-left hidden lg:block">
-                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-none mb-0.5">
-                  Guest Explorer
-                </p>
-                <p className="text-[10px] font-semibold text-gray-400 group-hover:text-blue-400 dark:group-hover:text-blue-300">
-                  Lvl 0 • Log in to Unlock More
-                </p>
-              </div>
+            <Link to="/login" className="ml-2 px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white font-bold hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 text-sm">
+              Log In
             </Link>
           )}
         </div>
@@ -214,22 +204,20 @@ const AppHeader = () => {
               <div className="flex items-center gap-3 bg-blue-50 dark:bg-gray-700/50 p-4 rounded-xl mb-2">
                 <img src={realUser.profilePicture || "https://placehold.co/100"} className="w-12 h-12 rounded-full border-2 border-blue-500" alt="Profile" />
                 <div>
-                  <p className="font-bold text-gray-800 dark:text-white text-lg">{realUser.name}</p>
-                  <div className="flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
-                    <FaShieldAlt /> {realUser.contributorLevel || 'NEWBIE'}
-                  </div>
+                  <p className="font-bold text-gray-800 dark:text-white text-lg">
+                    {realUser.name.split(' ')[0]}
+                  </p>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                    {realUser.name.split(' ').slice(1).join(' ')}
+                  </p>
                 </div>
               </div>
             ) : (
-              <Link to="/login" className="flex items-center gap-3 bg-gray-50 dark:bg-gray-700/30 p-4 rounded-xl mb-2 border border-dashed border-gray-300 dark:border-gray-600" onClick={closeMobileMenu}>
-                <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
-                  <FaUserSecret size={24} />
-                </div>
-                <div>
-                  <p className="font-bold text-gray-700 dark:text-gray-200">Guest Explorer</p>
-                  <p className="text-xs text-blue-500 font-bold">Tap to Log In & Level Up</p>
-                </div>
-              </Link>
+              <div className="mb-4">
+                <Link to="/login" className="block w-full text-center bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3 rounded-xl hover:opacity-90 transition shadow-lg" onClick={closeMobileMenu}>
+                  Log In
+                </Link>
+              </div>
             )}
 
             <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium" onClick={closeMobileMenu}>Home</Link>
@@ -253,6 +241,7 @@ const AppHeader = () => {
             </div>
 
             <Link to="/about" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium" onClick={closeMobileMenu}>About</Link>
+            <Link to="/contact" className="text-gray-700 dark:text-gray-200 hover:text-blue-600 font-medium" onClick={closeMobileMenu}>Contact</Link>
 
             {!user && (
               <Link to="/for-agents" className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-md transform hover:-translate-y-0.5 text-sm font-bold" onClick={closeMobileMenu}>

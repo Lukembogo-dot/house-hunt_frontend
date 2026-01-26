@@ -5,7 +5,7 @@ import { useFeatureFlag } from '../context/FeatureFlagContext';
 import { FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ProfileDropdown = () => {
+const ProfileDropdown = ({ customTrigger }) => {
   // ✅ 1. Get the new values from useAuth
   const { user, logout, realUser, startPreview } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -33,15 +33,21 @@ const ProfileDropdown = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <motion.button
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition"
-      >
-        <FaUserCircle size={24} />
-        {/* ✅ 2. This will now show your "preview" name or your real name */}
-        <span>{user?.name}</span>
-      </motion.button>
+      {customTrigger ? (
+        <div onClick={() => setIsOpen(!isOpen)}>
+          {customTrigger}
+        </div>
+      ) : (
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition"
+        >
+          <FaUserCircle size={24} />
+          {/* ✅ 2. This will now show your "preview" name or your real name */}
+          <span>{user?.name}</span>
+        </motion.button>
+      )}
 
       <AnimatePresence>
         {isOpen && (

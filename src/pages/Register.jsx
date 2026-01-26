@@ -1,9 +1,9 @@
 // src/pages/Register.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // ✅ Re-enabled useNavigate
-import apiClient from "../api/axios"; 
+import apiClient from "../api/axios";
 import { useAuth } from '../context/AuthContext'; // ✅ Re-enabled useAuth
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
 
 // ✅ 1. Import Google Component
 import { GoogleLogin } from '@react-oauth/google';
@@ -16,17 +16,18 @@ const Register = () => {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
-  
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   // ✅ Re-enabled hooks for Google Login flow
-  const navigate = useNavigate(); 
-  const { login } = useAuth(); 
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   // ✅ 2. Handle Google Success
   const handleGoogleSuccess = async (credentialResponse) => {
     setError("");
     try {
       const { credential } = credentialResponse;
-      
+
       const response = await apiClient.post(
         "/auth/google",
         { token: credential },
@@ -45,13 +46,18 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
     if (!name || !email || !password) {
       setError('Please fill in all fields.');
+      return;
+    }
+
+    if (!termsAccepted) {
+      setError('You must accept the Terms of Service and Privacy Policy to register.');
       return;
     }
 
@@ -65,7 +71,7 @@ const Register = () => {
         { name, email, password },
         { withCredentials: true }
       );
-      
+
       setSuccess(response.data.message);
 
     } catch (err) {
@@ -79,7 +85,7 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div 
+      <motion.div
         className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg dark:border dark:border-gray-700"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -171,6 +177,21 @@ const Register = () => {
                 </div>
               </div>
 
+              <div className="flex items-center mt-4">
+                <input
+                  id="terms"
+                  name="terms"
+                  type="checkbox"
+                  required
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                />
+                <label htmlFor="terms" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                  I accept the <Link to="/terms-of-service" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300" target="_blank">Terms of Service</Link> and <Link to="/privacy-policy" className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300" target="_blank">Privacy Policy</Link>
+                </label>
+              </div>
+
               <div className="flex items-center justify-between">
                 <div className="text-sm">
                   <Link to="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">
@@ -183,9 +204,8 @@ const Register = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${
-                    submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
-                  }`}
+                  className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 active:scale-[0.98] ${submitting ? "opacity-50 cursor-not-allowed" : "dark:hover:bg-blue-500"
+                    }`}
                 >
                   {submitting ? 'Creating account...' : 'Sign up'}
                 </button>

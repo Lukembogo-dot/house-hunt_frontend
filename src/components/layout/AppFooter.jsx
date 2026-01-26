@@ -29,11 +29,11 @@ const AppFooter = () => {
           <ul className="space-y-2 text-sm">
             <li><Link to="/buy" className="hover:text-blue-400 transition">Buy</Link></li>
             <li><Link to="/rent" className="hover:text-blue-400 transition">Rent</Link></li>
-            
+
             {/* ✅ Added Community Links */}
             <li><Link to="/community" className="hover:text-blue-400 transition">Community Stories</Link></li>
             <li><Link to="/share-insight" className="hover:text-blue-400 transition">Write a Review</Link></li>
-            
+
             <li><Link to="/about" className="hover:text-blue-400 transition">About Us</Link></li>
             <li><Link to="/contact" className="hover:text-blue-400 transition">Contact</Link></li>
           </ul>
@@ -65,19 +65,19 @@ const AppFooter = () => {
 
         {/* ✅ NEW: GEO CRAWL PATH (Dynamic Locations) */}
         <div>
-           <h3 className="text-lg font-semibold text-white mb-4 flex items-center justify-center md:justify-start gap-2">
-              <FaMapMarkerAlt className="text-green-500" /> Browse by Area
-           </h3>
-           <nav>
-             <ul className="space-y-2 text-sm">
-               {/* Dynamically list top pSEO paths for crawlers */}
-               <li><Link to="/search/rent/kilimani" className="hover:text-green-400 transition">Rent in Kilimani</Link></li>
-               <li><Link to="/search/rent/westlands" className="hover:text-green-400 transition">Rent in Westlands</Link></li>
-               <li><Link to="/search/sale/karen" className="hover:text-green-400 transition">Buy in Karen</Link></li>
-               <li><Link to="/search/rent/juja" className="hover:text-green-400 transition">Rent in Juja</Link></li>
-               <li><Link to="/search/rent/roysambu" className="hover:text-green-400 transition">Rent in Roysambu</Link></li>
-             </ul>
-           </nav>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center justify-center md:justify-start gap-2">
+            <FaMapMarkerAlt className="text-green-500" /> Browse by Area
+          </h3>
+          <nav>
+            <ul className="space-y-2 text-sm">
+              {/* Dynamically list top pSEO paths for crawlers */}
+              <li><Link to="/search/rent/kilimani" className="hover:text-green-400 transition">Rent in Kilimani</Link></li>
+              <li><Link to="/search/rent/westlands" className="hover:text-green-400 transition">Rent in Westlands</Link></li>
+              <li><Link to="/search/sale/karen" className="hover:text-green-400 transition">Buy in Karen</Link></li>
+              <li><Link to="/search/rent/juja" className="hover:text-green-400 transition">Rent in Juja</Link></li>
+              <li><Link to="/search/rent/roysambu" className="hover:text-green-400 transition">Rent in Roysambu</Link></li>
+            </ul>
+          </nav>
         </div>
 
         <div>
@@ -97,7 +97,9 @@ const AppFooter = () => {
         </div>
       </div>
       <div className="container mx-auto px-6 md:px-10 text-center mt-8 border-t border-gray-700 pt-6">
-        <p className="text-sm">&copy; {new Date().getFullYear()} HouseHunt Kenya. All rights reserved.</p>
+        <p className="text-sm">
+          &copy; 2026 HouseHunt Kenya. Use of this website constitutes acceptance of the <Link to="/terms-of-service" className="underline hover:text-blue-400">Terms of Service</Link> and <Link to="/privacy-policy" className="underline hover:text-blue-400">Privacy Policy</Link>.
+        </p>
       </div>
     </footer>
   );

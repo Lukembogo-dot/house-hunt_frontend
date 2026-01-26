@@ -3,7 +3,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams, useNavigate } from "react-router-dom";
 import ReactGA from 'react-ga4';
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
-import { FaCalculator, FaEnvelope, FaSearchLocation, FaLightbulb, FaRocket, FaQuestionCircle, FaBullhorn } from "react-icons/fa";
+import { FaCalculator, FaEnvelope, FaSearchLocation, FaLightbulb, FaRocket, FaQuestionCircle, FaBullhorn, FaWhatsapp } from "react-icons/fa";
 import { Helmet } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 
@@ -63,23 +63,24 @@ const PageLoader = () => (
   </div>
 );
 
-const ContactButton = () => {
-  const navigate = useNavigate();
+const WhatsAppButton = () => {
   return (
-    <motion.button
-      onClick={() => navigate('/contact')}
+    <motion.a
+      href="https://wa.me/254776929021"
+      target="_blank"
+      rel="noopener noreferrer"
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
-      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-green-600 text-white rounded-full shadow-xl shadow-green-600/30 hover:bg-green-700 transition-all duration-300 flex items-center justify-center group"
-      title="Contact Us"
+      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl shadow-green-600/30 hover:bg-[#20b85c] transition-all duration-300 flex items-center justify-center group"
+      title="Chat on WhatsApp"
     >
-      <FaEnvelope className="text-xl" />
+      <FaWhatsapp className="text-3xl" />
       <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-lg">
-        Talk to Support
+        Chat on WhatsApp
       </span>
-    </motion.button>
+    </motion.a>
   );
 };
 
@@ -470,7 +471,7 @@ function MainLayout() {
         </AnimatePresence>
       </Suspense>
 
-      <ContactButton />
+      <WhatsAppButton />
       <ChatBubble />
 
       <AppFooter />

@@ -18,53 +18,152 @@ const LegalPageWrapper = ({ title, children }) => (
 const TermsOfService = () => {
   return (
     <LegalPageWrapper title="Terms of Service">
-      <p><strong>Last Updated:</strong> November 9, 2025</p>
-      
-      <h3>1. Acceptance of Terms</h3>
-      <p>Welcome to HouseHunt Kenya ("we," "us," or "our"). By accessing or using our website and services (collectively, the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use our Service.</p>
+      <div className="space-y-8 text-lg text-gray-700 dark:text-gray-200">
+        <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+          <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Key Points</h3>
+          <ol className="list-decimal pl-5 space-y-2 font-medium">
+            <li>You must be 18+ to use the site.</li>
+            <li>HouseHunt Kenya only connects people – we are not the seller, landlord, or agent.</li>
+            <li>We are not responsible if a deal goes wrong or someone lies about a house.</li>
+            <li>All disputes follow Kenyan law and will be solved in Kenyan courts.</li>
+          </ol>
+        </div>
 
-      <h3>2. Description of Service</h3>
-      <p>HouseHunt Kenya is a technology platform that connects users (including prospective tenants and buyers) with property listings posted by third-party real estate agents, landlords, and owners ("Agents"). We are a directory and a facilitator, not a real estate agency, broker, or party to any transaction.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">1. Introduction</h2>
+          <p className="mb-4">
+            Welcome to HouseHunt Kenya ("we," "our," "us"). These Terms of Service ("Terms") govern your access to and use of our website, mobile site, and related services ("Services").
+          </p>
+          <p className="mb-4">
+            By accessing or using our Services, you agree to be bound by these Terms. If you do not agree, please do not use our platform.
+          </p>
+          <p>
+            We may update these Terms at any time. Continued use of the Services after updates constitutes acceptance.
+          </p>
+        </section>
 
-      <h3>3. User Accounts</h3>
-      <p>To access certain features, you must register for an account. You agree to provide accurate, current, and complete information. You are responsible for safeguarding your password and for all activities that occur under your account. You must be at least 18 years old to create an account.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">2. Eligibility</h2>
+          <p className="mb-2">You must:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Be at least 18 years old.</li>
+            <li>Provide accurate and truthful information when creating an account or submitting a listing.</li>
+          </ul>
+        </section>
 
-      <h3>4. User Conduct</h3>
-      <p>You agree not to use the Service to:</p>
-      <ul>
-        <li>Post false, misleading, or fraudulent information.</li>
-        <li>Harass, stalk, or harm another individual.</li>
-        <li>Scrape, data-mine, or harvest information without our consent.</li>
-        <li>Violate any applicable local, national, or international law.</li>
-      </ul>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">3. Nature of Service</h2>
+          <p className="mb-2">HouseHunt Kenya provides:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>A platform for listing, browsing, and discovering rental and sale properties.</li>
+            <li>A connection point between users, agents, and landlords.</li>
+            <li>Verified listings where stated, although not all listings are verified.</li>
+          </ul>
+          <p className="mb-4">
+            We are not a real estate agency and do not own or manage listed properties.
+          </p>
+          <p>
+            We do not participate in negotiations, tenancy agreements, payments, or property inspections unless explicitly stated.
+          </p>
+        </section>
 
-      <h3>5. Third-Party Content and Agent Interactions</h3>
-      <p>Our Service displays content provided by third-party Agents (listings, profiles) and may contain content or links to other third-party websites or resources, including social media platforms.</p>
-      
-      <p><strong>a. Third-Party Images:</strong> Some content, including property or profile images, may be sourced from public social media platforms or other third-party sites. The original content creators retain all sole rights to their work. HouseHunt Kenya does not claim ownership of this content and does not receive any monetary compensation for displaying or linking to it. We respect intellectual property and will promptly remove any content upon a valid request from the rights holder.</p>
-      
-      <p><strong>b. Engagement with Agents:</strong> HouseHunt Kenya does not endorse, guarantee, or verify the identity, qualifications, or legitimacy of any Agent. We provide a platform for connection, but we do not vet every Agent or listing.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">4. User Responsibilities</h2>
+          <p className="mb-2">Users agree to:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>Provide accurate personal and property information.</li>
+            <li>Avoid fraud, impersonation, and misleading content.</li>
+            <li>Not upload harmful content, malware, or spam.</li>
+            <li>Abide by Kenyan law when using the platform.</li>
+          </ul>
+          <p>
+            Agents must ensure that listing details, pricing, and images are accurate and up to date.
+          </p>
+        </section>
 
-      <h3>6. Disclaimers and Limitation of Liability</h3>
-      <p><strong>YOUR USE OF THE SERVICE IS ENTIRELY AT YOUR OWN RISK.</strong></p>
-      
-      <p><strong>a. No Warranty:</strong> The Service is provided "AS IS" and "AS AVAILABLE" without any warranties, express or implied. We do not warrant that the Service will be error-free, that listings are accurate, or that Agents are trustworthy.</p>
-      
-      <p><strong>b. No Liability for Agent Actions:</strong> You acknowledge that your interactions and transactions with Agents or other users are solely between you and that party. HouseHunt Kenya is not a party to, and will not be involved in, any disputes between users.</p>
-      
-      <p><strong>c. Release of Liability:</strong> To the fullest extent permitted by law, you release HouseHunt Kenya (and our officers, directors, and employees) from all liability, claims, and damages of every kind (including for negligence) arising out of or in connection with any disputes between you and other users, or any losses incurred as a result of using the Service. This includes, but is notlimited to, any losses arising from **scams, fraud, misrepresentation, property damage, financial loss, or personal injury** resulting from your engagement with an Agent or property listing found on our Service.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">5. Listing Information & Third-Party Content</h2>
+          <p className="mb-2">HouseHunt Kenya shall not be held responsible for:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>Inaccurate prices.</li>
+            <li>Incorrect photos.</li>
+            <li>Misrepresentations by landlords or agents.</li>
+            <li>Delays, cancellations, or false listings.</li>
+            <li>Loss of money or disputes between buyers, tenants, landlords, or agents.</li>
+          </ul>
+          <p>
+            All listings are submitted by third parties unless verified by us.
+          </p>
+        </section>
 
-      <h3>7. Termination</h3>
-      <p>We reserve the right to suspend or terminate your account and access to the Service at our sole discretion, without notice, for conduct that we believe violates these Terms or is harmful to other users or our business interests.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">6. Payments and Fees (If Applicable)</h2>
+          <p className="mb-2">If the platform charges listing or service fees:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Fees are clearly stated before payment.</li>
+            <li>Payments may be made through M-Pesa, bank transfer, or card.</li>
+            <li>Fees are non-refundable unless otherwise stated.</li>
+            <li>HouseHunt Kenya is not liable for payment disputes outside the platform.</li>
+          </ul>
+        </section>
 
-      <h3>8. Governing Law</h3>
-      <p>These Terms shall be governed and construed in accordance with the laws of the Republic of Kenya, without regard to its conflict of law provisions.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">7. Limitation of Liability</h2>
+          <p className="mb-2">To the maximum extent permitted by law, HouseHunt Kenya is not liable for:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>Financial loss.</li>
+            <li>Property fraud.</li>
+            <li>Disputes between users and agents.</li>
+            <li>Inability to find housing.</li>
+            <li>Errors or downtime on the website.</li>
+            <li>Loss of data or unauthorized access.</li>
+          </ul>
+          <p>
+            The platform is provided “as is” and “as available.”
+          </p>
+        </section>
 
-      <h3>9. Changes to Terms</h3>
-      <p>We may modify these Terms at any time. We will notify you by posting the updated terms on this page. Your continued use of the Service after such changes constitutes your acceptance of the new Terms.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">8. Prohibited Activities</h2>
+          <p className="mb-2">Users may not:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Scrape, copy, or duplicate content without permission.</li>
+            <li>Reverse engineer the platform.</li>
+            <li>Post illegal or offensive content.</li>
+            <li>Submit fraudulent listings.</li>
+            <li>Misuse agent or user contact details.</li>
+          </ul>
+        </section>
 
-      <h3>10. Contact Us</h3>
-      <p>If you have any questions about these Terms, please contact us at <strong>support@househuntkenya.co.ke</strong>.</p>
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">9. Account Suspension and Termination</h2>
+          <p className="mb-2">We may suspend or terminate accounts that:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>Violate these Terms.</li>
+            <li>Engage in fraud or misuse.</li>
+            <li>Provide false information.</li>
+            <li>Abuse other users or agents.</li>
+          </ul>
+          <p>
+            Users may delete their accounts at any time.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-bold mb-3 text-gray-900 dark:text-gray-100">10. Governing Law</h2>
+          <p className="mb-2">These Terms are governed by the Laws of Kenya, including:</p>
+          <ul className="list-disc pl-5 space-y-1 mb-4">
+            <li>The Data Protection Act, 2019.</li>
+            <li>The Consumer Protection Act.</li>
+            <li>The Kenya Information and Communications Act (KICA).</li>
+          </ul>
+          <p>
+            Any disputes shall be resolved in the courts of Kenya.
+          </p>
+        </section>
+      </div>
+
+
     </LegalPageWrapper>
   );
 };
