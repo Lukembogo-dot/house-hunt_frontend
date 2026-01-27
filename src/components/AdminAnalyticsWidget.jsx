@@ -3,7 +3,7 @@ import {
     ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area
 } from 'recharts';
 import apiClient from '../api/axios';
-import { FaChartLine, FaEye, FaMousePointer, FaGlobe, FaUserPlus } from 'react-icons/fa';
+import { FaChartLine, FaEye, FaMousePointer, FaGlobe, FaUserPlus, FaLink } from 'react-icons/fa';
 
 const AdminAnalyticsWidget = ({ properties = [] }) => {
     const [data, setData] = useState([]);
@@ -204,26 +204,57 @@ const AdminAnalyticsWidget = ({ properties = [] }) => {
                     </ResponsiveContainer>
                 </div>
 
-                {/* Top Sources */}
-                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700 overflow-y-auto max-h-80">
-                    <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-                        <FaGlobe className="text-blue-500" /> Top Traffic Sources
-                    </h4>
-                    <div className="space-y-3">
-                        {summary?.trafficSources && summary.trafficSources.length > 0 ? (
-                            summary.trafficSources.map((source, index) => (
-                                <div key={index} className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600 dark:text-gray-400 truncate max-w-[150px]" title={source._id}>
-                                        {source._id === 'direct' ? 'Direct / Unknown' : source._id}
-                                    </span>
-                                    <span className="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 px-2 py-0.5 rounded border dark:border-gray-600">
-                                        {source.count}
-                                    </span>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-400 text-sm italic">No traffic data.</p>
-                        )}
+                <div className="flex flex-col gap-6 h-80">
+                    {/* Top Sources */}
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700 overflow-y-auto flex-1">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2 text-sm">
+                            <FaGlobe className="text-blue-500" /> Traffic Channels
+                        </h4>
+                        <div className="space-y-3">
+                            {summary?.trafficSources && summary.trafficSources.length > 0 ? (
+                                summary.trafficSources.map((source, index) => (
+                                    <div key={index} className="flex justify-between items-center text-xs">
+                                        <span className="text-gray-600 dark:text-gray-400 truncate max-w-[120px]" title={source._id}>
+                                            {source._id === 'direct' ? 'Direct / Unknown' : source._id}
+                                        </span>
+                                        <span className="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 px-2 py-0.5 rounded border dark:border-gray-600">
+                                            {source.count}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-400 text-xs italic">No channel data.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Top Referrers (Specific Domains) */}
+                    <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700 overflow-y-auto flex-1">
+                        <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2 text-sm">
+                            <FaLink className="text-green-500" /> Top Referrers
+                        </h4>
+                        <div className="space-y-3">
+                            {summary?.topReferrers && summary.topReferrers.length > 0 ? (
+                                summary.topReferrers.map((ref, index) => (
+                                    <div key={index} className="flex justify-between items-center text-xs">
+                                        <a
+                                            href={ref._id}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-blue-600 hover:underline truncate max-w-[120px]"
+                                            title={ref._id}
+                                        >
+                                            {ref._id.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                                        </a>
+                                        <span className="font-bold text-gray-900 dark:text-white bg-white dark:bg-gray-700 px-2 py-0.5 rounded border dark:border-gray-600">
+                                            {ref.count}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-400 text-xs italic">No specific referrers.</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
