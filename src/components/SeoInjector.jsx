@@ -37,7 +37,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
     // ✅ 1. FIX: Hardcode the production domain. 
     const siteUrl = 'https://www.househuntkenya.co.ke';
 
-    // ✅ 2. FIX: Strict Canonical Logic
+    // ✅ 2. FIX: Strict Canonical Logic (Strip Query Parameters)
     let canonical = '';
 
     if (seo.canonicalUrl) {
@@ -45,8 +45,16 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
             ? seo.canonicalUrl
             : `${siteUrl}${seo.canonicalUrl}`;
     } else {
-        const currentPath = seo.pagePath || (typeof window !== 'undefined' ? window.location.pathname : '');
+        // Get current pathname WITHOUT query parameters
+        let currentPath = seo.pagePath;
+
+        if (!currentPath && typeof window !== 'undefined') {
+            // Use window.location.pathname (which naturally excludes query params)
+            currentPath = window.location.pathname;
+        }
+
         const cleanPath = currentPath === '/' ? '' : currentPath;
+        // Canonical URL is ALWAYS clean (no query parameters)
         canonical = `${siteUrl}${cleanPath}`;
     }
 
