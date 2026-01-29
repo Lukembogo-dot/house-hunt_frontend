@@ -201,7 +201,7 @@ const ServiceProviderDetails = () => {
         </Helmet>
 
         <div className="sr-only" aria-hidden="true">
-          <h1>Service Providers in Kenya</h1>
+          <h2>Service Providers in Kenya</h2>
           <p>Browse verified professionals for property services including plumbing, electrical work, moving services, cleaning, and property maintenance.</p>
           <ul>
             <li>Verified and trusted professionals</li>
@@ -260,7 +260,7 @@ const ServiceProviderDetails = () => {
 
       {/* ✅ AI/CRAWLER SUMMARY: Hidden from users */}
       <article className="sr-only" aria-hidden="true">
-        <h1>{provider.title} - {provider.serviceType} in {provider.location}</h1>
+        <h2>{provider.title} - {provider.serviceType} in {provider.location}</h2>
         <p>
           Looking for a verified **{provider.serviceType}**?
           **{provider.title}** provides professional services in **{provider.location}** and surrounding areas.

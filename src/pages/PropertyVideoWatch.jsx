@@ -268,7 +268,7 @@ const PropertyVideoWatch = () => {
                 </Helmet>
                 <div className="text-center max-w-md">
                     <FaPlay className="text-6xl text-gray-600 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-white mb-2">Video Not Available</h1>
+                    <h2 className="text-2xl font-bold text-white mb-2">Video Not Available</h2>
                     <p className="text-gray-400 mb-6">This property video tour is not available.</p>
                     <Link
                         to="/search/rent/all/all"

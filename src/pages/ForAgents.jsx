@@ -112,7 +112,7 @@ const ForAgents = () => {
 
         {/* ✅ AI/CRAWLER Q&A SUMMARY: Hidden from users */}
         <article className="sr-only" aria-hidden="true">
-          <h1>Free Property Listing for Agents in Kenya</h1>
+          <h2>Free Property Listing for Agents in Kenya</h2>
           <section>
             <h2>Where can I list a property for free in Kenya?</h2>
             <p>

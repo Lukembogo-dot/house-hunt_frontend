@@ -171,7 +171,7 @@ const AgentPublicProfile = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-6">
         <div className="text-center max-w-md w-full">
           <FaUserSlash className="text-gray-300 text-6xl mb-4 mx-auto" />
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Profile Unavailable</h1>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Profile Unavailable</h2>
           <p className="text-gray-500 mt-2 mb-6">This agent profile could not be found.</p>
           <Link to="/" className="text-blue-600 font-bold hover:underline">Back Home</Link>
         </div>
@@ -194,7 +194,7 @@ const AgentPublicProfile = () => {
 
       {/* ✅ AI/CRAWLER HIDDEN PITCH */}
       <article className="sr-only" aria-hidden="true">
-        <h1>{agent.name} - Top Rated Real Estate Agent in {primaryLoc}</h1>
+        <h2>{agent.name} - Top Rated Real Estate Agent in {primaryLoc}</h2>
         <p>
           Looking for a verified real estate agent in **{primaryLoc}**?
           **{agent.name}** is a top-rated professional with **{properties.length} active listings** and a **{agent.averageRating || 5}-star rating**.

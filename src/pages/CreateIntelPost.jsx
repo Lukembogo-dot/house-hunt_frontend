@@ -18,7 +18,7 @@ const intelCategories = {
 export default function CreateIntelPost() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   // --- 1. FEATURE FLAG CHECK ---
   const isUgcEnabled = useFeatureFlag('user-generated-intel');
 
@@ -53,10 +53,10 @@ export default function CreateIntelPost() {
       // --- 3. API CALL ---
       // This calls the new endpoint we created
       const { data } = await apiClient.post('/services/user-post', formData);
-      
+
       setSuccess('Your post has been submitted successfully! It is now live.');
       setFormData({ title: '', content: '', location: '', serviceType: '' }); // Reset form
-      
+
       // Redirect to their new post after a short delay
       setTimeout(() => {
         navigate(`/services/${data.slug}`);
@@ -90,9 +90,9 @@ export default function CreateIntelPost() {
           className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl border dark:border-gray-700"
         >
           <FaExclamationTriangle className="text-yellow-500 text-6xl mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Verify Your Email
-          </h1>
+          </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
             To ensure the quality of our community intel, you must verify your email address before you can create a post.
           </p>
@@ -112,7 +112,7 @@ export default function CreateIntelPost() {
         <title>Share Your Intel | HouseHunt Kenya</title>
         <meta name="description" content="Share your neighbourhood intel, review a service, or post a safety alert." />
       </Helmet>
-      
+
       <div className="container mx-auto max-w-2xl p-6 md:p-10 my-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -201,7 +201,7 @@ export default function CreateIntelPost() {
                 required
               />
             </div>
-            
+
             {/* Messages */}
             {error && (
               <div className="text-red-600 dark:text-red-400 p-3 bg-red-50 dark:bg-red-900/30 rounded-md">

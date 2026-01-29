@@ -171,17 +171,17 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" onClick={onClose}>
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0, y: 20 }} 
-        animate={{ scale: 1, opacity: 1, y: 0 }} 
-        exit={{ scale: 0.9, opacity: 0, y: 20 }} 
-        transition={{ duration: 0.3, ease: "easeOut" }} 
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
         className="bg-white/10 dark:bg-gray-900/20 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-8 relative border border-white/20 dark:border-white/10"
         onClick={(e) => e.stopPropagation()}
       >
-        <button 
-          onClick={onClose} 
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center" 
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center"
           disabled={submitting}
         >
           <FaTimes size={20} />
@@ -189,7 +189,7 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
 
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Schedule a Viewing</h3>
         <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-1 text-sm">For: <span className="font-semibold text-gray-900 dark:text-gray-100">{propertyTitle}</span></p>
-        
+
         {success ? (
           <div className="text-center p-6 bg-green-500/10 dark:bg-green-900/20 rounded-2xl border border-green-200/50 dark:border-green-800/50">
             <p className="text-lg font-semibold text-green-600 dark:text-green-400">{success}</p>
@@ -198,30 +198,30 @@ const ScheduleModal = ({ show, onClose, propertyId, propertyTitle }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="scheduledDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Preferred Date & Time</label>
-              <input 
-                type="datetime-local" 
-                id="scheduledDate" 
-                value={scheduledDate} 
-                onChange={(e) => setScheduledDate(e.target.value)} 
-                className="w-full px-4 py-3 bg-white/30 dark:bg-white/5 border border-white/30 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition" 
-                required 
+              <input
+                type="datetime-local"
+                id="scheduledDate"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                className="w-full px-4 py-3 bg-white/30 dark:bg-white/5 border border-white/30 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition"
+                required
               />
             </div>
             <div>
               <label htmlFor="message" className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Message (Optional)</label>
-              <textarea 
-                id="message" 
-                rows="3" 
-                value={message} 
-                onChange={(e) => setMessage(e.target.value)} 
-                placeholder="Any questions or specific requests for the agent?" 
+              <textarea
+                id="message"
+                rows="3"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Any questions or specific requests for the agent?"
                 className="w-full px-4 py-3 bg-white/30 dark:bg-white/5 border border-white/30 dark:border-white/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none transition"
               />
             </div>
             {error && <p className="text-sm text-red-500 dark:text-red-400 bg-red-500/10 dark:bg-red-900/20 p-3 rounded-lg border border-red-200/50 dark:border-red-800/50">{error}</p>}
-            <button 
-              type="submit" 
-              disabled={submitting} 
+            <button
+              type="submit"
+              disabled={submitting}
               className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3.5 rounded-xl transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               {submitting ? "Sending..." : "Send Request"}
@@ -389,7 +389,7 @@ const PropertyDetails = () => {
         </Helmet>
 
         <div className="sr-only" aria-hidden="true">
-          <h1>Property Listings in Kenya</h1>
+          <h2>Property Listings in Kenya</h2>
           <p>Find your perfect home. Browse thousands of verified properties for rent and sale across Kenya.</p>
         </div>
 
@@ -467,7 +467,7 @@ const PropertyDetails = () => {
             transition={{ duration: 0.6 }}
             className="bg-white/20 dark:bg-white/10 backdrop-blur-2xl rounded-3xl shadow-2xl p-8 md:p-12 border border-white/30 dark:border-white/20"
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -475,7 +475,7 @@ const PropertyDetails = () => {
             >
               <FaMapMarkerAlt className="text-5xl" />
             </motion.div>
-            
+
             <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-4">
               Property Not Found
             </h1>
@@ -524,7 +524,7 @@ const PropertyDetails = () => {
       <PropertySeoInjector seo={seo} property={property} faqs={schemaFaqs} reviews={comments} />
 
       {/* FULL-SCREEN IMAGE CAROUSEL */}
-      <PropertyImageCarousel 
+      <PropertyImageCarousel
         property={property}
         user={user}
         isFavorited={isFavorited}
@@ -624,11 +624,11 @@ const PropertyDetails = () => {
               <VideoPlayerSection videoUrl={property.video} propertySlug={property.slug} />
             </motion.div>
 
-            <motion.div 
-              className="mb-8" 
-              variants={sectionVariants} 
-              initial="hidden" 
-              whileInView="visible" 
+            <motion.div
+              className="mb-8"
+              variants={sectionVariants}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
             >
               <div className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/30 dark:border-white/20">
@@ -656,7 +656,7 @@ const PropertyDetails = () => {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {property.matatuRoute && (
-                    <motion.div 
+                    <motion.div
                       whileHover={{ y: -4 }}
                       className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
                     >
@@ -677,7 +677,7 @@ const PropertyDetails = () => {
                     </motion.div>
                   )}
                   {property.mamaMbogaDistance && (
-                    <motion.div 
+                    <motion.div
                       whileHover={{ y: -4 }}
                       className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
                     >
@@ -693,7 +693,7 @@ const PropertyDetails = () => {
                     </motion.div>
                   )}
                   {property.internetProviders && property.internetProviders.length > 0 && (
-                    <motion.div 
+                    <motion.div
                       whileHover={{ y: -4 }}
                       className="bg-white/30 dark:bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/50 dark:border-white/20 shadow-lg hover:shadow-xl transition-all"
                     >
@@ -705,8 +705,8 @@ const PropertyDetails = () => {
                           <h3 className="font-bold text-gray-900 dark:text-white text-lg">Internet Providers</h3>
                           <div className="flex flex-wrap gap-2 mt-2">
                             {property.internetProviders.map((isp, idx) => (
-                              <span 
-                                key={idx} 
+                              <span
+                                key={idx}
                                 className="text-xs font-semibold bg-blue-500/20 dark:bg-blue-600/30 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-600/50 px-3 py-1 rounded-full"
                               >
                                 {isp}
@@ -743,11 +743,11 @@ const PropertyDetails = () => {
               <PropertyAmenities amenities={property.amenities} />
             )}
 
-            <motion.div 
-              className="mb-8" 
-              variants={sectionVariants} 
-              initial="hidden" 
-              whileInView="visible" 
+            <motion.div
+              className="mb-8"
+              variants={sectionVariants}
+              initial="hidden"
+              whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
             >
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -846,7 +846,7 @@ const PropertyDetails = () => {
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg">Explore other premium listings from this verified agent</p>
             </motion.div>
-            
+
             <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
               {agentProperties.slice(0, 4).map((prop) => (
                 <PropertyCard key={prop._id} property={prop} />
@@ -872,28 +872,28 @@ const PropertyDetails = () => {
 
       <AnimatePresence>
         {selectedPlace && (
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md" 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
             onClick={() => setSelectedPlace(null)}
           >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.9, opacity: 0, y: 20 }} 
-              transition={{ duration: 0.3, ease: "easeOut" }} 
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
               className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-full p-8 relative border border-white/30 dark:border-white/20"
               onClick={(e) => e.stopPropagation()}
             >
-              <button 
-                onClick={() => setSelectedPlace(null)} 
+              <button
+                onClick={() => setSelectedPlace(null)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center"
               >
                 <FaTimes size={20} />
               </button>
-              
+
               <div className="flex items-center space-x-4 mb-6">
                 <div className="p-3 bg-white/30 dark:bg-white/20 rounded-xl">
                   <span className="text-3xl">{placeIconMap[selectedPlace.type]?.icon || placeIconMap.default.icon}</span>
@@ -903,7 +903,7 @@ const PropertyDetails = () => {
                   <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">{placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-4 bg-white/20 dark:bg-white/10 rounded-2xl p-6 border border-white/30 dark:border-white/20">
                 <div>
                   <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Proximity</p>

@@ -18,6 +18,7 @@ import SmartOwnerBanner from '../components/SmartOwnerBanner';
 import Breadcrumbs from '../components/Breadcrumbs';
 import PropertyAlertForm from '../components/PropertyAlertForm';
 import { useAuth } from '../context/AuthContext';
+import { getAnimationConfig } from '../utils/deviceDetection'; // ⚡ Performance
 import SeoInjector from '../components/SeoInjector'; // ✅ 1. Import Injector
 import HouseHuntRequest from '../components/HouseHuntRequest';
 
@@ -281,7 +282,7 @@ const DynamicSearchPage = () => {
 
       {/* ✅ GEO OPTIMIZATION: AI Summary for Search Engines */}
       <article className="sr-only" aria-hidden="true">
-        <h1>Find {listingType === 'rent' ? 'Rentals' : 'Property for Sale'} in {location !== 'all' ? location : 'Kenya'}</h1>
+        <h2>Find {listingType === 'rent' ? 'Rentals' : 'Property for Sale'} in {location !== 'all' ? location : 'Kenya'}</h2>
         <p>
           Browse {propertyType !== 'all' ? propertyType : 'all types of'} properties for {listingType} in {location !== 'all' ? location : 'Kenya'}.
           {bedrooms && bedrooms !== 'all' && ` ${bedrooms} bedroom options available.`}

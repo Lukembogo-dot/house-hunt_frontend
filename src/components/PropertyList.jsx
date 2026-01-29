@@ -174,9 +174,9 @@ export default function PropertyList({
     <>
       {showTitle && (
         <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">
             Discover Your Next Chapter
-          </h1>
+          </h2>
           <p className="text-gray-500 dark:text-gray-400">
             Hand-picked homes, verified agents, and real community insights.
           </p>

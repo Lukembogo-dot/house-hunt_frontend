@@ -197,7 +197,7 @@ const FaqDetails = () => {
         </Helmet>
 
         <div className="sr-only" aria-hidden="true">
-          <h1>Frequently Asked Questions</h1>
+          <h2>Frequently Asked Questions</h2>
           <p>Browse our comprehensive FAQ library for property hunting, renting, and buying advice in Kenya.</p>
           <ul>
             <li>How to find affordable housing in Kenya</li>

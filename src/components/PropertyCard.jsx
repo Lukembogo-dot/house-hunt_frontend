@@ -4,6 +4,8 @@ import React, { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { formatPrice } from "../utils/formatPrice";
+import OptimizedImage from "./OptimizedImage"; // ⚡ Performance: Lazy loading images
+import { getAnimationConfig } from "../utils/deviceDetection"; // ⚡ Performance: Adaptive animations
 import {
   FaHeart, FaRegHeart, FaStar, FaCheckCircle,
   FaInfoCircle, FaArrowRight, FaTimes, FaPlayCircle,
@@ -117,6 +119,9 @@ function PropertyCard({ property }) {
   const [isHovering, setIsHovering] = useState(false);
 
   const { user, addFavoriteContext, removeFavoriteContext } = useAuth();
+
+  // ⚡ Performance: Get optimal animation settings for device
+  const animConfig = getAnimationConfig();
 
   const safeImageDetails = getSafeImageDetails(property.images, property.title);
 
@@ -247,23 +252,37 @@ function PropertyCard({ property }) {
             {/* Background Image with Overlays */}
             <div className="absolute inset-0">
               <AnimatePresence mode="wait">
-                <motion.img
-                  key={currentImageIndex}
-                  src={images[currentImageIndex]}
-                  alt={generateAltText(currentImageIndex)}
-                  className={`w-full h-full object-cover ${isSoldOrRented ? 'grayscale' : ''}`}
-                  loading="lazy"
-                  itemProp="image"
-                  initial={{ opacity: 0, scale: 1.1 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.6 }}
-                />
+                {animConfig.shouldAnimate ? (
+                  <motion.div
+                    key={currentImageIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: animConfig.duration }}
+                    className="w-full h-full"
+                  >
+                    <OptimizedImage
+                      src={images[currentImageIndex]}
+                      alt={generateAltText(currentImageIndex)}
+                      className={`w-full h-full object-cover ${isSoldOrRented ? 'grayscale' : ''}`}
+                      priority={currentImageIndex === 0}
+                    />
+                  </motion.div>
+                ) : (
+                  <OptimizedImage
+                    key={currentImageIndex}
+                    src={images[currentImageIndex]}
+                    alt={generateAltText(currentImageIndex)}
+                    className={`w-full h-full object-cover ${isSoldOrRented ? 'grayscale' : ''}`}
+                    priority={currentImageIndex === 0}
+                  />
+                )}
               </AnimatePresence>
 
               {/* Gradient Overlays - Matching TopAgents */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
               <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
+              {!animConfig.useBackdropBlur && <div className="absolute inset-0 bg-black/20"></div>}
             </div>
 
             {/* Sold/Rented Overlay */}
@@ -361,7 +380,7 @@ function PropertyCard({ property }) {
               {/* Bottom Section - Property Info */}
               <div className="space-y-3">
                 {/* Property Details Card */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-lg">
+                <div className={`${animConfig.useBackdropBlur ? 'bg-white/10 backdrop-blur-xl' : 'bg-black/70'} rounded-2xl p-4 border border-white/20 shadow-lg`}>
                   <h2 className="text-white font-bold text-lg line-clamp-2 mb-2 leading-tight" itemProp="name">
                     {property.title}
                   </h2>
@@ -398,11 +417,11 @@ function PropertyCard({ property }) {
                   {/* Price - Highlighted on hover */}
                   <motion.div
                     className="flex items-baseline gap-2"
-                    animate={{
+                    animate={animConfig.shouldAnimate ? {
                       scale: isHovering ? 1.1 : 1,
                       y: isHovering ? -5 : 0
-                    }}
-                    transition={{ duration: 0.3 }}
+                    } : {}}
+                    transition={{ duration: animConfig.duration }}
                   >
                     <span className="text-white font-black text-3xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]
                       group-hover:text-yellow-400 transition-colors duration-300">
@@ -430,7 +449,7 @@ function PropertyCard({ property }) {
 
                   <button
                     onClick={handleFlip}
-                    className="bg-white/10 backdrop-blur-xl hover:bg-white/20 text-white font-bold py-2 text-sm rounded-xl flex items-center justify-center gap-2 transition-all border border-white/20"
+                    className={`${animConfig.useBackdropBlur ? 'bg-white/10 backdrop-blur-xl' : 'bg-black/70'} hover:bg-white/20 text-white font-bold py-2 text-sm rounded-xl flex items-center justify-center gap-2 transition-all border border-white/20`}
                   >
                     Meet Agent <FaHandshake size={14} />
                   </button>
@@ -488,13 +507,14 @@ function PropertyCard({ property }) {
                 </h4>
 
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="w-24 h-24 mx-auto mb-4 rounded-full p-1 bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-md shadow-2xl"
+                  whileHover={animConfig.shouldAnimate ? { scale: 1.05 } : {}}
+                  className={`w-24 h-24 mx-auto mb-4 rounded-full p-1 bg-gradient-to-br from-white/30 to-white/10 ${animConfig.useBackdropBlur ? 'backdrop-blur-md' : ''} shadow-2xl`}
                 >
-                  <img
+                  <OptimizedImage
                     src={agentImage}
                     alt={`${agentName} - Property agent`}
                     className="w-full h-full rounded-full object-cover border-2 border-white/50"
+                    priority={false}
                   />
                 </motion.div>
 
