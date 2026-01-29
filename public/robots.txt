@@ -4,5 +4,9 @@ Disallow: /admin/
 Disallow: /login
 Disallow: /register
 
+
+User-agent: SiteCheckerBotCrawler
+Allow: /
+
 # Sitemaps
 Sitemap: https://www.househuntkenya.co.ke/sitemap.xml
