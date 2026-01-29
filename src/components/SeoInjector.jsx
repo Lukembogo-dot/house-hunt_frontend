@@ -344,7 +344,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                 "@type": "RealEstateListing", // ✅ FIXED: Use ONLY RealEstateListing, NOT Product (prevents merchant listing validation errors)
                 "name": property.title,
                 "headline": property.title, // ✅ ENHANCED: Google recommended field
-                "description": cleanText(property.description, 5000), // Allow longer description for main schema but striped of HTML
+                "description": cleanText(property.description, 300), // ✅ SEO-optimized: 300 char limit prevents bloat
                 "image": (property.images && property.images.length > 0)
                     ? property.images
                         .map(img => typeof img === 'string' ? img : img.url)

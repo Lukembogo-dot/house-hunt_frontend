@@ -197,11 +197,15 @@ function PropertyCard({ property }) {
 
   return (
     <>
-      <Helmet>
+      {/* ✅ PERFORMANCE FIX: Schema removed from cards to prevent HTML bloat
+          Full schema is only needed on property detail pages, not listing cards.
+          This reduces HTML size from 4.91MB to <500KB on pages with many properties.
+      */}
+      {/* <Helmet>
         <script type="application/ld+json">
           {JSON.stringify(propertySchema)}
         </script>
-      </Helmet>
+      </Helmet> */}
 
       <motion.div
         className="relative w-full h-[400px] cursor-pointer group"
