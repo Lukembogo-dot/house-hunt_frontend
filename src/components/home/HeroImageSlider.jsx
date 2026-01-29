@@ -129,9 +129,9 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
                                 transition={{ duration: 0.5 }}
                                 className="max-w-4xl"
                             >
-                                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 drop-shadow-2xl leading-none">
+                                <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 drop-shadow-2xl leading-none">
                                     {currentImage.title}
-                                </h1>
+                                </h2>
                                 <p className="text-xl md:text-3xl lg:text-4xl text-gray-200 mb-0 max-w-2xl mx-auto font-light">
                                     {currentImage.subtitle}
                                 </p>

@@ -167,9 +167,9 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
                         className="max-w-3xl"
                     >
                         {/* Title */}
-                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight drop-shadow-2xl">
+                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight drop-shadow-2xl">
                             {currentProperty?.title}
-                        </h1>
+                        </h2>
 
                         {/* Location & View Count */}
                         <div className="flex flex-wrap items-center gap-4 lg:gap-6 mb-6">

@@ -200,7 +200,7 @@ const ServiceProviderDetails = () => {
           <meta name="robots" content="index, follow" />
         </Helmet>
 
-        <div className="sr-only" aria-hidden="true">
+        <div className="sr-only">
           <h2>Service Providers in Kenya</h2>
           <p>Browse verified professionals for property services including plumbing, electrical work, moving services, cleaning, and property maintenance.</p>
           <ul>

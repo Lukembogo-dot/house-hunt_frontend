@@ -388,7 +388,7 @@ const PropertyDetails = () => {
           <meta name="robots" content="index, follow" />
         </Helmet>
 
-        <div className="sr-only" aria-hidden="true">
+        <div className="sr-only">
           <h2>Property Listings in Kenya</h2>
           <p>Find your perfect home. Browse thousands of verified properties for rent and sale across Kenya.</p>
         </div>
