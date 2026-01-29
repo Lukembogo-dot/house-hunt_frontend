@@ -375,8 +375,8 @@ const EditProperty = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
+    if (file.size > 200 * 1024 * 1024) {
+      setStatus({ message: 'Video too large. Max 200MB - We compress it for you!', type: 'error' });
       e.target.value = null;
       return;
     }
@@ -963,9 +963,8 @@ const EditProperty = () => {
                 <div className="space-y-4">
                   {/* Option 1: File Upload */}
                   <div>
-                    {/* ✅ FIXED: Removed 'block' class which conflicted with 'flex' */}
                     <label className="text-sm font-bold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
-                      <FaCloudUploadAlt /> Upload New Video File (Max 2 mins)
+                      <FaCloudUploadAlt /> Upload New Video File (Max 200MB - Auto Compressed)
                     </label>
                     <input
                       type="file"

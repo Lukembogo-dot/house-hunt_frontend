@@ -292,8 +292,8 @@ const AddProperty = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setStatus({ message: 'Video too large. Max 50MB allowed.', type: 'error' });
+    if (file.size > 200 * 1024 * 1024) {
+      setStatus({ message: 'Video too large. Max 200MB - We compress it for you!', type: 'error' });
       e.target.value = null;
       return;
     }
