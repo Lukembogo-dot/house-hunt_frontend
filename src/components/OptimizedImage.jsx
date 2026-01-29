@@ -18,51 +18,40 @@ const OptimizedImage = ({
     className = '',
     blurhash,
     fallbackSrc = 'https://placehold.co/600x400/e2e8f0/64748b?text=Loading...',
-    onLoad,
     priority = false, // Set true for above-the-fold images
     ...props
 }) => {
-    const [imageSrc, setImageSrc] = useState(blurhash || fallbackSrc);
-    const [imageLoading, setImageLoading] = useState(true);
-    const [imageError, setImageError] = useState(false);
+    const [imgSrc, setImgSrc] = useState(src || fallbackSrc);
+    const [isLoading, setIsLoading] = useState(!priority);
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        // Skip loading if no src provided
-        if (!src) {
-            setImageError(true);
-            return;
+        if (src) {
+            // ✅ OPTIMIZATION: Auto-append Cloudinary params if not present
+            // f_auto = WebP/AVIF, q_auto = Optimize Quality, w_600 = Safe mobile width
+            let optimizedSrc = src;
+            if (src.includes('res.cloudinary.com') && !src.includes('f_auto')) {
+                // Insert params before the version/upload path or at the end
+                optimizedSrc = src.replace('/upload/', '/upload/f_auto,q_auto,w_600/');
+            }
+            setImgSrc(optimizedSrc);
         }
-
-        // Preload image
-        const img = new Image();
-        img.src = src;
-
-        img.onload = () => {
-            setImageSrc(src);
-            setImageLoading(false);
-            onLoad?.();
-        };
-
-        img.onerror = () => {
-            setImageError(true);
-            setImageLoading(false);
-            setImageSrc(fallbackSrc);
-        };
-
-        return () => {
-            img.onload = null;
-            img.onerror = null;
-        };
-    }, [src, fallbackSrc, onLoad]);
+    }, [src]);
 
     return (
         <img
-            src={imageSrc}
+            src={imgSrc}
             alt={alt}
-            className={`${className} ${imageLoading ? 'blur-sm scale-105' : 'blur-0 scale-100'
-                } transition-all duration-300 ease-out`}
+            className={`${className} ${isLoading ? 'blur-sm scale-110' : 'blur-0 scale-100'
+                } transition-all duration-500 ease-out`}
             loading={priority ? 'eager' : 'lazy'}
             decoding="async"
+            onLoad={() => setIsLoading(false)}
+            onError={() => {
+                setHasError(true);
+                setIsLoading(false);
+                setImgSrc(fallbackSrc);
+            }}
             {...props}
         />
     );
