@@ -81,6 +81,19 @@ const GlobalSearchBar = ({ initialValues = {} }) => {
     // 1. Clean the input
     const cleanLocation = location.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '');
 
+    // ✅ ANALYTICS: Track Search Query
+    const searchQuery = cleanLocation || 'kenya';
+    apiClient.post('/analytics/track', {
+      type: 'search',
+      source: 'global_search_bar',
+      metadata: {
+        query: searchQuery,
+        category: category,
+        filters: showFilters ? filters : null,
+        timestamp: new Date().toISOString()
+      }
+    }).catch(err => console.warn('Analytics tracking failed:', err.message));
+
     // 2. Build Query Params for Advanced Filters
     const queryParams = new URLSearchParams();
     if (showFilters) {
