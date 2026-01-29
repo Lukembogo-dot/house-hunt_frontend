@@ -13,6 +13,23 @@ import { extractVideoThumbnail, generateVideoUrls, estimateVideoDuration } from 
  * @param {Array} reviews - Array of review/comment objects for product snippets
  */
 const SeoInjector = ({ seo, property, reviews = [] }) => {
+    // ✅ Helper: Strip HTML and Truncate to prevent bloating
+    const cleanText = (html, maxLength = 300) => {
+        if (!html) return '';
+        // Strip HTML tags
+        let text = html.replace(/<[^>]*>?/gm, ' ');
+        // Collapse whitespace
+        text = text.replace(/\s+/g, ' ').trim();
+        // Truncate
+        if (text.length <= maxLength) return text;
+        return text.substr(0, maxLength) + '...';
+    };
+
+    // ✅ Helper: Ensure Image is URL (not Base64)
+    const isValidImageUrl = (url) => {
+        return url && typeof url === 'string' && url.startsWith('http');
+    };
+
     if (!seo || !seo.metaTitle) {
         return null; // Don't render anything if seo data isn't ready
     }
@@ -295,7 +312,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                 videoObject = {
                     "@type": "VideoObject",
                     "name": seo.videoTitle || `Virtual Tour of ${property.title}`,
-                    "description": seo.videoDescription || (property.description ? property.description.substring(0, 160) : `Watch a complete walkthrough of ${property.title}.`),
+                    "description": seo.videoDescription || cleanText(property.description, 160) || `Watch a complete walkthrough of ${property.title}.`,
                     "thumbnailUrl": seo.videoThumbnail || videoThumbnail || ((property.images && property.images.length > 0)
                         ? (property.images[0].url || property.images[0])
                         : "https://www.househuntkenya.co.ke/assets/video-placeholder.jpg"),
@@ -319,9 +336,11 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                 "@type": "RealEstateListing", // ✅ FIXED: Use ONLY RealEstateListing, NOT Product (prevents merchant listing validation errors)
                 "name": property.title,
                 "headline": property.title, // ✅ ENHANCED: Google recommended field
-                "description": property.description,
+                "description": cleanText(property.description, 5000), // Allow longer description for main schema but striped of HTML
                 "image": (property.images && property.images.length > 0)
-                    ? property.images.map(img => typeof img === 'string' ? img : img.url)
+                    ? property.images
+                        .map(img => typeof img === 'string' ? img : img.url)
+                        .filter(isValidImageUrl) // ✅ Filter out Base64
                     : ["https://www.househuntkenya.co.ke/assets/logo.png"],
                 "url": canonical,
                 "datePosted": property.createdAt,

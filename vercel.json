@@ -1,4 +1,22 @@
 {
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "househuntkenya.co.ke"
+        }
+      ],
+      "destination": "https://www.househuntkenya.co.ke/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
