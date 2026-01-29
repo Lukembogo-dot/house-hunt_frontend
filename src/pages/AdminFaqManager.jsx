@@ -6,9 +6,8 @@ import {
   FaSpinner, FaQuestionCircle, FaLink, FaCheck
 } from 'react-icons/fa';
 
-// --- CKEditor Imports ---
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// --- Lazy CKEditor Import (OPTIMIZED) ---
+import LazyCKEditor from '../components/LazyCKEditor';
 
 // --- 1. IMAGE UPLOAD ADAPTER (Reused for consistency) ---
 class MyUploadAdapter {
@@ -335,14 +334,10 @@ const AdminFaqManager = () => {
 
                   {viewMode === 'visual' ? (
                     <div className="ck-editor-container dark:text-black prose-lg">
-                      <CKEditor
-                        editor={ClassicEditor}
-                        config={editorConfig}
+                      <LazyCKEditor
                         data={formData.answer}
-                        onChange={(event, editor) => {
-                          const data = editor.getData();
-                          setFormData({ ...formData, answer: data });
-                        }}
+                        onChange={(data) => setFormData({ ...formData, answer: data })}
+                        placeholder="Write a detailed answer... (This acts as a mini blog post)"
                       />
                     </div>
                   ) : (

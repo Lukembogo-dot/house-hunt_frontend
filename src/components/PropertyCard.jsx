@@ -323,6 +323,16 @@ function PropertyCard({ property }) {
                         <FaStar size={10} /> Featured
                       </span>
                     )}
+                    {/* Visual Availability Badge */}
+                    {property.status === 'available' ? (
+                      <span className="bg-gradient-to-r from-green-500 to-emerald-500 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold uppercase shadow-lg border-2 border-white/30 flex items-center gap-1.5 animate-pulse">
+                        <FaCheckCircle size={12} /> Available
+                      </span>
+                    ) : (
+                      <span className="bg-gradient-to-r from-red-500 to-rose-500 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold uppercase shadow-lg border-2 border-white/30 flex items-center gap-1.5">
+                        <FaTimes size={12} /> {property.status === 'sold' ? 'Sold' : 'Rented'}
+                      </span>
+                    )}
                     <span className="bg-black/50 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg border border-white/10 flex items-center gap-1.5">
                       <FaEye size={12} className="text-blue-400" /> {property.views || 0}
                     </span>

@@ -4,13 +4,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { 
-  FaSpinner, FaSave, FaPlus, FaTrash, FaImage, FaLink 
+import {
+  FaSpinner, FaSave, FaPlus, FaTrash, FaImage, FaLink
 } from 'react-icons/fa';
 
-// 1. IMPORT CKEDITOR
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// 1. LAZY IMPORT CKEDITOR (OPTIMIZED)
+import LazyCKEditor from '../components/LazyCKEditor';
 
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -71,19 +70,19 @@ class MyUploadAdapter {
         headers: { 'Content-Type': 'multipart/form-data' },
         withCredentials: true
       })
-      .then(response => {
-        if (response.data.imageUrl) {
-          // CKEditor expects this exact format: { default: "image_url" }
-          resolve({
-            default: response.data.imageUrl
-          });
-        } else {
-          reject('Image URL not returned from server.');
-        }
-      })
-      .catch(error => {
-        reject(error.response?.data?.message || 'Image upload failed.');
-      });
+        .then(response => {
+          if (response.data.imageUrl) {
+            // CKEditor expects this exact format: { default: "image_url" }
+            resolve({
+              default: response.data.imageUrl
+            });
+          } else {
+            reject('Image URL not returned from server.');
+          }
+        })
+        .catch(error => {
+          reject(error.response?.data?.message || 'Image upload failed.');
+        });
     }));
   }
 
@@ -141,7 +140,7 @@ const initialFormState = {
   title: '',
   serviceType: '',
   location: '',
-  imageUrl: '', 
+  imageUrl: '',
   metaTitle: '',
   metaDescription: '',
 };
@@ -150,15 +149,15 @@ const AdminAddService = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [content, setContent] = useState(''); // CKEditor will use this state
   const [faqs, setFaqs] = useState([{ question: '', answer: '' }]);
-  const [imageUpload, setImageUpload] = useState(null); 
+  const [imageUpload, setImageUpload] = useState(null);
   const [imageUploadPreview, setImageUploadPreview] = useState('');
   const [imageInputMode, setImageInputMode] = useState('url');
-  
+
   const [cropModalOpen, setCropModalOpen] = useState(false);
-  const [imgSrc, setImgSrc] = useState(''); 
+  const [imgSrc, setImgSrc] = useState('');
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
-  const [aspect, setAspect] = useState(16 / 9); 
+  const [aspect, setAspect] = useState(16 / 9);
   const imgRef = useRef(null);
   const previewCanvasRef = useRef(null);
 
@@ -167,7 +166,7 @@ const AdminAddService = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditMode = Boolean(id);
-  
+
   // --- useEffect (Unchanged) ---
   useEffect(() => {
     if (isEditMode) {
@@ -184,10 +183,10 @@ const AdminAddService = () => {
             metaDescription: data.metaDescription || '',
           };
           setFormData(fetchedData);
-          
+
           const dbContent = data.content || '';
           setContent(dbContent); // Set state, CKEditor will read this
-          
+
           setFaqs(data.faqs && data.faqs.length > 0 ? data.faqs : [{ question: '', answer: '' }]);
         } catch (err) {
           setStatus({ message: 'Failed to load service data.', type: 'error' });
@@ -224,17 +223,17 @@ const AdminAddService = () => {
   const handleImageFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setCrop(undefined); 
+      setCrop(undefined);
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         setImgSrc(reader.result.toString() || '');
-        setCropModalOpen(true); 
+        setCropModalOpen(true);
       });
       reader.readAsDataURL(file);
-      setFormData(prev => ({ ...prev, imageUrl: '' })); 
+      setFormData(prev => ({ ...prev, imageUrl: '' }));
     }
   };
-  
+
   function onImageLoad(e) {
     const { width, height } = e.currentTarget;
     const newCrop = centerCrop(
@@ -243,7 +242,7 @@ const AdminAddService = () => {
       height
     );
     setCrop(newCrop);
-    imgRef.current = e.currentTarget; 
+    imgRef.current = e.currentTarget;
   }
 
   const handleCropSave = async () => {
@@ -254,8 +253,8 @@ const AdminAddService = () => {
           completedCrop,
           previewCanvasRef.current
         );
-        setImageUpload(croppedBlob); 
-        setImageUploadPreview(URL.createObjectURL(croppedBlob)); 
+        setImageUpload(croppedBlob);
+        setImageUploadPreview(URL.createObjectURL(croppedBlob));
         setCropModalOpen(false);
       } catch (e) {
         console.error('Error cropping image:', e);
@@ -263,7 +262,7 @@ const AdminAddService = () => {
       }
     }
   };
-  
+
   // --- handleSubmit (UPDATED) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -274,10 +273,10 @@ const AdminAddService = () => {
     Object.keys(formData).forEach(key => {
       dataToSend.append(key, formData[key]);
     });
-    
+
     dataToSend.append('content', content);
     dataToSend.append('faqs', JSON.stringify(faqs.filter(f => f.question && f.answer)));
-    
+
     if (imageUpload) {
       // ▼▼▼ THIS IS THE FIX ▼▼▼
       // Send the file as 'cropped-image.webp'
@@ -287,19 +286,19 @@ const AdminAddService = () => {
 
     try {
       if (isEditMode) {
-        await apiClient.put(`/services/${id}`, dataToSend, { 
+        await apiClient.put(`/services/${id}`, dataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          withCredentials: true 
+          withCredentials: true
         });
         setStatus({ message: 'Service post updated successfully!', type: 'success' });
       } else {
-        await apiClient.post('/services', dataToSend, { 
+        await apiClient.post('/services', dataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          withCredentials: true 
+          withCredentials: true
         });
         setStatus({ message: 'Service post created successfully!', type: 'success' });
       }
-      
+
       setTimeout(() => navigate('/admin/dashboard'), 2000);
 
     } catch (err) {
@@ -325,41 +324,40 @@ const AdminAddService = () => {
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-6 text-center">
             {isEditMode ? 'Edit Service Post' : 'Add New Service Post'}
           </h1>
-          
+
           {status.message && (
-            <div className={`p-4 mb-6 text-sm rounded-lg ${
-              status.type === 'success' 
-                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' 
+            <div className={`p-4 mb-6 text-sm rounded-lg ${status.type === 'success'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200'
                 : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200'
-            }`} role="alert">
+              }`} role="alert">
               {status.message}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
-            <InputField 
-              label="Post Title" 
-              name="title" 
+
+            <InputField
+              label="Post Title"
+              name="title"
               value={formData.title}
               onChange={handleChange}
-              placeholder="e.g., Best Plumbers in Kilimani" 
+              placeholder="e.g., Best Plumbers in Kilimani"
             />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <InputField 
-                label="Service Type" 
-                name="serviceType" 
+              <InputField
+                label="Service Type"
+                name="serviceType"
                 value={formData.serviceType}
                 onChange={handleChange}
-                placeholder="e.g., Plumbing, Electrician, Internet" 
+                placeholder="e.g., Plumbing, Electrician, Internet"
               />
-              <InputField 
-                label="Location" 
-                name="location" 
+              <InputField
+                label="Location"
+                name="location"
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="e.g., Kilimani" 
+                placeholder="e.g., Kilimani"
               />
             </div>
 
@@ -384,9 +382,9 @@ const AdminAddService = () => {
               </div>
 
               {imageInputMode === 'url' ? (
-                <InputField 
-                  label="Image URL" 
-                  name="imageUrl" 
+                <InputField
+                  label="Image URL"
+                  name="imageUrl"
                   value={formData.imageUrl}
                   onChange={handleChange}
                   placeholder="https://... (link to an image)"
@@ -410,19 +408,19 @@ const AdminAddService = () => {
                   />
                 </div>
               )}
-              
+
               {(formData.imageUrl || imageUploadPreview) && (
                 <div className="mt-4">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image Preview:</p>
-                  <img 
-                    src={imageUploadPreview || formData.imageUrl} 
-                    alt="Preview" 
-                    className="w-full h-48 object-cover rounded-lg border dark:border-gray-700" 
+                  <img
+                    src={imageUploadPreview || formData.imageUrl}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg border dark:border-gray-700"
                   />
                 </div>
               )}
             </div>
-            
+
             {/* 4. --- NEW CKEDITOR COMPONENT --- */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -430,14 +428,10 @@ const AdminAddService = () => {
               </label>
               {/* This class handles dark mode for CKEditor */}
               <div className="ck-editor-container dark:text-gray-900">
-                <CKEditor
-                  editor={ClassicEditor}
-                  config={editorConfig}
+                <LazyCKEditor
                   data={content}
-                  onChange={(event, editor) => {
-                    const data = editor.getData();
-                    setContent(data);
-                  }}
+                  onChange={setContent}
+                  placeholder="Write your blog post content here..."
                 />
               </div>
             </div>
@@ -452,10 +446,10 @@ const AdminAddService = () => {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Add FAQs to generate an automatic schema for Google.
               </p>
-              
+
               {faqs.map((faq, index) => (
                 <div key={index} className="p-4 border dark:border-gray-700 rounded-lg space-y-4 relative">
-                  <InputField 
+                  <InputField
                     label={`Question ${index + 1}`}
                     name={`faq-q-${index}`}
                     value={faq.question}
@@ -482,7 +476,7 @@ const AdminAddService = () => {
                   )}
                 </div>
               ))}
-              
+
               <button
                 type="button"
                 onClick={addFaq}
@@ -498,9 +492,9 @@ const AdminAddService = () => {
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
                 SEO Details
               </h2>
-              <InputField 
-                label="Meta Title" 
-                name="metaTitle" 
+              <InputField
+                label="Meta Title"
+                name="metaTitle"
                 value={formData.metaTitle}
                 onChange={handleChange}
                 placeholder="SEO-friendly title (max 60 chars)"
@@ -516,16 +510,15 @@ const AdminAddService = () => {
                 required={false}
               />
             </div>
-            
+
             <div className="pt-4">
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full flex justify-center items-center space-x-2 py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${
-                  loading 
-                    ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed' 
+                className={`w-full flex justify-center items-center space-x-2 py-3 px-4 rounded-lg shadow-sm text-lg font-medium text-white transition-all duration-150 active:scale-[0.98] ${loading
+                    ? 'bg-blue-400 dark:bg-blue-800 dark:text-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500'
-                }`}
+                  }`}
               >
                 {loading ? <FaSpinner className="animate-spin" /> : <FaSave />}
                 <span>{isEditMode ? 'Update Post' : 'Create Post'}</span>
@@ -534,7 +527,7 @@ const AdminAddService = () => {
           </form>
         </div>
       </div>
-      
+
       {/* --- CROP MODAL (Unchanged) --- */}
       <AnimatePresence>
         {cropModalOpen && (
@@ -577,7 +570,7 @@ const AdminAddService = () => {
                   </ReactCrop>
                 )}
               </div>
-              
+
               <canvas ref={previewCanvasRef} className="hidden" />
 
               <div className="flex justify-end space-x-3 mt-6">

@@ -7,7 +7,8 @@ import {
   FaWhatsapp, FaCalendarAlt, FaCommentDots,
   FaUserCircle, FaTiktok, FaInstagram, FaUserSlash,
   FaFacebookF, FaTwitter, FaLinkedinIn, FaCopy, FaEnvelope, FaTimes,
-  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag, FaPhone
+  FaMapMarkerAlt, FaTag, FaBed, FaRulerCombined, FaClock, FaFlag, FaPhone,
+  FaCheckCircle
 } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import InvestmentYieldWidget from './InvestmentYieldWidget';
@@ -319,13 +320,33 @@ const PropertySidebar = ({
       </h3>
 
       <div className="text-gray-600 dark:text-gray-300 space-y-4 mb-6 text-sm leading-relaxed">
+        {/* Enhanced Visual Availability Status */}
+        {property.status === 'available' ? (
+          <div className="flex items-center gap-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-500 dark:border-green-400 rounded-xl p-4 shadow-lg shadow-green-100 dark:shadow-green-900/20">
+            <div className="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center shadow-md">
+              <FaCheckCircle className="text-white text-2xl" />
+            </div>
+            <div>
+              <p className="text-green-700 dark:text-green-300 font-black text-lg uppercase tracking-wide">Available Now</p>
+              <p className="text-green-600 dark:text-green-400 text-xs font-semibold">Ready to view & inquire</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20 border-2 border-red-500 dark:border-red-400 rounded-xl p-4 shadow-lg shadow-red-100 dark:shadow-red-900/20">
+            <div className="flex-shrink-0 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-md">
+              <FaTimes className="text-white text-2xl" />
+            </div>
+            <div>
+              <p className="text-red-700 dark:text-red-300 font-black text-lg uppercase tracking-wide">
+                {property.status === 'sold' ? 'Sold' : 'Rented'}
+              </p>
+              <p className="text-red-600 dark:text-red-400 text-xs font-semibold">No longer available</p>
+            </div>
+          </div>
+        )}
+
         <p>
-          {property.status === 'available' ? (
-            <span className="text-green-600 font-bold">This unit is available</span>
-          ) : (
-            <span className="text-red-600 font-bold">Full/Sold</span>
-          )}
-          {' '}and is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>.
+          This property is currently listed for <strong className="text-gray-900 dark:text-white capitalize">{property.listingType}</strong>.
           It was posted <strong>{formatDistanceToNow(new Date(property.createdAt))} ago</strong>.
         </p>
 

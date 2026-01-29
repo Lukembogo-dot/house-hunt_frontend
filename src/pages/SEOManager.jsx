@@ -6,9 +6,8 @@ import { FaGlobe, FaTag, FaCheckCircle, FaSitemap, FaKey, FaTrash, FaStar, FaPlu
 import apiClient from '../api/axios';
 import { formatDistanceToNow } from 'date-fns';
 
-// --- CKEditor Imports (Unchanged) ---
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+// --- Lazy CKEditor Import (OPTIMIZED) ---
+import LazyCKEditor from '../components/LazyCKEditor';
 
 class MyUploadAdapter {
   constructor(loader) {
