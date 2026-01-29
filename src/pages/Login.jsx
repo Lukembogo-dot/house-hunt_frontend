@@ -1,7 +1,7 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; 
-import apiClient from "../api/axios"; 
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import apiClient from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSpinner, FaShieldAlt, FaKey, FaUserCheck, FaArrowRight, FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
@@ -12,14 +12,14 @@ import { GoogleLogin } from '@react-oauth/google';
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const location = useLocation(); 
+  const location = useLocation();
 
   // --- UI STATES ---
   const [step, setStep] = useState('CHECK_USER'); // CHECK_USER | PASSWORD | CLAIM | 2FA
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [userData, setUserData] = useState(null); // Stores name/email from Step 1
-  
+
   // --- 2FA STATES ---
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [tempToken, setTempToken] = useState("");
@@ -38,7 +38,7 @@ const Login = () => {
     setError("");
     try {
       const { credential } = credentialResponse;
-      
+
       const response = await apiClient.post(
         "/auth/google",
         { token: credential },
@@ -62,21 +62,21 @@ const Login = () => {
   const handleCheckUser = async (e) => {
     e.preventDefault();
     if (!identifier) { setError("Please enter your email or phone number."); return; }
-    
+
     setSubmitting(true);
     setError("");
-    
+
     try {
       const { data } = await apiClient.post("/auth/check-user", { identifier });
-      
+
       if (data.found) {
         setUserData(data);
         if (data.isShadow) {
           setClaimDetails({
-             shadowUserId: data.userId,
-             name: data.name,
-             whatsappNumber: identifier.includes('@') ? '' : identifier, 
-             email: identifier.includes('@') ? identifier : ''
+            shadowUserId: data.userId,
+            name: data.name,
+            whatsappNumber: identifier.includes('@') ? '' : identifier,
+            email: identifier.includes('@') ? identifier : ''
           });
           setStep('CLAIM');
         } else {
@@ -98,21 +98,21 @@ const Login = () => {
   const handlePasswordLogin = async (e) => {
     e.preventDefault();
     if (!password) { setError("Please enter your password."); return; }
-    
+
     setSubmitting(true);
     setError("");
 
     try {
       const response = await apiClient.post(
         "/auth/login",
-        { email: userData.email, password }, 
+        { email: userData.email, password },
         { withCredentials: true }
       );
 
       if (response.data.twoFactorRequired) {
         setTempToken(response.data.tempToken);
         setStep('2FA');
-        setSubmitting(false); 
+        setSubmitting(false);
       } else {
         login(response.data);
         const from = location.state?.from?.pathname || '/';
@@ -153,12 +153,12 @@ const Login = () => {
   const handle2FAVerify = async (e) => {
     e.preventDefault();
     const requiredLength = useBackupCode ? 8 : 6;
-    
+
     if (twoFactorCode.length < requiredLength) {
       setError(`Invalid code length.`);
       return;
     }
-    setSubmitting(true); 
+    setSubmitting(true);
     setError("");
 
     try {
@@ -167,7 +167,7 @@ const Login = () => {
         { tempToken, twoFactorCode },
         { withCredentials: true }
       );
-      
+
       login(response.data);
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
@@ -181,18 +181,18 @@ const Login = () => {
   // --- RENDER ---
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-inter">
-      <motion.div 
+      <motion.div
         className="max-w-md w-full bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg dark:border dark:border-gray-700 relative"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {step !== 'CHECK_USER' && !success && (
-          <button 
+          <button
             onClick={() => {
-               setStep('CHECK_USER'); 
-               setError(''); 
-               setPassword('');
+              setStep('CHECK_USER');
+              setError('');
+              setPassword('');
             }}
             className="absolute top-6 left-6 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
           >
@@ -201,12 +201,12 @@ const Login = () => {
         )}
 
         <div className="text-center">
-          <h2 className="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h1 className="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white">
             {step === 'CHECK_USER' && "Welcome Back"}
             {step === 'PASSWORD' && `Hi, ${userData?.name}`}
             {step === 'CLAIM' && "Claim Your Profile"}
             {step === '2FA' && "Two-Step Verification"}
-          </h2>
+          </h1>
           {step === 'CHECK_USER' && <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Enter your details to continue</p>}
         </div>
 
@@ -225,7 +225,7 @@ const Login = () => {
 
         {!success && (
           <div className="mt-8">
-            
+
             {/* STEP 1: IDENTIFIER INPUT */}
             {step === 'CHECK_USER' && (
               <>
@@ -270,7 +270,7 @@ const Login = () => {
                       onError={() => setError("Google Sign In Failed")}
                       theme="filled_blue"
                       shape="pill"
-                      width="350px" 
+                      width="350px"
                     />
                   </div>
                 </div>
@@ -367,11 +367,11 @@ const Login = () => {
             {step === '2FA' && (
               <form onSubmit={handle2FAVerify} className="space-y-6">
                 <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">
-                  {useBackupCode 
-                    ? "Enter an 8-character backup code." 
+                  {useBackupCode
+                    ? "Enter an 8-character backup code."
                     : "Enter the 6-digit code from your authenticator app."}
                 </p>
-                
+
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                     {useBackupCode ? <FaKey className="text-gray-400" /> : <FaShieldAlt className="text-gray-400" />}

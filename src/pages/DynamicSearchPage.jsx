@@ -281,7 +281,7 @@ const DynamicSearchPage = () => {
       {finalSeoData && <SeoInjector seo={finalSeoData} />}
 
       {/* ✅ GEO OPTIMIZATION: AI Summary for Search Engines */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h2>Find {listingType === 'rent' ? 'Rentals' : 'Property for Sale'} in {location !== 'all' ? location : 'Kenya'}</h2>
         <p>
           Browse {propertyType !== 'all' ? propertyType : 'all types of'} properties for {listingType} in {location !== 'all' ? location : 'Kenya'}.

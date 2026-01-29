@@ -69,12 +69,12 @@ export default function NeighbourhoodQuiz() {
   useEffect(() => {
     // This path must match the one we'll add in App.jsx
     const pagePath = '/find-my-neighbourhood';
-    
+
     const fetchSeoData = async () => {
       try {
         const encodedPath = encodeURIComponent(pagePath);
         const { data } = await apiClient.get(`/seo/${encodedPath}`);
-        
+
         // If data is found, set it. Otherwise, the defaults will be used.
         setSeo({
           metaTitle: data.metaTitle || seo.metaTitle,
@@ -136,7 +136,7 @@ export default function NeighbourhoodQuiz() {
     setSubmitting(true);
     // TODO: Connect this to a real backend endpoint
     console.log('Submitting lead:', { email, preferences: answers, results });
-    
+
     // Simulate API call
     setTimeout(() => {
       setSubmitting(false);
@@ -161,7 +161,7 @@ export default function NeighbourhoodQuiz() {
     <>
       <SeoInjector seo={seo} />
       <div className="flex min-h-[70vh] items-center justify-center bg-gray-100 dark:bg-gray-900 py-12 px-4">
-        <motion.div 
+        <motion.div
           className="w-full max-w-2xl"
           key={currentStep} // This makes Framer Motion re-animate on step change
           initial={{ opacity: 0, y: 30 }}
@@ -183,9 +183,9 @@ export default function NeighbourhoodQuiz() {
                   <div className="mb-4 text-sm font-semibold text-blue-600 dark:text-blue-400">
                     Step {currentStep} of {totalSteps}
                   </div>
-                  <h2 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
                     {currentQuestion.question}
-                  </h2>
+                  </h1>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {currentQuestion.options.map(option => (
                       <button
@@ -215,9 +215,9 @@ export default function NeighbourhoodQuiz() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                 >
-                  <h2 className="mb-4 text-center text-3xl font-bold text-gray-900 dark:text-white">
+                  <h1 className="mb-4 text-center text-3xl font-bold text-gray-900 dark:text-white">
                     Your Perfect Match!
-                  </h2>
+                  </h1>
                   <p className="mb-6 text-center text-lg text-gray-600 dark:text-gray-300">
                     Based on your answers, we recommend these neighbourhoods:
                   </p>
@@ -231,7 +231,7 @@ export default function NeighbourhoodQuiz() {
                       </span>
                     ))}
                   </div>
-                  
+
                   <div className="mt-10 rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-900 dark:bg-gray-800">
                     <h3 className="mb-3 text-2xl font-semibold text-gray-900 dark:text-white">
                       Get Notified!
@@ -270,7 +270,7 @@ export default function NeighbourhoodQuiz() {
                       </form>
                     )}
                   </div>
-                  
+
                   <button
                     onClick={restartQuiz}
                     className="mt-8 flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"

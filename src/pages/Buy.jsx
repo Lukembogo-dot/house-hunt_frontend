@@ -50,7 +50,7 @@ function Buy() {
       </Helmet>
 
       {/* AI/CRAWLER SUMMARY: Hidden from users */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h1>Buy Land and Houses in Kenya</h1>
         <p>
           **HouseHunt Kenya** is the premier platform for buying and selling real estate.

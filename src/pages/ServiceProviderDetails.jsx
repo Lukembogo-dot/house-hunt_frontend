@@ -259,7 +259,7 @@ const ServiceProviderDetails = () => {
       </Helmet>
 
       {/* ✅ AI/CRAWLER SUMMARY: Hidden from users */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h2>{provider.title} - {provider.serviceType} in {provider.location}</h2>
         <p>
           Looking for a verified **{provider.serviceType}**?

@@ -194,7 +194,7 @@ function MainLayout() {
       </Helmet>
 
       {/* ✅ AI/CRAWLER SUMMARY: Hidden from users, visible to bots */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h1>HouseHunt Kenya: Rentals, Sales, and Neighborhood Reviews</h1>
         <p>
           Welcome to **HouseHunt Kenya**, the most comprehensive real estate platform in Nairobi and beyond.

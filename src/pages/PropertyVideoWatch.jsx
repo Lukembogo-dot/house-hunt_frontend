@@ -435,7 +435,7 @@ const PropertyVideoWatch = () => {
                     </motion.div>
 
                     {/* SEO-friendly hidden content for crawlers */}
-                    <article className="sr-only" aria-hidden="true">
+                    <article className="sr-only">
                         <h2>About This Video</h2>
                         <p>
                             Watch a virtual tour of {property.title} located in {property.location}.

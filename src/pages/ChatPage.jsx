@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { 
-  FaSpinner, 
-  FaInbox, 
+import {
+  FaSpinner,
+  FaInbox,
   FaArrowLeft,
   FaUserSlash // 1. IMPORT THE 'USER SLASH' ICON
-} from 'react-icons/fa'; 
+} from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -25,14 +25,14 @@ const ChatPage = () => {
         setLoading(true);
         const { data } = await apiClient.get('/chat/conversations');
         setConversations(data);
-      } catch (err) { 
+      } catch (err) {
         setError('Failed to load conversations.');
       } finally {
         setLoading(false);
       }
     };
     fetchConversations();
-  }, []); 
+  }, []);
 
   const getOtherParticipant = (convo) => {
     // 2. UPDATED FOR SAFETY
@@ -70,10 +70,10 @@ const ChatPage = () => {
     // ✅ --- FIX IS HERE: Changed pt-20 to mt-20 ---
     // This moves the *entire component* down 80px to clear the header.
     <div className="container mx-auto h-[calc(100vh-80px)] max-h-[900px] flex mt-20 pb-4 md:pb-10 gap-6 overflow-hidden">
-      
+
       {/* Added `overflow-hidden` here to clip the animations. */}
       <div className="md:flex w-full h-full gap-6 relative overflow-hidden">
-        
+
         {/* ================================================= */}
         {/* Column 1: Conversation List (Sidebar) */}
         {/* ================================================= */}
@@ -90,9 +90,9 @@ const ChatPage = () => {
             transition={{ duration: 0.3, ease: 'easeOut' }}
           >
             <div className="p-4 border-b dark:border-gray-700">
-              <h2 className="text-2xl font-bold dark:text-white">Messages</h2>
+              <h1 className="text-2xl font-bold dark:text-white">Messages</h1>
             </div>
-            
+
             <div className="overflow-y-auto flex-1">
               {conversations.length === 0 ? (
                 <div className="p-6 text-center text-gray-500 dark:text-gray-400">
@@ -119,7 +119,7 @@ const ChatPage = () => {
                             <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
                               <FaUserSlash className="text-gray-500 dark:text-gray-400" />
                             </div>
-                            
+
                             <div className="flex-1 min-w-0">
                               <div className="flex justify-between items-center">
                                 {/* --- LINT FIX: Removed redundant 'font-semibold' --- */}
@@ -150,10 +150,10 @@ const ChatPage = () => {
                         className={`block p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition ${convo._id === activeConversationId ? 'bg-gray-100 dark:bg-gray-700' : ''}`}
                       >
                         <div className="flex items-center space-x-3">
-                          <img 
-                            src={otherUser.profilePicture} 
-                            alt={otherUser.name} 
-                            className="w-12 h-12 rounded-full object-cover" 
+                          <img
+                            src={otherUser.profilePicture}
+                            alt={otherUser.name}
+                            className="w-12 h-12 rounded-full object-cover"
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center">
@@ -177,7 +177,7 @@ const ChatPage = () => {
             </div>
           </motion.div>
         </AnimatePresence>
-        
+
         {/* ================================================= */}
         {/* Column 2: Active Chat Window (Main Content) */}
         {/* ================================================= */}
@@ -196,7 +196,7 @@ const ChatPage = () => {
             {/* --- Mobile Back Button --- */}
             {activeConversationId && (
               <button
-                onClick={() => navigate('/chat')} 
+                onClick={() => navigate('/chat')}
                 className="md:hidden p-4 border-b dark:border-gray-700 flex items-center space-x-2 text-blue-600 dark:text-blue-400"
               >
                 <FaArrowLeft />

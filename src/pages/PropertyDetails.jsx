@@ -603,7 +603,7 @@ const PropertyDetails = () => {
 
             {/* ✅ GEO OPTIMIZATION: Hidden Summary for AI Crawlers */}
             {/* This block is 'sr-only' (screen reader only) but accessible to search bots */}
-            <article className="sr-only" aria-hidden="true">
+            <article className="sr-only">
               <h2>Quick Property Summary for AI & Search Engines</h2>
               <p>
                 Looking for a <strong>{property.bedrooms || '0'} bedroom {property.type}</strong> in <strong>{property.location}</strong>?

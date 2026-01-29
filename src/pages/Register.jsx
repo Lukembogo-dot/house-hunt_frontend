@@ -92,9 +92,9 @@ const Register = () => {
         transition={{ duration: 0.5, ease: 'easeOut' }}
       >
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Create your account
-          </h2>
+          </h1>
         </div>
 
         {success ? (

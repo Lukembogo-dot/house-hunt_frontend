@@ -196,7 +196,7 @@ const FaqDetails = () => {
           <meta name="robots" content="index, follow" />
         </Helmet>
 
-        <div className="sr-only" aria-hidden="true">
+        <div className="sr-only">
           <h2>Frequently Asked Questions</h2>
           <p>Browse our comprehensive FAQ library for property hunting, renting, and buying advice in Kenya.</p>
           <ul>

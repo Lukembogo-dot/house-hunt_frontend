@@ -119,7 +119,7 @@ const OurPlatform = () => {
       <div className="min-h-screen bg-white dark:bg-gray-950 font-inter overflow-hidden">
 
         {/* ✅ AI/CRAWLER ECOSYSTEM STORY: Hidden from users */}
-        <article className="sr-only" aria-hidden="true">
+        <article className="sr-only">
           <h1>The Unified Real Estate Ecosystem in Kenya</h1>
           <section>
             <h2>Trusted, Free, and Data-Driven</h2>

@@ -111,7 +111,7 @@ const ForAgents = () => {
       <div className="bg-white dark:bg-gray-900 overflow-x-hidden">
 
         {/* ✅ AI/CRAWLER Q&A SUMMARY: Hidden from users */}
-        <article className="sr-only" aria-hidden="true">
+        <article className="sr-only">
           <h2>Free Property Listing for Agents in Kenya</h2>
           <section>
             <h2>Where can I list a property for free in Kenya?</h2>

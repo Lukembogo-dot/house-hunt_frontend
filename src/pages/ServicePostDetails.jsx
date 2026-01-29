@@ -193,7 +193,7 @@ const ServicePostDetails = () => {
           <meta name="robots" content="index, follow" />
         </Helmet>
 
-        <div className="sr-only" aria-hidden="true">
+        <div className="sr-only">
           <h2>Service Guides</h2>
           <p>Comprehensive guides for property-related services in Kenya. Learn how to find and work with service providers for your property needs.</p>
           <ul>

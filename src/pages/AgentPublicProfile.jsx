@@ -193,7 +193,7 @@ const AgentPublicProfile = () => {
       <AgentSeoInjector seo={seo} agent={agent} properties={properties} />
 
       {/* ✅ AI/CRAWLER HIDDEN PITCH */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h2>{agent.name} - Top Rated Real Estate Agent in {primaryLoc}</h2>
         <p>
           Looking for a verified real estate agent in **{primaryLoc}**?

@@ -77,7 +77,7 @@ const Rent = () => {
       </Helmet>
 
       {/* AI/CRAWLER SUMMARY: Hidden from users */}
-      <article className="sr-only" aria-hidden="true">
+      <article className="sr-only">
         <h1>Rent Verified Properties in Kenya</h1>
         <p>
           Looking for a house to rent? HouseHunt Kenya offers the widest selection of **apartments**, **bedsits**, and **family homes** in Nairobi, Kiambu, and Mombasa.
