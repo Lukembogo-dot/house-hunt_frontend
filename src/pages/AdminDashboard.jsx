@@ -9,7 +9,7 @@ import {
   FaSpinner, FaMoneyBillWave, FaClock, FaSitemap, FaQuestionCircle, FaFlag,
   FaUserCheck, FaUserShield, FaTrash, FaEdit, FaLink, FaGavel,
   FaFistRaised, FaIdCard, FaUserSecret, FaListAlt, FaCommentDots, FaSearch, FaUserPlus, FaTimes, FaPlusCircle, FaImage,
-  FaTachometerAlt, FaBox, FaUsers, FaCog, FaChevronDown, FaChevronUp // ✅ Added for tabs & collapsible sections
+  FaTachometerAlt, FaBox, FaUsers, FaCog, FaChevronDown, FaChevronUp, FaDatabase, FaExclamationTriangle // ✅ Added for tabs & collapsible sections
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import FailedQueries from '../components/FailedQueries';
@@ -239,6 +239,12 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
 
   const [claimRequests, setClaimRequests] = useState([]);
+  const [dbMode, setDbMode] = useState('MONGO'); // ✅ DB Mode State
+
+  // ✅ Search Analytics State
+  const [topSearches, setTopSearches] = useState([]);
+  const [zeroResults, setZeroResults] = useState([]);
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -291,16 +297,18 @@ const AdminDashboard = () => {
       setLoading(true);
       setError('');
 
-      // ✅ FETCH BOTH: Providers AND Posts
-      const [usersRes, propertiesRes, reviewsRes, providersRes, postsRes, agentsRes, ordersRes, claimsRes] = await Promise.all([
+      // ✅ FETCH ALL DATA INCLUDING ANALYTICS
+      const [usersRes, propertiesRes, reviewsRes, providersRes, postsRes, agentsRes, ordersRes, claimsRes, topSearchesRes, zeroResultsRes] = await Promise.all([
         apiClient.get('/users', { withCredentials: true }),
         apiClient.get('/properties?limit=1000'),
         apiClient.get('/reviews', { withCredentials: true }),
-        apiClient.get('/service-providers?limit=100'), // 1. Providers (People)
-        apiClient.get('/services'),                    // 2. Posts (Blogs/Articles)
+        apiClient.get('/service-providers?limit=100'),
+        apiClient.get('/services'),
         apiClient.get('/users/all-agents', { withCredentials: true }),
         apiClient.get('/payments', { withCredentials: true }),
         apiClient.get('/admin/claim-requests', { withCredentials: true }),
+        apiClient.get('/tracking/top-searches', { withCredentials: true }),
+        apiClient.get('/tracking/zero-results', { withCredentials: true })
       ]);
 
       setUsers(usersRes.data);
@@ -309,13 +317,16 @@ const AdminDashboard = () => {
 
       setReviews(reviewsRes.data);
 
-      // ✅ Assign correctly
       setServiceProviders(providersRes.data.providers || providersRes.data || []);
-      setServicePosts(postsRes.data.services || postsRes.data || []); // Blog posts
+      setServicePosts(postsRes.data.services || postsRes.data || []);
 
       setAllAgents(agentsRes.data);
       setOrders(ordersRes.data);
       setClaimRequests(claimsRes.data || []);
+
+      // ✅ Set Search Analytics
+      setTopSearches(topSearchesRes?.data || []);
+      setZeroResults(zeroResultsRes?.data || []);
 
     } catch (err) {
       setError('Failed to fetch admin data. You may not be authorized.');
@@ -324,6 +335,33 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   }, []);
+
+  // ✅ FETCH DB MODE
+  useEffect(() => {
+    const fetchDbMode = async () => {
+      try {
+        const { data } = await apiClient.get('/admin/db-mode', { withCredentials: true });
+        setDbMode(data.mode);
+      } catch (err) {
+        console.error("Failed to fetch DB Mode", err);
+      }
+    };
+    if (activeTab === 'system') {
+      fetchDbMode();
+    }
+  }, [activeTab]);
+
+  const handleToggleDbMode = async (newMode) => {
+    if (!window.confirm(`Are you sure you want to switch the database to ${newMode}? This will affect all users.`)) return;
+    try {
+      const { data } = await apiClient.post('/admin/db-mode', { mode: newMode }, { withCredentials: true });
+      setDbMode(data.mode);
+      alert(data.message);
+    } catch (err) {
+      alert("Failed to switch database mode.");
+      console.error(err);
+    }
+  };
 
   const navigate = useNavigate();
 
@@ -594,6 +632,76 @@ const AdminDashboard = () => {
               onToggle={() => toggleSection('analytics')}
             >
               <AdminAnalyticsWidget properties={properties} />
+            </CollapsibleSection>
+
+            {/* ✅ SEARCH INSIGHTS WIDGET */}
+            <CollapsibleSection
+              title="Search Insights & Content Gaps"
+              icon={FaSearch}
+              isCollapsed={collapsedSections.queries}
+              onToggle={() => toggleSection('queries')}
+              badge={zeroResults.length > 0 ? `${zeroResults.length} Gaps` : null}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 1. Top Searches */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <h3 className="font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+                    <FaSearch className="text-blue-500" /> Top Searches
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-gray-50 dark:bg-gray-700 text-xs uppercase text-gray-500 dark:text-gray-400">
+                        <tr>
+                          <th className="px-3 py-2 rounded-l">Query</th>
+                          <th className="px-3 py-2 text-right">Count</th>
+                          <th className="px-3 py-2 text-right rounded-r">Avg Results</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {topSearches.length > 0 ? topSearches.map((s, i) => (
+                          <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">{s._id}</td>
+                            <td className="px-3 py-2 text-right font-bold text-blue-600">{s.count}</td>
+                            <td className="px-3 py-2 text-right text-gray-500">{Math.round(s.avgResults)}</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan="3" className="text-center py-4 text-gray-400">No search data yet</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* 2. Zero Result Searches (Content Gaps) */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-red-100 dark:border-red-900/30 shadow-sm">
+                  <h3 className="font-bold text-red-600 dark:text-red-400 mb-4 flex items-center gap-2">
+                    <FaExclamationTriangle /> Content Gaps (Zero Results)
+                  </h3>
+                  <div className="mb-4 text-xs text-gray-500 bg-red-50 dark:bg-red-900/10 p-2 rounded">
+                    Use these queries to prioritize new content or acquire specific listings.
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-red-50 dark:bg-red-900/20 text-xs uppercase text-red-800 dark:text-red-200">
+                        <tr>
+                          <th className="px-3 py-2 rounded-l">Missing Query</th>
+                          <th className="px-3 py-2 text-right rounded-r">Attempts</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {zeroResults.length > 0 ? zeroResults.map((s, i) => (
+                          <tr key={i} className="hover:bg-red-50 dark:hover:bg-red-900/10">
+                            <td className="px-3 py-2 font-medium text-gray-800 dark:text-gray-200">{s._id}</td>
+                            <td className="px-3 py-2 text-right font-bold text-red-600">{s.count}</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan="2" className="text-center py-4 text-green-500">No content gaps detected! \u2705</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </CollapsibleSection>
 
             {/* Quick Navigation Links */}
@@ -1035,7 +1143,48 @@ const AdminDashboard = () => {
               isCollapsed={collapsedSections.maintenance}
               onToggle={() => toggleSection('maintenance')}
             >
-              <p className="text-gray-500 dark:text-gray-400">System settings coming soon...</p>
+              {/* DATABASE FAILOVER SWITCH */}
+              <div className={`p-6 rounded-xl border-l-4 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors duration-300 ${dbMode === 'SUPABASE'
+                ? 'bg-red-50 border-red-500 dark:bg-red-900/20 dark:border-red-500'
+                : 'bg-green-50 border-green-500 dark:bg-green-900/20 dark:border-green-500'
+                }`}>
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2 dark:text-white">
+                    <FaDatabase className={dbMode === 'SUPABASE' ? 'text-red-600' : 'text-green-600'} />
+                    Database Mode: <span className={dbMode === 'SUPABASE' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}>{dbMode}</span>
+                  </h3>
+                  <p className={`text-sm mt-1 ${dbMode === 'SUPABASE' ? 'text-red-600 dark:text-red-300' : 'text-green-600 dark:text-green-300'}`}>
+                    {dbMode === 'SUPABASE'
+                      ? '⚠️ FAILOVER ACTIVE: Using Supabase (Backup Replica). Read-only recommended.'
+                      : '✅ NORMAL: Using MongoDB (Primary). System is healthy.'}
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleToggleDbMode('MONGO')}
+                    disabled={dbMode === 'MONGO'}
+                    className={`px-4 py-2 rounded-lg font-semibold shadow-sm transition-all ${dbMode === 'MONGO'
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
+                      : 'bg-green-600 text-white hover:bg-green-700 hover:shadow-md'
+                      }`}
+                  >
+                    Switch to Mongo
+                  </button>
+                  <button
+                    onClick={() => handleToggleDbMode('SUPABASE')}
+                    disabled={dbMode === 'SUPABASE'}
+                    className={`px-4 py-2 rounded-lg font-semibold shadow-sm transition-all ${dbMode === 'SUPABASE'
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
+                      : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md'
+                      }`}
+                  >
+                    Switch to Supabase
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-gray-500 dark:text-gray-400 mt-4">More system settings coming soon...</p>
             </CollapsibleSection>
           </>
         )}

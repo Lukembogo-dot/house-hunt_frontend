@@ -54,6 +54,17 @@ const DynamicNeighbourhoodSearch = () => {
         console.error("Neighbourhood Data Error", error);
       } finally {
         setLoading(false);
+
+        // ✅ TRACKING: Log neighbourhood view as a search
+        try {
+          apiClient.post('/tracking/search', {
+            query: locationName,
+            resultCount: statsRes?.data?.count || 0,
+            category: 'neighbourhood'
+          });
+        } catch (err) {
+          console.warn("Neighbourhood tracking failed", err);
+        }
       }
     };
 

@@ -229,6 +229,21 @@ const DynamicSearchPage = () => {
         setStats(null);
       } finally {
         setLoadingStats(false);
+        // ✅ 4. TRACKING: Log the search query and result count
+        try {
+          const queryTerm = filterOverrides.location || 'all';
+          // Only track if we actually have a location or meaningful filter
+          if (queryTerm && queryTerm !== 'all') {
+            apiClient.post('/tracking/search', {
+              query: queryTerm,
+              resultCount: statsData?.count || 0,
+              category: listingType
+            });
+          }
+        } catch (err) {
+          // Silent fail for analytics
+          console.warn("Search tracking failed", err);
+        }
       }
     };
 
