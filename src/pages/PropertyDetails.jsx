@@ -302,7 +302,16 @@ const PropertyDetails = () => {
       const reviewsRes = await apiClient.get(`/reviews/${propData._id}`);
       setComments(reviewsRes.data || []);
 
-    } catch (error) { console.error("❌ Error fetching property:", error); } finally { setLoading(false); }
+    } catch (error) {
+      console.error("❌ Error fetching property:", error);
+    } finally {
+      setLoading(false);
+
+      // ✅ Tell Prerender.io we're ready (success or failure)
+      if (typeof window !== 'undefined' && window.prerenderReady === false) {
+        window.prerenderReady = true;
+      }
+    }
   };
 
   useEffect(() => { fetchPropertyData(); }, [slug]);

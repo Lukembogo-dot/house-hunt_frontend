@@ -14,7 +14,7 @@ const NotFound = () => {
         <title>404 - Page Not Found</title>
         <meta name="robots" content="noindex" />
       </Helmet>
-      
+
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-6 dark:bg-gray-950">
         <FaExclamationTriangle className="text-9xl text-yellow-400 mb-8" />
         <h1 className="text-5xl font-extrabold text-gray-900 dark:text-white mb-4">
