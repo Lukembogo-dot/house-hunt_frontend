@@ -198,139 +198,17 @@ export default function About() {
             "@id": "https://househuntkenya.com",
             "url": "https://househuntkenya.com",
             "telephone": "+254-700-000-000",
-            "priceRange": "Free - KES 20,000",
-            "address": {
-              "@type": "PostalAddress",
-              "streetAddress": "Nairobi",
-              "addressLocality": "Nairobi",
-              "addressRegion": "Nairobi County",
-              "postalCode": "00100",
-              "addressCountry": "KE"
-            },
-            "geo": {
-              "@type": "GeoCoordinates",
-              "latitude": -1.286389,
-              "longitude": 36.817223
-            },
-            "openingHoursSpecification": {
-              "@type": "OpeningHoursSpecification",
-              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-              "opens": "00:00",
-              "closes": "23:59"
-            },
-            "sameAs": [
-              "https://facebook.com/househuntkenya",
-              "https://twitter.com/househuntkenya",
-              "https://instagram.com/househuntkenya"
-            ],
             "areaServed": {
               "@type": "Country",
               "name": "Kenya"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "247",
-              "bestRating": "5",
-              "worstRating": "1"
             }
           })}
         </script>
 
-        {/* SoftwareApplication Schema */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "HouseHunt Kenya - Property Platform",
-            "applicationCategory": "BusinessApplication",
-            "operatingSystem": "Web, Android, iOS",
-            "description": "Revolutionary property platform for Kenya with AI matching, verified listings, community reviews, and service directory. Find your perfect home faster.",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "KES",
-              "availability": "https://schema.org/InStock"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "ratingCount": "247"
-            },
-            "screenshot": "https://househuntkenya.com/screenshot.png",
-            "featureList": [
-              "AI-powered property matching",
-              "Verified property listings",
-              "Shadow Buildings community reviews",
-              "Virtual property tours",
-              "Service provider directory",
-              "Advanced search filters",
-              "Real-time notifications",
-              "Mobile apps (Android & iOS)",
-              "Property scouts for offline listings",
-              "24/7 customer support"
-            ],
-            "provider": {
-              "@type": "Organization",
-              "name": "HouseHunt Kenya",
-              "url": "https://househuntkenya.com"
-            },
-            "applicationSubCategory": "Real Estate, Property Search",
-            "downloadUrl": "https://househuntkenya.com",
-            "softwareVersion": "2.0",
-            "releaseNotes": "Join the housing revolution. Free for property seekers!"
-          })}
-        </script>
 
-        {/* Product + AggregateRating + Reviews */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Product",
-            "name": "HouseHunt Kenya - Property Marketplace",
-            "description": "Kenya's most trusted digital property marketplace revolutionizing real estate.",
-            "brand": {
-              "@type": "Brand",
-              "name": "HouseHunt Kenya"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "247",
-              "bestRating": "5",
-              "worstRating": "1"
-            },
-            "review": [
-              {
-                "@type": "Review",
-                "author": {
-                  "@type": "Person",
-                  "name": "James Kimani"
-                },
-                "datePublished": "2025-01-25",
-                "reviewBody": "HouseHunt Kenya changed everything for me. The mission and values are real - they actually care about transparency and customer satisfaction. Found my apartment through their platform and the whole process was smooth!",
-                "reviewRating": {
-                  "@type": "Rating",
-                  "ratingValue": "5"
-                }
-              },
-              {
-                "@type": "Review",
-                "author": {
-                  "@type": "Person",
-                  "name": "Sarah Akinyi"
-                },
-                "datePublished": "2025-01-20",
-                "reviewBody": "Finally, a property platform that lives up to its promises! Their vision for affordable and transparent real estate is exactly what Kenya needs. The team really understands the challenges we face as property seekers.",
-                "reviewRating": {
-                  "@type": "Rating",
-                  "ratingValue": "5"
-                }
-              }
-            ]
-          })}
-        </script>
       </Helmet>
+
+
 
       <SeoInjector seo={seo} />
 
