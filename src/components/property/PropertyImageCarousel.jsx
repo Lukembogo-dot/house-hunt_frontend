@@ -4,9 +4,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FaChevronLeft, FaChevronRight, FaMapMarkerAlt, 
+  FaChevronLeft, FaChevronRight, FaMapMarkerAlt,
   FaBed, FaBath, FaRulerCombined, FaTag, FaHeart, FaRegHeart, FaEye
 } from 'react-icons/fa';
+import { getOptimizedUrl } from '../../utils/imageUtils';
 
 // Helper function to extract video thumbnail
 const getVideoThumbnail = (url) => {
@@ -29,7 +30,7 @@ const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick })
   // Get safe image array with video thumbnail fallback
   const images = React.useMemo(() => {
     let imageArray = [];
-    
+
     // First, add property images if available
     if (property?.images && Array.isArray(property.images)) {
       imageArray = property.images.map((img, index) => {
@@ -109,7 +110,7 @@ const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick })
                   transition={{ duration: 0.8 }}
                   className="absolute inset-0"
                   style={{
-                    backgroundImage: `url(${img})`,
+                    backgroundImage: `url(${getOptimizedUrl(img, { width: 100, quality: 50 })})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     filter: 'blur(40px)',
@@ -127,7 +128,7 @@ const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick })
             index === currentIndex && (
               <motion.img
                 key={`${property._id}-main-${index}`}
-                src={img}
+                src={getOptimizedUrl(img, { width: 1200 })}
                 alt={`${property.title} - Image ${index + 1}`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -271,11 +272,10 @@ const PropertyImageCarousel = ({ property, user, isFavorited, onFavoriteClick })
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => goToSlide(index)}
-              className={`w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                index === currentIndex
-                  ? 'border-blue-400 ring-2 ring-blue-400/50 shadow-lg'
-                  : 'border-white/30 hover:border-white/50 opacity-75 hover:opacity-100'
-              }`}
+              className={`w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${index === currentIndex
+                ? 'border-blue-400 ring-2 ring-blue-400/50 shadow-lg'
+                : 'border-white/30 hover:border-white/50 opacity-75 hover:opacity-100'
+                }`}
             >
               <img
                 src={img}

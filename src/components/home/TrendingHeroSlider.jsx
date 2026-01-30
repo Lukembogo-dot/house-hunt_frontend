@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaFire, FaEye, FaUser, FaLandmark } from 'react-icons/fa';
 import apiClient from '../../api/axios';
+import { getOptimizedUrl } from '../../utils/imageUtils';
 
 // Helper to extract video thumbnail
 const getVideoThumbnail = (url) => {
@@ -110,13 +111,15 @@ const TrendingHeroSlider = memo(({ listingType = 'sale', onLoad, autoPlayInterva
     if (properties.length === 0) return null;
 
     const currentProperty = properties[currentIndex];
-    const mainImage = currentProperty?.images?.[0]?.url || currentProperty?.images?.[0] || getVideoThumbnail(currentProperty?.video) || '/placeholder.jpg';
+    const rawMainImage = currentProperty?.images?.[0]?.url || currentProperty?.images?.[0] || getVideoThumbnail(currentProperty?.video) || '/placeholder.jpg';
+    const mainImage = getOptimizedUrl(rawMainImage, { width: 1920 });
 
     return (
         <section className="relative h-[75vh] md:h-[80vh] overflow-hidden bg-gray-900">
             {/* Background Images with Simple Crossfade - NO SCALE to prevent glitching */}
             {properties.map((prop, index) => {
-                const imgUrl = prop.images?.[0]?.url || prop.images?.[0] || getVideoThumbnail(prop.video) || '/placeholder.jpg';
+                const rawUrl = prop.images?.[0]?.url || prop.images?.[0] || getVideoThumbnail(prop.video) || '/placeholder.jpg';
+                const imgUrl = getOptimizedUrl(rawUrl, { width: 1920 });
                 return (
                     <div
                         key={prop._id}
