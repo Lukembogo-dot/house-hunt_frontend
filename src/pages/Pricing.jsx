@@ -85,7 +85,7 @@ const Pricing = () => {
             <Helmet>
                 {/* Primary Meta Tags */}
                 <title>Property Listing Pricing Plans Kenya | HouseHunt - List Your Properties Online</title>
-                <meta name="description" content="Best platform to list properties online in Kenya. Affordable rates from Ksh 4,000/month. Find houses for sale, apartments to rent, and land listings. Better than BuyRentKenya - FREE for 6 months!" />
+                <meta name="description" content="Best platform to list properties online in Kenya. Affordable rates from Ksh 4,000/month. Find houses for sale, apartments to rent, and land listings. Better than BuyRentKenya - FREE for 2 months!" />
                 <meta name="keywords" content="best platform to list properties Kenya, where to find properties online Kenya, house for sale Kenya, house to rent Kenya, one bedroom apartment Kenya, property listing pricing Kenya, list properties online Kenya, BuyRentKenya alternative, real estate listing fees Kenya, property advertising rates Kenya" />
 
                 {/* Open Graph / Facebook */}
@@ -215,7 +215,7 @@ const Pricing = () => {
                                 "name": "What is the best platform to list properties in Kenya?",
                                 "acceptedAnswer": {
                                     "@type": "Answer",
-                                    "text": "HouseHunt Kenya is the best platform to list properties in Kenya, offering affordable pricing from Ksh 4,000/month with unlimited listings, advanced analytics, and dedicated support. Currently FREE for the first 6 months for new property managers and landlords."
+                                    "text": "HouseHunt Kenya is the best platform to list properties in Kenya, offering affordable pricing from Ksh 4,000/month with unlimited listings, advanced analytics, and dedicated support. Currently FREE for the first 2 months for new property managers and landlords."
                                 }
                             },
                             {
@@ -255,7 +255,7 @@ const Pricing = () => {
                                 "name": "How much does it cost to list a property on HouseHunt Kenya?",
                                 "acceptedAnswer": {
                                     "@type": "Answer",
-                                    "text": "HouseHunt Kenya offers three pricing plans: Starter Plan (Ksh 4,000/month for up to 10 properties), Professional Plan (Ksh 10,000/month for unlimited listings), and Land Listing (Ksh 20,000 one-time fee). All plans are currently FREE for the first 6 months for new users."
+                                    "text": "HouseHunt Kenya offers three pricing plans: Starter Plan (Ksh 4,000/month for up to 10 properties), Professional Plan (Ksh 10,000/month for unlimited listings), and Land Listing (Ksh 20,000 one-time fee). All plans are currently FREE for the first 2 months for new users."
                                 }
                             },
                             {
@@ -263,7 +263,7 @@ const Pricing = () => {
                                 "name": "Is HouseHunt Kenya better than BuyRentKenya?",
                                 "acceptedAnswer": {
                                     "@type": "Answer",
-                                    "text": "Yes, HouseHunt Kenya offers better value than BuyRentKenya with more affordable pricing, modern features including AI-powered property matching, virtual tours, real-time analytics, and currently 6 months free service for property managers. We also provide 24/7 support and verified listings."
+                                    "text": "Yes, HouseHunt Kenya offers better value than BuyRentKenya with more affordable pricing, modern features including AI-powered property matching, virtual tours, real-time analytics, and currently 2 months free service for property managers. We also provide 24/7 support and verified listings."
                                 }
                             }
                         ]
@@ -443,7 +443,7 @@ const Pricing = () => {
                         "applicationSubCategory": "Real Estate Software, Property Management Software",
                         "downloadUrl": "https://househuntkenya.com/register",
                         "softwareVersion": "2.0",
-                        "releaseNotes": "Free for first 6 months - Limited time offer for new property managers and landlords in Kenya"
+                        "releaseNotes": "Free for first 2 months - Limited time offer for new property managers and landlords in Kenya"
                     })}
                 </script>
             </Helmet>
@@ -523,7 +523,7 @@ const Pricing = () => {
                                 </div>
 
                                 <h2 className="text-3xl md:text-4xl font-black text-white mb-3 drop-shadow-lg">
-                                    FREE FOR THE FIRST 6 MONTHS
+                                    FREE FOR THE FIRST 2 MONTHS
                                 </h2>
 
                                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 max-w-2xl mx-auto mb-4">
@@ -531,12 +531,12 @@ const Pricing = () => {
                                         Join now and lock in these features for <span className="text-yellow-300 text-2xl">Ksh 0/month</span>
                                     </p>
                                     <p className="text-white/90 text-base">
-                                        for the first <span className="font-black text-yellow-300">6 months</span>
+                                        for the first <span className="font-black text-yellow-300">2 months</span>
                                     </p>
                                 </div>
 
                                 <p className="text-white/80 text-xs md:text-sm max-w-xl mx-auto mb-4">
-                                    Sign up today and enjoy 6 months of completely free service! Post unlimited properties, access all premium features. No credit card required.
+                                    Sign up today and enjoy 2 months of completely free service! Post unlimited properties, access all premium features. No credit card required.
                                 </p>
 
                                 <motion.button
@@ -591,7 +591,7 @@ const Pricing = () => {
 
                                     {/* FREE Badge */}
                                     <div className="absolute -top-3 -right-3 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 px-4 py-2 rounded-full text-xs font-black shadow-2xl border-2 border-white z-20">
-                                        ✨ FREE 6 MONTHS
+                                        ✨ FREE 2 MONTHS
                                     </div>
 
                                     {/* Glassmorphic Content Overlay */}
@@ -608,9 +608,9 @@ const Pricing = () => {
 
                                             {/* Price */}
                                             <div className="mb-6">
-                                                {/* Free 6 Months Badge */}
+                                                {/* Free 2 Months Badge */}
                                                 <div className="inline-flex items-center gap-1 bg-green-500/20 backdrop-blur-md border border-green-400/30 rounded-full px-2 py-0.5 mb-3">
-                                                    <span className="text-green-300 text-[10px] font-bold uppercase tracking-wide">🎁 Free First 6 Months</span>
+                                                    <span className="text-green-300 text-[10px] font-bold uppercase tracking-wide">🎁 Free First 2 Months</span>
                                                 </div>
 
                                                 <div className="flex items-baseline gap-3 mb-2">
@@ -623,7 +623,7 @@ const Pricing = () => {
                                                         Ksh 0
                                                     </span>
                                                 </div>
-                                                <p className="text-gray-200 text-sm mt-1 drop-shadow">{plan.period} • <span className="text-green-300 font-semibold">First 6 months FREE!</span></p>
+                                                <p className="text-gray-200 text-sm mt-1 drop-shadow">{plan.period} • <span className="text-green-300 font-semibold">First 2 months FREE!</span></p>
                                                 <p className="text-gray-100 text-sm mt-3 drop-shadow">{plan.description}</p>
                                             </div>
 
@@ -672,7 +672,7 @@ const Pricing = () => {
                                 {[
                                     {
                                         question: "What is the best platform to list properties in Kenya?",
-                                        answer: "HouseHunt Kenya is the best platform to list properties in Kenya, offering affordable pricing from Ksh 4,000/month with unlimited listings, advanced analytics, and dedicated support. Currently FREE for the first 6 months for new property managers and landlords."
+                                        answer: "HouseHunt Kenya is the best platform to list properties in Kenya, offering affordable pricing from Ksh 4,000/month with unlimited listings, advanced analytics, and dedicated support. Currently FREE for the first 2 months for new property managers and landlords."
                                     },
                                     {
                                         question: "Where can I find properties online in Kenya?",
@@ -692,7 +692,7 @@ const Pricing = () => {
                                     },
                                     {
                                         question: "How much does it cost to list a property on HouseHunt Kenya?",
-                                        answer: "HouseHunt Kenya offers three pricing plans: Starter Plan (Ksh 4,000/month for up to 10 properties), Professional Plan (Ksh 10,000/month for unlimited listings), and Land Listing (Ksh 20,000 one-time fee). All plans are currently FREE for the first 6 months for new users."
+                                        answer: "HouseHunt Kenya offers three pricing plans: Starter Plan (Ksh 4,000/month for up to 10 properties), Professional Plan (Ksh 10,000/month for unlimited listings), and Land Listing (Ksh 20,000 one-time fee). All plans are currently FREE for the first 2 months for new users."
                                     }
                                     // Last question (BuyRentKenya comparison) hidden from visible display
                                     // Still available in FAQPage schema for AI crawlers/search engines

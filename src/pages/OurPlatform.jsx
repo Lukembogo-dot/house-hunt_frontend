@@ -208,7 +208,7 @@ const OurPlatform = () => {
                 "name": "Is HouseHunt Kenya free to use?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! Searching for properties, reading reviews, and accessing the community is completely FREE. Property seekers can browse unlimited listings, contact landlords, and use all platform features for free. Property managers can list properties starting from Ksh 4,000/month, with the first 6 months FREE for new users."
+                  "text": "Yes! Searching for properties, reading reviews, and accessing the community is completely FREE. Property seekers can browse unlimited listings, contact landlords, and use all platform features for free. Property managers can list properties starting from Ksh 4,000/month, with the first 2 months FREE for new users."
                 }
               },
               {
@@ -264,7 +264,7 @@ const OurPlatform = () => {
                 "name": "Is HouseHunt Kenya better than BuyRentKenya?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "HouseHunt Kenya offers superior features compared to BuyRentKenya: AI-powered property matching for better recommendations, community review system (Shadow Buildings) for authentic feedback, integrated service directory for home services, mobile apps for Android and iOS, virtual property tours, real-time analytics for landlords, and modern, fast interface. We also offer more affordable pricing and currently have 6 months free for new property managers."
+                  "text": "HouseHunt Kenya offers superior features compared to BuyRentKenya: AI-powered property matching for better recommendations, community review system (Shadow Buildings) for authentic feedback, integrated service directory for home services, mobile apps for Android and iOS, virtual property tours, real-time analytics for landlords, and modern, fast interface. We also offer more affordable pricing and currently have 2 months free for new property managers."
                 }
               }
             ]
@@ -362,7 +362,7 @@ const OurPlatform = () => {
             "applicationSubCategory": "Real Estate, Property Search, Home Services",
             "downloadUrl": "https://househuntkenya.com",
             "softwareVersion": "2.0",
-            "releaseNotes": "Free property search with AI matching. Property managers get 6 months free."
+            "releaseNotes": "Free property search with AI matching. Property managers get 2 months free."
           })}
         </script>
 
@@ -572,7 +572,7 @@ const OurPlatform = () => {
                   },
                   {
                     question: "Is HouseHunt Kenya free to use?",
-                    answer: "Yes! Searching for properties, reading reviews, and accessing the community is completely FREE. Property seekers can browse unlimited listings, contact landlords, and use all platform features for free. Property managers can list properties starting from Ksh 4,000/month, with the first 6 months FREE for new users."
+                    answer: "Yes! Searching for properties, reading reviews, and accessing the community is completely FREE. Property seekers can browse unlimited listings, contact landlords, and use all platform features for free. Property managers can list properties starting from Ksh 4,000/month, with the first 2 months FREE for new users."
                   },
                   {
                     question: "Can I read reviews about apartments before renting in Kenya?",

@@ -207,10 +207,10 @@ export default function PropertyList({
                         </h3>
                         <p className="text-sm text-blue-100 font-medium mb-2">We have an exclusive offer for pros.</p>
 
-                        {/* Free 6 Months Highlight */}
+                        {/* Free 2 Months Highlight */}
                         <div className="bg-yellow-400/20 backdrop-blur-md border border-yellow-300/30 rounded-lg px-4 py-2 mb-4">
                           <p className="text-yellow-200 text-xs font-black uppercase tracking-wide">🎁 Limited Time Offer</p>
-                          <p className="text-yellow-100 text-lg font-black">FREE for First 6 Months!</p>
+                          <p className="text-yellow-100 text-lg font-black">FREE for First 2 Months!</p>
                         </div>
 
                         <button
@@ -230,7 +230,7 @@ export default function PropertyList({
                         </span>
                         <p className="text-sm mb-6 leading-relaxed">
                           Post unlimited properties, access premium features, and grow your business.
-                          <span className="block mt-2 font-bold text-blue-600 dark:text-blue-400">✨ Sign up now - First 6 months absolutely FREE!</span>
+                          <span className="block mt-2 font-bold text-blue-600 dark:text-blue-400">✨ Sign up now - First 2 months absolutely FREE!</span>
                         </p>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate('/login'); }}
