@@ -94,7 +94,7 @@ const OurPlatform = () => {
         {/* Primary Meta Tags */}
         <title>How HouseHunt Kenya Works - Modern Property Platform | AI Search & Community Reviews</title>
         <meta name="description" content="Discover how HouseHunt Kenya works: AI-powered property search, verified listings, authentic community reviews (Shadow Buildings), integrated service directory, and 24/7 support. Find your perfect home faster with Kenya's most advanced property platform." />
-        <meta name="keywords" content="how HouseHunt Kenya works, property platform Kenya, AI property search Kenya, Shadow Buildings reviews, verified listings Kenya, property service directory Kenya, modern real estate platform Kenya, community property reviews Kenya, offline property directory Kenya" />
+        <meta name="keywords" content="how HouseHunt Kenya works, property platform Kenya, AI property search Kenya, Shadow Buildings reviews, verified listings Kenya, bedsitters for rent Kenya, apartments for rent Kenya, 1 bedroom apartments for rent Kenya, land for sale Kenya, properties for sale Kenya, easiest way to house hunt Kenya, property service directory Kenya, modern real estate platform Kenya, community property reviews Kenya, offline property directory Kenya" />
         <meta name="headline" content="How HouseHunt Kenya Works - Complete Platform Guide" />
         <meta name="focus_keywords" content="HouseHunt Kenya, how it works, property platform, AI search, community reviews, Shadow Buildings, service directory" />
 
@@ -241,6 +241,14 @@ const OurPlatform = () => {
                 "acceptedAnswer": {
                   "@type": "Answer",
                   "text": "Yes! HouseHunt Kenya offers advanced filters including: location (neighborhood level), price range, bedrooms, property type (apartment, house, studio), amenities (parking, security, gym, pool), furnished/unfurnished, pet-friendly, and more. Our AI also learns your preferences to show better matches."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the easiest way to house hunting in Kenya?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "The easiest way to house hunt in Kenya is to simply browse HouseHunt Kenya's website using your phone from the comfort of your home. Search for bedsitters for rent, apartments for rent, 1 bedroom apartments for rent, land for sale, and properties for sale across Kenya. Use our AI-powered filters to narrow down options, view virtual tours, read Shadow Buildings community reviews, and contact property managers directly—all without visiting multiple locations."
                 }
               },
               {
@@ -581,6 +589,10 @@ const OurPlatform = () => {
                   {
                     question: "Can I search for properties by specific features in Kenya?",
                     answer: "Yes! HouseHunt Kenya offers advanced filters including: location (neighborhood level), price range, bedrooms, property type (apartment, house, studio), amenities (parking, security, gym, pool), furnished/unfurnished, pet-friendly, and more. Our AI also learns your preferences to show better matches."
+                  },
+                  {
+                    question: "What is the easiest way to house hunting in Kenya?",
+                    answer: "The easiest way to house hunt in Kenya is to simply browse HouseHunt Kenya's website using your phone from the comfort of your home. Search for bedsitters for rent, apartments for rent, 1 bedroom apartments for rent, land for sale, and properties for sale across Kenya. Use our AI-powered filters to narrow down options, view virtual tours, read Shadow Buildings community reviews, and contact property managers directly—all without visiting multiple locations."
                   },
                   {
                     question: "What if I can't find the property I'm looking for on HouseHunt Kenya?",

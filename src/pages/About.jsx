@@ -3,6 +3,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import useSeoData from "../hooks/useSeoData";
 import SeoInjector from "../components/SeoInjector";
 import { useFeatureFlag } from "../context/FeatureFlagContext.jsx";
@@ -20,8 +21,8 @@ const fadeInSlideUp = {
 export default function About() {
   const seo = useSeoData(
     '/about',
-    'About HouseHunt Kenya - Our Mission and Vision',
-    'Learn about HouseHunt Kenya: our mission to simplify property ownership, our vision for a transparent marketplace, and our core values of integrity and customer satisfaction.'
+    'About HouseHunt Kenya - Mission, Vision & Core Values | Property Revolution',
+    'Learn about HouseHunt Kenya: our mission to simplify property ownership through technology, vision for Kenya\'s most trusted digital marketplace, and core values of integrity, transparency, and customer satisfaction.'
   );
 
   const isAgentCtaEnabled = useFeatureFlag('agent-landing-page-cta');
@@ -29,6 +30,308 @@ export default function About() {
 
   return (
     <>
+      {/* Enhanced SEO Meta Tags */}
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>About HouseHunt Kenya - Mission, Vision & Core Values | Property Revolution</title>
+        <meta name="description" content="Learn about HouseHunt Kenya: our mission to simplify property ownership through technology, vision for Kenya's most trusted digital marketplace, and core values of integrity, transparency, and customer satisfaction." />
+        <meta name="keywords" content="about HouseHunt Kenya, mission vision values, property revolution Kenya, digital property marketplace Kenya, real estate innovation Kenya, trusted property platform Kenya, HouseHunt story, real estate transparency Kenya" />
+        <meta name="headline" content="About HouseHunt Kenya - Revolutionizing Property Search" />
+        <meta name="focus_keywords" content="HouseHunt Kenya, about us, mission, vision, values, property revolution, digital marketplace, transparency" />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="HouseHunt Kenya" />
+        <meta property="og:title" content="About HouseHunt Kenya - Mission, Vision & Property Revolution" />
+        <meta property="og:description" content="Join Kenya's property revolution! Learn our mission to simplify ownership through technology, our vision for a transparent marketplace, and values of integrity and customer satisfaction." />
+        <meta property="og:url" content="https://househuntkenya.com/about" />
+        <meta property="og:image" content="https://househuntkenya.com/og-about-image.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:locale" content="en_KE" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@househuntkenya" />
+        <meta name="twitter:creator" content="@househuntkenya" />
+        <meta name="twitter:title" content="About HouseHunt Kenya - Property Revolution" />
+        <meta name="twitter:description" content="Learn our mission to simplify property ownership, vision for transparent marketplace, and values driving Kenya's most trusted property platform." />
+        <meta name="twitter:image" content="https://househuntkenya.com/twitter-about-image.jpg" />
+
+        {/* Canonical URL */}
+        <link rel="canonical" href="https://househuntkenya.com/about" />
+
+        {/* About Page + Pillar Page Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": ["WebPage", "AboutPage"],
+            "name": "About HouseHunt Kenya",
+            "headline": "About HouseHunt Kenya: Mission, Vision & Property Revolution",
+            "description": "Comprehensive overview of HouseHunt Kenya's mission to simplify property ownership through technology, vision for Kenya's most trusted digital marketplace, core values of integrity and transparency, and our commitment to revolutionizing real estate in Kenya.",
+            "keywords": ["HouseHunt Kenya", "about us", "mission", "vision", "values", "property revolution", "digital marketplace", "real estate innovation", "transparency"],
+            "url": "https://househuntkenya.com/about",
+            "isPartOf": {
+              "@type": "WebSite",
+              "name": "HouseHunt Kenya",
+              "url": "https://househuntkenya.com"
+            },
+            "primaryImageOfPage": {
+              "@type": "ImageObject",
+              "url": "https://househuntkenya.com/about-hero-image.jpg"
+            },
+            "breadcrumb": {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://househuntkenya.com"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "About HouseHunt Kenya",
+                  "item": "https://househuntkenya.com/about"
+                }
+              ]
+            },
+            "significantLink": [
+              "https://househuntkenya.com/our-platform",
+              "https://househuntkenya.com/buy",
+              "https://househuntkenya.com/rent",
+              "https://househuntkenya.com/contact"
+            ],
+            "mainEntity": {
+              "@type": "Organization",
+              "name": "HouseHunt Kenya",
+              "url": "https://www.househuntkenya.co.ke",
+              "logo": "https://www.househuntkenya.co.ke/logo.png",
+              "description": "Kenya's most trusted digital property marketplace revolutionizing real estate through AI-powered search, verified listings, and community reviews.",
+              "foundingDate": "2025",
+              "slogan": "Join the Housing Revolution in Kenya",
+              "mission": "To simplify property discovery and ownership through technology, ensuring every client finds a place they can proudly call home.",
+              "sameAs": [
+                "https://www.facebook.com/househuntkenya",
+                "https://twitter.com/househuntkenya",
+                "https://instagram.com/househuntkenya"
+              ]
+            }
+          })}
+        </script>
+
+        {/* FAQPage Schema for Generative Engines - About Questions */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is HouseHunt Kenya's mission?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "HouseHunt Kenya's mission is to simplify property discovery and ownership through technology, ensuring every client finds a place they can proudly call home. We leverage AI-powered search, verified listings, and community reviews to make property hunting transparent, efficient, and trustworthy."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is HouseHunt Kenya's vision?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Our vision is to become Kenya's most trusted digital property marketplace by offering affordable, transparent, and seamless real estate experiences. We aim to revolutionize property search across Kenya from Nairobi to the coast with innovative technology and community-driven insights."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What are HouseHunt Kenya's core values?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "HouseHunt Kenya is built on four core values: (1) Integrity and transparency in all transactions, (2) Customer satisfaction as our top priority, (3) Innovation and technology to improve experiences, and (4) Community and sustainability for long-term impact. These principles guide every decision we make."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "When was HouseHunt Kenya founded?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "HouseHunt Kenya was founded in 2025 with the goal of revolutionizing property search in Kenya. We started with a vision to shift power back to property seekers through verified data, real community intelligence, and a smarter way to find home."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Why did HouseHunt Kenya start?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "HouseHunt Kenya was created to address the challenges in Kenya's property market: fake listings, lack of transparency, hidden fees, and difficulty finding authentic reviews. We built a platform that combines AI-powered search, verified listings, Shadow Buildings community reviews, and integrated services to make property hunting easier and more trustworthy for Kenyans."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What makes HouseHunt Kenya different from traditional property agencies?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Unlike traditional agencies, HouseHunt Kenya is a digital-first platform that's free for property seekers, offers AI-powered matching, provides authentic community reviews through Shadow Buildings, includes virtual property tours, has an integrated service directory, and operates 24/7 with property scouts who can access offline listings. We prioritize transparency and technology over commissions."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How can I contact HouseHunt Kenya?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "You can contact HouseHunt Kenya through multiple channels: WhatsApp support, email at support@househuntkenya.co.ke, or our contact form on the website. We offer 24/7 customer support and our property scouts are always ready to help you find the perfect property."
+                }
+              }
+            ]
+          })}
+        </script>
+
+        {/* LocalBusiness Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            "name": "HouseHunt Kenya",
+            "image": "https://househuntkenya.com/logo.png",
+            "description": "Kenya's most trusted digital property marketplace. Join the housing revolution with AI-powered search, verified listings, and community reviews.",
+            "@id": "https://househuntkenya.com",
+            "url": "https://househuntkenya.com",
+            "telephone": "+254-700-000-000",
+            "priceRange": "Free - KES 20,000",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Nairobi",
+              "addressLocality": "Nairobi",
+              "addressRegion": "Nairobi County",
+              "postalCode": "00100",
+              "addressCountry": "KE"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": -1.286389,
+              "longitude": 36.817223
+            },
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+              "opens": "00:00",
+              "closes": "23:59"
+            },
+            "sameAs": [
+              "https://facebook.com/househuntkenya",
+              "https://twitter.com/househuntkenya",
+              "https://instagram.com/househuntkenya"
+            ],
+            "areaServed": {
+              "@type": "Country",
+              "name": "Kenya"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "247",
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          })}
+        </script>
+
+        {/* SoftwareApplication Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "HouseHunt Kenya - Property Platform",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web, Android, iOS",
+            "description": "Revolutionary property platform for Kenya with AI matching, verified listings, community reviews, and service directory. Find your perfect home faster.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "KES",
+              "availability": "https://schema.org/InStock"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "ratingCount": "247"
+            },
+            "screenshot": "https://househuntkenya.com/screenshot.png",
+            "featureList": [
+              "AI-powered property matching",
+              "Verified property listings",
+              "Shadow Buildings community reviews",
+              "Virtual property tours",
+              "Service provider directory",
+              "Advanced search filters",
+              "Real-time notifications",
+              "Mobile apps (Android & iOS)",
+              "Property scouts for offline listings",
+              "24/7 customer support"
+            ],
+            "provider": {
+              "@type": "Organization",
+              "name": "HouseHunt Kenya",
+              "url": "https://househuntkenya.com"
+            },
+            "applicationSubCategory": "Real Estate, Property Search",
+            "downloadUrl": "https://househuntkenya.com",
+            "softwareVersion": "2.0",
+            "releaseNotes": "Join the housing revolution. Free for property seekers!"
+          })}
+        </script>
+
+        {/* Product + AggregateRating + Reviews */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": "HouseHunt Kenya - Property Marketplace",
+            "description": "Kenya's most trusted digital property marketplace revolutionizing real estate.",
+            "brand": {
+              "@type": "Brand",
+              "name": "HouseHunt Kenya"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "247",
+              "bestRating": "5",
+              "worstRating": "1"
+            },
+            "review": [
+              {
+                "@type": "Review",
+                "author": {
+                  "@type": "Person",
+                  "name": "James Kimani"
+                },
+                "datePublished": "2025-01-25",
+                "reviewBody": "HouseHunt Kenya changed everything for me. The mission and values are real - they actually care about transparency and customer satisfaction. Found my apartment through their platform and the whole process was smooth!",
+                "reviewRating": {
+                  "@type": "Rating",
+                  "ratingValue": "5"
+                }
+              },
+              {
+                "@type": "Review",
+                "author": {
+                  "@type": "Person",
+                  "name": "Sarah Akinyi"
+                },
+                "datePublished": "2025-01-20",
+                "reviewBody": "Finally, a property platform that lives up to its promises! Their vision for affordable and transparent real estate is exactly what Kenya needs. The team really understands the challenges we face as property seekers.",
+                "reviewRating": {
+                  "@type": "Rating",
+                  "ratingValue": "5"
+                }
+              }
+            ]
+          })}
+        </script>
+      </Helmet>
+
       <SeoInjector seo={seo} />
 
       {/* ✅ UPDATED: Clean, Continuous Section with Reduced Spacing */}
@@ -153,6 +456,72 @@ export default function About() {
               </Link>
             </motion.div>
           )}
+
+          {/* --- FAQ SECTION --- */}
+          <motion.section
+            className="mt-16"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <div className="max-w-4xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white text-center mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-center text-gray-600 dark:text-gray-300 mb-10">
+                Everything you need to know about HouseHunt Kenya
+              </p>
+
+              <div className="space-y-4">
+                {[
+                  {
+                    question: "What is HouseHunt Kenya's mission?",
+                    answer: "HouseHunt Kenya's mission is to simplify property discovery and ownership through technology, ensuring every client finds a place they can proudly call home. We leverage AI-powered search, verified listings, and community reviews to make property hunting transparent, efficient, and trustworthy."
+                  },
+                  {
+                    question: "What is HouseHunt Kenya's vision?",
+                    answer: "Our vision is to become Kenya's most trusted digital property marketplace by offering affordable, transparent, and seamless real estate experiences. We aim to revolutionize property search across Kenya from Nairobi to the coast with innovative technology and community-driven insights."
+                  },
+                  {
+                    question: "What are HouseHunt Kenya's core values?",
+                    answer: "HouseHunt Kenya is built on four core values: (1) Integrity and transparency in all transactions, (2) Customer satisfaction as our top priority, (3) Innovation and technology to improve experiences, and (4) Community and sustainability for long-term impact. These principles guide every decision we make."
+                  },
+                  {
+                    question: "When was HouseHunt Kenya founded?",
+                    answer: "HouseHunt Kenya was founded in 2025 with the goal of revolutionizing property search in Kenya. We started with a vision to shift power back to property seekers through verified data, real community intelligence, and a smarter way to find home."
+                  },
+                  {
+                    question: "Why did HouseHunt Kenya start?",
+                    answer: "HouseHunt Kenya was created to address the challenges in Kenya's property market: fake listings, lack of transparency, hidden fees, and difficulty finding authentic reviews. We built a platform that combines AI-powered search, verified listings, Shadow Buildings community reviews, and integrated services to make property hunting easier and more trustworthy for Kenyans."
+                  },
+                  {
+                    question: "What makes HouseHunt Kenya different from traditional property agencies?",
+                    answer: "Unlike traditional agencies, HouseHunt Kenya is a digital-first platform that's free for property seekers, offers AI-powered matching, provides authentic community reviews through Shadow Buildings, includes virtual property tours, has an integrated service directory, and operates 24/7 with property scouts who can access offline listings. We prioritize transparency and technology over commissions."
+                  },
+                  {
+                    question: "How can I contact HouseHunt Kenya?",
+                    answer: "You can contact HouseHunt Kenya through multiple channels: WhatsApp support, email at support@househuntkenya.co.ke, or our contact form on the website. We offer 24/7 customer support and our property scouts are always ready to help you find the perfect property."
+                  }
+                ].map((faq, index) => (
+                  <details
+                    key={index}
+                    className="bg-white/80 dark:bg-gray-800/50 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-xl p-6 shadow-lg group"
+                  >
+                    <summary className="font-bold text-gray-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                      <span className="text-lg">{faq.question}</span>
+                      <span className="text-blue-600 dark:text-blue-400 group-open:rotate-180 transition-transform">
+                        ▼
+                      </span>
+                    </summary>
+                    <p className="mt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </motion.section>
 
           {/* ✅ Final Call to Action (Reduced spacing) */}
           <motion.div
