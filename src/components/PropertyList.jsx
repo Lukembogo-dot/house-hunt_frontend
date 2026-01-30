@@ -205,7 +205,20 @@ export default function PropertyList({
                         <h3 className="text-2xl font-black mb-3 leading-tight tracking-tight drop-shadow-md">
                           Are You Managing Properties?
                         </h3>
-                        <p className="text-sm text-blue-100 font-medium">We have an exclusive offer for pros.</p>
+                        <p className="text-sm text-blue-100 font-medium mb-2">We have an exclusive offer for pros.</p>
+
+                        {/* Free 6 Months Highlight */}
+                        <div className="bg-yellow-400/20 backdrop-blur-md border border-yellow-300/30 rounded-lg px-4 py-2 mb-4">
+                          <p className="text-yellow-200 text-xs font-black uppercase tracking-wide">🎁 Limited Time Offer</p>
+                          <p className="text-yellow-100 text-lg font-black">FREE for First 6 Months!</p>
+                        </div>
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate('/pricing'); }}
+                          className="bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/40 text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all shadow-lg flex items-center gap-2 mx-auto"
+                        >
+                          <FaHandHoldingUsd /> Check Our Rates
+                        </button>
                       </>
                     }
                     backContent={
@@ -215,8 +228,9 @@ export default function PropertyList({
                         <span className="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wide shadow-sm">
                           Limited Time Offer
                         </span>
-                        <p className="text-sm text-gray-600 dark:text-gray-200 mb-8 leading-relaxed font-medium">
-                          Be seen by thousands of serious renters. Post unlimited listings for FREE before we switch to paid plans.
+                        <p className="text-sm mb-6 leading-relaxed">
+                          Post unlimited properties, access premium features, and grow your business.
+                          <span className="block mt-2 font-bold text-blue-600 dark:text-blue-400">✨ Sign up now - First 6 months absolutely FREE!</span>
                         </p>
                         <button
                           onClick={(e) => { e.stopPropagation(); navigate('/login'); }}

@@ -47,6 +47,7 @@ const FaqDetails = lazy(() => import('../../pages/FaqDetails'));
 const FaqIndex = lazy(() => import('../../pages/FaqIndex'));
 const PaymentSuccess = lazy(() => import('../../pages/PaymentSuccess'));
 const PaymentCancel = lazy(() => import('../../pages/PaymentCancel'));
+const Pricing = lazy(() => import('../../pages/Pricing'));
 
 // Agent Route
 import AgentRoute from "../AgentRoute";
@@ -71,6 +72,7 @@ const AppRoutesConfig = ({ homeElement }) => {
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/for-agents" element={<ForAgents />} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="/find-my-neighbourhood" element={<NeighbourhoodQuiz />} />
       <Route path="/tools/cost-of-living" element={<CostOfLivingCalculator />} />
       <Route path="/search/:listingType/:propertyType/:location/:bedrooms" element={<DynamicSearchPage />} />
