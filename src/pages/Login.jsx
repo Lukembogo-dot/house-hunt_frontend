@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import apiClient from "../api/axios";
 import { useAuth } from "../context/AuthContext";
-import { motion, AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 import { FaSpinner, FaShieldAlt, FaKey, FaUserCheck, FaArrowRight, FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
 
 // ✅ 1. Import Google Login Component
@@ -85,7 +86,7 @@ const Login = () => {
       } else {
         setError("Account not found. Please register first.");
       }
-    } catch (err) {
+    } catch {
       setError("Connection failed. Please try again.");
     } finally {
       setSubmitting(false);
@@ -172,7 +173,7 @@ const Login = () => {
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
 
-    } catch (err) {
+    } catch {
       setError("Invalid code. Please try again.");
       setSubmitting(false);
     }
@@ -301,6 +302,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoFocus
+                    autoComplete="off"
                   />
                 </div>
                 <button

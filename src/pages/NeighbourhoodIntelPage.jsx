@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import apiClient from '../api/axios';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import { FaStar, FaBuilding, FaUserTie, FaPencilAlt, FaExclamationTriangle, FaUtensils, FaTools, FaCommentAlt } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 // ✅ 1. IMPORT THE FEATURE FLAG HOOK
 import { useFeatureFlag } from '../context/FeatureFlagContext';
 // ✅ 2. IMPORT THE AUTH HOOK
 import { useAuth } from '../context/AuthContext';
+import DOMPurify from 'dompurify';
 
 // --- Reusable Helper Functions ---
 const capitalize = (s) => {
@@ -35,10 +36,10 @@ const ServicePostCard = ({ post }) => (
     className="block bg-white dark:bg-gray-800 rounded-lg shadow-md border dark:border-gray-700 overflow-hidden transition-all hover:shadow-xl"
   >
     {post.imageUrl && (
-      <img 
-        src={post.imageUrl} 
-        alt={post.title} 
-        className="h-48 w-full object-cover" 
+      <img
+        src={post.imageUrl}
+        alt={post.title}
+        className="h-48 w-full object-cover"
       />
     )}
     <div className="p-5">
@@ -59,17 +60,17 @@ const ServicePostCard = ({ post }) => (
       <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
         {post.title}
       </h3>
-      <div 
+      <div
         className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3"
-        dangerouslySetInnerHTML={{ __html: post.content.replace(/<[^>]+>/g, '') }} // Basic strip HTML for preview
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content, { ALLOWED_TAGS: [] }) }} // Safe strip using DOMPurify
       />
-      
+
       {/* ✅ 3. ADDED AUTHOR DISPLAY BLOCK --- */}
       <div className="flex items-center mt-4 pt-4 border-t dark:border-gray-700">
         {post.author ? (
           <>
-            <img 
-              src={post.author.profilePicture || `https://ui-avatars.com/api/?name=${post.author.name}&background=random`} 
+            <img
+              src={post.author.profilePicture || `https://ui-avatars.com/api/?name=${post.author.name}&background=random`}
               alt={post.author.name}
               className="w-8 h-8 rounded-full object-cover mr-2"
             />
@@ -106,10 +107,10 @@ const EmptyState = ({ location, topic, isUgcEnabled }) => ( // ✅ 4. PASS IN FL
     <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
       Be the first to share your knowledge! Your insights help build a safer, smarter, and more connected community.
     </p>
-    
+
     {/* ✅ 5. UPDATE LINK TO BE DYNAMIC --- */}
     <Link
-      to={isUgcEnabled ? "/create-intel-post" : "/contact"} 
+      to={isUgcEnabled ? "/create-intel-post" : "/contact"}
       className="inline-block bg-blue-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-blue-700 transition-transform hover:scale-105 shadow-lg"
     >
       {isUgcEnabled ? "Share Your Intel" : "Contact Us"}
@@ -122,11 +123,11 @@ const EmptyState = ({ location, topic, isUgcEnabled }) => ( // ✅ 4. PASS IN FL
 export default function NeighbourhoodIntelPage() {
   // 1. Read location and topic from the URL
   const { location: locationParam, topic: topicParam } = useParams();
-  
+
   // ✅ 6. GET USER AND FEATURE FLAG STATUS
   const { user } = useAuth();
   const isUgcEnabled = useFeatureFlag('user-generated-intel');
-  
+
   // Clean up params
   const location = capitalize(locationParam) || 'Kenya';
   const topic = topicParam || 'reviews'; // Default to 'reviews'
@@ -140,30 +141,28 @@ export default function NeighbourhoodIntelPage() {
     h1: `Loading ${location}...`
   });
 
-  // 3. Generate Default SEO based on topic
-  const generateDefaultSeo = () => {
-    // ... (This function is unchanged) ...
-    const topicHeadlines = {
-      'safety': `Safety, Security & Alerts in ${location}`,
-      'lifestyle': `Lifestyle, Restaurants & Cafes in ${location}`,
-      'services': `Home Services & Utilities in ${location}`,
-      'reviews': `Reviews & Guides for Living in ${location}`
-    };
-    const topicDescriptions = {
-      'safety': `Get the latest safety updates, security tips, and community alerts for ${location}. Stay informed with HouseHunt.`,
-      'lifestyle': `Discover the best restaurants, cafes, nightlife, and leisure spots in ${location}.`,
-      'services': `Find top-rated home services in ${location}, from internet providers and plumbers to laundry and cleaning.`,
-      'reviews': `Read honest reviews, pros & cons, and guides for living in ${location}. Find your perfect neighbourhood.`
-    };
-    const h1 = topicHeadlines[topic] || `${capitalize(topic)} in ${location}`;
-    const title = `${h1} | HouseHunt Kenya`;
-    const description = topicDescriptions[topic] || `Get the latest intel on ${topic} in ${location} on HouseHunt Kenya.`;
-    return { title, description, h1 };
-  };
-
   // 4. useEffect to fetch both SEO and Post data
   useEffect(() => {
-    // ... (This function is unchanged) ...
+    // 3. Generate Default SEO based on topic (Moved inside useEffect)
+    const generateDefaultSeo = () => {
+      const topicHeadlines = {
+        'safety': `Safety, Security & Alerts in ${location}`,
+        'lifestyle': `Lifestyle, Restaurants & Cafes in ${location}`,
+        'services': `Home Services & Utilities in ${location}`,
+        'reviews': `Reviews & Guides for Living in ${location}`
+      };
+      const topicDescriptions = {
+        'safety': `Get the latest safety updates, security tips, and community alerts for ${location}. Stay informed with HouseHunt.`,
+        'lifestyle': `Discover the best restaurants, cafes, nightlife, and leisure spots in ${location}.`,
+        'services': `Find top-rated home services in ${location}, from internet providers and plumbers to laundry and cleaning.`,
+        'reviews': `Read honest reviews, pros & cons, and guides for living in ${location}. Find your perfect neighbourhood.`
+      };
+      const h1 = topicHeadlines[topic] || `${capitalize(topic)} in ${location}`;
+      const title = `${h1} | HouseHunt Kenya`;
+      const description = topicDescriptions[topic] || `Get the latest intel on ${topic} in ${location} on HouseHunt Kenya.`;
+      return { title, description, h1 };
+    };
+
     const defaultSeo = generateDefaultSeo();
     setSeo(defaultSeo);
     setLoading(true);
@@ -179,8 +178,8 @@ export default function NeighbourhoodIntelPage() {
           description: data.metaDescription || prev.description,
           h1: data.h1Tag || prev.h1
         }));
-      } catch (error) {
-        console.warn(`No manual SEO for ${pagePath}. Using defaults.`);
+      } catch {
+        // console.warn(`No manual SEO for ${pagePath}. Using defaults.`);
       }
 
       try {
@@ -192,23 +191,23 @@ export default function NeighbourhoodIntelPage() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
-  }, [locationParam, topicParam, location]); // Re-run if the URL changes
+  }, [locationParam, topicParam, location, topic]); // Added topic to dependency
 
   return (
     <>
       <SeoInjector seo={seo} />
-      
+
       <div className="container mx-auto max-w-7xl px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* --- Main Content (Column 1) --- */}
           <div className="lg:col-span-2">
-          
+
             {/* ✅ 7. ADDED FLEX WRAPPER FOR H1 AND NEW BUTTON --- */}
             <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-              <motion.h1 
+              <motion.h1
                 className="text-3xl md:text-4xl font-extrabold text-gray-800 dark:text-gray-100"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -229,7 +228,7 @@ export default function NeighbourhoodIntelPage() {
               )}
             </div>
             {/* --- END OF FLEX WRAPPER --- */}
-            
+
             {loading ? (
               // --- Loading State ---
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -251,18 +250,18 @@ export default function NeighbourhoodIntelPage() {
               </div>
             ) : (
               // --- No Posts Found (Empty Page Solution) ---
-              <EmptyState 
-                location={location} 
-                topic={topic} 
+              <EmptyState
+                location={location}
+                topic={topic}
                 isUgcEnabled={isUgcEnabled} // ✅ 9. PASS THE FLAG DOWN
               />
             )}
           </div>
-          
+
           {/* --- Sidebar (Column 2) - THE MOAT --- */}
           <aside className="lg:col-span-1 space-y-8 lg:mt-20">
             {/* --- Cross-link to Property Engine --- */}
-            <motion.div 
+            <motion.div
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border dark:border-gray-700"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -275,16 +274,16 @@ export default function NeighbourhoodIntelPage() {
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 See what's available for rent or sale in this neighbourhood right now.
               </p>
-              <Link 
+              <Link
                 to={`/search/rent/${locationParam}`}
                 className="block text-center font-semibold bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 transition"
               >
                 Browse Properties
               </Link>
             </motion.div>
-            
+
             {/* --- Cross-link to Agent Engine --- */}
-            <motion.div 
+            <motion.div
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border dark:border-gray-700"
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -297,7 +296,7 @@ export default function NeighbourhoodIntelPage() {
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Find the most active and top-rated real estate agents for {location}.
               </p>
-              <Link 
+              <Link
                 to={`/agents/${locationParam}`}
                 className="block text-center font-semibold bg-gray-700 text-white py-2.5 rounded-lg hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 transition"
               >
@@ -305,7 +304,7 @@ export default function NeighbourhoodIntelPage() {
               </Link>
             </motion.div>
           </aside>
-          
+
         </div>
       </div>
     </>

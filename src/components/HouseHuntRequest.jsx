@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Truck, CheckCircle, Clock, ArrowRight, Sparkles, Users, TrendingUp, Star } from 'lucide-react';
 import axios from 'axios';
@@ -24,8 +25,8 @@ const HouseHuntRequest = ({ compact = false }) => {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    // Only fetch ticker data if NOT compact mode (optimization)
-    if (compact) return;
+    // Fetch ticker data even in compact mode (horizontal ticker)
+    // if (compact) return;
 
     const fetchRecent = async () => {
       try {
@@ -61,7 +62,9 @@ const HouseHuntRequest = ({ compact = false }) => {
       setFormData({ name: '', phone: '', email: '', category: 'Property', details: '' });
 
       // No need to update ticker if compact
-      if (!compact) {
+      // Update ticker even if compact
+      // eslint-disable-next-line no-constant-condition
+      if (true) {
         const newLead = {
           name: formData.name,
           category: activeTab === 'property' ? 'Property' : formData.category,
@@ -89,7 +92,7 @@ const HouseHuntRequest = ({ compact = false }) => {
   ];
 
   return (
-    <section className={`relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 ${compact ? 'py-8 rounded-2xl border border-blue-100 dark:border-blue-900' : 'py-20'}`}>
+    <section className={`relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 ${compact ? 'py-4 px-2 rounded-xl border border-blue-100 dark:border-blue-900' : 'py-20'}`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -117,7 +120,7 @@ const HouseHuntRequest = ({ compact = false }) => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className={`text-center ${compact ? 'mb-8' : 'mb-16'}`}
+          className={`text-center ${compact ? 'mb-4' : 'mb-16'}`}
         >
           <motion.div
             initial={{ scale: 0.9 }}
@@ -131,17 +134,54 @@ const HouseHuntRequest = ({ compact = false }) => {
             </span>
           </motion.div>
 
-          <h2 className={`${compact ? 'text-3xl' : 'text-4xl md:text-5xl'} font-black text-gray-900 dark:text-white mb-6 leading-tight`}>
-            Can't Find What You're{' '}
+          <h2 className={`${compact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-black text-gray-900 dark:text-white mb-6 leading-tight`}>
+            Sit Back &{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-              Looking For?
+              Relax.
             </span>
+            <br />
+            We'll Find It For You.
           </h2>
 
           <p className={`${compact ? 'text-base' : 'text-xl'} text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed`}>
-            Our expert scouts will do the legwork. Just tell us what you need, and we'll find the perfect match.
+            Don't stress over the search. Tell us what you need, and our expert scouts will do the legwork to find your perfect match.
           </p>
         </motion.div>
+
+        {/* --- COMPACT MODE HORIZONTAL TICKER --- */}
+        {compact && recentLeads.length > 0 && (
+          <div className="mb-4 max-w-4xl mx-auto overflow-hidden relative group">
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-blue-50 via-purple-50 to-transparent dark:from-gray-950 dark:to-transparent z-10"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-pink-50 via-purple-50 to-transparent dark:from-gray-950 dark:to-transparent z-10"></div>
+
+            <motion.div
+              className="flex items-center gap-4 whitespace-nowrap"
+              animate={{ x: [0, -100 * recentLeads.length] }}
+              transition={{
+                x: {
+                  repeat: Infinity,
+                  repeatType: "loop",
+                  duration: Math.max(20, recentLeads.length * 5),
+                  ease: "linear",
+                },
+              }}
+            >
+              {[...recentLeads, ...recentLeads].map((lead, i) => (
+                <div key={i} className="inline-flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm px-3 py-1.5 rounded-full border border-gray-200/50 dark:border-gray-700/50 shadow-sm text-xs">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-[10px] shrink-0 ${['Property'].includes(lead.category) ? 'bg-blue-600' : 'bg-orange-500'}`}>
+                    {lead.name && lead.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    <span className="font-bold">{lead.name}</span> requested <span className="font-semibold text-blue-600 dark:text-blue-400">{lead.category}</span>
+                  </span>
+                  <span className="text-gray-400 dark:text-gray-500 text-[10px] ml-1">
+                    {lead.createdAt && !isNaN(new Date(lead.createdAt)) ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true }) : 'Just now'}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        )}
 
         {/* Stats Bar (Hidden in Compact Mode) */}
         {!compact && (
@@ -180,7 +220,7 @@ const HouseHuntRequest = ({ compact = false }) => {
             {/* Glow Effect */}
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
 
-            <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/60 dark:border-gray-700/50">
+            <div className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-gray-700/50 ${compact ? 'p-5' : 'p-8'}`}>
               {/* Header */}
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-3 flex items-center gap-3">

@@ -9,13 +9,14 @@ import { format, formatDistanceToNow } from 'date-fns';
 
 // ✅ IMPORT THE NEW CARD COMPONENT
 import CommunityPostCard from '../components/Community/CommunityPostCard';
+import DOMPurify from 'dompurify';
 
 const CommunityPost = () => {
   const { slug } = useParams();
   const { user } = useAuth();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [, setError] = useState('');
 
   // Interaction State
   const [replyContent, setReplyContent] = useState('');
@@ -93,7 +94,7 @@ const CommunityPost = () => {
       setPost(prev => ({ ...prev, replies: updatedReplies }));
       setReplyContent('');
       setReplyAuthorName('');
-    } catch (err) {
+    } catch {
       alert("Failed to post reply. Please try again.");
     } finally {
       setSubmittingReply(false);
@@ -179,7 +180,7 @@ const CommunityPost = () => {
             <div className="p-8 md:p-10">
               <div
                 className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: post.processedContent }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.processedContent) }}
               />
             </div>
 

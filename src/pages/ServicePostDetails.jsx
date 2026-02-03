@@ -1,15 +1,13 @@
-// src/pages/ServicePostDetails.jsx
-// (UPDATED: Merged Blog Logic with Provider Contact Features)
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
+// import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; // 🗑️ Unused
 import { FaStar, FaUserAlt, FaLightbulb, FaPhone, FaWhatsapp, FaMapMarkerAlt, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import DOMPurify from 'dompurify';
 
 // Re-usable Star Rating Component
 const StarRating = ({ rating }) => {
@@ -24,6 +22,8 @@ const StarRating = ({ rating }) => {
     </div>
   );
 };
+
+
 
 // ✅ 1. REBUILT SEO INJECTOR (FIXES FAQ + CANONICAL URL ISSUES)
 const ServiceSeoInjector = ({ service }) => {
@@ -141,7 +141,7 @@ const ServicePostDetails = () => {
   const [submitting, setSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
-  const fetchService = async () => {
+  const fetchService = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -153,11 +153,17 @@ const ServicePostDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
   useEffect(() => {
     fetchService();
-  }, [slug]);
+  }, [fetchService]);
+
+  /* 
+  const fetchService = async () => {
+     // ... moved inside useEffect
+  };
+  */
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -300,7 +306,7 @@ const ServicePostDetails = () => {
                 animate="visible"
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <div dangerouslySetInnerHTML={{ __html: service.content }} />
+                <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(service.content) }} />
               </motion.article>
 
               <motion.div
@@ -488,7 +494,7 @@ const ServicePostDetails = () => {
 
           </div>
         </div>
-      </div>
+      </div >
     </>
   );
 };

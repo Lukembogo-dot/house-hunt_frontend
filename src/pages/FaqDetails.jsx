@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 // ✅ 1. IMPORT PROPERTY LIST
 import PropertyList from '../components/PropertyList';
+import DOMPurify from 'dompurify';
 
 // --- SEO COMPONENT (Updated to QAPage for Single Q&A Pages) ---
 const FaqSeoInjector = ({ faq }) => {
@@ -305,7 +306,7 @@ const FaqDetails = () => {
                 <div className="p-8">
                   <div
                     className={answerContentClass}
-                    dangerouslySetInnerHTML={{ __html: decodeHtml(faq.answer) }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(decodeHtml(faq.answer)) }}
                   />
                 </div>
 
