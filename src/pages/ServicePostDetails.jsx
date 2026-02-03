@@ -8,6 +8,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import DOMPurify from 'dompurify';
+import Breadcrumbs from '../components/Breadcrumbs';
+import ServiceCard from '../components/services/ServiceCard';
 
 // Re-usable Star Rating Component
 const StarRating = ({ rating }) => {
@@ -141,6 +143,8 @@ const ServicePostDetails = () => {
   const [submitting, setSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
+  const [relatedServices, setRelatedServices] = useState([]);
+
   const fetchService = useCallback(async () => {
     try {
       setLoading(true);
@@ -158,6 +162,23 @@ const ServicePostDetails = () => {
   useEffect(() => {
     fetchService();
   }, [fetchService]);
+
+  useEffect(() => {
+    if (service && service.serviceType) {
+      const fetchRelated = async () => {
+        try {
+          // Fetch all for now and filter client-side as per Services.jsx pattern
+          const { data } = await apiClient.get('/service-providers?limit=20');
+          const allServices = data.providers || data || [];
+          const related = allServices
+            .filter(s => s.serviceType === service.serviceType && s._id !== service._id)
+            .slice(0, 3);
+          setRelatedServices(related);
+        } catch (err) { console.error("Error fetching related services:", err); }
+      };
+      fetchRelated();
+    }
+  }, [service]);
 
   /* 
   const fetchService = async () => {
@@ -236,6 +257,7 @@ const ServicePostDetails = () => {
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-10 px-4 sm:px-6 lg:px-8 font-inter">
         <div className="max-w-6xl mx-auto">
+          <Breadcrumbs />
 
           {/* --- HEADER SECTION --- */}
           <motion.header
@@ -441,6 +463,19 @@ const ServicePostDetails = () => {
                   )}
                 </section>
               </motion.div>
+
+              {relatedServices.length > 0 && (
+                <section className="mt-16 pt-10 border-t border-gray-200 dark:border-gray-800">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                    Similar Services
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {relatedServices.map(s => (
+                      <ServiceCard key={s._id} service={s} />
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* --- RIGHT COLUMN: STICKY SIDEBAR --- */}

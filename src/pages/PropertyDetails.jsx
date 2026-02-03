@@ -4,17 +4,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import apiClient from "../api/axios";
-import { extractVideoThumbnail } from "../utils/videoUtils";
+
 import {
-  FaStar, FaTimes, FaRegHeart, FaHeart,
-  FaSchool, FaHospital, FaShoppingCart, FaUtensils,
-  FaShoppingBag, FaShieldAlt, FaHotel, FaTree, FaLandmark,
   FaGem, FaPlay, FaMapMarkerAlt, FaBus, FaWifi, FaImages,
   FaHome, FaBuilding, FaArrowRight
 } from "react-icons/fa";
 
 import { useAuth } from "../context/AuthContext";
 import PropertyCard from "../components/PropertyCard";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import useSeoData from "../hooks/useSeoData";
@@ -40,41 +38,13 @@ const sectionVariants = {
   }
 };
 
-const placeIconMap = {
-  school: { icon: <FaSchool className="text-green-500" />, label: "School" },
-  hospital: { icon: <FaHospital className="text-red-500" />, label: "Hospital" },
-  supermarket: { icon: <FaShoppingCart className="text-orange-500" />, label: "Supermarket" },
-  restaurant: { icon: <FaUtensils className="text-yellow-500" />, label: "Restaurant" },
-  shopping_mall: { icon: <FaShoppingBag className="text-purple-500" />, label: "Mall" },
-  police: { icon: <FaShieldAlt className="text-blue-500" />, label: "Police" },
-  lodging: { icon: <FaHotel className="text-cyan-500" />, label: "Hotel" },
-  park: { icon: <FaTree className="text-green-700" />, label: "Park" },
-  tourist_attraction: { icon: <FaLandmark className="text-yellow-700" />, label: "Attraction" },
-  default: { icon: <FaStar className="text-gray-400" />, label: "Place" },
-};
 
-const placeholderImage = "https://placehold.co/1000x600/e2e8f0/64748b?text=No+Image+Available";
 
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c;
-  return d.toFixed(1);
-}
 
-const getSafeImageDetails = (imagesArray, propertyTitle) => {
-  if (!Array.isArray(imagesArray) || imagesArray.length === 0) return [];
-  return imagesArray.map((img, index) => {
-    if (typeof img === 'string') return { url: img, altText: `${propertyTitle} image ${index + 1}` };
-    return { url: img.url, altText: img.altText || `${propertyTitle} image ${index + 1}` };
-  });
-};
+
+
+
+
 
 // --- INTERNAL COMPONENTS (Modal, SEO & Video) ---
 
@@ -248,52 +218,24 @@ const PropertyDetails = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [activeImage, setActiveImage] = useState(null);
+
   const [agentProperties, setAgentProperties] = useState([]);
-  const [nearbyPlaces, setNearbyPlaces] = useState([]);
-  const [loadingPlaces, setLoadingPlaces] = useState(true);
-  const [amenitiesPage, setAmenitiesPage] = useState(1);
-  const [selectedPlace, setSelectedPlace] = useState(null);
-  const itemsPerPage = 8;
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [isStartingChat, setIsStartingChat] = useState(false);
-  const [localServices, setLocalServices] = useState([]);
-  const [viewId, setViewId] = useState(null);
-  const [schemaFaqs, setSchemaFaqs] = useState([]); // ✅ Store FAQs for SEO
 
   const pagePath = `/properties/${slug}`;
-  const { seo, loading: seoLoading } = useSeoData(pagePath, 'Property Listing | HouseHunt Kenya', 'View details for this property.');
+  const { seo } = useSeoData(pagePath, 'Property Listing | HouseHunt Kenya', 'View details for this property.');
 
   const handleLogLead = () => { if (property?._id) apiClient.post(`/properties/${property._id}/log-lead`).catch(err => console.error(err)); };
-  const safeImageDetails = property ? getSafeImageDetails(property.images, property.title) : [];
-  const allImageUrls = safeImageDetails.map(img => img.url);
 
-  // Logic: Determine if image section should be shown
-  const hasImages = allImageUrls.length > 0;
-  const hasVideo = property?.video && property.video.length > 0;
 
-  const fetchPropertyData = async () => {
+  const fetchPropertyData = React.useCallback(async () => {
     try {
       setLoading(true); setAgentProperties([]);
       const propertyRes = await apiClient.get(`/properties/slug/${slug}`);
       const propData = propertyRes.data;
       setProperty(propData);
-      if (propData.viewId) setViewId(propData.viewId); // ✅ Capture Session ID
-
-      const imagesList = getSafeImageDetails(propData.images, propData.title);
-      const urlsList = imagesList.map(img => img.url);
-
-      // ✅ LOGIC: Use video thumbnail as fallback if no images exist
-      if (urlsList.length > 0) {
-        setActiveImage(urlsList[0]);
-      } else if (propData.video) {
-        // Extract video thumbnail for display when no property images
-        const videoThumb = extractVideoThumbnail(propData.video);
-        setActiveImage(videoThumb || placeholderImage);
-      } else {
-        setActiveImage(placeholderImage);
-      }
 
       if (propData.agent && propData.agent._id) {
         const agentRes = await apiClient.get(`/properties/by-agent/${propData.agent._id}`);
@@ -312,23 +254,11 @@ const PropertyDetails = () => {
         window.prerenderReady = true;
       }
     }
-  };
+  }, [slug]);
 
-  useEffect(() => { fetchPropertyData(); }, [slug]);
+  useEffect(() => { fetchPropertyData(); }, [fetchPropertyData]);
 
-  useEffect(() => {
-    if (property && property.coordinates?.lat) {
-      const fetchNearbyPlaces = async () => {
-        try {
-          setLoadingPlaces(true);
-          const { lat, lng } = property.coordinates;
-          const { data } = await apiClient.get(`/maps/nearby?lat=${lat}&lng=${lng}`);
-          setNearbyPlaces(data.sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name)));
-        } catch (error) { console.error("Failed to fetch places:", error); } finally { setLoadingPlaces(false); }
-      };
-      fetchNearbyPlaces();
-    } else if (property) { setLoadingPlaces(false); }
-  }, [property]);
+
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -346,12 +276,7 @@ const PropertyDetails = () => {
     if (isFavorited) { removeFavoriteContext(property._id); } else { addFavoriteContext(property._id); }
   };
 
-  const totalPages = Math.ceil(nearbyPlaces.length / itemsPerPage);
-  const currentAmenities = nearbyPlaces.slice((amenitiesPage - 1) * itemsPerPage, amenitiesPage * itemsPerPage);
-  const handleAmenityClick = (place) => {
-    const distance = getDistance(property.coordinates.lat, property.coordinates.lng, place.location.lat, place.location.lng);
-    setSelectedPlace({ ...place, distance });
-  };
+
 
   const handleScheduleClick = () => {
     if (!user) { navigate('/login', { state: { from: location.pathname } }); return; }
@@ -530,7 +455,7 @@ const PropertyDetails = () => {
 
   return (
     <>
-      <PropertySeoInjector seo={seo} property={property} faqs={schemaFaqs} reviews={comments} />
+      <PropertySeoInjector seo={seo} property={property} faqs={[]} reviews={comments} />
 
       {/* FULL-SCREEN IMAGE CAROUSEL */}
       <PropertyImageCarousel
@@ -879,54 +804,7 @@ const PropertyDetails = () => {
         <ScheduleModal show={showScheduleModal} onClose={() => setShowScheduleModal(false)} propertyId={property?._id} propertyTitle={property.title} />
       </AnimatePresence>
 
-      <AnimatePresence>
-        {selectedPlace && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
-            onClick={() => setSelectedPlace(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="bg-white/20 dark:bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-full p-8 relative border border-white/30 dark:border-white/20"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setSelectedPlace(null)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition hover:bg-white/10 dark:hover:bg-white/5 w-10 h-10 rounded-full flex items-center justify-center"
-              >
-                <FaTimes size={20} />
-              </button>
 
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="p-3 bg-white/30 dark:bg-white/20 rounded-xl">
-                  <span className="text-3xl">{placeIconMap[selectedPlace.type]?.icon || placeIconMap.default.icon}</span>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedPlace.name}</h3>
-                  <p className="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">{placeIconMap[selectedPlace.type]?.label || placeIconMap.default.label}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4 bg-white/20 dark:bg-white/10 rounded-2xl p-6 border border-white/30 dark:border-white/20">
-                <div>
-                  <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Proximity</p>
-                  <p className="text-gray-900 dark:text-white font-semibold text-lg">{selectedPlace.distance} km away</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Address</p>
-                  <p className="text-gray-900 dark:text-white font-semibold">{selectedPlace.vicinity}</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 };

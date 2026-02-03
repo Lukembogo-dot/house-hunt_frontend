@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { FaPlay, FaHome, FaArrowLeft, FaMapMarkerAlt, FaBed, FaExpand, FaShareAlt } from 'react-icons/fa';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import apiClient from '../api/axios';
 import { extractVideoThumbnail, generateVideoUrls, estimateVideoDuration, getVideoPlatform } from '../utils/videoUtils';

@@ -29,6 +29,8 @@ const AppFooter = () => {
           <ul className="space-y-2 text-sm">
             <li><Link to="/buy" className="hover:text-blue-400 transition">Buy</Link></li>
             <li><Link to="/rent" className="hover:text-blue-400 transition">Rent</Link></li>
+            <li><Link to="/pricing" className="hover:text-blue-400 transition">Pricing</Link></li>
+            <li><Link to="/agencies" className="hover:text-blue-400 transition">For Agents</Link></li>
 
             {/* ✅ Added Community Links */}
             <li><Link to="/community" className="hover:text-blue-400 transition">Community Stories</Link></li>
@@ -81,10 +83,12 @@ const AppFooter = () => {
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-white mb-4">Legal</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Services</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/terms-of-service" className="hover:text-blue-400 transition">Terms of Service</Link></li>
-            <li><Link to="/privacy-policy" className="hover:text-blue-400 transition">Privacy Policy</Link></li>
+            <li><Link to="/services" className="hover:text-blue-400 transition">All Services</Link></li>
+            <li><Link to="/services/movers" className="hover:text-blue-400 transition">Movers</Link></li>
+            <li><Link to="/services/internet" className="hover:text-blue-400 transition">Internet</Link></li>
+            <li><Link to="/services/cleaning" className="hover:text-blue-400 transition">Cleaning</Link></li>
           </ul>
         </div>
         <div>
