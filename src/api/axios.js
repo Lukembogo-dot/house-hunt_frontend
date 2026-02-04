@@ -35,6 +35,16 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Prevent infinite loops: If the error comes FROM the refresh endpoint OR login endpoint, don't try to refresh.
+    if (originalRequest.url.includes('/auth/refresh') || originalRequest.url.includes('/auth/login')) {
+      // Don't log out if it's just a failed login attempt, just return the error
+      if (originalRequest.url.includes('/auth/refresh')) {
+        console.error("Refresh token failed. Logging out.");
+        localStorage.removeItem('token');
+      }
+      return Promise.reject(error);
+    }
+
     // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
