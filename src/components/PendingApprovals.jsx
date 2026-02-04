@@ -78,7 +78,7 @@ const PendingApprovals = () => {
     setActionLoading(prev => ({ ...prev, [id]: true }));
     try {
       await apiClient.put(
-        `/api/admin/users/${id}/approve-call-number`,
+        `/admin/users/${id}/approve-call-number`,
         {},
         { withCredentials: true }
       );
@@ -164,8 +164,8 @@ const PendingApprovals = () => {
         <button
           onClick={() => setActiveTab('property')}
           className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium whitespace-nowrap ${activeTab === 'property'
-              ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
         >
           <FaUserEdit />
@@ -176,8 +176,8 @@ const PendingApprovals = () => {
         <button
           onClick={() => setActiveTab('agent_apps')}
           className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium whitespace-nowrap ${activeTab === 'agent_apps'
-              ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
         >
           <FaBriefcase />
@@ -187,8 +187,8 @@ const PendingApprovals = () => {
         <button
           onClick={() => setActiveTab('user')}
           className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium whitespace-nowrap ${activeTab === 'user'
-              ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
-              : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+            : 'border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
         >
           <FaUser />

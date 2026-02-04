@@ -7,7 +7,6 @@ import {
   FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaPhone,
   FaWhatsapp, FaEnvelope, FaAward
 } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
 
 // --- AGENT CAROUSEL CARD ---
 const AgentCarouselCard = ({ agent }) => {
@@ -272,7 +271,7 @@ const TopAgents = () => {
 
   if (loading) {
     return (
-      <section className="py-20 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
+      <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
@@ -332,7 +331,7 @@ const TopAgents = () => {
   }
 
   return (
-    <section className="py-20 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
+    <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -359,7 +358,7 @@ const TopAgents = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-8"
         >
           <motion.div
             initial={{ scale: 0.9 }}
@@ -447,7 +446,7 @@ const TopAgents = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mt-16"
+          className="text-center mt-8"
         >
           <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">
             Looking for more expert guidance?

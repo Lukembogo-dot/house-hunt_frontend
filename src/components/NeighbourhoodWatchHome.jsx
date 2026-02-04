@@ -5,8 +5,8 @@ import { FaStar } from 'react-icons/fa';
 
 // This is the card for a single service post
 const ServicePostCard = ({ service }) => (
-  <Link 
-    to={`/services/${service.slug}`} 
+  <Link
+    to={`/services/${service.slug}`}
     className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border dark:border-gray-700 transition-transform transform hover:-translate-y-2 hover:shadow-xl flex flex-col"
   >
     <span className="text-sm font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1 rounded-full self-start">
@@ -60,9 +60,9 @@ const NeighbourhoodWatchHome = () => {
   }
 
   return (
-    <section className="py-20 px-6 bg-white dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700">
+    <section className="py-8 px-6 bg-white dark:bg-gray-800 border-t border-b border-gray-200 dark:border-gray-700">
       <div className="container mx-auto max-w-6xl">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-6">
           Neighbourhood Watch
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

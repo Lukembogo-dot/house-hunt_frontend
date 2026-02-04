@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/axios';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // Currently unused
 import { FaQuestionCircle, FaArrowRight, FaLightbulb } from 'react-icons/fa';
 
 const HomeFaqSection = () => {
@@ -28,9 +28,9 @@ const HomeFaqSection = () => {
   if (!loading && faqs.length === 0) return null;
 
   return (
-    <section className="py-16 px-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+    <section className="py-8 px-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-10">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-6">
           <div className="max-w-2xl">
             <span className="text-blue-600 dark:text-blue-400 font-bold tracking-wider uppercase text-sm mb-2 block">
               Knowledge Hub
@@ -53,7 +53,7 @@ const HomeFaqSection = () => {
 
         {/* FAQ Grid with 3D Flip Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {faqs.map((faq, index) => {
+          {faqs.map((faq) => {
             // Helper to strip HTML and decode entities for the preview
             const getPreviewText = (html) => {
               const txt = document.createElement("textarea");

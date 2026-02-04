@@ -6,7 +6,6 @@ import {
   FaComments, FaTruck, FaIdCard, FaStar, FaUserTie,
   FaBullhorn, FaArrowRight, FaQuestionCircle, FaHandHoldingUsd, FaRocket, FaHandshake, FaTimes
 } from "react-icons/fa";
-import { motion } from "framer-motion";
 import ServiceCard from "./services/ServiceCard";
 
 const EMPTY_OBJECT = {};
@@ -94,8 +93,14 @@ export default function PropertyList({
   const [relatedServices, setRelatedServices] = useState([]);
   const navigate = useNavigate();
 
-  const stableDefaultFilter = useMemo(() => defaultFilter, [JSON.stringify(defaultFilter)]);
-  const stableFilterOverrides = useMemo(() => filterOverrides, [JSON.stringify(filterOverrides)]);
+  // Extract stringified versions for stable dependencies
+  const defaultFilterStr = JSON.stringify(defaultFilter);
+  const filterOverridesStr = JSON.stringify(filterOverrides);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- using stringified version for stable reference
+  const stableDefaultFilter = useMemo(() => defaultFilter, [defaultFilterStr]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- using stringified version for stable reference
+  const stableFilterOverrides = useMemo(() => filterOverrides, [filterOverridesStr]);
 
   const activeFilters = useMemo(() => {
     return {
@@ -143,7 +148,8 @@ export default function PropertyList({
       if (err.code !== "ERR_CANCELED") console.error("Error fetching data:", err);
     }
     setLoading(false);
-  }, [limit, JSON.stringify(excludedIds)]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- page is passed as argument, excludedIds is stable per render
+  }, [limit, excludedIds]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -342,8 +348,8 @@ export default function PropertyList({
 
       {/* --- ✅ TRUSTED PARTNERS (Conversational Redesign) --- */}
       {relatedServices.length > 0 && (
-        <div className="mt-20 pt-10 border-t dark:border-gray-700">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-10 text-center md:text-left">
+        <div className="mt-10 pt-6 border-t dark:border-gray-700">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-6 text-center md:text-left">
             <div className="p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 shadow-sm">
               <FaHandshake size={28} />
             </div>
