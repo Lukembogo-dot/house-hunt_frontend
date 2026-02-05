@@ -157,7 +157,11 @@ export default function PropertyList({
     const controller = new AbortController();
     fetchProperties(activeFilters, page, controller.signal);
     return () => controller.abort();
-  }, [fetchProperties, activeFilters, page]);
+    // ⚡ CRITICAL FIX: Don't include fetchProperties in dependencies!
+    // It causes infinite loop because fetchProperties is recreated on every render
+    // activeFilters and page are enough to trigger refetch when needed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilters, page]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {

@@ -29,10 +29,12 @@ export function FeatureFlagProvider({ children }) {
       });
   }, []);
 
-  // Show a loading state or null while fetching to prevent flicker
-  if (loading) {
-    return null; // Or a full-page loader if you prefer
-  }
+  // ⚡ CRITICAL FIX: Don't block rendering while loading flags
+  // The app should work even if feature flags fail to load
+  // Features will simply be disabled (return false from useFeatureFlag)
+  // if (loading) {
+  //   return null; // This was blocking the entire app!
+  // }
 
   return (
     <FeatureFlagContext.Provider value={flags}>
@@ -49,5 +51,5 @@ export function FeatureFlagProvider({ children }) {
 export function useFeatureFlag(key) {
   const flags = useContext(FeatureFlagContext);
   // Returns true only if the key exists and is explicitly true
-  return flags[key] === true; 
+  return flags[key] === true;
 }
