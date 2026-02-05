@@ -5,7 +5,7 @@ import apiClient from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { FaSpinner, FaShieldAlt, FaKey, FaUserCheck, FaArrowRight, FaWhatsapp, FaArrowLeft } from 'react-icons/fa';
+import { FaSpinner, FaShieldAlt, FaKey, FaUserCheck, FaArrowRight, FaWhatsapp, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 // ✅ 1. Import Google Login Component
 import { GoogleLogin } from '@react-oauth/google';
@@ -20,6 +20,7 @@ const Login = () => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [userData, setUserData] = useState(null); // Stores name/email from Step 1
+  const [showPassword, setShowPassword] = useState(false); // ✅ Password visibility toggle
 
   // --- 2FA STATES ---
   const [twoFactorCode, setTwoFactorCode] = useState("");
@@ -293,17 +294,27 @@ const Login = () => {
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                     <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline dark:text-blue-400">Forgot?</Link>
                   </div>
-                  <input
-                    id="password"
-                    type="password"
-                    required
-                    className="appearance-none block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoFocus
-                    autoComplete="off"
-                  />
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      className="appearance-none block w-full px-3 py-3 pr-10 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoFocus
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
                 </div>
                 <button
                   type="submit"

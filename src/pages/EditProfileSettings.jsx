@@ -9,7 +9,7 @@ import {
   FaBriefcase, FaTools, FaInstagram, FaTwitter, FaFacebook, FaTiktok, FaEnvelope // ✅ Added Icons
 } from 'react-icons/fa';
 import { FaXTwitter } from "react-icons/fa6"; // Standard X icon
-import { useFeatureFlag } from '../context/FeatureFlagContext.jsx';
+
 
 // (VerifyEmailPrompt component is unchanged)
 const VerifyEmailPrompt = ({ user }) => {
@@ -223,7 +223,6 @@ const TwoFactorAuthSetup = () => {
 const EditProfileSettings = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
-  const is2FAEnabled = useFeatureFlag('two-factor-authentication');
 
   // --- Form States ---
   const [name, setName] = useState('');
@@ -434,7 +433,7 @@ const EditProfileSettings = () => {
 
         {status.message && (
           <div className={`p-4 mb-4 text-sm rounded-lg ${status.type === 'success' ? 'bg-green-100 text-green-700' :
-              status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+            status.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
             }`}>
             {status.message}
           </div>
@@ -503,8 +502,8 @@ const EditProfileSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Operating As</label>
                   <div className="flex gap-4">
                     <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-between transition ${agentType === 'Individual'
-                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       } ${fieldsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <div className="flex items-center gap-3">
                         <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${agentType === 'Individual' ? 'border-blue-600' : 'border-gray-400'
@@ -520,8 +519,8 @@ const EditProfileSettings = () => {
                     </label>
 
                     <label className={`flex-1 cursor-pointer border rounded-xl p-3 flex items-center justify-between transition ${agentType === 'Agency'
-                        ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 dark:bg-purple-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-purple-50 border-purple-500 ring-1 ring-purple-500 dark:bg-purple-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                       } ${fieldsLocked ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <div className="flex items-center gap-3">
                         <span className={`w-4 h-4 rounded-full border flex items-center justify-center ${agentType === 'Agency' ? 'border-purple-600' : 'border-gray-400'
@@ -659,16 +658,14 @@ const EditProfileSettings = () => {
           </form>
         </div>
 
-        {/* 2FA Section */}
-        {is2FAEnabled && (
-          <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
-              <FaShieldAlt className="mr-3 text-blue-500" />
-              Account Security
-            </h2>
-            <TwoFactorAuthSetup />
-          </div>
-        )}
+        {/* 2FA Section - Available to All Users */}
+        <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <FaShieldAlt className="mr-3 text-blue-500" />
+            Two-Factor Authentication
+          </h2>
+          <TwoFactorAuthSetup />
+        </div>
 
       </div>
     </div>
