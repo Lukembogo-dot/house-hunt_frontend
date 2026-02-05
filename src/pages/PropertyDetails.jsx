@@ -7,7 +7,7 @@ import apiClient from "../api/axios";
 
 import {
   FaGem, FaPlay, FaMapMarkerAlt, FaBus, FaWifi, FaImages,
-  FaHome, FaBuilding, FaArrowRight
+  FaHome, FaBuilding, FaArrowRight, FaShoppingCart, FaTimes, FaStar
 } from "react-icons/fa";
 
 import { useAuth } from "../context/AuthContext";
