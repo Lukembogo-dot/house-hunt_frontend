@@ -2,15 +2,14 @@
 import React, { useState, useEffect, Suspense, lazy } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom";
 import ReactGA from 'react-ga4';
-// motion used in JSX below (WhatsAppButton, HomePage search bar)
-// eslint-disable-next-line react/jsx-no-undef
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCalculator, FaEnvelope, FaSearchLocation, FaLightbulb, FaRocket, FaQuestionCircle, FaBullhorn, FaWhatsapp } from "react-icons/fa";
 import { Helmet } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
+import { SWRConfig } from 'swr';
 
-// --- Skeleton Loaders ---
-import { PageSkeleton, PropertyDetailsSkeleton, FormSkeleton } from "./components/skeletons";
+// ✅ Performance Optimizations
+import './styles/smooth-scroll.css';
 
 // --- Components (Critical - Load Immediately) ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
@@ -27,6 +26,7 @@ import TrendingMtaaScores from "./components/TrendingMtaaScores";
 import FeaturedProperties from "./components/FeaturedProperties";
 import NeighbourhoodWatchHome from "./components/NeighbourhoodWatchHome";
 import useVisitorTracking from "./hooks/useVisitorTracking";
+import { useRouteCache } from "./hooks/useCachedAPI";
 
 // --- Visual Enhancement Components (Critical for Homepage) ---
 import { HeroImageSlider, AnimatedStats } from "./components/home";
@@ -63,12 +63,17 @@ import { useAuth } from "./context/AuthContext";
 import { useFeatureFlag } from "./context/FeatureFlagContext";
 import apiClient from "./api/axios";
 
+// ✅ Instant Page Transition (no spinner)
 const PageLoader = () => (
-  <div className="flex justify-center items-center min-h-[70vh]">
-    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-  </div>
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.15 }}
+    className="min-h-[70vh]"
+  />
 );
 
+// ✅ Optimized WhatsApp button with spring physics
 const WhatsAppButton = () => {
   return (
     <motion.a
@@ -77,9 +82,10 @@ const WhatsAppButton = () => {
       rel="noopener noreferrer"
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl shadow-green-600/30 hover:bg-[#20b85c] transition-all duration-300 flex items-center justify-center group"
+      whileTap={{ scale: 0.95, rotate: 5 }}
+      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl shadow-green-600/30 hover:bg-[#20b85c] transition-all duration-200 flex items-center justify-center group will-change-transform"
       title="Chat on WhatsApp"
     >
       <FaWhatsapp className="text-3xl" />
@@ -90,52 +96,36 @@ const WhatsAppButton = () => {
   );
 };
 
+// ✅ Cached Service Route Handler (48h cache)
 const ServiceRouteHandler = () => {
   const { slug } = useParams();
-  const [viewType, setViewType] = useState('loading');
 
-  useEffect(() => {
-    const resolveRoute = async () => {
-      try {
-        await apiClient.get(`/service-providers/${slug}`);
-        setViewType('provider');
-      } catch {
-        try {
-          await apiClient.get(`/services/slug/${slug}`);
-          setViewType('post');
-        } catch {
-          setViewType('search');
-        }
-      }
-    };
-    resolveRoute();
-  }, [slug]);
+  // Try provider first, then post, cached for 48 hours
+  const { data: providerData, error: providerError } = useRouteCache(`/service-providers/${slug}`);
+  const { data: postData, error: postError } = useRouteCache(
+    !providerData && providerError ? `/services/slug/${slug}` : null
+  );
 
-  if (viewType === 'loading') return <PageLoader />;
-  if (viewType === 'provider') return <ServiceProviderDetails />;
-  if (viewType === 'post') return <ServicePostDetails />;
-  return <DynamicServiceSearch />;
+  // Instant loading - show cached content immediately
+  if (providerData) return <ServiceProviderDetails />;
+  if (postData) return <ServicePostDetails />;
+  if (providerError && postError) return <DynamicServiceSearch />;
+
+  return <PageLoader />;
 };
 
+// ✅ Cached Agent Route Handler (48h cache)
 const AgentRouteHandler = () => {
   const { slug } = useParams();
-  const [viewType, setViewType] = useState('loading');
 
-  useEffect(() => {
-    const resolveRoute = async () => {
-      try {
-        await apiClient.get(`/users/agents/${slug}`);
-        setViewType('profile');
-      } catch {
-        setViewType('search');
-      }
-    };
-    resolveRoute();
-  }, [slug]);
+  // Check if agent exists, cached for 48 hours
+  const { data: agentData, error: agentError } = useRouteCache(`/users/agents/${slug}`);
 
-  if (viewType === 'loading') return <PageLoader />;
-  if (viewType === 'profile') return <div className="p-20 text-center">Agent Profile View (Coming Soon)</div>;
-  return <DynamicAgentSearch />;
+  // Instant loading - show cached content immediately
+  if (agentData) return <div className="p-20 text-center">Agent Profile View (Coming Soon)</div>;
+  if (agentError) return <DynamicAgentSearch />;
+
+  return <PageLoader />;
 };
 
 function MainLayout() {
@@ -215,12 +205,12 @@ function MainLayout() {
 
       {/* --- ✨ NEW: HERO IMAGE SLIDER WITH VISUAL EFFECTS --- */}
       <HeroImageSlider showText={true} autoPlayInterval={6000}>
-        {/* Search Bar Inside Hero */}
+        {/* Search Bar Inside Hero - ✅ Spring Animation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="w-full max-w-4xl mx-auto mt-6"
+          transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.5 }}
+          className="w-full max-w-4xl mx-auto mt-6 will-change-transform"
         >
           <GlobalSearchBar />
         </motion.div>
@@ -357,11 +347,12 @@ function MainLayout() {
       <GlobalSchemaInjector />
       {previewRole && <PreviewBanner />}
 
-      <Suspense fallback={<PageSkeleton />}>
+      {/* ✅ Instant page transitions - no skeleton */}
+      <Suspense fallback={<PageLoader />}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/wanted/post" element={
-              <Suspense fallback={<FormSkeleton />}>
+              <Suspense fallback={<PageLoader />}>
                 <div className="pt-24 pb-16 px-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
                   <div className="max-w-4xl mx-auto text-center">
                     <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Let Us Do the Hunting</h1>
@@ -418,8 +409,16 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <style>{`
+    <SWRConfig
+      value={{
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        shouldRetryOnError: false,
+        dedupingInterval: 5000,
+      }}
+    >
+      <Router>
+        <style>{`
         body {
           user-select: none; 
           -webkit-user-select: none; 
@@ -443,9 +442,10 @@ function App() {
           100% { background-position: 0% 50%; }
         }
       `}</style>
-      <ScrollToTop />
-      <MainLayout />
-    </Router>
+        <ScrollToTop />
+        <MainLayout />
+      </Router>
+    </SWRConfig>
   )
 }
 

@@ -1,0 +1,38 @@
+/* Smooth Scroll Optimizations */
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+    /* Account for fixed header */
+    -webkit-font-smoothing: antialiased;
+}
+
+* {
+    /* iOS smooth scroll */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* GPU Acceleration for animated elements */
+.will-change-transform {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Optimize scroll performance */
+body {
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove scroll jank */
+img,
+video {
+    will-change: auto;
+    transform: translateZ(0);
+}
+
+/* Smooth transitions for route changes */
+.page-transition {
+    transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
