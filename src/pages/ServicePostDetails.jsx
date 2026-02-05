@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-// import { useFeatureFlag } from '../context/FeatureFlagContext.jsx'; // 🗑️ Unused
+import useAnalytics from '../hooks/useAnalytics'; // ✅ Import Analytics Hook
 import { FaStar, FaUserAlt, FaLightbulb, FaPhone, FaWhatsapp, FaMapMarkerAlt, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import { Helmet } from 'react-helmet-async';
@@ -132,9 +132,20 @@ const sectionVariants = {
 const ServicePostDetails = () => {
   const { slug } = useParams();
   const { user } = useAuth();
+  const { trackEvent } = useAnalytics(); // ✅ Initialize Analytics
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // ✅ Track View on Mount
+  useEffect(() => {
+    if (service && service._id) {
+      trackEvent('view_service', 'service_provider_details', service.author?._id, {
+        serviceId: service._id,
+        category: service.serviceType
+      });
+    }
+  }, [service, trackEvent]);
 
   // Review form state
   const [rating, setRating] = useState(0);
@@ -304,12 +315,12 @@ const ServicePostDetails = () => {
             {/* Mobile Action Bar */}
             <div className="flex md:hidden justify-between items-center p-4 border-t dark:border-gray-700 gap-2">
               {service.phoneNumber && (
-                <a href={`tel:${service.phoneNumber}`} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
+                <a href={`tel:${service.phoneNumber}`} onClick={() => trackEvent('call_click', 'service_provider_details', service.author?._id)} className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition">
                   <FaPhone /> Call
                 </a>
               )}
               {service.whatsappNumber && (
-                <a href={`https://wa.me/${service.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition">
+                <a href={`https://wa.me/${service.whatsappNumber}`} onClick={() => trackEvent('whatsapp_click', 'service_provider_details', service.author?._id)} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 transition">
                   <FaWhatsapp /> WhatsApp
                 </a>
               )}
@@ -498,12 +509,12 @@ const ServicePostDetails = () => {
 
                   <div className="space-y-3">
                     {service.phoneNumber && (
-                      <a href={`tel:${service.phoneNumber}`} className="flex items-center justify-center gap-3 w-full bg-white text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm">
+                      <a href={`tel:${service.phoneNumber}`} onClick={() => trackEvent('call_click', 'service_provider_details', service.author?._id)} className="flex items-center justify-center gap-3 w-full bg-white text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-sm">
                         <FaPhone /> Call Now
                       </a>
                     )}
                     {service.whatsappNumber && (
-                      <a href={`https://wa.me/${service.whatsappNumber}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-400 transition shadow-lg border border-green-400">
+                      <a href={`https://wa.me/${service.whatsappNumber}`} onClick={() => trackEvent('whatsapp_click', 'service_provider_details', service.author?._id)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-400 transition shadow-lg border border-green-400">
                         <FaWhatsapp className="text-xl" /> WhatsApp
                       </a>
                     )}

@@ -296,6 +296,55 @@ const AdminAnalyticsWidget = ({ properties = [] }) => {
                         </table>
                     </div>
                 </div>
+
+                {/* Top Agents (Leads) */}
+                <div className="bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 border border-gray-100 dark:border-gray-700 overflow-y-auto max-h-80 lg:col-span-3">
+                    <h4 className="font-bold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                        <FaUserPlus className="text-green-500" /> Top Agents by Leads
+                    </h4>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-gray-500 uppercase bg-gray-100 dark:bg-gray-800 dark:text-gray-400">
+                                <tr>
+                                    <th className="px-3 py-2 rounded-l-lg">#</th>
+                                    <th className="px-3 py-2">Agent</th>
+                                    <th className="px-3 py-2">Role</th>
+                                    <th className="px-3 py-2 text-right rounded-r-lg">Leads</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {summary?.topAgents && summary.topAgents.length > 0 ? (
+                                    summary.topAgents.map((agent, index) => (
+                                        <tr key={index} className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                            <td className="px-3 py-3 font-medium text-gray-900 dark:text-white">{index + 1}</td>
+                                            <td className="px-3 py-3 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+                                                    <img src={agent.profilePicture || `https://ui-avatars.com/api/?name=${agent.name}`} alt="" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold">{agent.name}</div>
+                                                    <div className="text-xs text-gray-500">{agent.email}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <span className={`px-2 py-0.5 text-xs rounded-full ${agent.role === 'agent' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                                                    {agent.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-3 text-right font-bold text-green-600 dark:text-green-400">
+                                                {agent.count}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="4" className="text-center py-4 text-gray-400 italic">No agent lead data available.</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     );
