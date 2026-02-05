@@ -1,7 +1,8 @@
-// frontend/src/components/TopAgents.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../api/axios';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useApiCache } from '../hooks/useApiCache';
 import {
   FaStar, FaBuilding, FaArrowRight, FaHome, FaCheckCircle,
   FaChevronLeft, FaChevronRight, FaMapMarkerAlt, FaPhone,
@@ -210,25 +211,26 @@ const AgentCarouselCard = ({ agent }) => {
 
 // --- MAIN COMPONENT ---
 const TopAgents = () => {
-  const [agents, setAgents] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const carouselRef = useRef(null);
 
-  useEffect(() => {
-    const fetchTopAgents = async () => {
-      try {
-        setLoading(true);
-        const { data } = await apiClient.get('/users/top-agents');
-        setAgents(data);
-      } catch (error) {
-        console.error('Failed to fetch top agents', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTopAgents();
-  }, []);
+  // ⚡ Performance: Use cached API requests (10 min TTL)
+  const { data, loading, error } = useApiCache(
+    'top-agents',
+    async () => {
+      const { data } = await apiClient.get('/users/top-agents');
+      return data;
+    },
+    10 * 60 * 1000 // 10 minutes cache
+  );
+
+  // ⚡ Null safety: Ensure agents is always an array
+  const agents = Array.isArray(data) ? data : [];
+
+  // Log errors for debugging
+  if (error) {
+    console.error('Failed to load top agents:', error);
+  }
 
   const [itemsPerPage, setItemsPerPage] = useState(3);
 
@@ -272,24 +274,10 @@ const TopAgents = () => {
   if (loading) {
     return (
       <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
-        {/* Animated Background Elements */}
+        {/* Static Background Elements - Performance Optimized */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0]
-            }}
-            transition={{ duration: 20, repeat: Infinity }}
-            className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.3, 1],
-              rotate: [0, -90, 0]
-            }}
-            transition={{ duration: 25, repeat: Infinity }}
-            className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
-          />
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl opacity-70" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl opacity-70" />
         </div>
 
         <div className="container mx-auto max-w-7xl relative z-10">
@@ -332,24 +320,10 @@ const TopAgents = () => {
 
   return (
     <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
-      {/* Animated Background Elements */}
+      {/* Static Background Elements - Performance Optimized */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0]
-          }}
-          transition={{ duration: 20, repeat: Infinity }}
-          className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            rotate: [0, -90, 0]
-          }}
-          transition={{ duration: 25, repeat: Infinity }}
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"
-        />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl opacity-70" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl opacity-70" />
       </div>
 
       <div className="container mx-auto max-w-7xl relative z-10">

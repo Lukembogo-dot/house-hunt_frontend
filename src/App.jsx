@@ -2,7 +2,8 @@
 import React, { useState, useEffect, Suspense, lazy } from "react";
 import { BrowserRouter as Router, Link, useLocation, Routes, Route, useParams } from "react-router-dom";
 import ReactGA from 'react-ga4';
-// eslint-disable-next-line no-unused-vars
+// motion used in JSX below (WhatsAppButton, HomePage search bar)
+// eslint-disable-next-line react/jsx-no-undef
 import { AnimatePresence, motion } from "framer-motion";
 import { FaCalculator, FaEnvelope, FaSearchLocation, FaLightbulb, FaRocket, FaQuestionCircle, FaBullhorn, FaWhatsapp } from "react-icons/fa";
 import { Helmet } from 'react-helmet-async';

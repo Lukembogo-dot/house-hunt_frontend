@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+// motion used in PromoFlipCard component below
+import { motion } from "framer-motion";
 import apiClient from "../api/axios";
 import PropertyCard from "./PropertyCard";
 import {
