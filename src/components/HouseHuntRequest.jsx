@@ -2,13 +2,9 @@ import React, { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Truck, CheckCircle, Clock, ArrowRight, Sparkles, Users, TrendingUp, Star } from 'lucide-react';
-import axios from 'axios';
+// import axios from 'axios'; // Removed unused axios import
+import apiClient from '../api/axios'; // ✅ Use synchronized API client
 import { formatDistanceToNow } from 'date-fns';
-
-const apiClient = axios.create({
-  baseURL: '/api',
-  withCredentials: true
-});
 
 const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'default' }) => {
   // Normalize layout variants

@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom'; // Assuming you use react-router-dom for routing
-import axios from 'axios';
-import { Home, Search, DollarSign, Clock, MapPin, Loader2, CheckCircle } from 'lucide-react';
+// import axios from 'axios'; // Removed
+import apiClient from '../api/axios'; // ✅ Use centralized client
+import { Home, Search, DollarSign, Clock, MapPin, Loader2, CheckCircle, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 // Configuration (Assuming apiClient is correctly configured to use /api)
-const apiClient = axios.create({
-  baseURL: '/api',
-  withCredentials: true
-});
+// const apiClient = axios.create({ ... }); // REMOVED
 
 const WantedRequestPage = () => {
   const { slug } = useParams(); // Get the slug from the URL: /wanted/2-bedroom-kilimani
