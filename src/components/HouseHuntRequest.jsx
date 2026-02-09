@@ -10,9 +10,23 @@ const apiClient = axios.create({
   withCredentials: true
 });
 
-const HouseHuntRequest = ({ compact = false }) => {
+const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'default' }) => {
+  // Normalize layout variants
+  const isCompactLayout = variant === 'compact';
+  const isWideLayout = variant === 'wide';
+  const isDefaultLayout = variant === 'default' || (!isCompactLayout && !isWideLayout);
+
+  // Feature Flags based on Layout
+  const showHeroHeader = isDefaultLayout;
+  const showStats = isDefaultLayout;
+  const showSlideshow = isDefaultLayout;
+  const showTopTicker = isCompactLayout;
+  const showSideCounter = isDefaultLayout || isWideLayout;
+  const useCardContainer = isCompactLayout;
+  const useTwoColGrid = isDefaultLayout || isWideLayout;
   const [activeTab, setActiveTab] = useState('property');
   const [recentLeads, setRecentLeads] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -23,6 +37,10 @@ const HouseHuntRequest = ({ compact = false }) => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Carousel settings
+  const maxRequests = 15;
+  const requestsPerSlide = 3;
 
   useEffect(() => {
     // Fetch ticker data even in compact mode (horizontal ticker)
@@ -45,7 +63,21 @@ const HouseHuntRequest = ({ compact = false }) => {
     fetchRecent();
     const interval = setInterval(fetchRecent, 30000);
     return () => clearInterval(interval);
-  }, [compact]);
+  }, [isCompactLayout]);
+
+  // Auto-rotate carousel
+  useEffect(() => {
+    if (isCompactLayout || recentLeads.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => {
+        const totalSlides = Math.ceil(Math.min(recentLeads.length, maxRequests) / requestsPerSlide);
+        return (prev + 1) % totalSlides;
+      });
+    }, 3000); // Rotate every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [recentLeads, isCompactLayout]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +124,7 @@ const HouseHuntRequest = ({ compact = false }) => {
   ];
 
   return (
-    <section className={`relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 ${compact ? 'py-4 px-2 rounded-xl border border-blue-100 dark:border-blue-900' : 'py-20'}`}>
+    <section className={`relative overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 ${useCardContainer ? 'py-4 px-2 rounded-xl border border-blue-100 dark:border-blue-900' : isWideLayout ? 'py-12' : 'py-20'}`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -120,7 +152,7 @@ const HouseHuntRequest = ({ compact = false }) => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className={`text-center ${compact ? 'mb-4' : 'mb-16'}`}
+          className={`text-center ${isCompactLayout ? 'mb-4' : 'mb-16'} ${!showHeroHeader && !isCompactLayout ? 'hidden' : ''}`}
         >
           <motion.div
             initial={{ scale: 0.9 }}
@@ -134,7 +166,7 @@ const HouseHuntRequest = ({ compact = false }) => {
             </span>
           </motion.div>
 
-          <h2 className={`${compact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-black text-gray-900 dark:text-white mb-6 leading-tight`}>
+          <h2 className={`${isCompactLayout ? 'text-2xl' : 'text-4xl md:text-5xl'} font-black text-gray-900 dark:text-white mb-6 leading-tight`}>
             Sit Back &{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
               Relax.
@@ -143,13 +175,13 @@ const HouseHuntRequest = ({ compact = false }) => {
             We'll Find It For You.
           </h2>
 
-          <p className={`${compact ? 'text-base' : 'text-xl'} text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed`}>
+          <p className={`${isCompactLayout ? 'text-base' : 'text-xl'} text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed`}>
             Don't stress over the search. Tell us what you need, and our expert scouts will do the legwork to find your perfect match.
           </p>
         </motion.div>
 
         {/* --- COMPACT MODE HORIZONTAL TICKER --- */}
-        {compact && recentLeads.length > 0 && (
+        {showTopTicker && recentLeads.length > 0 && (
           <div className="mb-4 max-w-4xl mx-auto overflow-hidden relative group">
             <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-blue-50 via-purple-50 to-transparent dark:from-gray-950 dark:to-transparent z-10"></div>
             <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-pink-50 via-purple-50 to-transparent dark:from-gray-950 dark:to-transparent z-10"></div>
@@ -184,7 +216,7 @@ const HouseHuntRequest = ({ compact = false }) => {
         )}
 
         {/* Stats Bar (Hidden in Compact Mode) */}
-        {!compact && (
+        {showStats && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -208,19 +240,122 @@ const HouseHuntRequest = ({ compact = false }) => {
           </motion.div>
         )}
 
-        <div className={`grid ${compact ? 'grid-cols-1 justify-center' : 'lg:grid-cols-2'} gap-8 items-start`}>
+        {/* ANIMATED SLIDESHOW CAROUSEL - Full Width */}
+        {showSlideshow && recentLeads.length > 0 && (
+          <div className="mb-16 max-w-6xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <motion.span
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="w-4 h-4 bg-green-500 rounded-full shadow-lg shadow-green-500/50"
+                />
+                <h3 className="text-2xl font-black text-gray-900 dark:text-white">
+                  Recent Requests
+                </h3>
+              </div>
+              <p className="text-gray-600 dark:text-gray-400 flex items-center justify-center gap-2">
+                <Users size={16} />
+                Live feed of what others are requesting
+              </p>
+            </div>
 
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              >
+                {recentLeads
+                  .slice(0, maxRequests)
+                  .slice(currentSlide * requestsPerSlide, (currentSlide + 1) * requestsPerSlide)
+                  .map((lead, index) => (
+                    <motion.div
+                      key={lead._id || index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group relative"
+                    >
+                      {/* Glow effect */}
+                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-30 transition-opacity"></div>
+
+                      <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/60 dark:border-gray-700/50 shadow-xl hover:shadow-2xl transition-all h-full">
+                        {/* Avatar */}
+                        <div className="flex items-center gap-4 mb-4">
+                          <div
+                            className={`w-16 h-16 rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-lg ${['Property'].includes(lead.category)
+                              ? 'bg-gradient-to-br from-blue-600 to-blue-700'
+                              : 'bg-gradient-to-br from-orange-500 to-red-500'
+                              }`}
+                          >
+                            {lead.name && lead.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-lg font-black text-gray-900 dark:text-white">
+                              {lead.name}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Looking for {lead.category === 'Property' ? 'a Property' : 'a Service'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1.5 bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-full text-xs font-bold text-blue-700 dark:text-blue-300">
+                              {lead.category === 'Property' ? <Home size={14} /> : <Truck size={14} />}
+                              {lead.category}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                            <Clock size={14} />
+                            {lead.createdAt && !isNaN(new Date(lead.createdAt))
+                              ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true })
+                              : 'Just now'}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation Dots */}
+            <div className="flex justify-center gap-2 mt-8">
+              {Array.from({
+                length: Math.ceil(Math.min(recentLeads.length, maxRequests) / requestsPerSlide)
+              }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`w-3 h-3 rounded-full transition-all ${currentSlide === i
+                    ? 'bg-blue-600 w-8'
+                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                    }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* THE FORM & LIVE COUNTER - Side by Side */}
+        <div className={`grid ${!useTwoColGrid ? 'grid-cols-1 justify-center' : 'lg:grid-cols-[1.5fr,1fr]'} gap-8 items-stretch max-w-6xl mx-auto`}>
           {/* LEFT: THE FORM with Enhanced Glassmorphism */}
           <motion.div
-            initial={{ opacity: 0, x: compact ? 0 : -30, y: compact ? 20 : 0 }}
             whileInView={{ opacity: 1, x: 0, y: 0 }}
             viewport={{ once: true }}
-            className={`relative ${compact ? 'max-w-2xl mx-auto w-full' : ''}`}
+            className={`relative ${isCompactLayout ? 'max-w-2xl mx-auto w-full' : 'h-full'}`}
           >
             {/* Glow Effect */}
             <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-30 transition-opacity"></div>
 
-            <div className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-gray-700/50 ${compact ? 'p-5' : 'p-8'}`}>
+            <div className={`relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-gray-700/50 ${isCompactLayout ? 'p-5' : 'p-8'} h-full flex flex-col justify-center`}>
               {/* Header */}
               <div className="mb-8">
                 <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-3 flex items-center gap-3">
@@ -392,111 +527,119 @@ const HouseHuntRequest = ({ compact = false }) => {
             </div>
           </motion.div>
 
-          {/* RIGHT: LIVE ACTIVITY with Enhanced Design */}
-          {!compact && (
+          {/* RIGHT: LIVE COUNTER */}
+          {showSideCounter && recentLeads.length > 0 && (
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               className="lg:sticky lg:top-24"
             >
-              {/* Header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <motion.span
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-4 h-4 bg-green-500 rounded-full shadow-lg shadow-green-500/50"
-                  />
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">
-                    Live Activity Feed
-                  </h3>
+              {/* Live Counter Card - Takes Full Height */}
+              <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/60 dark:border-gray-700/50 p-6 flex flex-col h-full">
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <motion.span
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-3 h-3 bg-green-500 rounded-full shadow-lg shadow-green-500/50"
+                    />
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                      Live Stats
+                    </h3>
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs">
+                    Real-time activity tracking
+                  </p>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Users size={16} />
-                  See what others are requesting right now
-                </p>
-              </div>
 
-              {/* Activity Feed */}
-              <div className="relative bg-white/70 dark:bg-gray-800/70 backdrop-blur-2xl rounded-3xl p-6 shadow-2xl border border-white/60 dark:border-gray-700/50 max-h-[500px] overflow-hidden">
-                {/* Gradient Masks */}
-                <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-white/90 dark:from-gray-800/90 to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white/90 dark:from-gray-800/90 to-transparent z-10 pointer-events-none"></div>
-
-                <div className="space-y-3 max-h-[450px] overflow-y-auto scrollbar-hide">
-                  {(!Array.isArray(recentLeads) || recentLeads.length === 0) ? (
-                    <div className="text-center py-12">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                        className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"
-                      />
-                      <p className="text-gray-400 dark:text-gray-500 italic">
-                        Loading recent activity...
+                {/* Stats */}
+                <div className="space-y-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-800/30">
+                      <p className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">
+                        Total
                       </p>
-                    </div>
-                  ) : (
-                    recentLeads.map((lead, index) => (
                       <motion.div
-                        key={`${lead._id || index}`}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="group relative"
+                        key={recentLeads.length}
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        className="text-2xl font-black text-blue-600 dark:text-blue-400"
                       >
-                        {/* Glow on hover */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        {recentLeads.length + 2485}
+                      </motion.div>
+                    </div>
+                    <div className="text-center p-4 bg-green-50/50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-800/30">
+                      <p className="text-[10px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">
+                        Fulfilled
+                      </p>
+                      <motion.div
+                        key={recentLeads.length}
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        className="text-2xl font-black text-green-600 dark:text-green-400"
+                      >
+                        {Math.floor((recentLeads.length + 2485) * 0.98)}
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
 
-                        <div className="relative flex items-start gap-4 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-4 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-md hover:shadow-xl transition-all">
-                          {/* Avatar */}
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shrink-0 shadow-lg ${['Property'].includes(lead.category)
-                            ? 'bg-gradient-to-br from-blue-600 to-blue-700'
-                            : 'bg-gradient-to-br from-orange-500 to-red-500'
-                            }`}>
+                {/* Trust Badge */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl text-white mb-6">
+                  <p className="text-sm font-bold mb-1 flex items-center justify-center gap-2">
+                    <TrendingUp size={18} />
+                    Join the Community
+                  </p>
+                  <p className="text-xs text-blue-100">
+                    Over <strong>{recentLeads.length + 2400}</strong> Kenyans found their perfect match this month!
+                  </p>
+                </div>
+
+                {/* Vertical Request Feed */}
+                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50">
+                  <h4 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                    Recent Activity
+                  </h4>
+                  <div className="space-y-3 max-h-[300px] overflow-hidden relative">
+                    {/* Gradient Overlay for Fade Effect */}
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-gray-50 dark:from-gray-800/0 to-transparent z-10"></div>
+
+                    <motion.div
+                      animate={{ y: [0, -((recentLeads.length * 50) - 300)] }}
+                      transition={{
+                        y: {
+                          repeat: Infinity,
+                          repeatType: "loop",
+                          duration: Math.max(20, recentLeads.length * 3),
+                          ease: "linear",
+                        }
+                      }}
+                    >
+                      {[...recentLeads, ...recentLeads].map((lead, i) => (
+                        <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm mb-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 ${['Property'].includes(lead.category) ? 'bg-blue-600' : 'bg-orange-500'}`}>
                             {lead.name && lead.name.charAt(0).toUpperCase()}
                           </div>
-
                           <div className="flex-1 min-w-0">
-                            <p className="text-gray-900 dark:text-white font-semibold text-sm mb-2">
-                              <span className="font-black">{lead.name}</span> requested {lead.category === 'Property' ? 'a Property' : 'a Service'}
+                            <p className="text-xs font-bold text-gray-900 dark:text-gray-200 truncate">
+                              {lead.name}
                             </p>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300">
-                                {lead.category === 'Property' ? <Home size={12} /> : <Truck size={12} />}
-                                {lead.category}
-                              </span>
-                              <span className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                                <Clock size={12} />
-                                {lead.createdAt && !isNaN(new Date(lead.createdAt))
-                                  ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true })
-                                  : 'Just now'}
-                              </span>
-                            </div>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                              Requested {lead.category}
+                            </p>
                           </div>
+                          <span className="text-[9px] text-gray-400 whitespace-nowrap">
+                            {lead.createdAt && !isNaN(new Date(lead.createdAt)) ? formatDistanceToNow(new Date(lead.createdAt), { addSuffix: true }) : 'Just now'}
+                          </span>
                         </div>
-                      </motion.div>
-                    ))
-                  )}
+                      ))}
+                    </motion.div>
+                  </div>
                 </div>
               </div>
-
-              {/* CTA Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mt-6 p-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl text-white"
-              >
-                <p className="text-lg font-bold mb-2 flex items-center gap-2">
-                  <TrendingUp size={20} />
-                  Join the Community
-                </p>
-                <p className="text-blue-100 text-sm">
-                  Over <strong>{(Array.isArray(recentLeads) && recentLeads.length > 0) ? recentLeads.length + 2400 : '2,500+'}</strong> Kenyans found their perfect match through our request system this month!
-                </p>
-              </motion.div>
-
             </motion.div>
           )}
         </div>

@@ -294,6 +294,12 @@ const ChatBubble = () => {
     navigate('/login', { state: { from: location } });
   };
 
+  // ✅ Temporary Visibility Restriction: Only visible to Admin and Moderator
+  // Completely hides the chat bubble for regular users and guests
+  if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
+    return null;
+  }
+
   return (
     <>
       {/* --- Context Popup Bubble --- */}

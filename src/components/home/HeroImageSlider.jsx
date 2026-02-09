@@ -2,10 +2,9 @@
 // Premium hero section with auto-rotating background images and parallax effects
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaRocket, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import heroBg1 from '../../assets/images/hero-bg-1.png';
-import heroBgScouts from '../../assets/images/hero-bg-scouts.png';
 import heroBgAgents from '../../assets/images/hero-bg-agents.png';
 
 // High-quality Kenyan real estate images
@@ -35,10 +34,7 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-    const { scrollY } = useScroll();
-    const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
-    const heroScale = useTransform(scrollY, [0, 300], [1, 1.1]);
-    const textY = useTransform(scrollY, [0, 200], [0, 50]);
+    // Scroll animation removed for sticky content behavior
 
     // Auto-advance slides
     useEffect(() => {
@@ -101,9 +97,8 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
                 </div>
             </div>
 
-            {/* Content Container */}
+            {/* Content Container - No Scroll Fade */}
             <motion.div
-                style={{ opacity: heroOpacity, y: textY }}
                 className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center"
             >
                 {/* Badge */}

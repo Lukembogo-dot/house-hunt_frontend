@@ -16,6 +16,7 @@ import GlobalSchemaInjector from './components/GlobalSchemaInjector';
 import PropertyList from "./components/PropertyList";
 import GlobalSearchBar from "./components/GlobalSearchBar";
 import ChatBubble from "./components/ChatBubble";
+import WhatsAppButton from "./components/WhatsAppButton";
 import ScrollToTop from "./components/ScrollToTop";
 import TopAgents from "./components/TopAgents";
 import HomeFaqSection from "./components/HomeFaqSection";
@@ -73,28 +74,7 @@ const PageLoader = () => (
   />
 );
 
-// ✅ Optimized WhatsApp button with spring physics
-const WhatsAppButton = () => {
-  return (
-    <motion.a
-      href="https://wa.me/254776929021"
-      target="_blank"
-      rel="noopener noreferrer"
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95, rotate: 5 }}
-      className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-[#25D366] text-white rounded-full shadow-xl shadow-green-600/30 hover:bg-[#20b85c] transition-all duration-200 flex items-center justify-center group will-change-transform"
-      title="Chat on WhatsApp"
-    >
-      <FaWhatsapp className="text-3xl" />
-      <span className="absolute right-full mr-3 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none font-bold shadow-lg">
-        Chat on WhatsApp
-      </span>
-    </motion.a>
-  );
-};
+// ✅ Validated Service Route Handler (48h cache)
 
 // ✅ Cached Service Route Handler (48h cache)
 const ServiceRouteHandler = () => {
@@ -219,9 +199,10 @@ function MainLayout() {
       <main id="properties" className="flex-grow bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-950 dark:to-gray-900/50 relative z-20">
 
         {/* --- HOUSE HUNT REQUEST (MOVED TO TOP) --- */}
+        {/* --- HOUSE HUNT REQUEST (MOVED TO TOP) --- */}
         {!submittedHomeFilters && (
-          <div className="py-6 px-4 max-w-4xl mx-auto">
-            <HouseHuntRequest compact={true} />
+          <div className="py-6 w-full">
+            <HouseHuntRequest variant="wide" />
           </div>
         )}
 
