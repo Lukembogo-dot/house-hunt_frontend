@@ -1,13 +1,13 @@
 import React from 'react';
-import { useTheme } from '../context/ThemeContext';
+import useTheme from '../hooks/useTheme';
 import { FaMoon, FaSun } from 'react-icons/fa';
 
 const ThemeToggle = () => {
   const { theme, setTheme } = useTheme();
 
   // Check the *effective* theme, resolving 'system'
-  const isDark = theme === 'dark' || 
-                 (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = theme === 'dark' ||
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
   const toggleTheme = () => {
     // Toggle between light and dark
