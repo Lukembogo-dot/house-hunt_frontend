@@ -104,9 +104,9 @@ const AddProperty = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // ✅ Dynamic Limits: Admin/Moderator/Subscribed = 10 images + Video. Others = 5 images + No Video.
-  const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
-  const MAX_IMAGES = isPremium ? 10 : 5;
+  // ✅ Dynamic Limits: All users get 10 images + Video
+  // const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
+  const MAX_IMAGES = 10; // Unlocked for all users, limit corrected to 10
 
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
   const calculatedPrice = formData.featuredDays * FEATURE_PRICE_PER_DAY;
@@ -258,7 +258,7 @@ const AddProperty = () => {
     // ✅ Enforce Dynamic Image Limit (5 for Normal, 10 for Premium)
     if (combinedFiles.length > MAX_IMAGES) {
       setStatus({
-        message: `Limit exceeded. You can upload ${MAX_IMAGES} images on your plan. ${!isPremium ? 'Upgrade to Premium for 10 images.' : ''}`,
+        message: `Limit exceeded. You cannot upload more than ${MAX_IMAGES} images.`,
         type: 'error'
       });
       // Scroll to top to ensure they see the error
@@ -314,13 +314,7 @@ const AddProperty = () => {
   };
 
   // ✅ NEW: Handler to intercept clicks on Premium features for unsubscribed users
-  const handlePremiumInteraction = () => {
-    setStatus({
-      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!',
-      type: 'error'
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+
 
   const handleMapClick = async (e) => {
     const clickedCoords = { lat: e.latLng.lat(), lng: e.latLng.lng() };
@@ -330,6 +324,7 @@ const AddProperty = () => {
       const { data } = await apiClient.get(`/maps/reverse-geocode?lat=${clickedCoords.lat}&lng=${clickedCoords.lng}`);
       setFormData(prev => ({ ...prev, location: data.address }));
     } catch (error) {
+      console.error("Reverse geocode error:", error);
       setStatus({ message: 'Could not find address for that location.', type: 'error' });
     } finally {
       setIsGeocoding(false);
@@ -352,6 +347,7 @@ const AddProperty = () => {
         setStatus({ message: 'Could not find coordinates for that address.', type: 'error' });
       }
     } catch (error) {
+      console.error("Geocode error:", error);
       setStatus({ message: 'Failed to geocode address.', type: 'error' });
     } finally {
       setIsGeocoding(false);
@@ -372,6 +368,7 @@ const AddProperty = () => {
       setFormData(prev => ({ ...prev, description: data.polished }));
       setStatus({ message: '✨ Description Polished!', type: 'success' });
     } catch (error) {
+      console.error("AI Polish error:", error);
       setStatus({ message: 'AI Polisher failed. Please try again.', type: 'error' });
     } finally {
       setIsPolishing(false);
@@ -871,23 +868,10 @@ const AddProperty = () => {
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
 
               {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
-              {!isPremium && (
-                <div
-                  onClick={handlePremiumInteraction}
-                  className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
-                >
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
-                    <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
-                      <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
-                    </div>
-                    <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
-                    <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
-                  </div>
-                </div>
-              )}
+
 
               {/* Actual Input Section (Now Always Rendered but blocked by overlay if not premium) */}
-              <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
+              <div className="">
                 <div className="space-y-4">
                   {/* Option 1: File Upload */}
                   <div>
@@ -927,7 +911,7 @@ const AddProperty = () => {
                 Property Images (Max {MAX_IMAGES})
               </label>
               {/* Visual indicator of the limit */}
-              <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+              <span className="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-600">
                 Limit: {MAX_IMAGES} Images
               </span>
             </div>
@@ -946,14 +930,6 @@ const AddProperty = () => {
               <p className={`text-xs ${imageFiles.length > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
                 Selected: {imageFiles.length} / {MAX_IMAGES}
               </p>
-              {!isPremium && (
-                <div className="flex flex-col items-end">
-                  <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
-                  <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
-                    <FaGem size={10} /> Upgrade for 10 Images
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 

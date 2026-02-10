@@ -11,7 +11,6 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
-import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent';
 import SmartPricingWidget from '../components/SmartPricingWidget';
 
@@ -75,8 +74,9 @@ const EditProperty = () => {
   const isFeaturedListingEnabled = useFeatureFlag('agent-featured-listing');
 
   // ✅ Dynamic Limits
-  const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
-  const MAX_IMAGES = isPremium ? 10 : 5;
+  // ✅ Dynamic Limits
+  // const isPremium = user?.role === 'admin' || user?.role === 'moderator' || user?.isLeadSubscribed;
+  const MAX_IMAGES = 10; // Unlocked for all users, limit corrected to 10
 
   const [formData, setFormData] = useState({
     title: '',
@@ -222,6 +222,7 @@ const EditProperty = () => {
         setExistingImages(imagesToSet);
 
       } catch (err) {
+        console.error("Error loading property:", err);
         setStatus({ message: 'Failed to load property data.', type: 'error' });
       } finally {
         setLoading(false);
@@ -341,7 +342,7 @@ const EditProperty = () => {
 
     if (totalImages > MAX_IMAGES) {
       setStatus({
-        message: `Limit exceeded. You have ${existingImages.length} existing images. You can add ${MAX_IMAGES - existingImages.length} more. Total limit: ${MAX_IMAGES}. ${!isPremium ? 'Upgrade for 10 images.' : ''}`,
+        message: `Limit exceeded. You have ${existingImages.length} existing images. You can add ${MAX_IMAGES - existingImages.length} more. Total limit: ${MAX_IMAGES}.`,
         type: 'error'
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -396,14 +397,7 @@ const EditProperty = () => {
     video.src = URL.createObjectURL(file);
   };
 
-  // ✅ NEW: Premium Interaction Handler
-  const handlePremiumInteraction = () => {
-    setStatus({
-      message: 'Video Tours are a Premium feature. Subscribe to unlock video uploads and attract 3x more leads!',
-      type: 'error'
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+
 
   const handleRemoveExistingImage = (imageUrlToRemove) => {
     setExistingImages(existingImages.filter(img => img.url !== imageUrlToRemove));
@@ -462,6 +456,7 @@ const EditProperty = () => {
       setFormData(prev => ({ ...prev, description: data.polished }));
       setStatus({ message: '✨ Description Polished!', type: 'success' });
     } catch (error) {
+      console.error("AI Polish error:", error);
       setStatus({ message: 'AI Polisher failed. Please try again.', type: 'error' });
     } finally {
       setIsPolishing(false);
@@ -943,23 +938,10 @@ const EditProperty = () => {
             <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 p-6 rounded-lg relative overflow-hidden">
 
               {/* ✅ LOCK OVERLAY FOR UNSUBSCRIBED USERS */}
-              {!isPremium && (
-                <div
-                  onClick={handlePremiumInteraction}
-                  className="absolute inset-0 z-10 bg-white/40 dark:bg-gray-900/40 backdrop-blur-[2px] flex flex-col items-center justify-center cursor-pointer hover:bg-white/20 transition-all group"
-                >
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-2xl border border-purple-200 flex flex-col items-center transform group-hover:scale-105 transition-transform duration-200">
-                    <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full mb-2">
-                      <FaLock className="text-purple-600 dark:text-purple-300 text-xl" />
-                    </div>
-                    <span className="font-bold text-gray-900 dark:text-white text-sm">Premium Feature</span>
-                    <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mt-1">Click to Unlock</span>
-                  </div>
-                </div>
-              )}
+
 
               {/* Actual Input Section (Blurred if not premium) */}
-              <div className={!isPremium ? "filter blur-[1px] opacity-60 pointer-events-none select-none" : ""}>
+              <div className="">
                 <div className="space-y-4">
                   {/* Option 1: File Upload */}
                   <div>
@@ -1046,7 +1028,7 @@ const EditProperty = () => {
                 Add New Images
               </label>
               {/* Visual indicator of the limit */}
-              <span className={`text-xs px-2 py-1 rounded-full font-bold ${isPremium ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+              <span className="text-xs px-2 py-1 rounded-full font-bold bg-gray-100 text-gray-600">
                 Limit: {MAX_IMAGES} Total Images
               </span>
             </div>
@@ -1064,14 +1046,7 @@ const EditProperty = () => {
               <p className={`text-xs ${(existingImages.length + newImageFiles.length) > MAX_IMAGES ? 'text-red-500 font-bold' : 'text-gray-500'}`}>
                 Total: {existingImages.length + newImageFiles.length} / {MAX_IMAGES} (Existing + New)
               </p>
-              {!isPremium && (
-                <div className="flex flex-col items-end">
-                  <p className="text-xs text-gray-400">Standard Plan Limit: 5</p>
-                  <button type="button" onClick={handlePremiumInteraction} className="text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 mt-1">
-                    <FaGem size={10} /> Upgrade for 10 Images
-                  </button>
-                </div>
-              )}
+
             </div>
           </div>
 
