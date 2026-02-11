@@ -14,7 +14,7 @@ import './styles/smooth-scroll.css';
 // --- Components (Critical - Load Immediately) ---
 import GlobalSchemaInjector from './components/GlobalSchemaInjector';
 import PropertyList from "./components/PropertyList";
-import GlobalSearchBar from "./components/GlobalSearchBar";
+// import GlobalSearchBar from "./components/GlobalSearchBar"; // Replaced by HeroSearchBar
 import ChatBubble from "./components/ChatBubble";
 import WhatsAppButton from "./components/WhatsAppButton";
 import ScrollToTop from "./components/ScrollToTop";
@@ -30,7 +30,7 @@ import useVisitorTracking from "./hooks/useVisitorTracking";
 import { useRouteCache } from "./hooks/useCachedAPI";
 
 // --- Visual Enhancement Components (Critical for Homepage) ---
-import { HeroImageSlider, AnimatedStats } from "./components/home";
+import { HeroImageSlider, AnimatedStats, HeroSearchBar } from "./components/home";
 
 // --- Layout Components (Critical) ---
 import AppHeader from "./components/layout/AppHeader";
@@ -190,15 +190,16 @@ function MainLayout() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 250, damping: 25, mass: 0.5 }}
-          className="w-full max-w-4xl mx-auto mt-6 will-change-transform"
+          className="w-full max-w-4xl mx-auto mt-6 will-change-transform px-4"
         >
-          <GlobalSearchBar />
+          <HeroSearchBar />
         </motion.div>
       </HeroImageSlider>
 
+
+
       <main id="properties" className="flex-grow bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-950 dark:to-gray-900/50 relative z-20">
 
-        {/* --- HOUSE HUNT REQUEST (MOVED TO TOP) --- */}
         {/* --- HOUSE HUNT REQUEST (MOVED TO TOP) --- */}
         {!submittedHomeFilters && (
           <div className="py-6 w-full">

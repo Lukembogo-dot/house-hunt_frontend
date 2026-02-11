@@ -203,8 +203,8 @@ const AgentCarouselCard = ({ agent }) => {
         </div>
       </div>
 
-      {/* Hover Effect Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-blue-600/0 to-blue-600/0 group-hover:from-blue-600/10 group-hover:to-purple-600/10 transition-all duration-300 pointer-events-none" />
+      {/* Hover Effect Overlay - Removed as per request */}
+      {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-600/0 to-blue-600/0 group-hover:from-blue-600/10 group-hover:to-purple-600/10 transition-all duration-300 pointer-events-none" /> */}
     </motion.div>
   );
 };

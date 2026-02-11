@@ -102,7 +102,7 @@ const AppFooter = () => {
       </div>
       <div className="container mx-auto px-6 md:px-10 text-center mt-8 border-t border-gray-700 pt-6">
         <p className="text-sm">
-          &copy; 2026 HouseHunt Kenya. Use of this website constitutes acceptance of the <Link to="/terms-of-service" className="underline hover:text-blue-400">Terms of Service</Link> and <Link to="/privacy-policy" className="underline hover:text-blue-400">Privacy Policy</Link>.
+          &copy; 2025 - {new Date().getFullYear()} HouseHunt Kenya. Use of this website constitutes acceptance of the <Link to="/terms-of-service" className="underline hover:text-blue-400">Terms of Service</Link> and <Link to="/privacy-policy" className="underline hover:text-blue-400">Privacy Policy</Link>.
         </p>
       </div>
     </footer>

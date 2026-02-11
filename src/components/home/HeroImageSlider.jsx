@@ -20,12 +20,6 @@ const heroImages = [
         alt: 'Beautiful land and countryside',
         title: 'Prime Land Opportunities',
         subtitle: 'Invest in your future with premium plots'
-    },
-    {
-        url: heroBgAgents,
-        alt: 'Real estate office with agents',
-        title: 'For Real Estate Firms',
-        subtitle: 'Maximum online visibility and instant connection with serious buyers'
     }
 ];
 
@@ -69,7 +63,7 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
     const currentImage = heroImages[currentIndex];
 
     return (
-        <section className="relative h-[70vh] md:h-[80vh] bg-gray-900 group">
+        <section className="relative h-[70vh] md:h-[80vh] bg-gray-900 group z-30">
             {/* ✅ BACKGROUND CLIPPING CONTAINER */}
             {/* This ensures images don't spill out, but allows search dropdown (in children) to overflow visible */}
             <div className="absolute inset-0 overflow-hidden">
@@ -124,10 +118,10 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
                                 transition={{ duration: 0.5 }}
                                 className="max-w-4xl"
                             >
-                                <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 drop-shadow-2xl leading-none">
+                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 drop-shadow-2xl leading-tight">
                                     {currentImage.title}
                                 </h2>
-                                <p className="text-xl md:text-3xl lg:text-4xl text-gray-200 mb-0 max-w-2xl mx-auto font-light">
+                                <p className="text-lg md:text-xl lg:text-2xl text-gray-200 mb-0 max-w-2xl mx-auto font-light">
                                     {currentImage.subtitle}
                                 </p>
                             </motion.div>
@@ -159,22 +153,7 @@ const HeroImageSlider = memo(({ children, showText = true, autoPlayInterval = 10
                 </>
             )}
 
-            {/* Slide Indicators */}
-            {heroImages.length > 1 && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-                    {heroImages.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => goToSlide(index)}
-                            className={`transition-all duration-300 rounded-full ${index === currentIndex
-                                ? 'w-8 h-3 bg-white'
-                                : 'w-3 h-3 bg-white/40 hover:bg-white/60'
-                                }`}
-                            aria-label={`Go to slide ${index + 1}`}
-                        />
-                    ))}
-                </div>
-            )}
+
 
             {/* Progress Bar */}
             {heroImages.length > 1 && (
