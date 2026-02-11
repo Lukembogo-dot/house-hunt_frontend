@@ -352,18 +352,24 @@ export default function PropertyList({
         </div>
       )}
 
-      {/* --- ✅ TRUSTED PARTNERS (Conversational Redesign) --- */}
+      {/* --- ✅ TRUSTED PARTNERS (Unified Design) --- */}
       {relatedServices.length > 0 && (
-        <div className="mt-10 pt-6 border-t dark:border-gray-700">
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-4 mb-6 text-center md:text-left">
-            <div className="p-4 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-600 shadow-sm">
-              <FaHandshake size={28} />
-            </div>
-            <div>
-              <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">
+        <div className="mt-4 pt-4 border-t dark:border-gray-700">
+
+          {/* Unified Header Layout */}
+          <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                  <FaHandshake className="text-sm" /> Trusted Partners
+                </span>
+                <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800 max-w-[100px]"></span>
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white mb-2 leading-tight">
                 Need a Hand Moving In?
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-3xl text-lg leading-relaxed">
                 We don't just find you a house; we help you settle in. From verified movers to reliable internet—we've got the connections you need in <span className="text-orange-600 dark:text-orange-400 font-bold">{locationName}</span>.
               </p>
             </div>

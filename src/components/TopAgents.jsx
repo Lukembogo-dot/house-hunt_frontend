@@ -273,7 +273,7 @@ const TopAgents = () => {
 
   if (loading) {
     return (
-      <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
+      <section className="py-6 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
         {/* Static Background Elements - Performance Optimized */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl opacity-70" />
@@ -281,29 +281,25 @@ const TopAgents = () => {
         </div>
 
         <div className="container mx-auto max-w-7xl relative z-10">
-          <div className="text-center mb-12">
-            <div className="inline-block animate-pulse mb-4">
-              <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider">
-                Loading Experts...
-              </span>
-            </div>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700/50 rounded-full animate-pulse" />
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-[520px] bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 animate-pulse">
-                <div className="h-full p-6 flex flex-col justify-between">
+              <div key={i} className="h-[460px] bg-white/50 dark:bg-gray-800/50 rounded-3xl border border-gray-200 dark:border-gray-700 animate-pulse">
+                <div className="h-full p-5 flex flex-col justify-between">
                   <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex gap-4">
-                      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      <div className="w-14 h-14 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                       <div className="flex-1 space-y-2">
-                        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                       </div>
                     </div>
-                    <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                    <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                    <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
                   </div>
                 </div>
               </div>
@@ -319,7 +315,7 @@ const TopAgents = () => {
   }
 
   return (
-    <section className="py-10 px-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-950 dark:via-blue-950/20 dark:to-purple-950/20 relative overflow-hidden">
+    <section className="py-2 px-6 relative overflow-hidden">
       {/* Static Background Elements - Performance Optimized */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl opacity-70" />
@@ -327,111 +323,91 @@ const TopAgents = () => {
       </div>
 
       <div className="container mx-auto max-w-7xl relative z-10">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-8"
-        >
+
+        {/* Unified Header & Controls Layout */}
+        <div className="flex flex-col md:flex-row items-end justify-between gap-4 mb-4">
+
+          {/* Left: Heading & Badge */}
           <motion.div
-            initial={{ scale: 0.9 }}
-            whileInView={{ scale: 1 }}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl px-6 py-3 rounded-full border border-blue-200 dark:border-blue-800 mb-6 shadow-lg"
+            className="flex-1"
           >
-            <FaBuilding className="text-blue-600 dark:text-blue-400" />
-            <span className="text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest text-sm">
-              Featured Professionals
-            </span>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <FaBuilding size={12} /> Featured
+              </span>
+              <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800 max-w-[100px]"></span>
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white leading-tight">
+              Meet Your Local <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Property Experts</span>
+            </h2>
           </motion.div>
 
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 leading-tight">
-            Meet Your Local{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
-              Property Experts
-            </span>
-          </h2>
-
-          <p className="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg leading-relaxed">
-            Connect with verified agents who have the experience and local knowledge to help you find your perfect home.
-          </p>
-        </motion.div>
+          {/* Right: Navigation Buttons (Desktop) */}
+          {agents.length > itemsPerPage && (
+            <div className="hidden md:flex gap-2">
+              <button
+                onClick={handlePrev}
+                className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Previous agents"
+              >
+                <FaChevronLeft size={14} />
+              </button>
+              <button
+                onClick={handleNext}
+                className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Next agents"
+              >
+                <FaChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Carousel */}
-        <div className="relative">
-          {/* Navigation Buttons */}
-          {agents.length > itemsPerPage && (
-            <>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handlePrev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md dark:bg-gray-800/80 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
-              >
-                <FaChevronLeft />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleNext}
-                className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 z-20 w-10 h-10 md:w-12 md:h-12 bg-white/80 backdrop-blur-md dark:bg-gray-800/80 rounded-full shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all"
-              >
-                <FaChevronRight />
-              </motion.button>
-            </>
-          )}
-
-          {/* Carousel Container */}
-          <div className="overflow-hidden px-1 py-4" ref={carouselRef}>
+        <div className="relative -mx-4 md:mx-0">
+          <div className="overflow-hidden px-4 py-2" ref={carouselRef}>
             <motion.div
               className="flex"
               animate={{ x: `-${currentIndex * (100 / itemsPerPage)}%` }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               {agents.map((agent) => (
-                <div key={agent._id} className="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 p-4">
-                  <AgentCarouselCard agent={agent} />
+                <div key={agent._id} className="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 p-2 md:p-3">
+                  <div className="h-[480px]"> {/* Fixed height container constraint */}
+                    <AgentCarouselCard agent={agent} />
+                  </div>
                 </div>
               ))}
             </motion.div>
           </div>
-
-          {/* Carousel Indicators */}
-          {agents.length > itemsPerPage && (
-            <div className="flex justify-center gap-2 mt-4">
-              {Array.from({ length: Math.max(1, agents.length - itemsPerPage + 1) }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-2 rounded-full transition-all ${index === currentIndex
-                    ? 'bg-blue-600 w-8'
-                    : 'bg-gray-300 dark:bg-gray-700 w-2 hover:bg-blue-400'
-                    }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Call to Action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mt-8"
-        >
-          <p className="text-gray-600 dark:text-gray-400 mb-6 text-lg">
-            Looking for more expert guidance?
-          </p>
+        {/* Mobile Navigation & View All */}
+        <div className="mt-4 flex items-center justify-between md:justify-center border-t border-gray-100 dark:border-gray-800 pt-4">
+          {/* Mobile Nav */}
+          {agents.length > itemsPerPage && (
+            <div className="flex md:hidden gap-2">
+              <button onClick={handlePrev} className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><FaChevronLeft size={14} /></button>
+              <div className="flex gap-1.5 items-center px-2">
+                {Array.from({ length: Math.min(5, Math.ceil(agents.length / itemsPerPage)) }).map((_, idx) => (
+                  <div key={idx} className={`h-1.5 rounded-full transition-all ${idx === currentIndex % Math.ceil(agents.length / itemsPerPage) ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300 dark:bg-gray-700'}`} />
+                ))}
+              </div>
+              <button onClick={handleNext} className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><FaChevronRight size={14} /></button>
+            </div>
+          )}
+
           <Link
             to="/agents"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-105"
+            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition"
           >
-            Browse All Agents <FaArrowRight />
+            View All Agents <FaArrowRight size={14} />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   );
