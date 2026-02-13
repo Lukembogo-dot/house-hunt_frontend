@@ -28,14 +28,6 @@
   ],
   "rewrites": [
     {
-      "source": "/sitemap.xml",
-      "destination": "https://api.househuntkenya.co.ke/sitemap.xml"
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "https://api.househuntkenya.co.ke/robots.txt"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
