@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useFeatureFlag } from '../context/FeatureFlagContext';
+import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent';
 import SmartPricingWidget from '../components/SmartPricingWidget';
 
