@@ -28,7 +28,10 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
     phone: '',
     email: '',
     category: 'Property',
-    details: ''
+    details: '',
+    unitType: '',
+    landSize: '',
+    budget: ''
   });
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -102,7 +105,7 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
         category: activeTab === 'property' ? 'Property' : formData.category
       });
       setSuccessMsg('🎉 Request Sent! An agent will contact you shortly.');
-      setFormData({ name: '', phone: '', email: '', category: 'Property', details: '' });
+      setFormData({ name: '', phone: '', email: '', category: 'Property', details: '', unitType: '', landSize: '', budget: '' });
 
       // No need to update ticker if compact
       // Update ticker even if compact
@@ -424,6 +427,65 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
                   </motion.div>
                 )}
 
+                {activeTab === 'property' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-5"
+                  >
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Unit Type</label>
+                      <select
+                        value={formData.unitType}
+                        onChange={(e) => setFormData({ ...formData, unitType: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                      >
+                        <option value="">Select Type</option>
+                        <option value="Bedsitter">Bedsitter</option>
+                        <option value="1 Bedroom">1 Bedroom</option>
+                        <option value="2 Bedroom">2 Bedroom</option>
+                        <option value="3 Bedroom">3 Bedroom</option>
+                        <option value="4+ Bedroom">4+ Bedroom</option>
+                        <option value="Maisonette">Maisonette</option>
+                        <option value="Land">Land</option>
+                        <option value="Commercial">Commercial</option>
+                      </select>
+                    </div>
+
+                    {formData.unitType === 'Land' ? (
+                      <div>
+                        <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Land Size</label>
+                        <input
+                          type="text"
+                          placeholder="e.g 50x100, 1 Acre"
+                          value={formData.landSize}
+                          onChange={(e) => setFormData({ ...formData, landSize: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                        />
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Budget Range</label>
+                        <select
+                          value={formData.budget}
+                          onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                        >
+                          <option value="">Select Budget</option>
+                          <option value="Below 10k">Below 10k</option>
+                          <option value="10k - 20k">10k - 20k</option>
+                          <option value="20k - 35k">20k - 35k</option>
+                          <option value="35k - 50k">35k - 50k</option>
+                          <option value="50k - 80k">50k - 80k</option>
+                          <option value="80k - 150k">80k - 150k</option>
+                          <option value="Above 150k">Above 150k</option>
+                        </select>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Your Name</label>
@@ -462,10 +524,10 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Tell Us What You Need</label>
+                  <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Tell Us More</label>
                   <textarea
                     placeholder={activeTab === 'property'
-                      ? "E.g., 2 Bedroom apartment in Kilimani, Budget 50k/month, near school..."
+                      ? "E.g., Spacious with a balcony and close to the road..."
                       : "E.g., Moving from Westlands to Kileleshwa this Saturday, need a 3-ton truck..."
                     }
                     required
