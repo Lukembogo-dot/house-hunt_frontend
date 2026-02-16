@@ -31,7 +31,8 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
     details: '',
     unitType: '',
     landSize: '',
-    budget: ''
+    budget: '',
+    location: ''
   });
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -105,7 +106,8 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
         category: activeTab === 'property' ? 'Property' : formData.category
       });
       setSuccessMsg('🎉 Request Sent! An agent will contact you shortly.');
-      setFormData({ name: '', phone: '', email: '', category: 'Property', details: '', unitType: '', landSize: '', budget: '' });
+      setSuccessMsg('🎉 Request Sent! An agent will contact you shortly.');
+      setFormData({ name: '', phone: '', email: '', category: 'Property', details: '', unitType: '', landSize: '', budget: '', location: '' });
 
       // No need to update ticker if compact
       // Update ticker even if compact
@@ -483,6 +485,17 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
                         </select>
                       </div>
                     )}
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-gray-600 dark:text-gray-400 mb-2">Ideal Location</label>
+                      <input
+                        type="text"
+                        placeholder="e.g Kilimani, Westlands, Thika Road"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 bg-white/50 dark:bg-gray-700/50 backdrop-blur-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none dark:text-white transition-all"
+                      />
+                    </div>
                   </motion.div>
                 )}
 
@@ -570,7 +583,7 @@ const HouseHuntRequest = ({ compact = false, variant = compact ? 'compact' : 'de
                   whileTap={{ scale: loading ? 1 : 0.98 }}
                   className={`w-full py-4 rounded-xl text-white font-bold text-lg transition-all shadow-xl flex items-center justify-center gap-3 ${loading
                     ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:shadow-2xl hover:shadow-purple-500/50'
+                    : 'bg-green-600 hover:bg-green-700 hover:shadow-2xl hover:shadow-green-500/50'
                     }`}
                 >
                   {loading ? (
