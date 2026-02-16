@@ -178,30 +178,36 @@ const AdminAnalyticsWidget = ({ properties = [] }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Chart */}
-                <div className="lg:col-span-2 h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                            <defs>
-                                <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <XAxis dataKey="date" stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                            <YAxis yAxisId="left" stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                            <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" tick={{ fontSize: 12 }} />
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                                itemStyle={{ color: '#fff' }}
-                            />
-                            <Legend />
-                            {/* Page Views as Area */}
-                            <Area yAxisId="left" type="monotone" dataKey="views" fill="url(#colorViews)" stroke="#8b5cf6" strokeWidth={2} name="Page Views" />
-                            {/* Actions as Bar */}
-                            <Bar yAxisId="right" dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Engagement Actions" barSize={20} />
-                        </ComposedChart>
-                    </ResponsiveContainer>
+                <div className="lg:col-span-2 h-80 relative">
+                    {data && data.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                            <ComposedChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                                <YAxis yAxisId="left" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                                <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" tick={{ fontSize: 12 }} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Legend />
+                                {/* Page Views as Area */}
+                                <Area yAxisId="left" type="monotone" dataKey="views" fill="url(#colorViews)" stroke="#8b5cf6" strokeWidth={2} name="Page Views" />
+                                {/* Actions as Bar */}
+                                <Bar yAxisId="right" dataKey="total" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Engagement Actions" barSize={20} />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                            No chart data available.
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-6 h-80">

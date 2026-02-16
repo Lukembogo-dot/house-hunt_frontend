@@ -62,7 +62,7 @@ const Rent = () => {
             "@type": "CollectionPage",
             "name": "Properties for Rent in Kenya",
             "description": "Browse thousands of verified rental listings including apartments, bungalows, and bedsitters.",
-            "url": "https://www.househuntkenya.co.ke/rent",
+            "url": "https://househuntkenya.com/rent",
             "about": {
               "@type": "Thing",
               "name": "Rental Properties",

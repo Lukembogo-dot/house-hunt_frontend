@@ -27,7 +27,7 @@ const CommunityHub = () => {
   }, []);
 
   // Simple frontend filter
-  const filteredInsights = insights.filter(post => 
+  const filteredInsights = insights.filter(post =>
     post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     post.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -37,7 +37,7 @@ const CommunityHub = () => {
       <Helmet>
         <title>Community Stories & Neighborhood Reviews | HouseHunt Kenya</title>
         <meta name="description" content="Read real stories and reviews from residents in Nairobi's neighborhoods. Discover what it's really like to live in Kilimani, Westlands, and more." />
-        <link rel="canonical" href="https://www.househuntkenya.co.ke/community" />
+        <link rel="canonical" href="https://househuntkenya.com/community" />
       </Helmet>
 
       {/* --- Hero Section --- */}
@@ -58,14 +58,14 @@ const CommunityHub = () => {
             <p className="text-lg text-purple-100 mb-8 max-w-2xl mx-auto">
               Discover the hidden gems, the vibes, and the honest truth about Nairobi's neighborhoods—written by the people who live there.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-               <Link 
-                 to="/share-insight" 
-                 className="flex items-center justify-center bg-yellow-400 text-purple-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-300 transition transform hover:scale-105"
-               >
-                 <FaPenNib className="mr-2" /> Write a Story
-               </Link>
+              <Link
+                to="/share-insight"
+                className="flex items-center justify-center bg-yellow-400 text-purple-900 font-bold py-3 px-8 rounded-lg hover:bg-yellow-300 transition transform hover:scale-105"
+              >
+                <FaPenNib className="mr-2" /> Write a Story
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -73,34 +73,34 @@ const CommunityHub = () => {
 
       {/* --- Content Section --- */}
       <div className="max-w-7xl mx-auto px-6 py-12">
-        
+
         {/* Search Bar */}
         <div className="flex justify-between items-center mb-8 flex-col md:flex-row gap-4">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Recent Stories
           </h2>
           <div className="relative w-full md:w-1/3">
-             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-             <input 
-               type="text" 
-               placeholder="Search location or topic..." 
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-               className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
-             />
+            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search location or topic..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none"
+            />
           </div>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             {[1, 2, 3].map(i => (
-               <div key={i} className="h-64 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
-             ))}
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+            ))}
           </div>
         ) : filteredInsights.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredInsights.map((post, index) => (
-              <motion.div 
+              <motion.div
                 key={post._id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -114,16 +114,16 @@ const CommunityHub = () => {
                       <FaMapMarkerAlt className="mr-1" /> {post.location}
                     </span>
                     <span className="text-xs text-gray-400">
-                       {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
                     </span>
                   </div>
-                  
+
                   <Link to={`/community/${post.slug}`} className="block group">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 transition">
                       {post.title}
                     </h3>
                   </Link>
-                  
+
                   <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-3 leading-relaxed">
                     {post.metaDescription || "Read the full story to learn more about living in this neighborhood..."}
                   </p>
@@ -131,24 +131,24 @@ const CommunityHub = () => {
 
                 {/* ✅ FIXED: Removed conflicting pt-0 class here */}
                 <div className="p-6 mt-auto border-t border-gray-100 dark:border-gray-700 flex items-center justify-between pt-4">
-                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <FaUser className="mr-2" /> {post.authorName}
-                   </div>
-                   <Link to={`/community/${post.slug}`} className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                     Read More &rarr;
-                   </Link>
+                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <FaUser className="mr-2" /> {post.authorName}
+                  </div>
+                  <Link to={`/community/${post.slug}`} className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    Read More &rarr;
+                  </Link>
                 </div>
               </motion.div>
             ))}
           </div>
         ) : (
-           <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700">
-              <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">No stories found.</h3>
-              <p className="text-gray-500 mb-6">Be the first to write about {searchTerm || "your neighborhood"}!</p>
-              <Link to="/share-insight" className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-bold">
-                Write a Story
-              </Link>
-           </div>
+          <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-700 dark:text-gray-200 mb-2">No stories found.</h3>
+            <p className="text-gray-500 mb-6">Be the first to write about {searchTerm || "your neighborhood"}!</p>
+            <Link to="/share-insight" className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-bold">
+              Write a Story
+            </Link>
+          </div>
         )}
 
       </div>

@@ -106,8 +106,8 @@ export default function About() {
             "mainEntity": {
               "@type": "Organization",
               "name": "HouseHunt Kenya",
-              "url": "https://www.househuntkenya.co.ke",
-              "logo": "https://www.househuntkenya.co.ke/logo.png",
+              "url": "https://househuntkenya.com",
+              "logo": "https://househuntkenya.com/logo.png",
               "description": "Kenya's most trusted digital property marketplace revolutionizing real estate through AI-powered search, verified listings, and community reviews.",
               "foundingDate": "2025",
               "slogan": "Join the Housing Revolution in Kenya",

@@ -149,10 +149,10 @@ function MainLayout() {
             "@context": "https://schema.org",
             "@type": "WebSite",
             "name": "HouseHunt Kenya",
-            "url": "https://www.househuntkenya.co.ke",
+            "url": "https://househuntkenya.com",
             "potentialAction": {
               "@type": "SearchAction",
-              "target": "https://www.househuntkenya.co.ke/search?q={search_term_string}",
+              "target": "https://househuntkenya.com/search?q={search_term_string}",
               "query-input": "required name=search_term_string"
             }
           })}

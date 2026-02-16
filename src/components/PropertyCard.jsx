@@ -42,7 +42,7 @@ const getVideoThumbnail = (url) => {
 };
 
 const generatePropertyCardSchema = (property, images) => {
-  const baseUrl = 'https://www.househuntkenya.co.ke';
+  const baseUrl = 'https://househuntkenya.com';
   const propertyUrl = `${baseUrl}/properties/${property.slug}`;
 
   return {
@@ -225,7 +225,7 @@ function PropertyCard({ property }) {
         {/* SEO Microdata */}
         <meta itemProp="name" content={property.title} />
         <meta itemProp="description" content={`${property.bedrooms || 0} bedroom ${property.type} for ${property.listingType} in ${property.location}`} />
-        <link itemProp="url" href={`https://www.househuntkenya.co.ke/properties/${property.slug}`} />
+        <link itemProp="url" href={`https://househuntkenya.com/properties/${property.slug}`} />
 
         <div itemProp="offers" itemScope itemType="https://schema.org/Offer" className="sr-only">
           <meta itemProp="price" content={property.price.toString()} />

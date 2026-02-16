@@ -60,7 +60,7 @@ const MyProfile = () => {
     // ✅ UPDATE: Include Battle Stats in Share Text
     const battleText = gameData.battleWins > 0 ? ` & ${gameData.battleWins} Battle Wins 🏆` : '';
     const shareText = `I'm a Level ${gameData.level} ${gameData.title || 'Contributor'} on HouseHunt Kenya! 🛡️ I've earned ${gameData.score} XP${battleText}. Rate your building anonymously and join me!`;
-    const shareUrl = 'https://www.househuntkenya.co.ke';
+    const shareUrl = 'https://househuntkenya.com';
 
     if (platform === 'native' && navigator.share) {
       try {

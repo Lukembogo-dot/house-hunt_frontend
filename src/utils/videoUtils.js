@@ -186,5 +186,5 @@ export const getVideoThumbnailWithFallback = (videoUrl, propertyImages = []) => 
     }
 
     // Final fallback: Generic video placeholder
-    return "https://www.househuntkenya.co.ke/assets/video-placeholder.jpg";
+    return "https://househuntkenya.com/assets/video-placeholder.jpg";
 };

@@ -34,7 +34,7 @@ function Buy() {
             "@type": "CollectionPage",
             "name": "Properties for Sale in Kenya",
             "description": "Find premier land, houses, and apartments for sale across Nairobi and Kenya.",
-            "url": "https://www.househuntkenya.co.ke/buy",
+            "url": "https://househuntkenya.com/buy",
             "about": {
               "@type": "Thing",
               "name": "Real Estate for Sale",

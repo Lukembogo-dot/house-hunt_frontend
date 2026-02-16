@@ -35,7 +35,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
     }
 
     // ✅ 1. FIX: Hardcode the production domain. 
-    const siteUrl = 'https://www.househuntkenya.co.ke';
+    const siteUrl = 'https://househuntkenya.com';
 
     // ✅ 2. FIX: Strict Canonical Logic (Strip Query Parameters)
     let canonical = '';
@@ -323,7 +323,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                     "description": seo.videoDescription || cleanText(property.description, 160) || `Watch a complete walkthrough of ${property.title}.`,
                     "thumbnailUrl": seo.videoThumbnail || videoThumbnail || ((property.images && property.images.length > 0)
                         ? (property.images[0].url || property.images[0])
-                        : "https://www.househuntkenya.co.ke/assets/video-placeholder.jpg"),
+                        : "https://househuntkenya.com/assets/video-placeholder.jpg"),
                     "uploadDate": property.createdAt || new Date().toISOString(),
                     "duration": videoDuration, // ✅ Required by Google
                     "contentUrl": contentUrl, // ✅ Proper YouTube watch URL or direct file
@@ -333,7 +333,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                         "name": "HouseHunt Kenya",
                         "logo": {
                             "@type": "ImageObject",
-                            "url": "https://www.househuntkenya.co.ke/assets/logo.png"
+                            "url": "https://househuntkenya.com/assets/logo.png"
                         }
                     }
                 };
@@ -349,7 +349,7 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
                     ? property.images
                         .map(img => typeof img === 'string' ? img : img.url)
                         .filter(isValidImageUrl) // ✅ Filter out Base64
-                    : ["https://www.househuntkenya.co.ke/assets/logo.png"],
+                    : ["https://househuntkenya.com/assets/logo.png"],
                 "url": canonical,
                 "datePosted": property.createdAt,
                 "dateModified": property.updatedAt || property.createdAt, // ✅ ENHANCED: Last updated date

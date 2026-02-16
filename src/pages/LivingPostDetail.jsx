@@ -1,9 +1,9 @@
 // src/pages/LivingPostDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  FaArrowLeft, FaUserSecret, FaShieldAlt, FaMapMarkerAlt, 
-  FaReply, FaPaperPlane, FaSpinner, FaCrown, FaHome 
+import {
+  FaArrowLeft, FaUserSecret, FaShieldAlt, FaMapMarkerAlt,
+  FaReply, FaPaperPlane, FaSpinner, FaCrown, FaHome
 } from 'react-icons/fa';
 import { formatDistanceToNow } from 'date-fns';
 import apiClient from '../utils/apiClient';
@@ -13,7 +13,7 @@ import { Helmet } from 'react-helmet-async'; // ✅ IMPORT HELMET
 const LivingPostDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  
+
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [replyContent, setReplyContent] = useState('');
@@ -43,7 +43,7 @@ const LivingPostDetail = () => {
       const { data: updatedReplies } = await apiClient.post(`/living-community/posts/${id}/reply`, {
         content: replyContent
       });
-      
+
       // Update local state with new replies
       setPost(prev => ({ ...prev, replies: updatedReplies }));
       setReplyContent('');
@@ -98,12 +98,12 @@ const LivingPostDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
-      
+
       {/* ✅ 2. INJECT SEO META DATA */}
       <Helmet>
         <title>{post.category}: {post.neighborhood} Updates | HouseHunt Kenya</title>
         <meta name="description" content={`Real-time ${post.category} update from residents in ${post.neighborhood}: "${post.content.substring(0, 100)}..."`} />
-        <link rel="canonical" href={`https://www.househuntkenya.co.ke/living-feed/${id}`} />
+        <link rel="canonical" href={`https://househuntkenya.com/living-feed/${id}`} />
         <script type="application/ld+json">{JSON.stringify(discussionSchema)}</script>
       </Helmet>
 
@@ -117,7 +117,7 @@ const LivingPostDetail = () => {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 mt-6">
-        
+
         {/* --- MAIN POST --- */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 mb-6">
           <div className="p-6">
@@ -138,10 +138,10 @@ const LivingPostDetail = () => {
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
                     <span>•</span>
-                    
+
                     {/* ✅ 3. pSEO LINK: Neighborhood clicks go to Real Estate Search */}
-                    <Link 
-                      to={`/search/rent/${post.neighborhood.toLowerCase()}`} 
+                    <Link
+                      to={`/search/rent/${post.neighborhood.toLowerCase()}`}
                       className="flex items-center gap-1 text-blue-600 hover:underline font-bold"
                       title={`See apartments in ${post.neighborhood}`}
                     >
@@ -161,12 +161,12 @@ const LivingPostDetail = () => {
 
             {/* ✅ 4. CTA to Search Properties in this area */}
             <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                <Link 
-                  to={`/search/rent/${post.neighborhood.toLowerCase()}`}
-                  className="flex items-center gap-2 text-sm text-purple-600 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 p-2 rounded-lg transition w-max"
-                >
-                   <FaHome /> View Homes for Rent in {post.neighborhood}
-                </Link>
+              <Link
+                to={`/search/rent/${post.neighborhood.toLowerCase()}`}
+                className="flex items-center gap-2 text-sm text-purple-600 font-bold hover:bg-purple-50 dark:hover:bg-purple-900/20 p-2 rounded-lg transition w-max"
+              >
+                <FaHome /> View Homes for Rent in {post.neighborhood}
+              </Link>
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ const LivingPostDetail = () => {
                       <span className="font-bold text-sm text-gray-800 dark:text-gray-200">
                         {reply.authorAlias}
                       </span>
-                      
+
                       {/* Badges */}
                       {isReplyAuthorOriginalPoster && (
                         <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
@@ -227,15 +227,15 @@ const LivingPostDetail = () => {
         <div className="max-w-3xl mx-auto">
           {user ? (
             <form onSubmit={handleReplySubmit} className="flex gap-3">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={isCurrentUserAuthor ? "Update your status or reply..." : "Reply to this update..."}
                 className="flex-1 bg-gray-100 dark:bg-gray-800 border-none rounded-full px-5 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white"
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
               />
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={submitting || !replyContent.trim()}
                 className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -248,7 +248,7 @@ const LivingPostDetail = () => {
               <Link to="/login" className="text-blue-600 font-bold text-sm hover:underline">Login Now</Link>
             </div>
           )}
-          
+
           {/* Gamification Hint */}
           {user && (
             <p className="text-[10px] text-center text-gray-400 mt-2">

@@ -19,7 +19,7 @@ const FaqSeoInjector = ({ faq }) => {
   if (!faq) return null;
 
   // ✅ Generate canonical URL
-  const canonicalUrl = `https://www.househuntkenya.co.ke/faq/${faq.slug}`;
+  const canonicalUrl = `https://househuntkenya.com/faq/${faq.slug}`;
 
   // Helper to decode for Schema too (So Google sees <h3> not &lt;h3&gt;)
   const decodeHtml = (html) => {
@@ -63,8 +63,8 @@ const FaqSeoInjector = ({ faq }) => {
     "@type": "BreadcrumbList",
     "@id": `${canonicalUrl}#breadcrumb`,
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.househuntkenya.co.ke" },
-      { "@type": "ListItem", "position": 2, "name": "FAQs", "item": "https://www.househuntkenya.co.ke/faqs" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://househuntkenya.com" },
+      { "@type": "ListItem", "position": 2, "name": "FAQs", "item": "https://househuntkenya.com/faqs" },
       { "@type": "ListItem", "position": 3, "name": faq.question, "item": canonicalUrl }
     ]
   };

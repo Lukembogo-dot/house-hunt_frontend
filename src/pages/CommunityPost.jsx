@@ -129,7 +129,7 @@ const CommunityPost = () => {
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.metaDescription} />
         <meta property="og:type" content="article" />
-        <link rel="canonical" href={`https://www.househuntkenya.co.ke/community/${post.slug}`} />
+        <link rel="canonical" href={`https://househuntkenya.com/community/${post.slug}`} />
       </Helmet>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">

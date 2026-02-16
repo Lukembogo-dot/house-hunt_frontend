@@ -165,8 +165,8 @@ const OurPlatform = () => {
             "mainEntity": {
               "@type": "Organization",
               "name": "HouseHunt Kenya",
-              "url": "https://www.househuntkenya.co.ke",
-              "logo": "https://www.househuntkenya.co.ke/logo.png",
+              "url": "https://househuntkenya.com",
+              "logo": "https://househuntkenya.com/logo.png",
               "description": "Kenya's most advanced property platform combining AI-powered search, verified listings, community reviews, and professional services.",
               "sameAs": [
                 "https://www.facebook.com/househuntkenya",
@@ -174,8 +174,8 @@ const OurPlatform = () => {
                 "https://instagram.com/househuntkenya"
               ],
               "potentialAction": [
-                { "@type": "SearchAction", "target": "https://www.househuntkenya.co.ke/rent" },
-                { "@type": "SellAction", "target": "https://www.househuntkenya.co.ke/agents" }
+                { "@type": "SearchAction", "target": "https://househuntkenya.com/rent" },
+                { "@type": "SellAction", "target": "https://househuntkenya.com/agents" }
               ]
             }
           })}

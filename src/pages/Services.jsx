@@ -7,7 +7,7 @@ import apiClient from '../api/axios';
 import SeoInjector from '../components/SeoInjector';
 
 // ✅ IMPORT THE EXTERNAL CARD COMPONENT
-import ServiceCard from '../components/services/ServiceCard'; 
+import ServiceCard from '../components/services/ServiceCard';
 
 // ==========================================
 // 1. INLINE ICONS (For Hero Section)
@@ -35,42 +35,42 @@ const categories = [
 const ServicesHero = ({ activeCategory, onCategoryChange, searchQuery, onSearchChange }) => {
   return (
     <section className="relative pt-32 pb-16 px-6 bg-gray-50 dark:bg-gray-900 overflow-hidden border-b dark:border-gray-800">
-      
+
       {/* Animated Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-        <motion.div 
-          animate={{ x: [0, 50, 0], y: [0, -30, 0] }} 
+        <motion.div
+          animate={{ x: [0, 50, 0], y: [0, -30, 0] }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className="absolute top-10 left-10 w-96 h-96 bg-blue-200/30 dark:bg-blue-900/20 rounded-full blur-3xl"
         />
-        <motion.div 
-          animate={{ x: [0, -50, 0], y: [0, 30, 0] }} 
+        <motion.div
+          animate={{ x: [0, -50, 0], y: [0, 30, 0] }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           className="absolute bottom-10 right-10 w-80 h-80 bg-purple-200/30 dark:bg-purple-900/20 rounded-full blur-3xl"
         />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto text-center">
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight"
         >
           The <span className="text-blue-600 dark:text-blue-400">Services Directory</span>
         </motion.h1>
-        
-        <motion.p 
+
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="text-gray-600 dark:text-gray-300 text-lg md:text-xl max-w-2xl mx-auto mb-10"
         >
-          Connect with trusted professionals verified by the HouseHunt community. 
+          Connect with trusted professionals verified by the HouseHunt community.
           From movers to internet providers, find what you need.
         </motion.p>
 
         {/* Search Bar */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
@@ -79,8 +79,8 @@ const ServicesHero = ({ activeCategory, onCategoryChange, searchQuery, onSearchC
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
             <IconSearch className="w-5 h-5 text-gray-400" />
           </div>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search for 'movers', 'Kilimani', or 'Swift'..."
@@ -97,11 +97,10 @@ const ServicesHero = ({ activeCategory, onCategoryChange, searchQuery, onSearchC
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + (index * 0.05) }}
               onClick={() => onCategoryChange(cat.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 border ${
-                activeCategory === cat.id 
-                  ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105' 
+              className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 border ${activeCategory === cat.id
+                  ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/30 scale-105'
                   : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-              }`}
+                }`}
             >
               {cat.icon} {cat.label}
             </motion.button>
@@ -120,7 +119,7 @@ const Services = () => {
   const [filteredServices, setFilteredServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [seoData, setSeoData] = useState(null);
-  
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -131,14 +130,14 @@ const Services = () => {
         setLoading(true);
         // Fetch up to 1000 to ensure robust client-side search for now
         const [servicesRes, seoRes] = await Promise.all([
-          apiClient.get('/service-providers?limit=1000'), 
-          apiClient.get('/seo/services') 
+          apiClient.get('/service-providers?limit=1000'),
+          apiClient.get('/seo/services')
         ]);
 
         const servicesData = servicesRes.data.providers || servicesRes.data || [];
         setServices(servicesData);
         setFilteredServices(servicesData);
-        
+
         if (seoRes.data) {
           setSeoData(seoRes.data);
         }
@@ -157,7 +156,7 @@ const Services = () => {
 
     // Filter by Category Pill
     if (activeCategory !== 'all') {
-      result = result.filter(service => 
+      result = result.filter(service =>
         service.serviceType?.toLowerCase().includes(activeCategory.toLowerCase())
       );
     }
@@ -165,7 +164,7 @@ const Services = () => {
     // Filter by Search Bar
     if (searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase();
-      result = result.filter(service => 
+      result = result.filter(service =>
         // 1. Check Title (Company Name)
         (service.title && service.title.toLowerCase().includes(query)) ||
         // 2. Check Location (HQ)
@@ -197,26 +196,26 @@ const Services = () => {
     "@type": "CollectionPage",
     "name": finalSeo.metaTitle,
     "description": finalSeo.metaDescription,
-    "url": "https://www.househuntkenya.co.ke/services",
+    "url": "https://househuntkenya.com/services",
     "mainEntity": {
       "@type": "ItemList",
       "itemListElement": filteredServices.map((service, index) => ({
         "@type": "ListItem",
         "position": index + 1,
         "item": {
-           "@type": "LocalBusiness",
-           "name": service.title,
-           "image": service.imageUrl,
-           "address": {
-             "@type": "PostalAddress",
-             "addressLocality": service.location || "Nairobi",
-             "addressCountry": "KE"
-           },
-           "aggregateRating": {
-             "@type": "AggregateRating",
-             "ratingValue": service.averageRating || 5,
-             "reviewCount": service.numReviews || 1
-           }
+          "@type": "LocalBusiness",
+          "name": service.title,
+          "image": service.imageUrl,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": service.location || "Nairobi",
+            "addressCountry": "KE"
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": service.averageRating || 5,
+            "reviewCount": service.numReviews || 1
+          }
         }
       }))
     }
@@ -231,8 +230,8 @@ const Services = () => {
         </script>
       </Helmet>
 
-      <ServicesHero 
-        activeCategory={activeCategory} 
+      <ServicesHero
+        activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -240,18 +239,18 @@ const Services = () => {
 
       <main className="max-w-7xl mx-auto px-6 py-16">
         {loading ? (
-           <div className="flex justify-center items-center h-64">
-             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-           </div>
+          <div className="flex justify-center items-center h-64">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
         ) : (
           <>
             <div className="flex justify-between items-center mb-8">
-               <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                 {filteredServices.length} {filteredServices.length === 1 ? 'Provider' : 'Providers'} Found
-               </h2>
-               <div className="text-sm text-gray-500 dark:text-gray-400">
-                 Showing {activeCategory === 'all' ? 'all' : activeCategory} services
-               </div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                {filteredServices.length} {filteredServices.length === 1 ? 'Provider' : 'Providers'} Found
+              </h2>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Showing {activeCategory === 'all' ? 'all' : activeCategory} services
+              </div>
             </div>
 
             {filteredServices.length === 0 ? (
@@ -263,7 +262,7 @@ const Services = () => {
                 </button>
               </div>
             ) : (
-              <motion.div 
+              <motion.div
                 layout
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
               >
@@ -289,7 +288,7 @@ const Services = () => {
 
       {/* SEO Content Block */}
       <section className="py-16 px-6 bg-gray-50 dark:bg-gray-900">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -302,9 +301,9 @@ const Services = () => {
             Trusted Service Providers in Kenya
           </h3>
           <p className="text-lg md:text-xl leading-relaxed text-gray-700 dark:text-white/90">
-            HouseHunt Kenya is not just about properties; we are building a complete ecosystem for living. 
-            Our Service Directory helps you find reliable movers, fast internet service providers (ISPs), 
-            professional cleaners, and skilled plumbers in your area. All providers are reviewed by the community, 
+            HouseHunt Kenya is not just about properties; we are building a complete ecosystem for living.
+            Our Service Directory helps you find reliable movers, fast internet service providers (ISPs),
+            professional cleaners, and skilled plumbers in your area. All providers are reviewed by the community,
             ensuring you get quality service every time.
           </p>
         </motion.div>

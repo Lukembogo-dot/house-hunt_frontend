@@ -18,7 +18,7 @@ const PropertyVideoWatch = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const siteUrl = 'https://www.househuntkenya.co.ke';
+    const siteUrl = 'https://househuntkenya.com';
 
     useEffect(() => {
         const fetchProperty = async () => {

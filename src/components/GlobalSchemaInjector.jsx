@@ -43,7 +43,7 @@ const GlobalSchemaInjector = () => {
     '@context': 'https://schema.org',
     '@type': 'RealEstateAgent', // This is more specific than LocalBusiness
     'name': settings.businessName,
-    'url': 'https://www.househuntkenya.co.ke', // Your homepage URL
+    'url': 'https://househuntkenya.com', // Your homepage URL
     'logo': settings.logoUrl,
     'telephone': settings.phoneNumber,
     'address': {

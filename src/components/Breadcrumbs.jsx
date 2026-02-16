@@ -10,7 +10,7 @@ const Breadcrumbs = () => {
   if (pathnames.length === 0) return null;
 
   // Generate structured data (JSON-LD) for Google
-  const siteUrl = 'https://www.househuntkenya.co.ke'; // ✅ Standardized domain
+  const siteUrl = 'https://househuntkenya.com'; // ✅ Standardized domain
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

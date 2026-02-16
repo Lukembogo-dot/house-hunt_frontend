@@ -56,11 +56,14 @@ const AgentSeoInjector = ({ seo, agent, properties = [] }) => {
   const locations = [...new Set(properties.map(p => p.location).filter(Boolean))].slice(0, 5); // Top 5 locations
   const primaryLocation = agent.location || locations[0] || "Nairobi";
 
+  // ✅ Construct clean canonical URL (no query params, correct domain)
+  const canonicalUrl = `https://househuntkenya.com/agent/${agent._id}`;
+
   const agentSchema = {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
     "name": agent.name,
-    "url": window.location.href,
+    "url": canonicalUrl,
     "image": agent.profilePicture,
     "description": agent.seo?.schemaDescription || seo.metaDescription || agent.about?.substring(0, 160) || `Professional real estate agent ${agent.name} specializing in properties in ${primaryLocation}.`,
     "telephone": agent.voiceCallNumber,
@@ -85,7 +88,7 @@ const AgentSeoInjector = ({ seo, agent, properties = [] }) => {
     "email": agent.email,
     "mainEntityOfPage": {
       "@type": "ProfilePage",
-      "@id": window.location.href
+      "@id": canonicalUrl
     }
   };
 
@@ -93,7 +96,7 @@ const AgentSeoInjector = ({ seo, agent, properties = [] }) => {
     <Helmet>
       <title>{agent.seo?.metaTitle || seo.metaTitle || `${agent.name} - Top Real Estate Agent in ${primaryLocation} | HouseHunt Kenya`}</title>
       <meta name="description" content={agent.seo?.metaDescription || seo.metaDescription || `Contact ${agent.name}, a verified agent in ${primaryLocation} with ${properties.length} active listings. View portfolio and reviews.`} />
-      <link rel="canonical" href={window.location.href} />
+      <link rel="canonical" href={canonicalUrl} />
       <meta property="og:title" content={`${agent.name} - Real Estate Portfolio`} />
       <meta property="og:image" content={agent.profilePicture} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(agentSchema) }} />

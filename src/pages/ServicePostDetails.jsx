@@ -30,7 +30,7 @@ const StarRating = ({ rating }) => {
 // ✅ 1. REBUILT SEO INJECTOR (FIXES FAQ + CANONICAL URL ISSUES)
 const ServiceSeoInjector = ({ service }) => {
   // ✅ Generate canonical URL
-  const canonicalUrl = `https://www.househuntkenya.co.ke/services/${service.slug}`;
+  const canonicalUrl = `https://househuntkenya.com/services/${service.slug}`;
 
   // ✅ BlogPosting schema for article rich results (FAQs removed)
   const blogSchema = {
@@ -38,7 +38,7 @@ const ServiceSeoInjector = ({ service }) => {
     "@id": `${canonicalUrl}#article`,
     "headline": service.metaTitle || service.title,
     "description": service.metaDescription || service.content?.substring(0, 160),
-    "image": service.imageUrl || "https://www.househuntkenya.co.ke/default-image.png",
+    "image": service.imageUrl || "https://househuntkenya.com/default-image.png",
     "datePublished": service.createdAt,
     "dateModified": service.updatedAt,
     "author": {
@@ -50,7 +50,7 @@ const ServiceSeoInjector = ({ service }) => {
       "name": "House Hunt Kenya",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://www.househuntkenya.co.ke/icons/icon-512x512.png"
+        "url": "https://househuntkenya.com/icons/icon-512x512.png"
       }
     }
   };

@@ -872,7 +872,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 value={seoData.canonicalUrl}
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
-                placeholder="e.g., https://www.househuntkenya.co.ke/rent/nairobi"
+                placeholder="e.g., https://househuntkenya.com/rent/nairobi"
               />
               <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
                 Leave blank to use the default page URL. Only fill this in if you have duplicate content.
@@ -946,7 +946,7 @@ const PageSettingsEditor = ({ keywordLibrary }) => {
                 value={seoData.ogImage || ''}
                 onChange={handleInputChange}
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3"
-                placeholder="https://www.househuntkenya.co.ke/images/property-preview.jpg"
+                placeholder="https://househuntkenya.com/images/property-preview.jpg"
               />
               <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
                 📏 Recommended size: 1200x630px. This image appears when sharing on Facebook, LinkedIn, WhatsApp.
@@ -1475,7 +1475,7 @@ const GlobalSettingsManager = () => {
           </div>
           <div>
             <label htmlFor="logoUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Logo URL</label>
-            <input type="text" id="logoUrl" name="logoUrl" value={settings.logoUrl} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="https://www.househuntkenya.co.ke/logo.png" />
+            <input type="text" id="logoUrl" name="logoUrl" value={settings.logoUrl} onChange={handleInputChange} className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm p-3" placeholder="https://househuntkenya.com/logo.png" />
           </div>
           <div>
             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>

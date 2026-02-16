@@ -115,7 +115,7 @@ const PropertyAIInsights = ({ propertyId, propertyTitle, propertyLocation, prope
                                 "author": {
                                     "@type": "RealEstateAgent",
                                     "name": agentName || "HouseHunt Agent",
-                                    "image": agentImage || "https://househuntkenya.co.ke/default-agent.png",
+                                    "image": agentImage || "https://househuntkenya.com/default-agent.png",
                                     "telephone": agentContact || ""
                                 }
                             })}

@@ -23,7 +23,7 @@ const SoldPropertiesPage = () => {
         setLoading(false);
       }
     };
-    
+
     if (status && location) {
       fetchArchive();
     }
@@ -37,36 +37,36 @@ const SoldPropertiesPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
-      
+
       {/* ✅ 2. DYNAMIC SEO META TAGS */}
       <Helmet>
         <title>{`${formattedStatus} Properties in ${formattedLocation} | Market Data - HouseHunt Kenya`}</title>
-        <meta 
-          name="description" 
-          content={`Browse archive of recently ${formattedStatus.toLowerCase()} properties in ${formattedLocation}. View historical prices and market trends. Missed out? Find active listings here.`} 
+        <meta
+          name="description"
+          content={`Browse archive of recently ${formattedStatus.toLowerCase()} properties in ${formattedLocation}. View historical prices and market trends. Missed out? Find active listings here.`}
         />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href={`https://www.househuntkenya.co.ke/${status}/${location}`} />
+        <link rel="canonical" href={`https://househuntkenya.com/${status}/${location}`} />
       </Helmet>
 
       <div className="max-w-7xl mx-auto">
-        
+
         {/* Header Section */}
         <div className="text-center mb-12">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="inline-block p-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 mb-4"
           >
             <FaCheckCircle size={32} />
           </motion.div>
-          
+
           <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4">
             Properties Just {formattedStatus} in <span className="text-blue-600 dark:text-blue-400">{formattedLocation}</span>
           </h1>
-          
+
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Browse our archive of recently {formattedStatus.toLowerCase()} homes. 
+            Browse our archive of recently {formattedStatus.toLowerCase()} homes.
             These properties are no longer available, but they provide great insight into the {formattedLocation} market.
           </p>
         </div>
@@ -79,8 +79,8 @@ const SoldPropertiesPage = () => {
         ) : properties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {properties.map((prop, index) => (
-              <motion.div 
-                key={prop._id} 
+              <motion.div
+                key={prop._id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
@@ -90,7 +90,7 @@ const SoldPropertiesPage = () => {
                 <div className="absolute top-4 right-4 z-20 bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wide">
                   {formattedStatus}
                 </div>
-                
+
                 {/* Visual indicator that it is inactive */}
                 <div className="filter grayscale hover:grayscale-0 transition duration-500 opacity-90 hover:opacity-100">
                   <PropertyCard property={prop} />
@@ -107,8 +107,8 @@ const SoldPropertiesPage = () => {
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               We haven't archived any {formattedStatus.toLowerCase()} properties in {formattedLocation} recently.
             </p>
-            <Link 
-              to={status === 'sold' ? '/buy' : '/rent'} 
+            <Link
+              to={status === 'sold' ? '/buy' : '/rent'}
               className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
             >
               <FaArrowLeft size={14} /> View Available Properties
@@ -117,7 +117,7 @@ const SoldPropertiesPage = () => {
         )}
 
         {/* ✅ 3. CONVERSION SECTION (CTA) */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -136,8 +136,8 @@ const SoldPropertiesPage = () => {
               Don't worry! We have many more active listings in <strong>{formattedLocation}</strong> waiting for you.
               Check out what's available right now.
             </p>
-            
-            <Link 
+
+            <Link
               to={activeLink}
               className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-full font-bold text-lg hover:bg-blue-50 hover:shadow-lg transition transform hover:-translate-y-1"
             >

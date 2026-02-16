@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 import MapComponent from '../components/MapComponent';
 import SmartPricingWidget from '../components/SmartPricingWidget';
 
-const MAX_FILE_SIZE_MB = 2; // (Note: Video check uses 50MB internally in handler)
+const MAX_FILE_SIZE_MB = 10; // Increased to 10MB to accommodate high-res photos
 const NAIROBI_COORDS = { lat: -1.286389, lng: 36.817223 };
 const FEATURE_PRICE_PER_DAY = 170;
 
@@ -353,7 +353,8 @@ const EditProperty = () => {
 
     const oversizedFiles = combinedNewFiles.filter(file => file.size > MAX_FILE_SIZE_MB * 1024 * 1024);
     if (oversizedFiles.length > 0) {
-      setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB.`, type: 'error' });
+      setStatus({ message: `Error: Some files exceed ${MAX_FILE_SIZE_MB}MB. Please compress them.`, type: 'error' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       e.target.value = null;
       return;
     }
@@ -402,6 +403,21 @@ const EditProperty = () => {
 
   const handleRemoveExistingImage = (imageUrlToRemove) => {
     setExistingImages(existingImages.filter(img => img.url !== imageUrlToRemove));
+  };
+
+  // ✅ NEW: Handle removing a newly selected image (and re-indexing alt texts)
+  const handleRemoveNewImage = (indexToRemove) => {
+    const updatedFiles = newImageFiles.filter((_, i) => i !== indexToRemove);
+    setNewImageFiles(updatedFiles);
+
+    // Rebuild alt texts to maintain correct index mapping
+    const updatedAltTexts = {};
+    updatedFiles.forEach((_, newIndex) => {
+      // If we are before the removed index, keeps same index. If after, shift down by 1.
+      const oldIndex = newIndex < indexToRemove ? newIndex : newIndex + 1;
+      updatedAltTexts[newIndex] = newImageAltTexts[oldIndex] || '';
+    });
+    setNewImageAltTexts(updatedAltTexts);
   };
 
   const handleMapClick = async (e) => {
@@ -1038,6 +1054,7 @@ const EditProperty = () => {
               type="file"
               id="new-images"
               name="new-images"
+              accept="image/png, image/jpeg, image/webp"
               onChange={handleFileChange}
               multiple
               className="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900 dark:file:text-blue-300 dark:hover:file:bg-blue-800"
@@ -1053,14 +1070,35 @@ const EditProperty = () => {
 
           {newImageFiles.length > 0 && (
             <div className="space-y-4 pt-4 border-t dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">New Image Alt Text</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">New Images & Alt Text</h3>
               {newImageFiles.map((file, index) => (
-                <AltTextInputField
-                  key={index}
-                  label={`Alt Text for New Image ${index + 1} (${file.name})`}
-                  value={newImageAltTexts[index] || ''}
-                  onChange={(e) => handleNewAltTextChange(index, e.target.value)}
-                />
+                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end bg-blue-50 dark:bg-gray-800 border border-blue-100 dark:border-gray-700 p-4 rounded-lg shadow-sm">
+                  {/* \u2705 ADDED IMAGE PREVIEW */}
+                  <div className="md:col-span-1 relative">
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt={`Preview ${index}`}
+                      className="w-full h-24 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                    />
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      type="button"
+                      onClick={() => handleRemoveNewImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 leading-none shadow-md transition"
+                      title="Remove Image"
+                    >
+                      <FaTimes size={12} />
+                    </motion.button>
+                  </div>
+
+                  <div className="md:col-span-4">
+                    <AltTextInputField
+                      label={`Alt Text for New Image ${index + 1} (${file.name})`}
+                      value={newImageAltTexts[index] || ''}
+                      onChange={(e) => handleNewAltTextChange(index, e.target.value)}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           )}

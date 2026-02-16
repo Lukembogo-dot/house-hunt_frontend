@@ -245,7 +245,7 @@ const ServiceProviderDetails = () => {
 
   // Construct Prefilled Message
   const whatsappMessage = encodeURIComponent(
-    `Hello ${provider.title}, I found your services on HouseHunt Kenya (https://househuntkenya.co.ke/services/${slug}). I am interested in your services.`
+    `Hello ${provider.title}, I found your services on HouseHunt Kenya (https://househuntkenya.com/services/${slug}). I am interested in your services.`
   );
 
   return (
