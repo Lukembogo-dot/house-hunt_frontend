@@ -1,7 +1,5 @@
-// middleware.js — Vercel Edge Middleware for Prerender.io
-// Works with any Vercel-deployed app (Vite, CRA, etc.)
-// Intercepts requests from known bot/crawler user agents and proxies
-// them to Prerender.io for fully-rendered HTML snapshots.
+// middleware.js — Vercel Edge Middleware for Prerender.io & Canonical Redirects
+// Intercepts requests to enforce HTTPS, www.househuntkenya.com, and Prerender.io
 
 // Bot user agents that should receive pre-rendered pages
 const BOT_AGENTS = [
@@ -46,15 +44,40 @@ const IGNORED_EXTENSIONS = /\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|ico|rss|zip|
 export default async function middleware(request) {
     const url = new URL(request.url);
     const pathname = url.pathname;
+    const hostname = url.hostname;
+    const protocol = url.protocol;
 
-    // Skip API routes and static assets
-    if (pathname.startsWith('/api/') || IGNORED_EXTENSIONS.test(pathname)) {
+    // 1. ✅ CSS/JS/Static Assets -> Skip all logic
+    if (IGNORED_EXTENSIONS.test(pathname)) {
         return;
     }
 
-    const userAgent = request.headers.get('user-agent') || '';
+    // 2. ✅ Canonical Redirects (Enforce https://www.househuntkenya.com)
+    // Skip this logic for localhost during development
+    if (hostname !== 'localhost' && !hostname.includes('vercel.app')) {
 
-    // Check if request is from a bot
+        const desiredHostname = 'www.househuntkenya.com';
+
+        // Check if we need to redirect (non-www OR .co.ke OR http)
+        const isWrongHost = hostname !== desiredHostname;
+        const isWrongProto = request.headers.get('x-forwarded-proto') === 'http';
+
+        if (isWrongHost || isWrongProto) {
+            url.hostname = desiredHostname;
+            url.protocol = 'https:';
+            url.port = ''; // Clear port if any
+
+            return Response.redirect(url.toString(), 301);
+        }
+    }
+
+    // 3. ✅ API Routes -> Skip prerender logic
+    if (pathname.startsWith('/api/')) {
+        return;
+    }
+
+    // 4. ✅ Prerender.io Proxy (Bot Detection)
+    const userAgent = request.headers.get('user-agent') || '';
     const isBot = BOT_AGENTS.some(bot =>
         userAgent.toLowerCase().includes(bot.toLowerCase())
     );
@@ -63,7 +86,6 @@ export default async function middleware(request) {
         return;
     }
 
-    // Proxy to Prerender.io
     const prerenderToken = process.env.PRERENDER_TOKEN;
     if (!prerenderToken) {
         console.warn('⚠️ PRERENDER_TOKEN not set. Serving normal SPA.');
@@ -79,24 +101,21 @@ export default async function middleware(request) {
             redirect: 'follow',
         });
 
-        // Forward the pre-rendered HTML
         const body = await prerenderResponse.text();
         return new Response(body, {
             status: prerenderResponse.status,
             headers: {
                 'Content-Type': 'text/html; charset=utf-8',
                 'X-Prerender': 'true',
-                'Cache-Control': 'public, max-age=86400', // Cache for 24h
+                'Cache-Control': 'public, max-age=86400',
             },
         });
     } catch (error) {
         console.error('Prerender.io proxy failed:', error.message);
-        // Fall through to normal SPA rendering
         return;
     }
 }
 
-// Vercel Edge Middleware config
 export const config = {
     matcher: [
         '/((?!_vercel|_next|icons|manifest\\.json|robots\\.txt|sitemap\\.xml|assets|favicon\\.ico).*)',

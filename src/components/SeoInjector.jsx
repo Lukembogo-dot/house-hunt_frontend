@@ -64,8 +64,8 @@ const SeoInjector = ({ seo, property, reviews = [] }) => {
             currentPath = window.location.pathname;
         }
 
-        const cleanPath = currentPath === '/' ? '' : currentPath;
-        // Canonical URL is ALWAYS clean (no query parameters)
+        const cleanPath = currentPath === '/' ? '' : currentPath.replace(/\/$/, ''); // ✅ STRIP TRAILING SLASH
+        // Canonical URL is ALWAYS clean (no query parameters, no trailing slash)
         canonical = `${siteUrl}${cleanPath}`;
     }
 
