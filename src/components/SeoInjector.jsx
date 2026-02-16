@@ -1,7 +1,7 @@
 // src/components/SeoInjector.jsx
 // (UPDATED: Fixed Video Schema and Breadcrumb Issues for Google Search Console)
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { extractVideoThumbnail, generateVideoUrls, estimateVideoDuration } from '../utils/videoUtils';
 
@@ -13,6 +13,17 @@ import { extractVideoThumbnail, generateVideoUrls, estimateVideoDuration } from 
  * @param {Array} reviews - Array of review/comment objects for product snippets
  */
 const SeoInjector = ({ seo, property, reviews = [] }) => {
+
+    // ✅ PRERENDER.IO: Signal that the page is ready for snapshotting
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.prerenderReady === false) {
+            // Small delay to ensure Helmet has injected meta tags into the DOM
+            const timer = setTimeout(() => {
+                window.prerenderReady = true;
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [seo]);
     // ✅ Helper: Strip HTML and Truncate to prevent bloating
     const cleanText = (html, maxLength = 300) => {
         if (!html) return '';
