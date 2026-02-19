@@ -51,6 +51,7 @@ const ServicePostDetails = lazy(() => import('./pages/ServicePostDetails'));
 const AddServiceProvider = lazy(() => import('./pages/admin/AddServiceProvider'));
 const EditServiceProvider = lazy(() => import('./pages/admin/EditServiceProvider'));
 const Contact = lazy(() => import('./pages/Contact'));
+const MobileGoogleAuth = lazy(() => import('./pages/MobileGoogleAuth'));
 const OurPlatform = lazy(() => import('./pages/OurPlatform'));
 const ModeratorDashboard = lazy(() => import('./pages/ModeratorDashboard'));
 const RatedPropertiesPage = lazy(() => import('./pages/RatedPropertiesPage'));
@@ -425,7 +426,16 @@ function App() {
         }
       `}</style>
         <ScrollToTop />
-        <MainLayout />
+        <Routes>
+          {/* Standalone route for mobile Google auth (no header/footer) */}
+          <Route path="/mobile-google-auth" element={
+            <Suspense fallback={<PageLoader />}>
+              <MobileGoogleAuth />
+            </Suspense>
+          } />
+          {/* All other routes wrapped in MainLayout */}
+          <Route path="/*" element={<MainLayout />} />
+        </Routes>
       </Router>
     </SWRConfig>
   )
