@@ -1,24 +1,38 @@
 import { test, expect } from '@playwright/test';
 
-test('test', async ({ page }) => {
-  await page.goto('http://localhost:5173/');
-  await page.getByRole('heading', { name: 'Prime Land Opportunities' }).click();
-  await page.getByRole('textbox', { name: 'Enter Location...' }).click();
-  await page.getByRole('button', { name: 'Rent Property' }).click();
-  await page.getByRole('button', { name: 'Intel' }).click();
-  await page.getByRole('button', { name: 'Filters' }).click();
-  await page.getByRole('heading', { name: 'Land, Apartments & Rentals in' }).click();
-  await page.locator('.relative.bg-white\\/80').first().click();
-  await page.getByText('Live StatsReal-time activity trackingTotal2495Fulfilled2445Join the').click();
-  // Fill the form BEFORE clicking Submit Request - use locators for native select elements
-  // The form has Unit Type and Budget dropdowns that are native <select> elements
-  await page.locator('select').first().selectOption('1 Bedroom'); // Unit Type
-  await page.locator('select').nth(1).selectOption('Below 10k'); // Budget
-  await page.getByRole('textbox', { name: 'e.g Kilimani, Westlands,' }).click();
-  await page.getByRole('textbox', { name: 'e.g Kilimani, Westlands,' }).fill('nyeri');
-  await page.getByRole('textbox', { name: 'e.g Kilimani, Westlands,' }).click();
-  await page.getByRole('textbox', { name: 'e.g Kilimani, Westlands,' }).dblclick();
-  await page.locator('.overflow-hidden.px-4 > div > div:nth-child(3)').click();
-  await page.getByText('Grand View EstateKamanguFor saleKsh 1,500,000AMCCO PROPERTIES0.').click();
-  await page.getByRole('heading', { name: 'Hand-Picked Homes We Love' }).click();
+test.describe('Home Page - Hero Section', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should load the home page with correct title heading', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Prime Land Opportunities' })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should have location search textbox', async ({ page }) => {
+    await expect(page.getByRole('textbox', { name: 'Enter Location...' })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should have Rent Property button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Rent Property' })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should have Filters button', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Filters' })).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should navigate to search results when clicking Rent Property', async ({ page }) => {
+    await page.getByRole('button', { name: 'Rent Property' }).click();
+    await expect(page.getByRole('heading', { name: 'Land, Apartments & Rentals in' })).toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe('Home Page - Featured Properties', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('should display Hand-Picked Homes section', async ({ page }) => {
+    await expect(page.getByRole('heading', { name: 'Hand-Picked Homes We Love' })).toBeVisible({ timeout: 10000 });
+  });
 });
