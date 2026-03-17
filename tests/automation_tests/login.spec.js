@@ -66,8 +66,7 @@ test.describe('Login Page', () => {
     await page.getByLabel('Email or WhatsApp Number').fill('notanemail');
     await page.getByRole('button', { name: /Continue/i }).click();
     
-    // Wait for response
-    await page.waitForTimeout(1000);
+    
     
     // Either error shows or we're still on login page
     const errorVisible = await page.getByText(/valid email|invalid email|email format/i).first().isVisible().catch(() => false);

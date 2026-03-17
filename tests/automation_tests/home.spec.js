@@ -5,8 +5,14 @@ test.describe('Home Page - Hero Section', () => {
     await page.goto('/');
   });
 
-  test('should load the home page with correct title heading', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Prime Land Opportunities' })).toBeVisible({ timeout: 10000 });
+  test('should load the home page with hero heading', async ({ page }) => {
+    // The hero has a rotating slider with two possible headings
+    // Either "Land, Apartments & Rentals in Kenya" or "Prime Land Opportunities"
+    const heroHeading1 = page.getByRole('heading', { name: 'Land, Apartments & Rentals in Kenya' });
+    const heroHeading2 = page.getByRole('heading', { name: 'Prime Land Opportunities' });
+    
+    // Wait for at least one of the headings to be visible
+    await expect(heroHeading1.or(heroHeading2)).toBeVisible({ timeout: 10000 });
   });
 
   test('should have location search textbox', async ({ page }) => {
